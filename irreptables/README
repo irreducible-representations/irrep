@@ -1,0 +1,42 @@
+
+            # ###   ###   #####  ###
+            # #  #  #  #  #      #  #
+            # ###   ###   ###    ###
+            # #  #  #  #  #      #
+            # #   # #   # #####  #
+
+##################################################################
+## This files are distributed as part of                         #
+## "IrRep" code and under terms of GNU General Public license v3 #
+## see LICENSE file in the                                       #
+##                                                               #
+##################################################################
+
+Tables provided in this directory were obtained from the Bilbao Crystallographic Server 
+http://www.cryst.ehu.es/cgi-bin/cryst/programs/representations.pl?tipogrupo=spg
+http://www.cryst.ehu.es/cgi-bin/cryst/programs/representations.pl?tipogrupo=dbg
+
+
+If you use them, please cite the following Reference:
+
+L. Elcoro, B. Bradlyn, Z. Wang, M. G. Vergniory, J. Cano, C. Felser, B. A. Bernevig, D. Orobengoa, G. de la Flor and M. I. Aroyo
+"Double crystallographic groups and their representations on the Bilbao Crystallographic Server"
+J. of Appl. Cryst. (2017). 50, 1457-1477. doi:10.1107/S1600576717011712
+
+
+Bibtex entry:
+
+@article{Elcoro:ks5574,
+author = "Elcoro, Luis and Bradlyn, Barry and Wang, Zhijun and Vergniory, Maia G. and Cano, Jennifer and Felser, Claudia and Bernevig, B. Andrei and Orobengoa, Danel and de la Flor, Gemma and Aroyo, Mois I.",
+title = "{Double crystallographic groups and their representations on the Bilbao Crystallographic Server}",
+journal = "Journal of Applied Crystallography",
+year = "2017",
+volume = "50",
+number = "5",
+pages = "1457--1477",
+month = "Oct",
+doi = {10.1107/S1600576717011712},
+url = {https://doi.org/10.1107/S1600576717011712},
+abstract = {A new section of databases and programs devoted to double crystallographic groups (point and space groups) has been implemented in the Bilbao Crystallographic Server (http://www.cryst.ehu.es). The double crystallographic groups are required in the study of physical systems whose Hamiltonian includes spin-dependent terms. In the symmetry analysis of such systems, instead of the irreducible representations of the space groups, it is necessary to consider the single- and double-valued irreducible representations of the double space groups. The new section includes databases of symmetry operations ({\it DGENPOS}) and of irreducible representations of the double (point and space) groups ({\it REPRESENTATIONS DPG} and {\it REPRESENTATIONS DSG}). The tool {\it DCOMPREL} provides compatibility relations between the irreducible representations of double space groups at different {\bf k} vectors of the Brillouin zone when there is a group{--}subgroup relation between the corresponding little groups. The program {\it DSITESYM} implements the so-called site-symmetry approach, which establishes symmetry relations between localized and extended crystal states, using representations of the double groups. As an application of this approach, the program {\it BANDREP} calculates the band representations and the elementary band representations induced from any Wyckoff position of any of the 230 double space groups, giving information about the properties of these bands. Recently, the results of {\it BANDREP} have been extensively applied in the description of and the search for topological insulators.},
+keywords = {double crystallographic groups, single-valued and double-valued irreducible representations, band representations, Bilbao Crystallographic Server, computer programs},
+}
