@@ -6,10 +6,22 @@ also one can get the trace.txt file for Check Topological Mat routine of Bilbao 
 
 help on usage can be obtained by typing
 
-irrep.py -h
+python3 -m irrep -h
 
 that help is under construction and is far from being complete. If you have interest in the code and not sure how to use it, feel free to contact the author.
+
 Also, have a look at the examples provided.
+
+an example of using: 
+
+python3 -m irrep Ecut=50 code=abinit fWFK=Bi_WFK refUC=0,-1,1,1,0,-1,-1,-1,-1  kpoints=11 IBend=5  kpnames="GM"
+
+
+Installation: 
+just use pip:
+
+pip3 install irrep
+
 
 Currently the code is interfaced VASP and ABINIT, but if interface with other code is needed, please contact me.
 
@@ -21,7 +33,6 @@ cite
 L. Elcoro, B. Bradlyn, Z. Wang, M. G. Vergniory, J. Cano, C. Felser, B. A. Bernevig, D. Orobengoa, G. de la Flor and M. I. Aroyo
 "Double crystallographic groups and their representations on the Bilbao Crystallographic Server"
 J. of Appl. Cryst. (2017). 50, 1457-1477. doi:10.1107/S1600576717011712
-
 
 
 Brefore releasing this public repository on github on 22th of June 2019, 

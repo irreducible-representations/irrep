@@ -1,5 +1,3 @@
-the code is ready to run by the main script  irrep.py
-provided that python3 is installed with the following libraries:
-spglib
-numpy
-scipy
+Please, install it with pip
+
+pip3 install irrep

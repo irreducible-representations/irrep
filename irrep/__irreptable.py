@@ -18,7 +18,7 @@
 import numpy as np
 import os,sys
 import copy
-from aux import str2bool,str_,str2list_space
+from .__aux import str2bool,str_,str2list_space
 
 
 

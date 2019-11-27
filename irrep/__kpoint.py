@@ -18,11 +18,11 @@
 import numpy as np
 import numpy.linalg as la
 import copy
-from gvectors import calc_gvectors,symm_eigenvalues,NotSymmetryError,symm_matrix
+from .__gvectors import calc_gvectors,symm_eigenvalues,NotSymmetryError,symm_matrix
 #from spacegroup import SymmetryOperation,SpaceGroup
-from readfiles import AbinitHeader,Hartree_eV
-from readfiles import WAVECARFILE,record_abinit
-from aux import compstr
+from .__readfiles import AbinitHeader,Hartree_eV
+from .__readfiles import WAVECARFILE,record_abinit
+from .__aux import compstr
 
 
 class Kpoint():

@@ -21,10 +21,10 @@ import numpy as np
 from math import log,pi
 from scipy.linalg import expm
 import spglib
-from irreptable import IrrepTable
+from .__irreptable import IrrepTable
 import scipy
 from scipy.optimize import minimize
-from aux import str_
+from .__aux import str_
 
 pauli_sigma=np.array([ [[0,1],[1,0]], [[0,-1j],[1j,0]], [[1,0],[0,-1]]  ])
 

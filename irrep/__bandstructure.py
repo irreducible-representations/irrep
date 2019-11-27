@@ -20,12 +20,12 @@ import numpy as np
 import numpy.linalg as la
 import copy
 #from gvectors import calc_gvectors,symm_eigenvalues,NotSymmetryError,symm_matrix
-from spacegroup import SpaceGroup # SymmetryOperation,
-from readfiles import AbinitHeader,Hartree_eV
-from kpoint import Kpoint
+from .__spacegroup import SpaceGroup # SymmetryOperation,
+from .__readfiles import AbinitHeader,Hartree_eV
+from .__kpoint import Kpoint
 import functools
 
-from readfiles import record_abinit,WAVECARFILE
+from .__readfiles import record_abinit,WAVECARFILE
 
 class BandStructure():
 
