@@ -19,8 +19,7 @@
 import numpy as np
 import numpy.linalg as la
 import copy
-#from gvectors import calc_gvectors,symm_eigenvalues,NotSymmetryError,symm_matrix
-from .__spacegroup import SpaceGroup # SymmetryOperation,
+from .__spacegroup import SpaceGroup 
 from .__readfiles import AbinitHeader,Hartree_eV
 from .__kpoint import Kpoint
 import functools

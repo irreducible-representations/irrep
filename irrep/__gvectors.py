@@ -32,7 +32,7 @@ twomhbar2*=(1+correction)
 
 
 ## This function is a python translation of a part of WaveTrans Code
-def calc_gvectors(K,RecLattice,Ecut,nplane,Ecut1=-1,thresh=1e-4,spinor=True):
+def calc_gvectors(K,RecLattice,Ecut,nplane,Ecut1=-1,thresh=1e-3,spinor=True):
     """ calculating g-vectors for a point K with energy cutoff Ecut
         nplane is used to check the correctness
         optionally one may provide a lower cutoff Ecut1, to exclude higher g-vectors
@@ -118,6 +118,7 @@ RecLattice -- rows are the vectors of the reciprocal lattice
         raise NotSymmetryError("The k-point {0} is transformed to non-equivalent point {1}  under transformation\n {2}".format(kpt,kpt_,A))
 
     igTr=B.dot(ig[:3,:])+dkpt[:,None]   # the transformed
+    igTr=np.array(np.round(igTr),dtype=int)
 #    print ("the original g-vectors :\n",ig)
 #    print ("the transformed g-vectors :\n",igTr)
     ng=ig.shape[1]
@@ -128,7 +129,8 @@ RecLattice -- rows are the vectors of the reciprocal lattice
                 rotind[i]=j;
                 break
         if rotind[i]==-1:
-            raise RuntimeError( "no pair found for the transformed g-vector ig[{0}]={1} in the original g-vectors set".format(i,igTr[:,i]))
+            raise RuntimeError( "no pair found for the transformed g-vector igTr[{i}]={igtr}  ig[{i}]={ig} in the original g-vectors set (kpoint{kp}). Other g-vectors with same energy:\n{other} ".format(
+                     i=i,ig=ig[:3,i],igtr=igTr[:,i],kp=kpt,other=ig[:3,ig[4,i]:ig[5,i]]))
     return rotind
 
 

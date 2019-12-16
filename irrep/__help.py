@@ -18,6 +18,7 @@
 ##################################################################
 
 def __help():
+    from .__version import __version__ as version
     print ( """ 
 
            # ###   ###   #####  ### 
@@ -26,6 +27,8 @@ def __help():
            # #  #  #  #  #      #   
            # #   # #   # #####  #   
         
+     version {}  
+
       calculates the expectation values of symmetry operations 
     <Psi_nk | T(g) | Psi_nk >  as well as irreducible representations,
      Wannier charge centers (1D) Zak phases and many more
@@ -72,7 +75,7 @@ def __help():
     
     
     NOTE FOR ABINIT:  always use "istwfk=1"
-""")
+""".format(version))
     exit()
 
 
