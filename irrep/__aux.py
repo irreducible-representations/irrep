@@ -17,6 +17,9 @@
 
 
 import numpy as np
+from scipy import constants
+bohr=0.529 #constants.physical_constants['Bohr radius'][0]/constants.angstrom
+
 
 def str2list(string):
     return np.hstack( [ np.arange( *(np.array(s.split("-"),dtype=int)+np.array([0,1]) )) if "-" in s else np.array([int(s)])  for s in string.split(",")] )

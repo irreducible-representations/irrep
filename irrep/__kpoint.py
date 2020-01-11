@@ -38,7 +38,7 @@ class Kpoint():
                 except NotSymmetryError as err:
                     pass # print  ( err )
 
-    def __init__(self,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice,SG=None,spinor=None,code="vasp",kpt=None,npw_=None,fWFK=None,WCF=None,flag=-1,usepaw=0):
+    def __init__(self,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice,SG=None,spinor=None,code="vasp",kpt=None,npw_=None,fWFK=None,WCF=None,seedname=None,kptxml=None,flag=-1,usepaw=0):
         self.spinor=spinor
         self.ik0=ik+1  # the index in the WAVECAR (count start from 1)
         self.Nband=IBend-IBstart
@@ -49,6 +49,10 @@ class Kpoint():
             self.WF,self.ig=self.__init_vasp(WCF,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice)
         elif code.lower()=="abinit":
             self.WF,self.ig=self.__init_abinit(fWFK,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice,kpt=kpt,npw_=npw_,flag=flag,usepaw=usepaw)
+        elif code.lower()=="espresso":
+            self.WF,self.ig=self.__init_espresso(seedname,ik,IBstart,IBend,Ecut,Ecut0,RecLattice,kptxml)
+        else:
+            raise RuntimeError("unknown code : {}".format(code))
         self.WF/=(np.sqrt(np.abs(np.einsum("ij,ij->i",self.WF.conj(),self.WF)))).reshape(self.Nband,1)
         self.SG=SG
         self.__calc_sym_eigenvalues()
@@ -227,6 +231,10 @@ class Kpoint():
 
 
         return CG,igall
+
+    def __init_espresso(self,seedname,ik,IBstart,IBend,Ecut,Ecut0,RecLattice,kpt,kptxml):
+        pass
+
 
     def write_characters(self,degen_thresh=1e-8,irreptable=None,symmetries=None,preline="",efermi=0.,plotFile=None,kpl=""):
         if symmetries is None:

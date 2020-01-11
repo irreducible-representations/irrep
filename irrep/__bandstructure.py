@@ -22,6 +22,7 @@ import copy
 from .__spacegroup import SpaceGroup 
 from .__readfiles import AbinitHeader,Hartree_eV
 from .__kpoint import Kpoint
+from .__aux import str2bool,bohr
 import functools
 
 from .__readfiles import record_abinit,WAVECARFILE
@@ -29,11 +30,13 @@ from .__readfiles import record_abinit,WAVECARFILE
 class BandStructure():
 
 
-    def __init__(self,fWAV=None,fWFK=None,fPOS=None,Ecut=None,IBstart=None,IBend=None,kplist=None,spinor=None,code="vasp",EF=None,onlysym=False):
+    def __init__(self,fWAV=None,fWFK=None,seedname=None,fPOS=None,Ecut=None,IBstart=None,IBend=None,kplist=None,spinor=None,code="vasp",EF=None,onlysym=False):
         if code=="vasp":
            self.__init_vasp(fWAV,fPOS,Ecut,IBstart,IBend,kplist,spinor,EF=EF,onlysym=onlysym)
         elif code=="abinit":
            self.__init_abinit(fWFK,Ecut,IBstart,IBend,kplist,EF=EF,onlysym=onlysym)
+        elif code=="espresso":
+           self.__init_espresso(seedname,Ecut,IBstart,IBend,kplist,EF=EF,onlysym=onlysym)
           
 
     def __init_vasp(self,fWAV,fPOS,Ecut=None,IBstart=None,IBend=None,kplist=None,spinor=None,EF=None,onlysym=False):
@@ -135,12 +138,73 @@ class BandStructure():
                           code="abinit",kpt=header.kpt[ik],npw_=header.npwarr[ik],fWFK=fWFK,flag=flag,usepaw=usepaw) 
             self.kpoints.append(kp)
             flag=ik
-            
+
+
+    def __init_espresso(self,seedname,Ecut=None,IBstart=None,IBend=None,kplist=None,EF=None,onlysym=False):
+        import xml.etree.ElementTree as ET
+        mytree = ET.parse(seedname+'.save/data-file-schema.xml')
+        myroot = mytree.getroot()
+        inp=myroot.find('input')
+        outp=myroot.find('output')
+        bandstr=outp.find('band_structure')
+        ntyp=int(inp.find('atomic_species').attrib['ntyp'])
+        atnames=[sp.attrib['name'] for sp in inp.find('atomic_species').findall('species')]
+        assert (len(atnames)==ntyp)
+        atnumbers={atn:i+1 for i,atn in enumerate(atnames)}
+        self.spinor=str2bool(bandstr.find('noncolin').text)
+        print ('spinor=',self.spinor)
+        struct=inp.find("atomic_structure")
+        nat=struct.attrib['nat']
+        self.Lattice=bohr*np.array([struct.find("cell").find('a{}'.format(i+1)).text.strip().split() for i in range(3)],dtype=float)
+        xcart=[]
+        typat=[]
+        for at in struct.find("atomic_positions").findall("atom"):
+            typat.append(atnumbers[at.attrib["name"]])
+            xcart.append(at.text.split())
+        xred=(np.array(xcart,dtype=float)*bohr).dot(np.linalg.inv(self.Lattice))
+        print ("xred=",xred)
+        self.spacegroup=SpaceGroup(cell=(self.Lattice,xred,typat),spinor=self.spinor)
+        self.Ecut0=float(inp.find('basis').find('ecutwfc').text)*Hartree_eV
+        self.Ecut=Ecut
+        self.RecLattice=np.array([np.cross(self.Lattice[(i+1)%3],self.Lattice[(i+2)%3]) for i in range(3)] 
+                                       )*2*np.pi/np.linalg.det(self.Lattice)
+        nbnd=int(bandstr.find('nbnd').text)
+        self.efermi=float(bandstr.find('fermi_energy').text)
+        kpall=bandstr.findall('ks_energies')
+        NK=len(kpall)
+        if kplist is None:
+            kplist=np.arange(NK)
+        else : 
+            kplist-=1
+            kplist=np.array([k for k in kplist if k>=0 and k<NK])
+        print ("kplist",kplist)
+        for kp in kpall:
+            print(kp.find('k_point').text)
+        self.kpoints=[]
+        flag=-1
+        for ik in kplist:
+            kp=Kpoint(ik, nbnd,IBstart,IBend,Ecut,self.Ecut0,self.RecLattice,SG=self.spacegroup,spinor=self.spinor,
+                          code="espresso",kptxml=kpall[ik],seedname=seedname) 
+            self.kpoints.append(kp)
+            flag=ik
+
+
+#        tagname= mytree.getElementsByTagName('item')[0]
+#        print(tagname)
+#If I try to fetch the first ele
+#        myroot = mytree.getroot()
+#        print (myroot)
+#        exit()
 
     def getNK():
        return len(self.kpoints)
 
     NK=property(getNK)
+
+
+
+
+
 
     def write_characters(self,degen_thresh=0,refUC=None,shiftUC=np.zeros(3),kpnames=None,symmetries=None,preline="",plotFile=None):
 #        if refUC is not None:
@@ -203,7 +267,6 @@ class BandStructure():
         for KP in self.kpoints:
             f.write(KP.write_trace(degen_thresh,symmetries=symmetries,efermi=self.efermi))
                 
-
 
 
 

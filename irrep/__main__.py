@@ -38,6 +38,7 @@ def __main__():
 
     fWAV="WAVECAR"
     fWFK=None
+    seedname=None
     fPOS="POSCAR"
     IBstart=None
     IBend=None
@@ -78,6 +79,7 @@ def __main__():
             v="=".join(arg.split("=")[1:])
             if   k=="fWAV"  : fWAV=v
             elif k=="fWFK"  : fWFK=v
+            elif k=="seedname"  : seedname=v
             elif k=="charfile"  : charfile=v
             elif k=="EF"  : EF=float(v)
     #        elif k=="preline"  : preline=v
@@ -116,7 +118,7 @@ def __main__():
     
     
     
-    bandstr=BS.BandStructure(fWAV=fWAV,fWFK=fWFK,fPOS=fPOS,Ecut=Ecutsym,IBstart=IBstart,IBend=IBend,kplist=kpoints,spinor=spinor,code=code,EF=EF,onlysym=onlysym)
+    bandstr=BS.BandStructure(fWAV=fWAV,fWFK=fWFK,seedname=seedname,fPOS=fPOS,Ecut=Ecutsym,IBstart=IBstart,IBend=IBend,kplist=kpoints,spinor=spinor,code=code,EF=EF,onlysym=onlysym)
     bandstr.spacegroup.show(refUC=refUC,shiftUC=shiftUC,symmetries=symmetries)
     if onlysym : 
     #    print ("onlysym")
