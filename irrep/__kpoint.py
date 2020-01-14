@@ -42,7 +42,7 @@ class Kpoint():
         return symmetries
 
     def __init__(self,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice,SG=None,spinor=None,
-                 code="vasp",kpt=None,npw_=None,fWFK=None,WCF=None,seedname=None,kptxml=None,flag=-1,usepaw=0):
+                 code="vasp",kpt=None,npw_=None,fWFK=None,WCF=None,prefix=None,kptxml=None,flag=-1,usepaw=0):
         self.spinor=spinor
         self.ik0=ik+1  # the index in the WAVECAR (count start from 1)
         self.Nband=IBend-IBstart
@@ -54,7 +54,7 @@ class Kpoint():
         elif code.lower()=="abinit":
             self.WF,self.ig=self.__init_abinit(fWFK,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice,kpt=kpt,npw_=npw_,flag=flag,usepaw=usepaw)
         elif code.lower()=="espresso":
-            self.WF,self.ig=self.__init_espresso(seedname,ik,IBstart,IBend,Ecut,Ecut0,RecLattice,kptxml=kptxml)
+            self.WF,self.ig=self.__init_espresso(prefix,ik,IBstart,IBend,Ecut,Ecut0,RecLattice,kptxml=kptxml)
         else:
             raise RuntimeError("unknown code : {}".format(code))
         self.WF/=(np.sqrt(np.abs(np.einsum("ij,ij->i",self.WF.conj(),self.WF)))).reshape(self.Nband,1)
@@ -214,7 +214,7 @@ class Kpoint():
         
 
 
-    def __init_espresso(self,seedname,ik,IBstart,IBend,Ecut,Ecut0,RecLattice,kptxml,thresh=1e-4):
+    def __init_espresso(self,prefix,ik,IBstart,IBend,Ecut,Ecut0,RecLattice,kptxml,thresh=1e-4):
         self.K=np.array(kptxml.find("k_point").text.split(),dtype=float)
 
         eigen=np.array(kptxml.find("eigenvalues").text.split(),dtype=float)
@@ -227,30 +227,30 @@ class Kpoint():
         npw=int(kptxml.find("npw").text)
 #        kg= np.random.randint(100,size=(npw,3))-50
         npwtot=npw*(2 if self.spinor else 1)
-        CG= np.zeros((IBend-IBstart,npwtot),dtype=float )
-        fWFC=FF("{}.save/WFC{}.dat".format(seedname,ik+1),"r")
+        CG= np.zeros((IBend-IBstart,npwtot),dtype=complex )
+        fWFC=FF("{}.save/WFC{}.dat".format(prefix,ik+1),"r")
         rec=record_abinit(fWFC,'i4,3f8,i4,i4,f8')[0]
-        print ('rec=',rec)
+#        print ('rec=',rec)
         ik,xk,ispin,gamma_only,scalef=rec
 #        xk/=bohr
 #        xk=xk.dot(np.linalg.inv(RecLattice))
 
         rec=record_abinit(fWFC,'4i4')
-        print ('rec=',rec)
+#        print ('rec=',rec)
         ngw,igwx,npol,nbnd=rec
 
         rec=record_abinit(fWFC,'(3,3)f8')
-        print ('rec=',rec)
+#        print ('rec=',rec)
         B=np.array(rec)
-        print (np.mean(B/RecLattice))
+#        print (np.mean(B/RecLattice))
         self.K=xk.dot(np.linalg.inv(B))
         
         rec=record_abinit(fWFC,'({},3)i4'.format(igwx))
-        print ('rec=',rec)
+#        print ('rec=',rec)
         kg=np.array(rec)
-        print (np.mean(B/RecLattice))
+#        print (np.mean(B/RecLattice))
 #        print ("k-point {0}: {1}/{2}={3}".format(ik, self.K,xk,self.K/xk))
-        print ("k-point {0}: {1}".format(ik,self.K ))
+#        print ("k-point {0}: {1}".format(ik,self.K ))
         
 
         for ib in range(IBend):

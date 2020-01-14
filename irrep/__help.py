@@ -41,7 +41,7 @@ def __help():
 
     -h   print this help message
 
-    code  vasp (default) or abinit
+    code  vasp (default) or abinit or espresso
     
     ZAK - calcualte Zak phase
     WCC - calcualte  Wannier Charge Centers
@@ -52,6 +52,7 @@ def __help():
     fWAV  input wavefunctions file  name for vasp. default: WAVECAR
     fPOS  input POSCAR file  name. default: WAVECAR
     fWFK  input wavefunctions file  name for abinit. default: none
+    prefix - for QuantumEspresso calculations (data should be in prefix.save)
     
     spinor   wether the wavefunctions are spinor. (relevant and mandatory for VASP only)
 
@@ -73,6 +74,9 @@ def __help():
 
     isymsep   index of the symmetry to separate the eigenstates  ( works well only for norm-conserving potentials (in abinit) )
     
+    EXAMPLES:
+       python3 -m irrep Ecut=50 code=abinit fWFK=Bi_WFK refUC=0,-1,1,1,0,-1,-1,-1,-1  kpoints=11 IBend=5  kpnames="GM" 
+       python3 -m irrep Ecut=50 code=espresso prefix=Bi refUC=0,-1,1,1,0,-1,-1,-1,-1  kpoints=11 IBend=5  kpnames="GM" 
     
     NOTE FOR ABINIT:  always use "istwfk=1"
 """.format(version))

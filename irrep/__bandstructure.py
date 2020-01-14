@@ -30,13 +30,13 @@ from .__readfiles import record_abinit,WAVECARFILE
 class BandStructure():
 
 
-    def __init__(self,fWAV=None,fWFK=None,seedname=None,fPOS=None,Ecut=None,IBstart=None,IBend=None,kplist=None,spinor=None,code="vasp",EF=None,onlysym=False):
+    def __init__(self,fWAV=None,fWFK=None,prefix=None,fPOS=None,Ecut=None,IBstart=None,IBend=None,kplist=None,spinor=None,code="vasp",EF=None,onlysym=False):
         if code=="vasp":
            self.__init_vasp(fWAV,fPOS,Ecut,IBstart,IBend,kplist,spinor,EF=EF,onlysym=onlysym)
         elif code=="abinit":
            self.__init_abinit(fWFK,Ecut,IBstart,IBend,kplist,EF=EF,onlysym=onlysym)
         elif code=="espresso":
-           self.__init_espresso(seedname,Ecut,IBstart,IBend,kplist,EF=EF,onlysym=onlysym)
+           self.__init_espresso(prefix,Ecut,IBstart,IBend,kplist,EF=EF,onlysym=onlysym)
           
 
     def __init_vasp(self,fWAV,fPOS,Ecut=None,IBstart=None,IBend=None,kplist=None,spinor=None,EF=None,onlysym=False):
@@ -140,9 +140,9 @@ class BandStructure():
             flag=ik
 
 
-    def __init_espresso(self,seedname,Ecut=None,IBstart=None,IBend=None,kplist=None,EF=None,onlysym=False):
+    def __init_espresso(self,prefix,Ecut=None,IBstart=None,IBend=None,kplist=None,EF=None,onlysym=False):
         import xml.etree.ElementTree as ET
-        mytree = ET.parse(seedname+'.save/data-file-schema.xml')
+        mytree = ET.parse(prefix+'.save/data-file-schema.xml')
         myroot = mytree.getroot()
         inp=myroot.find('input')
         outp=myroot.find('output')
@@ -152,7 +152,7 @@ class BandStructure():
         assert (len(atnames)==ntyp)
         atnumbers={atn:i+1 for i,atn in enumerate(atnames)}
         self.spinor=str2bool(bandstr.find('noncolin').text)
-        print ('spinor=',self.spinor)
+#        print ('spinor=',self.spinor)
         struct=inp.find("atomic_structure")
         nat=struct.attrib['nat']
         self.Lattice=bohr*np.array([struct.find("cell").find('a{}'.format(i+1)).text.strip().split() for i in range(3)],dtype=float)
@@ -162,7 +162,7 @@ class BandStructure():
             typat.append(atnumbers[at.attrib["name"]])
             xcart.append(at.text.split())
         xred=(np.array(xcart,dtype=float)*bohr).dot(np.linalg.inv(self.Lattice))
-        print ("xred=",xred)
+#        print ("xred=",xred)
         self.spacegroup=SpaceGroup(cell=(self.Lattice,xred,typat),spinor=self.spinor)
         Ecut0=float(inp.find('basis').find('ecutwfc').text)*Hartree_eV
 
@@ -188,14 +188,14 @@ class BandStructure():
         else : 
             kplist-=1
             kplist=np.array([k for k in kplist if k>=0 and k<NK])
-        print ("kplist",kplist)
-        for kp in kpall:
-            print(kp.find('k_point').text)
+#        print ("kplist",kplist)
+#        for kp in kpall:
+#            print(kp.find('k_point').text)
         self.kpoints=[]
         flag=-1
         for ik in kplist:
             kp=Kpoint(ik, NBin,IBstart,IBend,Ecut,Ecut0,self.RecLattice,SG=self.spacegroup,spinor=self.spinor,
-                          code="espresso",kptxml=kpall[ik],seedname=seedname) 
+                          code="espresso",kptxml=kpall[ik],prefix=prefix) 
             self.kpoints.append(kp)
             flag=ik
 

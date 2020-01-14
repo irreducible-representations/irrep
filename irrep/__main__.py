@@ -38,7 +38,7 @@ def __main__():
 
     fWAV="WAVECAR"
     fWFK=None
-    seedname=None
+    prefix=None
     fPOS="POSCAR"
     IBstart=None
     IBend=None
@@ -61,7 +61,7 @@ def __main__():
     writebands=True
     plotbands=True
     plotFile=None
-    seedname=""
+    suffix=""
     
     for arg in sys.argv[1:]:
         if arg=="-h": 
@@ -79,7 +79,7 @@ def __main__():
             v="=".join(arg.split("=")[1:])
             if   k=="fWAV"  : fWAV=v
             elif k=="fWFK"  : fWFK=v
-            elif k=="seedname"  : seedname=v
+            elif k=="prefix"  : prefix=v
             elif k=="charfile"  : charfile=v
             elif k=="EF"  : EF=float(v)
     #        elif k=="preline"  : preline=v
@@ -91,7 +91,7 @@ def __main__():
             elif k=="kpoints"   : kpoints=str2list(v)
             elif k=="degen_thresh"   : degen_thresh=float(v)
             elif k=="code" : code=v.lower()
-            elif k=="seedname" : seedname=v
+            elif k=="suffix" : suffix=v
             elif k=="kpnames" :     kpnames=v.split(",")
             elif k=="refUC" : refUC=np.array(v.split(','),dtype=float).reshape( (3,3) ) 
             elif k=="shiftUC" : shiftUC=np.array(v.split(','),dtype=float).reshape( 3 ) 
@@ -118,7 +118,7 @@ def __main__():
     
     
     
-    bandstr=BS.BandStructure(fWAV=fWAV,fWFK=fWFK,seedname=seedname,fPOS=fPOS,Ecut=Ecutsym,IBstart=IBstart,IBend=IBend,kplist=kpoints,spinor=spinor,code=code,EF=EF,onlysym=onlysym)
+    bandstr=BS.BandStructure(fWAV=fWAV,fWFK=fWFK,prefix=prefix,fPOS=fPOS,Ecut=Ecutsym,IBstart=IBstart,IBend=IBend,kplist=kpoints,spinor=spinor,code=code,EF=EF,onlysym=onlysym)
     bandstr.spacegroup.show(refUC=refUC,shiftUC=shiftUC,symmetries=symmetries)
     if onlysym : 
     #    print ("onlysym")
@@ -182,11 +182,11 @@ def __main__():
        for k,sub in subbands.items():
             if isymsep is not None: 
                 print ("\n\n\n\n ################################################ \n\n\n next subspace:  ", " , ".join("{0}:{1}".format(s,short(ev)) for s,ev in zip(isymsep,k)))
-                fname="bands-"+seedname+"-"+"-".join("{0}:{1}".format(s,short(ev)) for s,ev in zip(isymsep,k))+".dat"
-                fname1="bands-sym-"+seedname+"-"+"-".join("{0}:{1}".format(s,short(ev)) for s,ev in zip(isymsep,k))+".dat"
+                fname="bands-"+suffix+"-"+"-".join("{0}:{1}".format(s,short(ev)) for s,ev in zip(isymsep,k))+".dat"
+                fname1="bands-sym-"+suffix+"-"+"-".join("{0}:{1}".format(s,short(ev)) for s,ev in zip(isymsep,k))+".dat"
             else:
-                fname="bands-{0}.dat".format(seedname)
-                fname1="bands-sym-{0}.dat".format(seedname)
+                fname="bands-{0}.dat".format(suffix)
+                fname1="bands-sym-{0}.dat".format(suffix)
             open(fname,"w").write(sub.write_bands())
             sub.write_trace_all(degen_thresh,fname=fname1)
     
