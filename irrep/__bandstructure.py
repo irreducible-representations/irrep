@@ -164,11 +164,22 @@ class BandStructure():
         xred=(np.array(xcart,dtype=float)*bohr).dot(np.linalg.inv(self.Lattice))
         print ("xred=",xred)
         self.spacegroup=SpaceGroup(cell=(self.Lattice,xred,typat),spinor=self.spinor)
-        self.Ecut0=float(inp.find('basis').find('ecutwfc').text)*Hartree_eV
+        Ecut0=float(inp.find('basis').find('ecutwfc').text)*Hartree_eV
+
+        NBin=int(bandstr.find('nbnd').text)
+
+        IBstart=0 if (IBstart is None or IBstart<=0) else IBstart-1
+        if  IBend is None or IBend<=0 or IBend>NBin: 
+            IBend=NBin 
+        NBout=IBend-IBstart
+        if NBout<=0: raise RuntimeError("No bands to calculate")
+        if Ecut is None or Ecut>Ecut0 or Ecut<=0:
+            Ecut=Ecut0
+
+
         self.Ecut=Ecut
         self.RecLattice=np.array([np.cross(self.Lattice[(i+1)%3],self.Lattice[(i+2)%3]) for i in range(3)] 
                                        )*2*np.pi/np.linalg.det(self.Lattice)
-        nbnd=int(bandstr.find('nbnd').text)
         self.efermi=float(bandstr.find('fermi_energy').text)
         kpall=bandstr.findall('ks_energies')
         NK=len(kpall)
@@ -183,7 +194,7 @@ class BandStructure():
         self.kpoints=[]
         flag=-1
         for ik in kplist:
-            kp=Kpoint(ik, nbnd,IBstart,IBend,Ecut,self.Ecut0,self.RecLattice,SG=self.spacegroup,spinor=self.spinor,
+            kp=Kpoint(ik, NBin,IBstart,IBend,Ecut,Ecut0,self.RecLattice,SG=self.spacegroup,spinor=self.spinor,
                           code="espresso",kptxml=kpall[ik],seedname=seedname) 
             self.kpoints.append(kp)
             flag=ik

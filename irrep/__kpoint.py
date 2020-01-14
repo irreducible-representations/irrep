@@ -23,22 +23,26 @@ from .__gvectors import calc_gvectors,symm_eigenvalues,NotSymmetryError,symm_mat
 from .__readfiles import AbinitHeader,Hartree_eV
 from .__readfiles import WAVECARFILE,record_abinit
 from .__aux import compstr
-
-
+from .__aux import bohr
+from scipy.io import FortranFile as FF
+from lazy_property import LazyProperty
 class Kpoint():
 
-    def __calc_sym_eigenvalues(self):
-        self.symmetries={}
+    @LazyProperty
+    def symmetries(self):
+        symmetries={}
 #        print ("calculating symmetry eigenvalues for E={0}, WF={1} SG={2}".format(self.Energy,self.WF.shape,self.SG) )
         if not (self.SG is None):
             for symop in self.SG.symmetries:
                 try:
-                    self.symmetries[symop]=symm_eigenvalues(self.K,self.RecLattice,self.WF,self.ig,spinor=self.spinor,
+                    symmetries[symop]=symm_eigenvalues(self.K,self.RecLattice,self.WF,self.ig,spinor=self.spinor,
                          A=symop.rotation,S=symop.spinor_rotation,T=symop.translation)
                 except NotSymmetryError as err:
                     pass # print  ( err )
+        return symmetries
 
-    def __init__(self,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice,SG=None,spinor=None,code="vasp",kpt=None,npw_=None,fWFK=None,WCF=None,seedname=None,kptxml=None,flag=-1,usepaw=0):
+    def __init__(self,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice,SG=None,spinor=None,
+                 code="vasp",kpt=None,npw_=None,fWFK=None,WCF=None,seedname=None,kptxml=None,flag=-1,usepaw=0):
         self.spinor=spinor
         self.ik0=ik+1  # the index in the WAVECAR (count start from 1)
         self.Nband=IBend-IBstart
@@ -50,12 +54,12 @@ class Kpoint():
         elif code.lower()=="abinit":
             self.WF,self.ig=self.__init_abinit(fWFK,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice,kpt=kpt,npw_=npw_,flag=flag,usepaw=usepaw)
         elif code.lower()=="espresso":
-            self.WF,self.ig=self.__init_espresso(seedname,ik,IBstart,IBend,Ecut,Ecut0,RecLattice,kptxml)
+            self.WF,self.ig=self.__init_espresso(seedname,ik,IBstart,IBend,Ecut,Ecut0,RecLattice,kptxml=kptxml)
         else:
             raise RuntimeError("unknown code : {}".format(code))
         self.WF/=(np.sqrt(np.abs(np.einsum("ij,ij->i",self.WF.conj(),self.WF)))).reshape(self.Nband,1)
         self.SG=SG
-        self.__calc_sym_eigenvalues()
+#        self.__calc_sym_eigenvalues()
 #        print("WF=\n",WF)
                     
     def copy_sub(self,E,WF):
@@ -185,10 +189,11 @@ class Kpoint():
             kg=record_abinit(fWFK,"({npw},3)i4".format(npw=npw))#[0]
             eigen,occ=fWFK.read_record("{nband}f8,{nband}f8".format(nband=nband_loc))[0]
             nspinor=2 if self.spinor else 1
-            CG=np.zeros((nband_loc,npw*nspinor),dtype=complex)
+            CG=np.zeros((IBend-IBstart,npw*nspinor),dtype=complex)
             for iband in range(nband_loc):
                 cg_tmp=record_abinit(fWFK,"{0}f8".format(2*npw*nspinor))#[0]
-                CG[iband]=cg_tmp[0::2]+1.j*cg_tmp[1::2]
+                if iband>=IBstart and iband<IBend:
+                    CG[iband-IBstart]=cg_tmp[0::2]+1.j*cg_tmp[1::2]
             flag+=1
 
         #now, we have kept in npw,nspinor_loc,naband_loc,eigen,occ,cg_tmp the info of the k-point labeled by ik
@@ -197,18 +202,73 @@ class Kpoint():
         assert (nspinor_loc==2 and self.spinor) or (nspinor_loc==1 and not self.spinor)
         
         if usepaw==0:
-            assert   np.max(np.abs(CG.conj().dot(CG.T)-np.eye(nband_loc,nband_loc)) ) < 1e-10  # check orthonormality
-        
-        KG=(kg+kpt).dot(RecLattice)
-        eKG=Hartree_eV*(la.norm(KG,axis=1)**2)/2
-        assert   Ecut0*1.000000001>np.max(eKG) 
-        sel=np.where(eKG<Ecut)[0]
-        npw1=sel.shape[0]
+            assert   np.max(np.abs(CG.conj().dot(CG.T)-np.eye(IBend-IBstart)) ) < 1e-10  # check orthonormality
+
         self.Energy=eigen[IBstart:IBend]*Hartree_eV
         try:
             self.upper=eigen[IBend]*hartree_eV
         except:
             self.upper = np.NaN
+
+        return self.__sortIG(kg,kpt,CG,RecLattice,Ecut0,Ecut,thresh=thresh)
+        
+
+
+    def __init_espresso(self,seedname,ik,IBstart,IBend,Ecut,Ecut0,RecLattice,kptxml,thresh=1e-4):
+        self.K=np.array(kptxml.find("k_point").text.split(),dtype=float)
+
+        eigen=np.array(kptxml.find("eigenvalues").text.split(),dtype=float)
+        try:
+            self.upper=eigen[IBend]
+        except:
+            self.upper = np.NaN
+
+        self.Energy=eigen[IBstart:IBend]
+        npw=int(kptxml.find("npw").text)
+#        kg= np.random.randint(100,size=(npw,3))-50
+        npwtot=npw*(2 if self.spinor else 1)
+        CG= np.zeros((IBend-IBstart,npwtot),dtype=float )
+        fWFC=FF("{}.save/WFC{}.dat".format(seedname,ik+1),"r")
+        rec=record_abinit(fWFC,'i4,3f8,i4,i4,f8')[0]
+        print ('rec=',rec)
+        ik,xk,ispin,gamma_only,scalef=rec
+#        xk/=bohr
+#        xk=xk.dot(np.linalg.inv(RecLattice))
+
+        rec=record_abinit(fWFC,'4i4')
+        print ('rec=',rec)
+        ngw,igwx,npol,nbnd=rec
+
+        rec=record_abinit(fWFC,'(3,3)f8')
+        print ('rec=',rec)
+        B=np.array(rec)
+        print (np.mean(B/RecLattice))
+        self.K=xk.dot(np.linalg.inv(B))
+        
+        rec=record_abinit(fWFC,'({},3)i4'.format(igwx))
+        print ('rec=',rec)
+        kg=np.array(rec)
+        print (np.mean(B/RecLattice))
+#        print ("k-point {0}: {1}/{2}={3}".format(ik, self.K,xk,self.K/xk))
+        print ("k-point {0}: {1}".format(ik,self.K ))
+        
+
+        for ib in range(IBend):
+            cg_tmp=record_abinit(fWFC,'{}f8'.format(npwtot*2))
+            if ib>=IBstart:
+                CG[ib-IBstart]=cg_tmp[0::2]+1.j*cg_tmp[1::2]
+
+        return self.__sortIG(kg,self.K,CG,B,Ecut0,Ecut,thresh=thresh)
+        
+
+    def __sortIG(self,kg,kpt,CG,RecLattice,Ecut0,Ecut,thresh=1e-4):
+        KG=(kg+kpt).dot(RecLattice)
+        npw=kg.shape[0]
+        eKG=Hartree_eV*(la.norm(KG,axis=1)**2)/2
+        print (Ecut0,np.max(eKG))
+        assert   Ecut0*1.000000001>np.max(eKG) 
+        sel=np.where(eKG<Ecut)[0]
+        npw1=sel.shape[0]
 
 
         KG=KG[sel]
@@ -225,15 +285,14 @@ class Kpoint():
             igall[5,wall[i]:wall[i+1]]=wall[i+1]
 
         if self.spinor:
-            CG=CG[IBstart:IBend,np.hstack( (sel[srt],sel[srt]+npw) ) ]
+            CG=CG[:,np.hstack( (sel[srt],sel[srt]+npw) ) ]
         else:
-            CG=CG[IBstart:IBend,sel[srt]]
+            CG=CG[:,sel[srt]]
 
 
         return CG,igall
 
-    def __init_espresso(self,seedname,ik,IBstart,IBend,Ecut,Ecut0,RecLattice,kpt,kptxml):
-        pass
+
 
 
     def write_characters(self,degen_thresh=1e-8,irreptable=None,symmetries=None,preline="",efermi=0.,plotFile=None,kpl=""):

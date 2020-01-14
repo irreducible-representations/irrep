@@ -319,7 +319,8 @@ class SpaceGroup():
                 try :
 #                    print (i,j)
                     tab[irr.name][j+1]=irr.characters[i+1]*signs[j]*np.exp(2j*np.pi*dt[j].dot(irr.k))
-                except KeyError:
+                except KeyError as err:
+                    print ("WARNING:{}".format(err))
                     pass
 #        print (tab)
         if len(tab)==0:
