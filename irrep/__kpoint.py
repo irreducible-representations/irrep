@@ -228,7 +228,11 @@ class Kpoint():
 #        kg= np.random.randint(100,size=(npw,3))-50
         npwtot=npw*(2 if self.spinor else 1)
         CG= np.zeros((IBend-IBstart,npwtot),dtype=complex )
-        fWFC=FF("{}.save/WFC{}.dat".format(prefix,ik+1),"r")
+        try:
+            fWFC=FF("{}.save/WFC{}.dat".format(prefix,ik+1),"r")
+        except FileNotFoundError:
+            fWFC=FF("{}.save/wfc{}.dat".format(prefix,ik+1),"r")
+ 
         rec=record_abinit(fWFC,'i4,3f8,i4,i4,f8')[0]
 #        print ('rec=',rec)
         ik,xk,ispin,gamma_only,scalef=rec
