@@ -269,7 +269,7 @@ class Kpoint():
         KG=(kg+kpt).dot(RecLattice)
         npw=kg.shape[0]
         eKG=Hartree_eV*(la.norm(KG,axis=1)**2)/2
-        print (Ecut0,np.max(eKG))
+        print ('Found cutoff: {0:12.6f} eV   Largest plane wave energy in K-point {1:4d}: {2:12.6f} eV'.format(Ecut0,self.ik0,np.max(eKG)))
         assert   Ecut0*1.000000001>np.max(eKG) 
         sel=np.where(eKG<Ecut)[0]
         npw1=sel.shape[0]
