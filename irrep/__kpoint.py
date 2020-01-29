@@ -26,9 +26,6 @@ from .__aux import compstr
 from .__aux import bohr
 from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
-
-Ry2eV=27.2
-
 class Kpoint():
 
     @LazyProperty
@@ -226,7 +223,7 @@ class Kpoint():
         except:
             self.upper = np.NaN
 
-        self.Energy=eigen[IBstart:IBend]*Ry2eV
+        self.Energy=eigen[IBstart:IBend]*Hartree_eV
         npw=int(kptxml.find("npw").text)
 #        kg= np.random.randint(100,size=(npw,3))-50
         npwtot=npw*(2 if self.spinor else 1)
@@ -344,7 +341,7 @@ class Kpoint():
         print ("\n\nk-point {0:3d} :{1} \n number of irreps = {2}".format(self.ik0,self.K,Nirrep) )
         print ("   Energy  | multiplicity |{0} irreps {0}| sym. operations  ".format(s2))
         print ("           |              |{0}        {0}| ".format(s2)," ".join(s1+"{0:4d}    ".format(i)+s1 for i in sorted(sym)))
-        print ("\n".join( (" {0:8.4f}  |    {1:5d}     | {2:"+str(irreplen)+"s} |").format(e-efermi*Ry2eV,d,ir)+
+        print ("\n".join( (" {0:8.4f}  |    {1:5d}     | {2:"+str(irreplen)+"s} |").format(e-efermi,d,ir)+
                  " ".join("{0:8.4f}".format(c.real)+("{0:+7.4f}j".format(c.imag) if writeimaginary else "") for c in ch )
                           for e,d,ir,ch  in zip(E,dim,irreps,char) ) )
         
