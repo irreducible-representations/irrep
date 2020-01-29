@@ -181,7 +181,7 @@ class BandStructure():
         self.Ecut=Ecut
         self.RecLattice=np.array([np.cross(self.Lattice[(i+1)%3],self.Lattice[(i+2)%3]) for i in range(3)] 
                                        )*2*np.pi/np.linalg.det(self.Lattice)
-        self.efermi=float(bandstr.find('fermi_energy').text)
+        self.efermi=float(bandstr.find('fermi_energy').text)*Hartree_eV
         kpall=bandstr.findall('ks_energies')
         NK=len(kpall)
         if kplist is None:
