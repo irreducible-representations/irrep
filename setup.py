@@ -1,6 +1,6 @@
 ## python3 setup.py sdist
-## python3 setup.py sdist bdist_wheel
-## python -m twine upload *
+## python3 setup.py bdist_wheel
+## python3 -m twine upload *
 import setuptools
 
 with open("README", "r") as fh:
@@ -17,7 +17,7 @@ setuptools.setup(
      description="a tool to get symmetry proberties of ab-initio wavefunctions, irreduible representations and more",
      long_description=long_description,
      long_description_content_type="text/markdown",
-     install_requires=['numpy', 'scipy >= 1.0', 'spglib >=1.14' ],
+     install_requires=['numpy', 'scipy >= 1.0', 'spglib >=1.14' ,'lazy_property'],
      include_package_data=True,
      url="https://github.com/stepan-tsirkin/irrep",
      packages=setuptools.find_packages(),
