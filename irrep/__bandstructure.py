@@ -153,15 +153,19 @@ class BandStructure():
         
         def get_param(key,tp,default=None):
             i=np.where(ind==key)[0]
-            if len(i)==0 and default is None:
-                raise RuntuimeError("parameter {} was not found in {}.win".format(key,prefix))
+            if len(i)==0 :
+                if default is None:
+                    raise RuntuimeError("parameter {} was not found in {}.win".format(key,prefix))
+                else:
+                    return default
             if len(i)>1:
                 raise RuntuimeError("parameter {} was not found {} times in {}.win".format(key,len(i),prefix))
-            print(fwin[i[0]][1])
+            print ('i=',i,len(i))
+            print(i,fwin[i[0]])
             return tp(fwin[i[0]][1])
         
         NBin=get_param("num_bands",int)
-        print ("nbands=",NBin)
+#        print ("nbands=",NBin)
         self.spinor = str2bool(get_param("spinors",str))
         self.efermi=get_param("fermi_energy",float,0.) if EF is None else EF
         NK=np.prod(np.array(get_param("mp_grid",str).split(),dtype=int))
@@ -224,8 +228,42 @@ class BandStructure():
                     if l[0].split()[1][6:10]=="cart":
                         xred=xred.dot(np.linalg.inv(self.Lattice))
 
+#        print ("lattice vectors:\n",self.Lattice)
+        self.RecLattice=np.array([np.cross(self.Lattice[(i+1)%3],self.Lattice[(i+2)%3]) for i in range(3)] 
+                                 )*2*np.pi/np.linalg.det(self.Lattice)
+
+
         self.spacegroup=SpaceGroup(cell=(self.Lattice,xred,typat),spinor=self.spinor)
         if onlysym: return
+        
+        feig=prefix+".eig"
+        eigenval=np.loadtxt(prefix+".eig")
+        try:
+            if eigenval.shape[0]!=NBin*NK:
+                raise RuntimeError("wrong number of entries ")
+            ik=np.array(eigenval[:,1]).reshape(NK,NBin)
+            if not np.all(ik==np.arange(1,NK+1)[:,None]*np.ones(NBin,dtype=int)[None,:]):
+                raise RuntimeError("wrong k-point indices")
+            ib=np.array(eigenval[:,0]).reshape(NK,NBin)
+            if not np.all(ib==np.arange(1,NBin+1)[None,:]*np.ones(NK,dtype=int)[:,None]):
+                raise RuntimeError("wrong band indices")
+            eigenval=eigenval[:,2].reshape(NK,NBin)
+        except Exception as err:
+            raise RuntimeError(" error reading {} : {}".format(feig,err))
+
+        IBstart=0 if (IBstart is None or IBstart<=0) else IBstart-1
+        if  IBend is None or IBend<=0 or IBend>NBin: 
+            IBend=NBin 
+        NBout=IBend-IBstart
+        if NBout<=0: raise RuntimeError("No bands to calculate")
+        
+
+#        print ("eigenvalues are : ",eigenval)
+        self.kpoints=[
+                Kpoint(ik-1, NBin,IBstart,IBend,Ecut,None,self.RecLattice,SG=self.spacegroup,spinor=self.spinor,
+                          code="wannier",eigenval=eigenval[ik-1],kpt=kpred[ik-1]) 
+                   for ik in kplist]
+  
 
 
 

@@ -42,7 +42,8 @@ class Kpoint():
         return symmetries
 
     def __init__(self,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice,SG=None,spinor=None,
-                 code="vasp",kpt=None,npw_=None,fWFK=None,WCF=None,prefix=None,kptxml=None,flag=-1,usepaw=0):
+                 code="vasp",kpt=None,npw_=None,fWFK=None,WCF=None,prefix=None,kptxml=None,
+                           flag=-1,usepaw=0,eigenval=None):
         self.spinor=spinor
         self.ik0=ik+1  # the index in the WAVECAR (count start from 1)
         self.Nband=IBend-IBstart
@@ -50,13 +51,21 @@ class Kpoint():
         self.RecLattice=RecLattice
 
         if code.lower()=="vasp": 
-            self.WF,self.ig=self.__init_vasp(WCF,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice)
+            self.WF,self.ig=self.__init_vasp(WCF,ik,NBin,IBstart,IBend,Ecut,Ecut0)
         elif code.lower()=="abinit":
-            self.WF,self.ig=self.__init_abinit(fWFK,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice,kpt=kpt,npw_=npw_,flag=flag,usepaw=usepaw)
+            self.WF,self.ig=self.__init_abinit(fWFK,ik,NBin,IBstart,IBend,Ecut,Ecut0,kpt=kpt,npw_=npw_,flag=flag,usepaw=usepaw)
         elif code.lower()=="espresso":
-            self.WF,self.ig=self.__init_espresso(prefix,ik,IBstart,IBend,Ecut,Ecut0,RecLattice,kptxml=kptxml)
+            self.WF,self.ig=self.__init_espresso(prefix,ik,IBstart,IBend,Ecut,Ecut0,kptxml=kptxml)
+        elif code.lower()=="wannier":
+            self.WF,self.ig=self.__init_wannier(NBin,IBstart,IBend,Ecut,kpt=kpt,eigenval=eigenval)
         else:
             raise RuntimeError("unknown code : {}".format(code))
+
+        try:
+            self.upper=self.Energy[IBend]
+        except:
+            self.upper = np.NaN
+
         self.WF/=(np.sqrt(np.abs(np.einsum("ij,ij->i",self.WF.conj(),self.WF)))).reshape(self.Nband,1)
         self.SG=SG
 #        self.__calc_sym_eigenvalues()
@@ -156,7 +165,7 @@ class Kpoint():
 
         return subspaces
     
-    def __init_vasp(self,WCF,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice):
+    def __init_vasp(self,WCF,ik,NBin,IBstart,IBend,Ecut,Ecut0):
         r=WCF.record(2+ik*(NBin+1))
         #get the number of planewave coefficients. It should be even for spinor wavefunctions
     #    print (r)
@@ -166,10 +175,6 @@ class Kpoint():
         self.K=r[1:4]
         eigen=np.array(r[4:4+NBin*3]).reshape(NBin,3)[:,0]
         self.Energy=eigen[IBstart:IBend]
-        try:
-            self.upper=eigen[IBend]
-        except:
-            self.upper = np.NaN
 
         ig=calc_gvectors(self.K,self.RecLattice,Ecut0,npw,Ecut,spinor=self.spinor)
         selectG=np.hstack( (ig[3],ig[3]+int(npw/2)) ) if self.spinor else ig[3]
@@ -177,7 +182,7 @@ class Kpoint():
         return WF,ig
 
 
-    def __init_abinit(self,fWFK,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice,kpt,npw_,thresh=1e-4,flag=-1,usepaw=0):
+    def __init_abinit(self,fWFK,ik,NBin,IBstart,IBend,Ecut,Ecut0,kpt,npw_,thresh=1e-4,flag=-1,usepaw=0):
 
         assert not(kpt is None)
         self.K=kpt
@@ -205,23 +210,49 @@ class Kpoint():
             assert   np.max(np.abs(CG.conj().dot(CG.T)-np.eye(IBend-IBstart)) ) < 1e-10  # check orthonormality
 
         self.Energy=eigen[IBstart:IBend]*Hartree_eV
-        try:
-            self.upper=eigen[IBend]*hartree_eV
-        except:
-            self.upper = np.NaN
 
-        return self.__sortIG(kg,kpt,CG,RecLattice,Ecut0,Ecut,thresh=thresh)
+        return self.__sortIG(kg,kpt,CG,self.RecLattice,Ecut0,Ecut,thresh=thresh)
         
 
+    def __init_wannier(self,NBin,IBstart,IBend,Ecut,kpt,eigenval,thresh=1e-4):
+        self.K=np.array(kpt,dtype=float)
+        self.Energy=eigenval[IBstart:IBend]
+        fname="UNK{:05d}.{}".format(self.ik0,'NC' if self.spinor else "1")
+        fUNK=FF(fname,"r")
+        ngx, ngy, ngz, ik, nbnd=record_abinit(fUNK,'i4,i4,i4,i4,i4')[0]
+        ngtot=ngx*ngy*ngz
+        if ik !=self.ik0 :
+            raise RuntimeError("file {} contains point number {}, expected {}".format(fname,ik,self.ik0))
+        if nbnd != NBin :
+            raise RuntimeError("file {} contains {} bands , expected {}".format(fname,nbnd,NBin))
+        nspinor=2 if self.spinor else 1	
 
-    def __init_espresso(self,prefix,ik,IBstart,IBend,Ecut,Ecut0,RecLattice,kptxml,thresh=1e-4):
+        ig=calc_gvectors(self.K,self.RecLattice,Ecut,spinor=self.spinor,nplanemax=np.max([ngx,ngy,ngz])//2 )
+
+        selectG=tuple(ig[0:3])
+
+        def _readWF_1(skip=False):
+            cg_tmp=record_abinit(fUNK,'{}f8'.format(ngtot*2))
+            if skip:
+                return np.array([0],dtype=complex)
+            cg_tmp=(cg_tmp[0::2]+1.j*cg_tmp[1::2]).reshape((ngx,ngy,ngz),order='F')
+            cg_tmp=np.fft.fftn(cg_tmp)
+            return cg_tmp[selectG]
+
+        def _readWF(skip=False):
+            return np.hstack( [_readWF_1(skip) for i in range(nspinor)])
+                
+        for ib in range(IBstart):
+            _readWF(skip=True)
+        WF=np.array([  _readWF(skip=False) for ib in range(IBend-IBstart)])
+        return WF,ig
+
+
+
+    def __init_espresso(self,prefix,ik,IBstart,IBend,Ecut,Ecut0,kptxml,thresh=1e-4):
         self.K=np.array(kptxml.find("k_point").text.split(),dtype=float)
 
         eigen=np.array(kptxml.find("eigenvalues").text.split(),dtype=float)
-        try:
-            self.upper=eigen[IBend]
-        except:
-            self.upper = np.NaN
 
         self.Energy=eigen[IBstart:IBend]*Hartree_eV
         npw=int(kptxml.find("npw").text)
@@ -265,8 +296,8 @@ class Kpoint():
         return self.__sortIG(kg,self.K,CG,B,Ecut0,Ecut,thresh=thresh)
         
 
-    def __sortIG(self,kg,kpt,CG,RecLattice,Ecut0,Ecut,thresh=1e-4):
-        KG=(kg+kpt).dot(RecLattice)
+    def __sortIG(self,kg,kpt,CG,Ecut0,Ecut,thresh=1e-4):
+        KG=(kg+kpt).dot(self.RecLattice)
         npw=kg.shape[0]
         eKG=Hartree_eV*(la.norm(KG,axis=1)**2)/2
         print ('Found cutoff: {0:12.6f} eV   Largest plane wave energy in K-point {1:4d}: {2:12.6f} eV'.format(Ecut0,self.ik0,np.max(eKG)))

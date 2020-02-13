@@ -293,7 +293,7 @@ class SpaceGroup():
                     break
             if not found : 
                 raise RuntimeError ("symmetry {0} with R={1},t={2}, t1={3} was not matched to tables".format(j+1,R,t,t1))
-        print( "matching index :",ind)
+#        print( "matching index :",ind)
         
         if ( len(set(ind))!=len(self.symmetries ) ):
             raise RuntimeError ("Error in matching symmetries detected by spglib with the symmetries in the tables. Try to modify the refUC and shiftUC parameters" )
@@ -320,7 +320,7 @@ class SpaceGroup():
 #                    print (i,j)
                     tab[irr.name][j+1]=irr.characters[i+1]*signs[j]*np.exp(2j*np.pi*dt[j].dot(irr.k))
                 except KeyError as err:
-                    print ("WARNING:{}".format(err))
+#                    print ("WARNING:{}".format(err))
                     pass
 #        print (tab)
         if len(tab)==0:

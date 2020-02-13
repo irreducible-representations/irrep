@@ -245,7 +245,9 @@ class IrrepTable():
         self.spinor=spinor
         if name is None:
             name="{root}/irreptables/irreps-SG={SG}-{spinor}.dat".format(SG=self.number,spinor="spin" if self.spinor else "scal",root=os.path.dirname(__file__))
-        print ("reading from a user-defined irrep table <{0}>".format(name) ) 
+            print ("reading from a standard irrep table <{0}>".format(name) ) 
+        else:         
+            print ("reading from a user-defined irrep table <{0}>".format(name) ) 
             
         lines=open(name).readlines()[-1::-1]
         while len(lines)>0:
