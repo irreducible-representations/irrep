@@ -286,7 +286,7 @@ class SpaceGroup():
             for i,sym2 in enumerate(table.symmetries):
                 t1=np.dot(sym2.t-t,invlattice)%1
                 t1[1-t1<1e-5]=0
-                if np.allclose(R,sym2.R) and np.allclose(t1,[0,0,0]):
+                if np.allclose(R,sym2.R,atol=1e-4) and np.allclose(t1,[0,0,0],atol=1e-4):
                     ind.append(i)
                     dt.append(sym2.t-t)
                     found=True
