@@ -393,9 +393,9 @@ class Kpoint():
 # (3) energy and eigenvalues (real part, imaginary part) for each symmetry operation of the little group (listed above).
 ).format(len(sym.keys()),"  ".join(str(x) for x in sym ) )
         
-        char=np.vstack([self.symmetries[sym[i]] for i in sorted(sym) ])
-        borders=np.hstack([ [0],np.where(self.Energy[1:]-self.Energy[:-1]>degen_thresh)[0]+1,[self.Nband] ])
-        char =  np.array([char[:,start:end].sum(axis=1) for start,end  in zip(borders,borders[1:])]) 
+        char    = np.vstack([self.symmetries[sym[i]] for i in sorted(sym) ])
+        borders = np.hstack([ [0],np.where(self.Energy[1:]-self.Energy[:-1]>degen_thresh)[0]+1,[self.Nband] ])
+        char    = np.array([char[:,start:end].sum(axis=1) for start,end  in zip(borders,borders[1:])]) 
 
         E    =  np.array([self.Energy[start:end].mean() for start,end  in zip(borders,borders[1:])])
         dim  =  np.array([end-start for start,end  in zip(borders,borders[1:])])
