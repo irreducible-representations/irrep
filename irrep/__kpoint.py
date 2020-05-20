@@ -69,7 +69,7 @@ class Kpoint():
         other.Energy=E[sortE]
         other.WF=WF[sortE]
         other.Nband=len(E)
-        other.__calc_sym_eigenvalues()
+        # other.__calc_sym_eigenvalues()
 #        print ( self.Energy,other.Energy)
 #        print ( self.WF.shape, other.WF.shape)
 #        other.write_characters()
@@ -84,7 +84,7 @@ class Kpoint():
         S1=self.WF.conj().dot(self.WF.T)
         check=np.max(abs(S1-np.eye(S1.shape[0])))
         if check>1e-5:
-            print ("orthogonality:  \n",check)
+            print ("orthogonality (largest of diag. <psi_nk|psi_mk>): {0:7.5} > 1e-5   \n".format(check))
 #        print ("symmetry matrix \n",shortS)
         eigenvalues=[]
         eigenvectors=[]
@@ -206,7 +206,7 @@ class Kpoint():
 
         self.Energy=eigen[IBstart:IBend]*Hartree_eV
         try:
-            self.upper=eigen[IBend]*hartree_eV
+            self.upper=eigen[IBend]*Hartree_eV
         except:
             self.upper = np.NaN
 
