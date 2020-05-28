@@ -23,7 +23,7 @@ just use pip:
 pip3 install irrep
 
 
-Currently the code is interfaced VASP and ABINIT, but if interface with other code is needed, please contact me.
+Currently the code is interfaced VASP,ABINIT and QuantumEspresso, but if interface with other code is needed, please contact me.
 
 The code relies on spglib library (https://github.com/atztogo/spglib) to determine the symmetry of the crystal
 and the tables of the characters of irreducible representations, obtained from the Bilbao Crystallographic Server (BCS) (http://www.cryst.ehu.es/)

@@ -78,7 +78,7 @@ class Kpoint():
         other.Energy=E[sortE]
         other.WF=WF[sortE]
         other.Nband=len(E)
-        other.__calc_sym_eigenvalues()
+        # other.__calc_sym_eigenvalues()
 #        print ( self.Energy,other.Energy)
 #        print ( self.WF.shape, other.WF.shape)
 #        other.write_characters()
@@ -93,7 +93,7 @@ class Kpoint():
         S1=self.WF.conj().dot(self.WF.T)
         check=np.max(abs(S1-np.eye(S1.shape[0])))
         if check>1e-5:
-            print ("orthogonality:  \n",check)
+            print ("orthogonality (largest of diag. <psi_nk|psi_mk>): {0:7.5} > 1e-5   \n".format(check))
 #        print ("symmetry matrix \n",shortS)
         eigenvalues=[]
         eigenvectors=[]
@@ -210,6 +210,10 @@ class Kpoint():
             assert   np.max(np.abs(CG.conj().dot(CG.T)-np.eye(IBend-IBstart)) ) < 1e-10  # check orthonormality
 
         self.Energy=eigen[IBstart:IBend]*Hartree_eV
+        try:
+            self.upper=eigen[IBend]*Hartree_eV
+        except:
+            self.upper = np.NaN
 
         return self.__sortIG(kg,kpt,CG,self.RecLattice,Ecut0,Ecut,thresh=thresh)
         
@@ -424,9 +428,9 @@ class Kpoint():
 # (3) energy and eigenvalues (real part, imaginary part) for each symmetry operation of the little group (listed above).
 ).format(len(sym.keys()),"  ".join(str(x) for x in sym ) )
         
-        char=np.vstack([self.symmetries[sym[i]] for i in sorted(sym) ])
-        borders=np.hstack([ [0],np.where(self.Energy[1:]-self.Energy[:-1]>degen_thresh)[0]+1,[self.Nband] ])
-        char =  np.array([char[:,start:end].sum(axis=1) for start,end  in zip(borders,borders[1:])]) 
+        char    = np.vstack([self.symmetries[sym[i]] for i in sorted(sym) ])
+        borders = np.hstack([ [0],np.where(self.Energy[1:]-self.Energy[:-1]>degen_thresh)[0]+1,[self.Nband] ])
+        char    = np.array([char[:,start:end].sum(axis=1) for start,end  in zip(borders,borders[1:])]) 
 
         E    =  np.array([self.Energy[start:end].mean() for start,end  in zip(borders,borders[1:])])
         dim  =  np.array([end-start for start,end  in zip(borders,borders[1:])])
