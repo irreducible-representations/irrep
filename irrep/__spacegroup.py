@@ -115,10 +115,10 @@ class SymmetryOperation():
         if self.spinor :
             print ("\n".join(s+" ".join("{0:6.3f}{1:+6.3f}j".format(x.real,x.imag) for x in row)+t 
                   for s,row,t in zip(["spinor   : |"," "*11+"|"," "*11+"|"],self.spinor_rotation,[" |"," |"," |"]) ) )
-        print (" translation : [ "+" ".join("{0:10.6f}".format(x) for x in self.translation.round(6) ) +" ] " )
+        print (" translation : [ "+" ".join("{0:10.6f}".format(x%1) for x in self.translation.round(6) ) +" ] " )
         if refUC is not None:
             print ("     in the reference unit cell :")
-            print ("     translation : [ "+" ".join("{0:10.6f}".format(x) for x in self.translation_refUC(refUC,shiftUC).round(6) ) +" ] " )
+            print ("     translation : [ "+" ".join("{0:10.6f}".format(x%1) for x in self.translation_refUC(refUC,shiftUC).round(6) ) +" ] " )
         print ("axis: {0} ; angle = {1}, inversion : {2} ".format(self.axis.round(6),self.angle_str,self.inversion))
 
 
@@ -284,15 +284,21 @@ class SpaceGroup():
             R,t=sym.rotation_refUC(refUC),sym.translation_refUC(refUC,shiftUC)
             found=False
             for i,sym2 in enumerate(table.symmetries):
-                t1=np.dot(sym2.t-t,invlattice)%1
+                # t1=np.dot(sym2.t-t,invlattice)%1
+                t1=(sym2.t-t)%1
                 t1[1-t1<1e-5]=0
-                if np.allclose(R,sym2.R,atol=1e-4) and np.allclose(t1,[0,0,0],atol=1e-4):
-                    ind.append(i)
-                    dt.append(sym2.t-t)
-                    found=True
-                    break
-            if not found : 
-                raise RuntimeError ("symmetry {0} with R={1},t={2}, t1={3} was not matched to tables".format(j+1,R,t,t1))
+
+                if np.allclose(R,sym2.R):
+                    if np.allclose(t1,[0,0,0]):
+                        ind.append(i)
+                        dt.append(sym2.t-t)
+                        found=True
+                        break
+                    else:
+                        print('table t=',sym2.t,'found t=',t,"dot:",np.dot(sym2.t-t,invlattice))
+                        raise RuntimeError ("symmetry {0} with R={1},t={2}, t1={3} was not matched to tables".format(j+1,R,t,t1))
+           if not found : 
+                raise RuntimeError ("symmetry {0} with R={1},t={2} was not matched to tables".format(j+1,R,t))
         
         if ( len(set(ind))!=len(self.symmetries ) ):
             raise RuntimeError ("Error in matching symmetries detected by spglib with the symmetries in the tables. Try to modify the refUC and shiftUC parameters" )
