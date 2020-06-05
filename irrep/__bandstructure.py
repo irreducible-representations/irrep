@@ -159,7 +159,7 @@ class BandStructure():
                 else:
                     return default
             if len(i)>1:
-                raise RuntimeError("parameter {} was not found {} times in {}.win".format(key,len(i),prefix))
+                raise RuntimeError("parameter {} was found {} times in {}.win".format(key,len(i),prefix))
             print ('i=',i,len(i))
             print(i,fwin[i[0]])
             return tp(fwin[i[0]][1])
