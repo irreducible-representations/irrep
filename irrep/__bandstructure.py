@@ -155,11 +155,11 @@ class BandStructure():
             i=np.where(ind==key)[0]
             if len(i)==0 :
                 if default is None:
-                    raise RuntuimeError("parameter {} was not found in {}.win".format(key,prefix))
+                    raise RuntimeError("parameter {} was not found in {}.win".format(key,prefix))
                 else:
                     return default
             if len(i)>1:
-                raise RuntuimeError("parameter {} was not found {} times in {}.win".format(key,len(i),prefix))
+                raise RuntimeError("parameter {} was not found {} times in {}.win".format(key,len(i),prefix))
             print ('i=',i,len(i))
             print(i,fwin[i[0]])
             return tp(fwin[i[0]][1])
