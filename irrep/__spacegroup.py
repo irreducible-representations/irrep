@@ -297,7 +297,7 @@ class SpaceGroup():
                     else:
                         print('table t=',sym2.t,'found t=',t,"dot:",np.dot(sym2.t-t,invlattice))
                         raise RuntimeError ("symmetry {0} with R={1},t={2}, t1={3} was not matched to tables".format(j+1,R,t,t1))
-           if not found : 
+            if not found : 
                 raise RuntimeError ("symmetry {0} with R={1},t={2} was not matched to tables".format(j+1,R,t))
         
         if ( len(set(ind))!=len(self.symmetries ) ):
