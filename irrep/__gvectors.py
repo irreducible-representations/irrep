@@ -32,7 +32,7 @@ twomhbar2*=(1+correction)
 
 
 ## This function is a python translation of a part of WaveTrans Code
-def calc_gvectors(K,RecLattice,Ecut,nplane,Ecut1=-1,thresh=1e-3,spinor=True):
+def calc_gvectors(K,RecLattice,Ecut,nplane=np.Inf,Ecut1=-1,thresh=1e-3,spinor=True,nplanemax=10000):
     """ calculating g-vectors for a point K with energy cutoff Ecut
         nplane is used to check the correctness
         optionally one may provide a lower cutoff Ecut1, to exclude higher g-vectors
@@ -41,7 +41,7 @@ def calc_gvectors(K,RecLattice,Ecut,nplane,Ecut1=-1,thresh=1e-3,spinor=True):
         where 
             first three components are the reciprocal lattice coordinates 
             the fourth - is the index of the g-vectors (with the reduced Ecut1)
-            the 5th and the 6th - the strat and end of the group of g-vectors with the same energy
+            the 5th and the 6th - the start and end of the group of g-vectors with the same energy
         in the original list (with Ecut from WAVECAR)
 """
     if Ecut1<=0:Ecut1=Ecut
@@ -51,8 +51,9 @@ def calc_gvectors(K,RecLattice,Ecut,nplane,Ecut1=-1,thresh=1e-3,spinor=True):
     igp=np.zeros(3)
     igall=[]
     Eg=[]
-    for N in range(100000):
-        if len(igall)>=nplane/(2 if spinor else 1): break
+    for N in range(nplanemax):
+        if (N%10==0): print (N,len(igall))
+        if len(igall)>= nplane/(2 if spinor else 1): break
         for ig3 in range (-N,N+1):
           for ig2 in range(-(N-abs(ig3)),N-abs(ig3)+1):
             for ig1 in set([-(N-abs(ig3)-abs(ig2)),N-abs(ig3)-abs(ig2)]):
@@ -65,12 +66,13 @@ def calc_gvectors(K,RecLattice,Ecut,nplane,Ecut1=-1,thresh=1e-3,spinor=True):
     ncnt=len(igall)
 #    print ("\n".join("{0:+4d}  {1:4d} {2:4d}  |  {3:6d}".format(ig[0],ig[1],ig[2],np.abs(ig).sum()) for ig in igall) )
 #    print (len(igall),len(set(igall)))
-    if spinor:
-      if 2*ncnt!=nplane:
-        raise RuntimeError('*** error - computed 2*ncnt={0} != input nplane={1}'.format(2*ncnt, nplane))
-    else: 
-      if ncnt!=nplane:
-        raise RuntimeError('*** error - computed ncnt={0} != input nplane={1}'.format(ncnt, nplane))
+    if nplane < np.Inf:
+      if spinor:
+        if 2*ncnt!=nplane:
+          raise RuntimeError('*** error - computed 2*ncnt={0} != input nplane={1}'.format(2*ncnt, nplane))
+      else: 
+        if ncnt!=nplane:
+          raise RuntimeError('*** error - computed ncnt={0} != input nplane={1}'.format(ncnt, nplane))
     igall=np.array(igall,dtype=int)
     ng=igall.max(axis=0)-igall.min(axis=0)
     igall1=igall%ng[None,:]

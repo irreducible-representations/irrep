@@ -41,7 +41,7 @@ def __help():
 
     -h   print this help message
 
-    code  vasp (default) or abinit or espresso
+    code  vasp (default) or abinit or espresso or wannier90
     
     ZAK - calcualte Zak phase
     WCC - calcualte  Wannier Charge Centers
