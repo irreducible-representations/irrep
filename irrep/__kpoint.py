@@ -300,8 +300,8 @@ class Kpoint():
         return self.__sortIG(kg,self.K,CG,B,Ecut0,Ecut,thresh=thresh)
         
 
-    def __sortIG(self,kg,kpt,CG,Ecut0,Ecut,thresh=1e-4):
-        KG=(kg+kpt).dot(self.RecLattice)
+    def __sortIG(self,kg,kpt,CG,RecLattice,Ecut0,Ecut,thresh=1e-4):
+        KG=(kg+kpt).dot(RecLattice)
         npw=kg.shape[0]
         eKG=Hartree_eV*(la.norm(KG,axis=1)**2)/2
         print ('Found cutoff: {0:12.6f} eV   Largest plane wave energy in K-point {1:4d}: {2:12.6f} eV'.format(Ecut0,self.ik0,np.max(eKG)))
