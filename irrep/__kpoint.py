@@ -297,7 +297,7 @@ class Kpoint():
             if ib>=IBstart:
                 CG[ib-IBstart]=cg_tmp[0::2]+1.j*cg_tmp[1::2]
 
-        return self.__sortIG(kg,self.K,CG,B,Ecut0,Ecut,thresh=thresh)
+        return self.__sortIG(kg,self.K,CG,Ecut0,Ecut,thresh=thresh)
         
 
     def __sortIG(self,kg,kpt,CG,Ecut0,Ecut,thresh=1e-4):
