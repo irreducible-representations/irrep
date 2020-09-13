@@ -1,0 +1,224 @@
+The code was called with the following command-line options
+irrep/__main__.py   spinor=T   code=vasp   kpnames=T,GM,F,L   Ecut=50   refUC=1,-1,0,0,1,-1,1,1,1   EF=5.2156   IBstart=5   IBend=10
+'NoneType' object has no attribute 'split'
+
+
+ ----------INFORMATION ABOUT THE UNIT CELL----------- 
+
+
+Primitive vectors : 
+ [[ 2.274       1.31289451  3.95066667]
+ [-2.274       1.31289451  3.95066667]
+ [ 0.         -2.62578902  3.95066667]] 
+ Atomic positions: 
+ [[0.763 0.763 0.763]
+ [0.237 0.237 0.237]] 
+ Atom type indices: 
+ [1, 1]
+
+ Reciprocal lattice:
+ [[ 1.38152711  0.79762505  0.53013713]
+ [-1.38152711  0.79762505  0.53013713]
+ [ 0.         -1.5952501   0.53013713]]
+Efermi =  5.2156 5.2156
+WAVECAR contains 4 k-points and 24 bands.
+ Saving 6 bands starting from 5 in the output
+Energy cutoff in WAVECAR :  520.0
+Energy cutoff reduced to :  50.0
+0 0
+10 1030
+20 1873
+0 0
+10 1027
+20 1867
+0 0
+10 1006
+20 1855
+0 0
+10 1012
+20 1870
+
+
+ ---------- INFORMATION ABOUT THE SPACE GROUP ---------- 
+
+
+Space group # 166 has 12 symmetry operations  
+ #  1
+rotation : |  1   0   0 |     in refUC : |  1   0   0 |
+           |  0   1   0 |                |  0   1   0 |
+           |  0   0   1 |                |  0   0   1 |
+spinor   : | 1.000+0.000j  0.000+0.000j |
+           | 0.000+0.000j  1.000+0.000j |
+ translation : [   0.000000   0.000000   0.000000 ] 
+     in the reference unit cell :
+     translation : [   0.000000   0.000000   0.000000 ] 
+axis: [-0.004919 -0.234987  0.971986] ; angle =  0 , inversion : False 
+ #  2
+rotation : | -1   0   0 |     in refUC : | -1   0   0 |
+           |  0  -1   0 |                |  0  -1   0 |
+           |  0   0  -1 |                |  0   0  -1 |
+spinor   : | 1.000+0.000j  0.000+0.000j |
+           | 0.000+0.000j  1.000+0.000j |
+ translation : [   0.000000   0.000000   0.000000 ] 
+     in the reference unit cell :
+     translation : [   0.000000   0.000000   0.000000 ] 
+axis: [ 0.004919 -0.234987  0.971986] ; angle =  0 , inversion : True 
+ #  3
+rotation : |  0   0   1 |     in refUC : |  0  -1   0 |
+           |  1   0   0 |                |  1  -1   0 |
+           |  0   1   0 |                |  0   0   1 |
+spinor   : | 0.500-0.866j -0.000-0.000j |
+           | 0.000-0.000j  0.500+0.866j |
+ translation : [   0.000000   0.000000   0.000000 ] 
+     in the reference unit cell :
+     translation : [   0.000000   0.000000   0.000000 ] 
+axis: [0. 0. 1.] ; angle = 2/3 pi, inversion : False 
+ #  4
+rotation : |  0   0  -1 |     in refUC : |  0   1   0 |
+           | -1   0   0 |                | -1   1   0 |
+           |  0  -1   0 |                |  0   0  -1 |
+spinor   : | 0.500-0.866j -0.000-0.000j |
+           | 0.000-0.000j  0.500+0.866j |
+ translation : [   0.000000   0.000000   0.000000 ] 
+     in the reference unit cell :
+     translation : [   0.000000   0.000000   0.000000 ] 
+axis: [0. 0. 1.] ; angle = 2/3 pi, inversion : True 
+ #  5
+rotation : |  0   1   0 |     in refUC : | -1   1   0 |
+           |  0   0   1 |                | -1   0   0 |
+           |  1   0   0 |                |  0   0   1 |
+spinor   : | 0.500+0.866j  0.000-0.000j |
+           |-0.000-0.000j  0.500-0.866j |
+ translation : [   0.000000   0.000000   0.000000 ] 
+     in the reference unit cell :
+     translation : [   0.000000   0.000000   0.000000 ] 
+axis: [-0.  0.  1.] ; angle = -2/3 pi, inversion : False 
+ #  6
+rotation : |  0  -1   0 |     in refUC : |  1  -1   0 |
+           |  0   0  -1 |                |  1   0   0 |
+           | -1   0   0 |                |  0   0  -1 |
+spinor   : | 0.500+0.866j  0.000-0.000j |
+           |-0.000-0.000j  0.500-0.866j |
+ translation : [   0.000000   0.000000   0.000000 ] 
+     in the reference unit cell :
+     translation : [   0.000000   0.000000   0.000000 ] 
+axis: [-0.  0.  1.] ; angle = -2/3 pi, inversion : True 
+ #  7
+rotation : |  0   0  -1 |     in refUC : |  0   1   0 |
+           |  0  -1   0 |                |  1   0   0 |
+           | -1   0   0 |                |  0   0  -1 |
+spinor   : | 0.000+0.000j  0.866+0.500j |
+           |-0.866+0.500j -0.000-0.000j |
+ translation : [   0.000000   0.000000   0.000000 ] 
+     in the reference unit cell :
+     translation : [   0.000000   0.000000   0.000000 ] 
+axis: [-0.5      -0.866025 -0.      ] ; angle = 1 pi, inversion : False 
+ #  8
+rotation : |  0   0   1 |     in refUC : |  0  -1   0 |
+           |  0   1   0 |                | -1   0   0 |
+           |  1   0   0 |                |  0   0   1 |
+spinor   : | 0.000+0.000j  0.866+0.500j |
+           |-0.866+0.500j -0.000-0.000j |
+ translation : [   0.000000   0.000000   0.000000 ] 
+     in the reference unit cell :
+     translation : [   0.000000   0.000000   0.000000 ] 
+axis: [-0.5      -0.866025 -0.      ] ; angle = 1 pi, inversion : True 
+ #  9
+rotation : |  0  -1   0 |     in refUC : |  1  -1   0 |
+           | -1   0   0 |                |  0  -1   0 |
+           |  0   0  -1 |                |  0   0  -1 |
+spinor   : | 0.000+0.000j  0.000-1.000j |
+           | 0.000-1.000j  0.000+0.000j |
+ translation : [   0.000000   0.000000   0.000000 ] 
+     in the reference unit cell :
+     translation : [   0.000000   0.000000   0.000000 ] 
+axis: [1. 0. 0.] ; angle = 1 pi, inversion : False 
+ #  10
+rotation : |  0   1   0 |     in refUC : | -1   1   0 |
+           |  1   0   0 |                |  0   1   0 |
+           |  0   0   1 |                |  0   0   1 |
+spinor   : | 0.000+0.000j  0.000-1.000j |
+           | 0.000-1.000j  0.000+0.000j |
+ translation : [   0.000000   0.000000   0.000000 ] 
+     in the reference unit cell :
+     translation : [   0.000000   0.000000   0.000000 ] 
+axis: [1. 0. 0.] ; angle = 1 pi, inversion : True 
+ #  11
+rotation : | -1   0   0 |     in refUC : | -1   0   0 |
+           |  0   0  -1 |                | -1   1   0 |
+           |  0  -1   0 |                |  0   0  -1 |
+spinor   : | 0.000-0.000j -0.866+0.500j |
+           | 0.866+0.500j -0.000+0.000j |
+ translation : [   0.000000   0.000000   0.000000 ] 
+     in the reference unit cell :
+     translation : [   0.000000   0.000000   0.000000 ] 
+axis: [-0.5       0.866025  0.      ] ; angle = 1 pi, inversion : False 
+ #  12
+rotation : |  1   0   0 |     in refUC : |  1   0   0 |
+           |  0   0   1 |                |  1  -1   0 |
+           |  0   1   0 |                |  0   0   1 |
+spinor   : | 0.000-0.000j -0.866+0.500j |
+           | 0.866+0.500j -0.000+0.000j |
+ translation : [   0.000000   0.000000   0.000000 ] 
+     in the reference unit cell :
+     translation : [   0.000000   0.000000   0.000000 ] 
+axis: [-0.5       0.866025  0.      ] ; angle = 1 pi, inversion : True 
+reading from a standard irrep table </home/mikel/dipc_loc/Bi_stepan/RES_v2t/irrep/irreptables/irreps-SG=166-spin.dat>
+reading symmetries
+
+
+k-point   1 :[0.5 0.5 0.5] 
+ number of irreps = 4
+   Energy  | multiplicity |       irreps       | sym. operations  
+           |              |                    |     1        2        3        4        5        6        7        8        9       10       11       12    
+  -1.5597  |        2     | -T9(1.0)           |  2.0000  -2.0000   1.0000  -1.0000   1.0000  -1.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+  -1.2220  |        2     | -T8(1.0)           |  2.0000   2.0000   1.0000   1.0000   1.0000   1.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+   0.1460  |        2     | -T6(1.0), -T7(1.0) |  2.0000  -2.0000  -2.0000   2.0000  -2.0000   2.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+inversion is # 2
+number of inversions-odd Kramers pairs :  2
+Gap with upper bands :  0.15615105117514538
+reading from a standard irrep table </home/mikel/dipc_loc/Bi_stepan/RES_v2t/irrep/irreptables/irreps-SG=166-spin.dat>
+reading symmetries
+
+
+k-point   2 :[0. 0. 0.] 
+ number of irreps = 6
+   Energy  | multiplicity |        irreps        | sym. operations  
+           |              |                      |     1        2        3        4        5        6        7        8        9       10       11       12    
+  -2.7306  |        2     | -GM8(1.0)            |  2.0000   2.0000   1.0000   1.0000   1.0000   1.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+  -0.7762  |        2     | -GM8(1.0)            |  2.0000   2.0000   1.0000   1.0000   1.0000   1.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+  -0.4961  |        2     | -GM4(1.0), -GM5(1.0) |  2.0000   2.0000  -2.0000  -2.0000  -2.0000  -2.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+inversion is # 2
+number of inversions-odd Kramers pairs :  0
+Gap with upper bands :  1.7616216106061593
+reading from a standard irrep table </home/mikel/dipc_loc/Bi_stepan/RES_v2t/irrep/irreptables/irreps-SG=166-spin.dat>
+reading symmetries
+
+
+k-point   3 :[0.5 0.5 0. ] 
+ number of irreps = 10
+   Energy  | multiplicity |       irreps       | sym. operations  
+           |              |                    |     1        2        9       10    
+  -4.8263  |        2     | -F3(1.0), -F4(1.0) |  2.0000   2.0000   0.0000   0.0000
+  -3.6784  |        2     | -F5(1.0), -F6(1.0) |  2.0000  -2.0000   0.0000   0.0000
+  -2.4303  |        2     | -F5(1.0), -F6(1.0) |  2.0000  -2.0000   0.0000   0.0000
+inversion is # 2
+number of inversions-odd Kramers pairs :  2
+Gap with upper bands :  4.844806150928424
+reading from a standard irrep table </home/mikel/dipc_loc/Bi_stepan/RES_v2t/irrep/irreptables/irreps-SG=166-spin.dat>
+reading symmetries
+
+
+k-point   4 :[0.  0.5 0. ] 
+ number of irreps = 10
+   Energy  | multiplicity |       irreps       | sym. operations  
+           |              |                    |     1        2        7        8    
+  -1.7054  |        2     | -L5(1.0), -L6(1.0) |  2.0000  -2.0000   0.0000   0.0000
+  -1.6885  |        2     | -L3(1.0), -L4(1.0) |  2.0000   2.0000   0.0000   0.0000
+  -0.1312  |        2     | -L5(1.0), -L6(1.0) |  2.0000  -2.0000   0.0000   0.0000
+inversion is # 2
+number of inversions-odd Kramers pairs :  2
+Gap with upper bands :  0.08857033154551353
+number of inversions-odd Kramers pairs IN THE LISTED KPOINTS:  6   Z4=  2
+Minimal direct gap: 0.08857033154551353  eV
+indirect  gap: -0.1886089499035215  eV
