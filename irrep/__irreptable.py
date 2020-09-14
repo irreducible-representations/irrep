@@ -201,7 +201,7 @@ class Irrep:
         s = f.readline().split()
         logger.debug(s)
         self.k = np.array(s[:3], dtype=float)
-        self.hasRkmk = True if s[3] == "1" else "0" if s[3] == 0 else None
+        self.has_rkmk = True if s[3] == "1" else "0" if s[3] == 0 else None
         self.name = s[4]
         self.kpname = s[7]
         self.dim = int(s[5])
