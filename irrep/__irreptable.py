@@ -15,10 +15,13 @@
 ##################################################################
 
 
-import numpy as np
-import os, sys
 import copy
-from .__aux import str2bool, str_, str2list_space
+import os
+import sys
+
+import numpy as np
+
+from .__aux import str2bool, str2list_space, str_
 
 
 class symop_table:
