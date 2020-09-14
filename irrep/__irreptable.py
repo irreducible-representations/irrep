@@ -29,15 +29,15 @@ class SymopTable:
     Docstring to go here,
     """
 
-    def __init__(self, line, fromUser=False):
+    def __init__(self, line, from_user=False):
         """
         Docstring to go here.
 
         :param line: explanation + type of kwarg to go here.
-        :param fromUser: explanation + type of kwarg to go here.
+        :param from_user: explanation + type of kwarg to go here.
         """
-        if fromUser:
-            self.__init__fromUser(line)
+        if from_user:
+            self.__init__from_user(line)
             return
         numbers = line.split()
         self.R = np.array(numbers[:9], dtype=int).reshape(3, 3)
@@ -47,7 +47,7 @@ class SymopTable:
             * np.exp(1j * np.pi * np.array(numbers[13::2], dtype=float))
         ).reshape(2, 2)
 
-    def __init__fromUser(self, line):
+    def __init__from_user(self, line):
         """
         Docstring to go here.
 
@@ -181,16 +181,16 @@ class Irrep:
 
     """
 
-    def __init__(self, f=None, nsym_group=None, line=None, KP=None):
+    def __init__(self, f=None, nsym_group=None, line=None, k_point=None):
         """
 
         :param f:
         :param nsym_group:
         :param line:
-        :param KP:
+        :param k_point:
         """
-        if KP is not None:
-            self.__init__user(line, KP)
+        if k_point is not None:
+            self.__init__user(line, k_point)
             return
         s = f.readline().split()
         #        print (s)
@@ -239,20 +239,20 @@ class Irrep:
         #        print ("characters are:",self.characters)
         assert len(self.characters) == self.nsym
 
-    def __init__user(self, line, KP):
+    def __init__user(self, line, k_point):
         """
 
         :param line:
-        :param KP:
+        :param k_point:
         :return:
         """
         #        print ("reading irrep line <{0}> for KP=<{1}> ".format(line,KP.str()))
-        self.k = KP.k
-        self.kpname = KP.name
+        self.k = k_point.k
+        self.kpname = k_point.name
         line = line.split()
         self.name = line[0]
         self.dim = int(line[1])
-        self.nsym = len(KP.isym)
+        self.nsym = len(k_point.isym)
         self.reality = len(line[2:]) == self.nsym
         ch = np.array(line[2 : 2 + self.nsym], dtype=float)
         if not self.reality:
@@ -261,7 +261,7 @@ class Irrep:
                 * np.pi
                 * np.array(line[2 + self.nsym : 2 + 2 * self.nsym], dtype=float)
             )
-        self.characters = {KP.isym[i]: ch[i] for i in range(self.nsym)}
+        self.characters = {k_point.isym[i]: ch[i] for i in range(self.nsym)}
 
     #        print ("the irrep {0}  ch= {1}".format(self.name,self.characters))
 
@@ -395,7 +395,7 @@ class IrrepTable:
 
     def __init__user(self, SG, spinor, name):
         """
-        
+
         :param SG:
         :param spinor:
         :param name:
@@ -430,7 +430,7 @@ class IrrepTable:
                     l = lines.pop()
                     #                    print (l)
                     try:
-                        self.symmetries.append(SymopTable(l, fromUser=True))
+                        self.symmetries.append(SymopTable(l, from_user=True))
                     except Exception as err:
                         print(err)
                         pass
@@ -447,7 +447,7 @@ class IrrepTable:
             except Exception as err:
                 #                print( "error while reading k-point <{0}>".format(l),err)
                 try:
-                    self.irreps.append(Irrep(line=l, KP=kp))
+                    self.irreps.append(Irrep(line=l, k_point=kp))
                 except Exception as err:
                     #                    print ("error while reading irrep <{0}>".format(l), err)
                     pass
