@@ -25,7 +25,17 @@ from .__aux import str2bool, str2list_space, str_
 
 
 class SymopTable:
+    """
+    Docstring to go here,
+    """
+
     def __init__(self, line, fromUser=False):
+        """
+        Docstring to go here.
+
+        :param line: explanation + type of kwarg to go here.
+        :param fromUser: explanation + type of kwarg to go here.
+        """
         if fromUser:
             self.__init__fromUser(line)
             return
@@ -38,6 +48,12 @@ class SymopTable:
         ).reshape(2, 2)
 
     def __init__fromUser(self, line):
+        """
+        Docstring to go here.
+
+        :param line: explanation + type of kwarg to go here.
+        :return:
+        """
         numbers = line.split()
         self.R = np.array(numbers[:9], dtype=int).reshape(3, 3)
         self.t = np.array(numbers[9:12], dtype=float)
@@ -50,6 +66,12 @@ class SymopTable:
             self.S = np.eye(2)
 
     def str(self, spinor=True):
+        """
+        Docstring to go here.
+
+        :param spinor:
+        :return:
+        """
         return (
             "   ".join(" ".join(str(x) for x in r) for r in self.R)
             + "     "
@@ -72,10 +94,25 @@ class SymopTable:
 
 
 class CharFunction:
+    """
+
+    """
+
     def __init__(self, abcde):
+        """
+
+        :param abcde:
+        """
         self.abcde = copy.deepcopy(abcde)
 
     def __call__(self, u=0, v=0, w=0):
+        """
+
+        :param u:
+        :param v:
+        :param w:
+        :return:
+        """
         return sum(
             aaa[0]
             * np.exp(1j * np.pi * (sum(a * u for a, u in zip(aaa[1:], (1, u, v, w)))))
@@ -84,7 +121,18 @@ class CharFunction:
 
 
 class KPoint:
+    """
+
+    """
+
     def __init__(self, name=None, k=None, isym=None, line=None):
+        """
+
+        :param name:
+        :param k:
+        :param isym:
+        :param line:
+        """
         if line is not None:
             line_ = line.split(":")
             if line_[0].split()[0] != "kpoint":
@@ -100,6 +148,11 @@ class KPoint:
             self.isym = isym
 
     def __eq__(self, other):
+        """
+
+        :param other:
+        :return:
+        """
         if self.name != other.name:
             return False
         if np.linalg.norm(self.k - other.k) > 1e-8:
@@ -109,6 +162,10 @@ class KPoint:
         return True
 
     def show(self):
+        """
+
+        :return:
+        """
         return "{0} : {1}  symmetries : {2}".format(self.name, self.k, self.isym)
 
     def str(self):
@@ -120,7 +177,18 @@ class KPoint:
 
 
 class Irrep:
+    """
+
+    """
+
     def __init__(self, f=None, nsym_group=None, line=None, KP=None):
+        """
+
+        :param f:
+        :param nsym_group:
+        :param line:
+        :param KP:
+        """
         if KP is not None:
             self.__init__user(line, KP)
             return
@@ -172,6 +240,12 @@ class Irrep:
         assert len(self.characters) == self.nsym
 
     def __init__user(self, line, KP):
+        """
+
+        :param line:
+        :param KP:
+        :return:
+        """
         #        print ("reading irrep line <{0}> for KP=<{1}> ".format(line,KP.str()))
         self.k = KP.k
         self.kpname = KP.name
@@ -192,9 +266,17 @@ class Irrep:
     #        print ("the irrep {0}  ch= {1}".format(self.name,self.characters))
 
     def show(self):
+        """
+
+        :return:
+        """
         print(self.kpname, self.name, self.dim, self.reality)
 
     def str(self):
+        """
+
+        :return:
+        """
         #        print(self.characters)
         ch = np.array([self.characters[isym] for isym in sorted(self.characters)])
         if np.abs(np.imag(ch)).max() > 1e-6:
@@ -206,7 +288,18 @@ class Irrep:
 
 
 class IrrepTable:
+    """
+
+    """
+
     def __init__(self, SGnumber, spinor, fromUser=True, name=None):
+        """
+
+        :param SGnumber:
+        :param spinor:
+        :param fromUser:
+        :param name:
+        """
         if fromUser:
             self.__init__user(SGnumber, spinor, name)
             return
@@ -244,12 +337,21 @@ class IrrepTable:
         self.symmetries = self.symmetries[0 : self.nsym]
 
     def show(self):
+        """
+
+        :return:
+        """
         for i, s in enumerate(self.symmetries):
             print(i + 1, "\n", s.R, "\n", s.t, "\n", s.S, "\n\n")
         for irr in self.irreps:
             irr.show()
 
     def save4user(self, name=None):
+        """
+
+        :param name:
+        :return:
+        """
         if name is None:
             name = "irreptables/irreps-SG={SG}-{spinor}.dat".format(
                 SG=self.number, spinor="spin" if self.spinor else "scal"
@@ -292,6 +394,13 @@ class IrrepTable:
         fout.close()
 
     def __init__user(self, SG, spinor, name):
+        """
+        
+        :param SG:
+        :param spinor:
+        :param name:
+        :return:
+        """
         self.number = SG
         self.spinor = spinor
         if name is None:
