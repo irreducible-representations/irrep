@@ -24,7 +24,7 @@ import numpy as np
 from .__aux import str2bool, str2list_space, str_
 
 
-class symop_table:
+class SymopTable:
     def __init__(self, line, fromUser=False):
         if fromUser:
             self.__init__fromUser(line)
@@ -71,7 +71,7 @@ class symop_table:
         )
 
 
-class charfunction:
+class CharFunction:
     def __init__(self, abcde):
         self.abcde = copy.deepcopy(abcde)
 
@@ -83,7 +83,7 @@ class charfunction:
         )
 
 
-class KP:
+class KPoint:
     def __init__(self, name=None, k=None, isym=None, line=None):
         if line is not None:
             line_ = line.split(":")
@@ -119,7 +119,7 @@ class KP:
         )
 
 
-class irrep:
+class Irrep:
     def __init__(self, f=None, nsym_group=None, line=None, KP=None):
         if KP is not None:
             self.__init__user(line, KP)
@@ -163,7 +163,7 @@ class irrep:
             if any(hasuvw):
                 self.hasuvw = True
             if isym <= nsym_group / 2:
-                self.characters[isym] = charfunction(abcde)
+                self.characters[isym] = CharFunction(abcde)
         if not self.hasuvw:
             self.characters = {
                 isym: self.characters[isym]() for isym in self.characters
@@ -219,13 +219,13 @@ class IrrepTable:
         self.nsym, self.name = f.readline().split()
         self.spinor = spinor
         self.nsym = int(self.nsym)
-        self.symmetries = [symop_table(f.readline()) for i in range(self.nsym)]
+        self.symmetries = [SymopTable(f.readline()) for i in range(self.nsym)]
         assert f.readline().strip() == "#"
         self.NK = int(f.readline())
         self.irreps = []
         try:
             while True:
-                self.irreps.append(irrep(f=f, nsym_group=self.nsym))
+                self.irreps.append(Irrep(f=f, nsym_group=self.nsym))
                 #               print ("irrep appended:")
                 #               self.irreps[-1].show()
                 f.readline()
@@ -270,7 +270,7 @@ class IrrepTable:
 
         for irr in self.irreps:
             if not irr.hasuvw:
-                kp = KP(irr.kpname, irr.k, set(irr.characters.keys()))
+                kp = KPoint(irr.kpname, irr.k, set(irr.characters.keys()))
                 if (
                     len(
                         set(
@@ -321,7 +321,7 @@ class IrrepTable:
                     l = lines.pop()
                     #                    print (l)
                     try:
-                        self.symmetries.append(symop_table(l, fromUser=True))
+                        self.symmetries.append(SymopTable(l, fromUser=True))
                     except Exception as err:
                         print(err)
                         pass
@@ -333,12 +333,12 @@ class IrrepTable:
         while len(lines) > 0:
             l = lines.pop().strip()
             try:
-                kp = KP(line=l)
+                kp = KPoint(line=l)
             #                print ("kpoint successfully read:",kp.str())
             except Exception as err:
                 #                print( "error while reading k-point <{0}>".format(l),err)
                 try:
-                    self.irreps.append(irrep(line=l, KP=kp))
+                    self.irreps.append(Irrep(line=l, KP=kp))
                 except Exception as err:
                     #                    print ("error while reading irrep <{0}>".format(l), err)
                     pass
