@@ -1,0 +1,255 @@
+The code was called with the following command-line options
+ /home/mikel/dipc_loc/cubi2o4_stepan/abinit_wsoc/genWFK_wsoc/RES_genWKF/irrep/__main__.py   code=abinit   kpnames=GM,X,M,Z,R,A   Ecut=100   spinor=F   fWFK=O_DS3_WFK   IBstart=145   IBend=148
+['O_DS3_WFK']
+WARNING, the version 8.4.4  of abinit is not 8.6.3 
+ecut=500.0000393217782 eV
+
+
+ ----------INFORMATION ABOUT THE UNIT CELL----------- 
+
+
+Primitive vectors : 
+ [[16.01542898  0.          0.        ]
+ [ 0.         16.01542898  0.        ]
+ [ 0.          0.         10.97174993]] 
+ Atomic positions: 
+ [[0.049 0.141 0.089]
+ [0.451 0.359 0.089]
+ [0.359 0.049 0.089]
+ [0.141 0.451 0.089]
+ [0.951 0.641 0.411]
+ [0.549 0.859 0.411]
+ [0.641 0.549 0.411]
+ [0.859 0.951 0.411]
+ [0.951 0.859 0.911]
+ [0.549 0.641 0.911]
+ [0.641 0.951 0.911]
+ [0.859 0.549 0.911]
+ [0.049 0.359 0.589]
+ [0.451 0.141 0.589]
+ [0.359 0.451 0.589]
+ [0.141 0.049 0.589]
+ [0.418 0.582 0.25 ]
+ [0.082 0.918 0.25 ]
+ [0.918 0.418 0.25 ]
+ [0.582 0.082 0.25 ]
+ [0.582 0.418 0.75 ]
+ [0.918 0.082 0.75 ]
+ [0.082 0.582 0.75 ]
+ [0.418 0.918 0.75 ]
+ [0.25  0.25  0.078]
+ [0.75  0.75  0.422]
+ [0.75  0.75  0.922]
+ [0.25  0.25  0.578]] 
+ Atom type indices: 
+ [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3]
+
+ Reciprocal lattice:
+ [[0.39232076 0.         0.        ]
+ [0.         0.39232076 0.        ]
+ [0.         0.         0.57266939]]
+lattice vectors:
+ [[16.01542898  0.          0.        ]
+ [ 0.         16.01542898  0.        ]
+ [ 0.          0.         10.97174993]]
+WFK contains 6 k-points and 166 bands.
+ Saving 4 bands starting from 145 in the output
+Energy cutoff in WFK file :  500.0000393217782
+Energy cutoff reduced to :  100.0
+reading k-point 0
+Found cutoff:   500.000039 eV   Largest plane wave energy in K-point    1:   499.880402 eV
+reading k-point 1
+Found cutoff:   500.000039 eV   Largest plane wave energy in K-point    2:   499.691969 eV
+reading k-point 2
+Found cutoff:   500.000039 eV   Largest plane wave energy in K-point    3:   499.641046 eV
+reading k-point 3
+Found cutoff:   500.000039 eV   Largest plane wave energy in K-point    4:   499.066269 eV
+reading k-point 4
+Found cutoff:   500.000039 eV   Largest plane wave energy in K-point    5:   499.877029 eV
+reading k-point 5
+Found cutoff:   500.000039 eV   Largest plane wave energy in K-point    6:   499.661608 eV
+
+
+ ---------- INFORMATION ABOUT THE SPACE GROUP ---------- 
+
+
+Space group # 130 has 16 symmetry operations  
+ #  1
+rotation : |  1   0   0 |
+           |  0   1   0 |
+           |  0   0   1 |
+ translation : [   0.000000   0.000000   0.000000 ] 
+axis: [0. 0. 1.] ; angle =  0 , inversion : False 
+ #  2
+rotation : |  0  -1   0 |
+           |  1   0   0 |
+           |  0   0   1 |
+ translation : [   0.500000   0.000000   0.000000 ] 
+axis: [0. 0. 1.] ; angle = 1/2 pi, inversion : False 
+ #  3
+rotation : | -1   0   0 |
+           |  0  -1   0 |
+           |  0   0   1 |
+ translation : [   0.500000   0.500000   0.000000 ] 
+axis: [0. 0. 1.] ; angle = 1 pi, inversion : False 
+ #  4
+rotation : |  0   1   0 |
+           | -1   0   0 |
+           |  0   0   1 |
+ translation : [   0.000000   0.500000   0.000000 ] 
+axis: [0. 0. 1.] ; angle = -1/2 pi, inversion : False 
+ #  5
+rotation : |  1   0   0 |
+           |  0  -1   0 |
+           |  0   0  -1 |
+ translation : [   0.500000   0.000000   0.500000 ] 
+axis: [1. 0. 0.] ; angle = 1 pi, inversion : False 
+ #  6
+rotation : |  0  -1   0 |
+           | -1   0   0 |
+           |  0   0  -1 |
+ translation : [   0.000000   0.000000   0.500000 ] 
+axis: [ 0.707107 -0.707107  0.      ] ; angle = 1 pi, inversion : False 
+ #  7
+rotation : | -1   0   0 |
+           |  0   1   0 |
+           |  0   0  -1 |
+ translation : [   0.000000   0.500000   0.500000 ] 
+axis: [0. 1. 0.] ; angle = 1 pi, inversion : False 
+ #  8
+rotation : |  0   1   0 |
+           |  1   0   0 |
+           |  0   0  -1 |
+ translation : [   0.500000   0.500000   0.500000 ] 
+axis: [0.707107 0.707107 0.      ] ; angle = 1 pi, inversion : False 
+ #  9
+rotation : | -1   0   0 |
+           |  0  -1   0 |
+           |  0   0  -1 |
+ translation : [   0.000000   0.000000   0.000000 ] 
+axis: [0. 0. 1.] ; angle =  0 , inversion : True 
+ #  10
+rotation : |  0   1   0 |
+           | -1   0   0 |
+           |  0   0  -1 |
+ translation : [   0.500000   0.000000   0.000000 ] 
+axis: [0. 0. 1.] ; angle = 1/2 pi, inversion : True 
+ #  11
+rotation : |  1   0   0 |
+           |  0   1   0 |
+           |  0   0  -1 |
+ translation : [   0.500000   0.500000   0.000000 ] 
+axis: [0. 0. 1.] ; angle = 1 pi, inversion : True 
+ #  12
+rotation : |  0  -1   0 |
+           |  1   0   0 |
+           |  0   0  -1 |
+ translation : [   0.000000   0.500000   0.000000 ] 
+axis: [0. 0. 1.] ; angle = -1/2 pi, inversion : True 
+ #  13
+rotation : | -1   0   0 |
+           |  0   1   0 |
+           |  0   0   1 |
+ translation : [   0.500000   0.000000   0.500000 ] 
+axis: [1. 0. 0.] ; angle = 1 pi, inversion : True 
+ #  14
+rotation : |  0   1   0 |
+           |  1   0   0 |
+           |  0   0   1 |
+ translation : [   0.000000   0.000000   0.500000 ] 
+axis: [-0.707107  0.707107  0.      ] ; angle = 1 pi, inversion : True 
+ #  15
+rotation : |  1   0   0 |
+           |  0  -1   0 |
+           |  0   0   1 |
+ translation : [   0.000000   0.500000   0.500000 ] 
+axis: [0. 1. 0.] ; angle = 1 pi, inversion : True 
+ #  16
+rotation : |  0  -1   0 |
+           | -1   0   0 |
+           |  0   0   1 |
+ translation : [   0.500000   0.500000   0.500000 ] 
+axis: [0.707107 0.707107 0.      ] ; angle = 1 pi, inversion : True 
+reading from a user-defined irrep table </home/mikel/dipc_loc/cubi2o4_stepan/abinit_wsoc/genWFK_wsoc/RES_genWKF/irrep/irreptables/irreps-SG=130-scal.dat>
+reading symmetries
+
+
+k-point   1 :[0. 0. 0.] 
+ number of irreps = 4
+   Energy  | multiplicity |     irreps     | sym. operations  
+           |              |                |     1        2        3        4        5        6        7        8        9       10       11       12       13       14       15       16    
+  -0.4222  |        1     | GM4+(0.99999)  |  1.0000  -1.0000   1.0000  -1.0000  -1.0000   1.0000  -1.0000   1.0000   1.0000  -1.0000   1.0000  -1.0000  -1.0000   1.0000  -1.0000   1.0000
+   0.0056  |        1     | GM2+(0.99998)  |  1.0000  -1.0000   1.0000  -1.0000   1.0000  -1.0000   1.0000  -1.0000   1.0000  -1.0000   1.0000  -1.0000   1.0000  -1.0000   1.0000  -1.0000
+   0.1356  |        1     | GM4-(0.99998)  |  1.0000  -1.0000   1.0000  -1.0000  -1.0000   1.0000  -1.0000   1.0000  -1.0000   1.0000  -1.0000   1.0000   1.0000  -1.0000   1.0000  -1.0000
+   0.1918  |        1     | GM2-(0.99998)  |  1.0000  -1.0000   1.0000  -1.0000   1.0000  -1.0000   1.0000  -1.0000  -1.0000   1.0000  -1.0000   1.0000  -1.0000   1.0000  -1.0000   1.0000
+inversion is # 9
+number of inversions-odd states :  2
+Gap with upper bands :  nan
+reading from a user-defined irrep table </home/mikel/dipc_loc/cubi2o4_stepan/abinit_wsoc/genWFK_wsoc/RES_genWKF/irrep/irreptables/irreps-SG=130-scal.dat>
+reading symmetries
+
+
+k-point   2 :[0.  0.5 0. ] 
+ number of irreps = 2
+   Energy  | multiplicity |    irreps    | sym. operations  
+           |              |              |         1                3                5                7                9               11               13               15        
+  -0.0341  |        2     | X2(0.99999)  |  2.0000+0.0000j   0.0002-0.0000j   0.0000-0.0000j  -0.0000-0.0002j  -0.0000-0.0000j  -0.0000+0.0002j  -1.9999+0.0000j  -0.0003-0.0000j
+   0.1014  |        2     | X1(0.99999)  |  2.0000+0.0000j  -0.0006-0.0000j  -0.0002+0.0000j   0.0000-0.0001j  -0.0002-0.0000j  -0.0000-0.0001j   2.0000-0.0000j  -0.0006+0.0000j
+inversion is # 9
+number of inversions-odd states :  2
+Gap with upper bands :  nan
+reading from a user-defined irrep table </home/mikel/dipc_loc/cubi2o4_stepan/abinit_wsoc/genWFK_wsoc/RES_genWKF/irrep/irreptables/irreps-SG=130-scal.dat>
+reading symmetries
+
+
+k-point   3 :[0.5 0.5 0. ] 
+ number of irreps = 2
+   Energy  | multiplicity |    irreps    | sym. operations  
+           |              |              |         1                2                3                4                5                6                7                8                9               10               11               12               13               14               15               16        
+  -0.0523  |        2     | M4(0.99999)  |  2.0000+0.0000j   0.0000-0.0000j   2.0000-0.0000j   0.0000+0.0000j   0.0000+0.0001j  -0.0002+0.0000j  -0.0000+0.0001j  -0.0002+0.0000j   0.0002+0.0000j  -0.0000-0.0001j   0.0002+0.0000j   0.0000-0.0001j  -0.0000+0.0000j  -2.0000-0.0000j  -0.0001-0.0000j  -2.0000-0.0000j
+   0.0586  |        2     | M3(0.99998)  |  2.0000+0.0000j   0.0000+0.0000j   2.0000-0.0000j   0.0000-0.0000j   0.0000-0.0002j   0.0003-0.0000j  -0.0000-0.0002j   0.0003-0.0000j   0.0003-0.0000j   0.0000-0.0002j   0.0003-0.0000j  -0.0000-0.0002j   0.0001+0.0000j   1.9999-0.0000j   0.0001+0.0000j   1.9999-0.0000j
+inversion is # 9
+number of inversions-odd states :  2
+Gap with upper bands :  nan
+reading from a user-defined irrep table </home/mikel/dipc_loc/cubi2o4_stepan/abinit_wsoc/genWFK_wsoc/RES_genWKF/irrep/irreptables/irreps-SG=130-scal.dat>
+reading symmetries
+
+
+k-point   4 :[0.  0.  0.5] 
+ number of irreps = 4
+   Energy  | multiplicity |    irreps    | sym. operations  
+           |              |              |     1        2        3        4        5        6        7        8        9       10       11       12       13       14       15       16    
+  -0.6100  |        2     | Z1(0.99999)  |  2.0000  -2.0000   2.0000  -2.0000   0.0000  -0.0000   0.0000  -0.0000   0.0001  -0.0001   0.0001  -0.0001  -0.0000   0.0000  -0.0000  -0.0000
+   0.3002  |        2     | Z1(0.99998)  |  2.0000  -2.0000   1.9999  -2.0000  -0.0000   0.0000   0.0000   0.0000  -0.0000   0.0000   0.0000   0.0000  -0.0000   0.0000  -0.0000   0.0000
+inversion is # 9
+number of inversions-odd states :  2
+Gap with upper bands :  nan
+reading from a user-defined irrep table </home/mikel/dipc_loc/cubi2o4_stepan/abinit_wsoc/genWFK_wsoc/RES_genWKF/irrep/irreptables/irreps-SG=130-scal.dat>
+reading symmetries
+
+
+k-point   5 :[0.  0.5 0.5] 
+ number of irreps = 2
+   Energy  | multiplicity |        irreps        | sym. operations  
+           |              |                      |         1                3                5                7                9               11               13               15        
+  -0.0815  |        4     | R1(0.99998), R2(1.0) |  4.0000+0.0000j   0.0003-0.0000j   0.0003+0.0000j  -0.0000-0.0001j   0.0004+0.0000j  -0.0000-0.0003j  -0.0000+0.0001j   0.0000-0.0001j
+inversion is # 9
+number of inversions-odd states :  2
+Gap with upper bands :  nan
+reading from a user-defined irrep table </home/mikel/dipc_loc/cubi2o4_stepan/abinit_wsoc/genWFK_wsoc/RES_genWKF/irrep/irreptables/irreps-SG=130-scal.dat>
+reading symmetries
+
+
+k-point   6 :[0.5 0.5 0.5] 
+ number of irreps = 2
+   Energy  | multiplicity |        irreps        | sym. operations  
+           |              |                      |         1                2                3                4                5                6                7                8                9               10               11               12               13               14               15               16        
+  -0.0047  |        4     | A3(0.99998), A4(1.0) |  4.0000+0.0000j  -0.0002-0.0000j   3.9999+0.0000j  -0.0002+0.0000j  -0.0000-0.0004j   0.0002-0.0000j   0.0000-0.0004j   0.0002+0.0000j  -0.0003-0.0000j   0.0000-0.0002j  -0.0002+0.0000j  -0.0000-0.0002j  -0.0000+0.0000j   0.0000+0.0004j   0.0000+0.0001j   0.0000+0.0004j
+inversion is # 9
+number of inversions-odd states :  2
+Gap with upper bands :  nan
+number of inversions-odd states :  12
+Minimal direct gap: inf  eV
+indirect  gap: inf  eV
+writing bands in file bands-.dat
+writing traces in file bands-sym-.dat

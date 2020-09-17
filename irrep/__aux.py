@@ -43,13 +43,14 @@ def str2list_space(string):
     return res 
 
 
-def str2bool(v):
-    if v[0] in "fF" :
+def str2bool(v1):
+    v=v1.lower().strip('. ')
+    if v[0] == "f" :
         return False
-    elif v[0] in "tT":
+    elif v[0] == "t":
         return True
     else :
-        raise RuntimeError(" unrecognized value of bool parameter :{0}".format(v) )
+        raise RuntimeError(" unrecognized value of bool parameter :{0}".format(v1) )
 
 
 def str_(x):
