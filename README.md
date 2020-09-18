@@ -46,9 +46,9 @@ J. of Appl. Cryst. (2017). 50, 1457-1477. doi:10.1107/S1600576717011712
 Before releasing this public repository on github on 22th of June 2019, 
 the code is mainly written by:
 
-Stepan S. Tsirkin 
-University of Zurich
-stepan.tsirkin@physik.uzh.ch
+> Stepan S. Tsirkin   
+> University of Zurich  
+> stepan.tsirkin@physik.uzh.ch  
 
 after a fruitful discussion of formalism with Maia G. Vergniory (Donostia International Physics Center/IKERBASQUE, Basque Country, Spain) 
 
