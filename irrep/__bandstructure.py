@@ -31,12 +31,17 @@ class BandStructure():
 
 
     def __init__(self,fWAV=None,fWFK=None,prefix=None,fPOS=None,Ecut=None,IBstart=None,IBend=None,kplist=None,spinor=None,code="vasp",EF=None,onlysym=False):
+        code=code.lower()
         if code=="vasp":
            self.__init_vasp(fWAV,fPOS,Ecut,IBstart,IBend,kplist,spinor,EF=EF,onlysym=onlysym)
         elif code=="abinit":
            self.__init_abinit(fWFK,Ecut,IBstart,IBend,kplist,EF=EF,onlysym=onlysym)
         elif code=="espresso":
            self.__init_espresso(prefix,Ecut,IBstart,IBend,kplist,EF=EF,onlysym=onlysym)
+        elif code=="wannier90":
+           self.__init_wannier(prefix,Ecut,IBstart,IBend,kplist,EF=EF,onlysym=onlysym)
+        else :
+           raise RuntimeError("Unknown/unsupported code :{}".format(code))
           
 
     def __init_vasp(self,fWAV,fPOS,Ecut=None,IBstart=None,IBend=None,kplist=None,spinor=None,EF=None,onlysym=False):
@@ -138,6 +143,128 @@ class BandStructure():
                           code="abinit",kpt=header.kpt[ik],npw_=header.npwarr[ik],fWFK=fWFK,flag=flag,usepaw=usepaw) 
             self.kpoints.append(kp)
             flag=ik
+
+
+
+    def __init_wannier(self,prefix,Ecut=None,IBstart=None,IBend=None,kplist=None,EF=None,onlysym=False):
+        fwin = [ l.strip().lower() for l in open(prefix+".win").readlines() ]
+        fwin = [ [ s.strip() for s in l.split("=") ] for l in fwin if len(l)>0 and l[0] not in ('!','#') ]
+        ind=np.array([l[0] for l in fwin])
+        
+        def get_param(key,tp,default=None):
+            i=np.where(ind==key)[0]
+            if len(i)==0 :
+                if default is None:
+                    raise RuntuimeError("parameter {} was not found in {}.win".format(key,prefix))
+                else:
+                    return default
+            if len(i)>1:
+                raise RuntuimeError("parameter {} was not found {} times in {}.win".format(key,len(i),prefix))
+            print ('i=',i,len(i))
+            print(i,fwin[i[0]])
+            return tp(fwin[i[0]][1])
+        
+        NBin=get_param("num_bands",int)
+#        print ("nbands=",NBin)
+        self.spinor = str2bool(get_param("spinors",str))
+        self.efermi=get_param("fermi_energy",float,0.) if EF is None else EF
+        NK=np.prod(np.array(get_param("mp_grid",str).split(),dtype=int))
+        
+        self.Lattice=None
+        kpred=None
+
+#        kplist-=1
+#        kplist=np.array([k for k in kplist if k>=0 and k<NK])
+        found_atoms=False
+## todo : use an iterator to avoid double looping over lines between "begin" and "end"
+        iterwin=iter(fwin)
+        def check_end(name):
+            s=next(iterwin)[0]
+            if " ".join(s.split())!="end "+name:
+                raise RuntimeError("expected 'end {}', found {} instead".format(name,s) )
+        for l in iterwin:
+            if l[0].startswith("begin"):
+                if l[0].split()[1]=="unit_cell_cart":
+                    if self.Lattice is not None:
+                        raise RuntimeError("'begin unit_cell_cart' found more then once  in {}.win".format(prefix))
+                    j=0
+                    l1=next(iterwin) 
+                    if l1[0] in ("bohr","ang"):
+                        units=l1[0]
+                        L=[next(iterwin)[0] for i in range(3)]
+                    else:
+                        units="ang"
+                        L=[l1][0]+[next(iterwin)[0] for i in range(2)]
+                    self.Lattice=np.array( [ m.split()[:3] for m in L ],dtype=float)
+                    if units=="bohr":
+                        self.Lattice*=bohr
+                    check_end("unit_cell_cart")
+                elif l[0].split()[1]=="kpoints":
+                    if kpred is not None:
+                        raise RuntimeError("'begin kpoints' found more then once  in {}.win".format(prefix))
+                    kpred=np.array([next(iterwin)[0].split()[:3] for i in range(NK)],dtype=float)
+#                    kpred=np.array([kpred[j].split()[:3] for j in kplist],dtype=float)
+                    check_end("kpoints")
+                elif l[0].split()[1].startswith("atoms_"):
+                    if l[0].split()[1][6:10] not in ("cart","frac"):
+                        raise RuntimeError("unrecognised block :  '{}' ".format(l[0]))
+                    if found_atoms :
+                        raise RuntimeError("'begin atoms_***' found more then once  in {}.win".format(prefix))
+                    found_atoms=True
+                    xred=[]
+                    nameat=[]
+                    while True:
+                        l1=next(iterwin)[0].split()
+                        if l1[0]=="end":
+                            if l1[1]!=l[0].split()[1]:
+#                                print (l1[1],l[0].split()[1])
+                                raise RuntimeError("{}' ended with 'end {}'".format(l[0],l1[1])) 
+                            break 
+                        nameat.append(l1[0])
+                        xred.append(l1[1:4])
+                    typatdic={n:i+1 for i,n in enumerate(set(nameat))}
+                    typat=[typatdic[n] for n in nameat]
+                    xred=np.array(xred)
+                    if l[0].split()[1][6:10]=="cart":
+                        xred=xred.dot(np.linalg.inv(self.Lattice))
+
+#        print ("lattice vectors:\n",self.Lattice)
+        self.RecLattice=np.array([np.cross(self.Lattice[(i+1)%3],self.Lattice[(i+2)%3]) for i in range(3)] 
+                                 )*2*np.pi/np.linalg.det(self.Lattice)
+
+
+        self.spacegroup=SpaceGroup(cell=(self.Lattice,xred,typat),spinor=self.spinor)
+        if onlysym: return
+        
+        feig=prefix+".eig"
+        eigenval=np.loadtxt(prefix+".eig")
+        try:
+            if eigenval.shape[0]!=NBin*NK:
+                raise RuntimeError("wrong number of entries ")
+            ik=np.array(eigenval[:,1]).reshape(NK,NBin)
+            if not np.all(ik==np.arange(1,NK+1)[:,None]*np.ones(NBin,dtype=int)[None,:]):
+                raise RuntimeError("wrong k-point indices")
+            ib=np.array(eigenval[:,0]).reshape(NK,NBin)
+            if not np.all(ib==np.arange(1,NBin+1)[None,:]*np.ones(NK,dtype=int)[:,None]):
+                raise RuntimeError("wrong band indices")
+            eigenval=eigenval[:,2].reshape(NK,NBin)
+        except Exception as err:
+            raise RuntimeError(" error reading {} : {}".format(feig,err))
+
+        IBstart=0 if (IBstart is None or IBstart<=0) else IBstart-1
+        if  IBend is None or IBend<=0 or IBend>NBin: 
+            IBend=NBin 
+        NBout=IBend-IBstart
+        if NBout<=0: raise RuntimeError("No bands to calculate")
+        
+
+#        print ("eigenvalues are : ",eigenval)
+        self.kpoints=[
+                Kpoint(ik-1, NBin,IBstart,IBend,Ecut,None,self.RecLattice,SG=self.spacegroup,spinor=self.spinor,
+                          code="wannier",eigenval=eigenval[ik-1],kpt=kpred[ik-1]) 
+                   for ik in kplist]
+  
+
 
 
     def __init_espresso(self,prefix,Ecut=None,IBstart=None,IBend=None,kplist=None,EF=None,onlysym=False):

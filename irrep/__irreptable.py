@@ -410,33 +410,27 @@ class IrrepTable:
         self.number = SG
         self.spinor = spinor
         if name is None:
-            name = "{root}/irreptables/irreps-SG={SG}-{spinor}.dat".format(
-                SG=self.number,
-                spinor="spin" if self.spinor else "scal",
-                root=os.path.dirname(__file__),
-            )
-        logger.debug("reading from a user-defined irrep table <{0}>".format(name))
-
-        lines = open(name).readlines()[-1::-1]
-        while len(lines) > 0:
-            l = lines.pop().strip().split("=")
-            logger.debug(l, l[0].lower())
-            if l[0].lower() == "SG":
-                assert int(l[1]) == SG
-            elif l[0].lower() == "name":
-                self.name = l[1]
-            elif l[0].lower() == "nsym":
-                self.nsym = int(l[1])
-            elif l[0].lower() == "spinor":
-                assert str2bool(l[1]) == self.spinor
-            elif l[0].lower() == "symmetries":
-                logger.debug("reading symmetries")
-                self.symmetries = []
-                while len(self.symmetries) < self.nsym:
-                    l = lines.pop()
-                    #                    logger.debug(l)
-                    try:
-                        self.symmetries.append(SymopTable(l, from_user=True))
+            name="{root}/irreptables/irreps-SG={SG}-{spinor}.dat".format(SG=self.number,spinor="spin" if self.spinor else "scal",root=os.path.dirname(__file__))
+            logger.debug("reading from a standard irrep table <{0}>".format(name) ) 
+        else:         
+            logger.debug("reading from a user-defined irrep table <{0}>".format(name) ) 
+            
+        lines=open(name).readlines()[-1::-1]
+        while len(lines)>0:
+            l=lines.pop().strip().split("=")
+#            logger.debug(l,l[0].lower())
+            if    l[0].lower()=='SG' : assert(int(l[1])==SG)
+            elif  l[0].lower()=='name' : self.name=l[1]
+            elif  l[0].lower()=='nsym' : self.nsym=int(l[1])
+            elif  l[0].lower()=='spinor' : assert(str2bool(l[1])==self.spinor)
+            elif  l[0].lower()=='symmetries':
+                print ('reading symmetries')
+                self.symmetries=[]
+                while len(self.symmetries)<self.nsym :
+                    l=lines.pop()
+#                    logger.debug(l)
+                    try: 
+                       self.symmetries.append( symop_table(l,fromUser=True) )
                     except Exception as err:
                         logger.debug(err)
                         pass
