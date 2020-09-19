@@ -147,11 +147,6 @@ do not hesitate to contact the author:
     "to get the unit cell as defined in crystallographic tables. Three comma-separated numbers.",
 )
 @click.option(
-    "-NB",
-    default=0,
-    help="Number of bands in the output. If NB <= 0 all bands are used.",
-)
-@click.option(
     "-isymsep",
     help="Index of the symmetry to separate the eigenstates. Works well only for norm-conserving "
     "potentials as in ABINIT.",
@@ -199,7 +194,6 @@ def cli(
     kpnames,
     refuc,
     shiftuc,
-    nb,
     isymsep,
     onlysym,
     zak,
@@ -216,7 +210,7 @@ def cli(
     """
     Defines thsymmetriese "irrep" command-line tool interface.
     """
-    # TODO: later, this can be split up into separate sub-commands
+    # TODO: later, this can be split up into separate sub-commands (e.g. for zak, etc.)
 
     # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
     if refuc:
@@ -224,8 +218,18 @@ def cli(
     if shiftuc:
         shiftuc = np.array(shiftuc.split(","), dtype=float).reshape(3)
 
+    # parse input arguments into lists if supplied
     if symmetries:
         symmetries = str2list(symmetries)
+    if kpoints:
+        kpoints = str2list(kpoints)
+    if isymsep:
+        isymsep = str2list(isymsep)
+    if kpnames:
+        kpnames = kpnames.split(",")
+
+    if onlysym:
+        spinor = False
 
     try:
         print(fwfk.split("/")[0].split("-"))
@@ -284,8 +288,8 @@ def cli(
                 degen_thresh=0.001, refUC=refuc, symmetries=symmetries
             )
             print("eigenvalue : #{0} \n Zak phases are : ".format(k))
-            ZAK = subbands[k].zakphase()
-            for n, (z, gw, gc, lgw) in enumerate(zip(*ZAK)):
+            zak = subbands[k].zakphase()
+            for n, (z, gw, gc, lgw) in enumerate(zip(*zak)):
                 print(
                     "   {n:4d}    {z:8.5f} pi gapwidth = {gap:8.4f} gapcenter = {cent:8.3f} localgap= {lg:8.4f}".format(
                         n=n + 1, z=z / np.pi, gap=gw, cent=gc, lg=lgw
@@ -295,7 +299,7 @@ def cli(
     if wcc:
         for k in subbands:
             print("eigenvalue {0}".format(k))
-            #        subbands[k].write_characters(degen_thresh=0.001,refUC=refUC,symmetries=symmetries)
+            # subbands[k].write_characters(degen_thresh=0.001,refUC=refUC,symmetries=symmetries)
             wcc = subbands[k].wcc()
             print(
                 "eigenvalue : #{0} \n  WCC are : {1} \n sumWCC={2}".format(
