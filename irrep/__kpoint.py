@@ -23,7 +23,7 @@ from .__gvectors import calc_gvectors,symm_eigenvalues,NotSymmetryError,symm_mat
 from .__readfiles import AbinitHeader,Hartree_eV
 from .__readfiles import WAVECARFILE,record_abinit
 from .__aux import compstr
-from .__aux import bohr
+from .__aux import BOHR
 from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
 class Kpoint():
