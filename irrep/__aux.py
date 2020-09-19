@@ -18,7 +18,7 @@
 
 import numpy as np
 from scipy import constants
-bohr=constants.physical_constants['Bohr radius'][0]/constants.angstrom
+BOHR = constants.physical_constants['Bohr radius'][0] / constants.angstrom
 
 
 def str2list(string):
