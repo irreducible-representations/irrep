@@ -1,5 +1,3 @@
-The code was called with the following command-line options
- /opt/miniconda3/envs/irrep-pip/lib/python3.8/site-packages/irrep/__main__.py   code=wannier90   prefix=PbTe   kpoints=1,33,37,419   Ecut=30   kpnames=GM,L,X,W   refUC=-1,+1,-1,-1,+1,+1,+1,+1,-1
 'NoneType' object has no attribute 'split'
 i= [0] 1
 [0] ['num_bands', '6']
@@ -20,7 +18,7 @@ Primitive vectors :
  [['0.0' '0.0' '0.0']
  ['0.5' '0.5' '-0.5']] 
  Atom type indices: 
- [1, 2]
+ [2, 1]
 
  Reciprocal lattice:
  [[-0.9726293 -0.9726293  0.9726293]
@@ -520,10 +518,6 @@ spinor   : | 0.707+0.000j  0.000-0.707j |
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
 axis: [1. 0. 0.] ; angle = 1/2 pi, inversion : True 
-here [[-1.  1. -1.]
- [-1.  1.  1.]
- [ 1.  1. -1.]] [0. 0. 0.] GM [0. 0. 0.]
-reading from a standard irrep table </opt/miniconda3/envs/irrep-pip/lib/python3.8/site-packages/irrep/irreptables/irreps-SG=225-spin.dat>
 reading symmetries
 
 
@@ -536,10 +530,6 @@ k-point   1 :[0. 0. 0.]
 inversion is # 2
 number of inversions-odd Kramers pairs :  3
 Gap with upper bands :  nan
-here [[-1.  1. -1.]
- [-1.  1.  1.]
- [ 1.  1. -1.]] [0. 0. 0.] L [0.  0.5 0. ]
-reading from a standard irrep table </opt/miniconda3/envs/irrep-pip/lib/python3.8/site-packages/irrep/irreptables/irreps-SG=225-spin.dat>
 reading symmetries
 
 
@@ -553,10 +543,6 @@ k-point  33 :[0.  0.5 0. ]
 inversion is # 2
 number of inversions-odd Kramers pairs :  1
 Gap with upper bands :  nan
-here [[-1.  1. -1.]
- [-1.  1.  1.]
- [ 1.  1. -1.]] [0. 0. 0.] X [0.  0.5 0.5]
-reading from a standard irrep table </opt/miniconda3/envs/irrep-pip/lib/python3.8/site-packages/irrep/irreptables/irreps-SG=225-spin.dat>
 reading symmetries
 
 
@@ -570,10 +556,6 @@ k-point  37 :[0.  0.5 0.5]
 inversion is # 2
 number of inversions-odd Kramers pairs :  3
 Gap with upper bands :  nan
-here [[-1.  1. -1.]
- [-1.  1.  1.]
- [ 1.  1. -1.]] [0. 0. 0.] W [0.75 0.5  0.25]
-reading from a standard irrep table </opt/miniconda3/envs/irrep-pip/lib/python3.8/site-packages/irrep/irreptables/irreps-SG=225-spin.dat>
 reading symmetries
 
 
