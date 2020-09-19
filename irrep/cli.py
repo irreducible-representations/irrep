@@ -43,6 +43,7 @@ from irrep import __version__ as version
             # #  #  #  #  #      #
             # #   # #   # #####  #
 
+\b
 Calculates the expectation values of symmetry operations 
 <Psi_nk | T(g) | Psi_nk >  as well as irreducible representations,
 Wannier charge centers (1D) Zak phases and many more.
@@ -175,7 +176,7 @@ do not hesitate to contact the author:
     "-plotFile", flag_value=True, default=False, help="TODO: help to go here!"
 )
 @click.option("-EF", type=float, help="TODO: help to go here!")
-@click.option("-degenThresh", type=float, default=1e-4, help="")
+@click.option("-degenThresh", type=float, default=1e-4, help="TODO: help to go here!")
 @click.option(
     "-groupKramers", flag_value=True, default=True, help="TODO: help to go here!"
 )
