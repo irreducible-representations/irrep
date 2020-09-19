@@ -26,7 +26,7 @@ import math
 import click
 
 from .__spacegroup import SpaceGroup
-from . import __bandstructure as BS
+from .__bandstructure import BandStructure
 from .__aux import str2bool, str2list
 
 from irrep import __version__ as version
@@ -171,11 +171,199 @@ do not hesitate to contact the author:
     help="Write gnuplottable files with all symmetry eigenvalues",
 )
 @click.option(
-    "-WCC", flag_value=True, default=False, help="Calculate Wannier charge centres"
+    "-plotFile", flag_value=True, default=False, help="TODO: help to go here!"
 )
-def cli(*args, **kwargs):
+@click.option("-EF", type=float, help="TODO: help to go here!")
+@click.option("-degenThresh", type=float, default=1e-4, help="")
+@click.option(
+    "-groupKramers", flag_value=True, default=True, help="TODO: help to go here!"
+)
+@click.option("-symmetries", type=str, help="TODO: help to go here!")
+@click.option("-suffix", type=str, help="TODO: help to go here!")
+@click.option(
+    "-writebands", flag_value=True, default=True, help="TODO: help to go here!"
+)
+def cli(
+    ecut,
+    fwav,
+    fpos,
+    fwfk,
+    prefix,
+    ibstart,
+    ibend,
+    code,
+    spinor,
+    kpoints,
+    kpnames,
+    refuc,
+    shiftuc,
+    nb,
+    isymsep,
+    onlysym,
+    zak,
+    wcc,
+    plotbands,
+    plotfile,
+    ef,
+    degenthresh,
+    groupkramers,
+    symmetries,
+    writebands,
+    suffix,
+):
     """
-    Defines the "irrep" command-line tool interface.
+    Defines thsymmetriese "irrep" command-line tool interface.
     """
     # TODO: later, this can be split up into separate sub-commands
-    pass
+
+    # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
+    if refuc:
+        refuc = np.array(refuc.split(","), dtype=float).reshape((3, 3))
+    if shiftuc:
+        shiftuc = np.array(shiftuc.split(","), dtype=float).reshape(3)
+
+    if symmetries:
+        symmetries = str2list(symmetries)
+
+    try:
+        print(fwfk.split("/")[0].split("-"))
+        preline = " ".join(s.split("_")[1] for s in fwfk.split("/")[0].split("-")[:3])
+    except Exception as err:
+        print(err)
+        preline = ""
+
+    if (refuc is not None) and (shiftuc is None):
+        shiftuc = np.zeros(3)
+
+    bandstr = BandStructure(
+        fWAV=fwav,
+        fWFK=fwfk,
+        prefix=prefix,
+        fPOS=fpos,
+        Ecut=ecut,
+        IBstart=ibstart,
+        IBend=ibend,
+        kplist=kpoints,
+        spinor=spinor,
+        code=code,
+        EF=ef,
+        onlysym=onlysym,
+    )
+    bandstr.spacegroup.show(refUC=refuc, shiftUC=shiftuc, symmetries=symmetries)
+
+    if onlysym:
+        exit()
+
+    if refuc is None:
+        refuc = np.eye(3)
+    if shiftuc is None:
+        shiftuc = np.zeros(3)
+
+    with open("irreptable-template", "w") as f:
+        f.write(bandstr.spacegroup.str(refUC=refuc, shiftUC=shiftuc))
+
+    subbands = {(): bandstr}
+
+    if isymsep is not None:
+        for isym in isymsep:
+            print("Separating by symmetry operation # ", isym)
+            subbands = {
+                tuple(list(s_old) + [s_new]): sub
+                for s_old, bands in subbands.items()
+                for s_new, sub in bands.Separate(
+                    isym, degen_thresh=degenthresh, groupKramers=groupkramers
+                ).items()
+            }
+
+    if zak:
+        for k in subbands:
+            print("eigenvalue {0}".format(k))
+            subbands[k].write_characters(
+                degen_thresh=0.001, refUC=refuc, symmetries=symmetries
+            )
+            print("eigenvalue : #{0} \n Zak phases are : ".format(k))
+            ZAK = subbands[k].zakphase()
+            for n, (z, gw, gc, lgw) in enumerate(zip(*ZAK)):
+                print(
+                    "   {n:4d}    {z:8.5f} pi gapwidth = {gap:8.4f} gapcenter = {cent:8.3f} localgap= {lg:8.4f}".format(
+                        n=n + 1, z=z / np.pi, gap=gw, cent=gc, lg=lgw
+                    )
+                )
+
+    if wcc:
+        for k in subbands:
+            print("eigenvalue {0}".format(k))
+            #        subbands[k].write_characters(degen_thresh=0.001,refUC=refUC,symmetries=symmetries)
+            wcc = subbands[k].wcc()
+            print(
+                "eigenvalue : #{0} \n  WCC are : {1} \n sumWCC={2}".format(
+                    k, wcc, np.sum(wcc) % 1
+                )
+            )
+
+    def short(x, nd=3):
+        fmt = "{{0:+.{0}f}}".format(nd)
+        if abs(x.imag) < 10 ** (-nd):
+            return fmt.format(x.real)
+        if abs(x.real) < 10 ** (-nd):
+            return fmt.format(x.imag) + "j"
+        return short(x.real, nd) + short(1j * x.imag)
+
+    if writebands:
+        bandstr.write_trace(
+            degen_thresh=degenthresh,
+            refUC=refuc,
+            shiftUC=shiftuc,
+            symmetries=symmetries,
+        )
+        for k, sub in subbands.items():
+            if isymsep is not None:
+                print(
+                    "\n\n\n\n ################################################ \n\n\n next subspace:  ",
+                    " , ".join(
+                        "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
+                    ),
+                )
+            sub.write_characters(
+                degen_thresh=degenthresh,
+                refUC=refuc,
+                shiftUC=shiftuc,
+                symmetries=symmetries,
+                kpnames=kpnames,
+                preline=preline,
+                plotFile=plotfile,
+            )
+
+    if plotbands:
+        for k, sub in subbands.items():
+            if isymsep is not None:
+                print(
+                    "\n\n\n\n ################################################ \n\n\n next subspace:  ",
+                    " , ".join(
+                        "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
+                    ),
+                )
+                fname = (
+                    "bands-"
+                    + suffix
+                    + "-"
+                    + "-".join(
+                        "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
+                    )
+                    + ".dat"
+                )
+                fname1 = (
+                    "bands-sym-"
+                    + suffix
+                    + "-"
+                    + "-".join(
+                        "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
+                    )
+                    + ".dat"
+                )
+            else:
+                fname = "bands-{0}.dat".format(suffix)
+                fname1 = "bands-sym-{0}.dat".format(suffix)
+            with open(fname, "w") as f:
+                f.write(sub.write_bands())
+            sub.write_trace_all(degenthresh, fname=fname1)
