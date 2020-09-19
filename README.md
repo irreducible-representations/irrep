@@ -1,4 +1,4 @@
-# Irrep
+# IrRep
 
 This is a code to determine symmetry eigenvalues of electronic states obtained by DFT codes, as well as irreducible representations, 
 wannier charge centers (1D) and many more
