@@ -208,9 +208,13 @@ def cli(
     suffix,
 ):
     """
-    Defines thsymmetriese "irrep" command-line tool interface.
+    Defines the "irrep" command-line tool interface.
     """
     # TODO: later, this can be split up into separate sub-commands (e.g. for zak, etc.)
+
+    # print("The code was called with the following command-line options:")
+    # for k, v in locals().items():
+    #     print("{}\t{}".format(k, v))
 
     # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
     if refuc:
