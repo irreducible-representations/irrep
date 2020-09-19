@@ -9,7 +9,7 @@ of [Bilbao Crystallographic Server](https://www.cryst.ehu.es).
 Help on usage can be obtained by typing
 
 ```
-irrep -h
+irrep --help
 ```
 
 Help is under construction and is far from being complete. If you have interest in the code and not sure how to use it, 
