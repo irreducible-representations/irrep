@@ -212,7 +212,7 @@ class Irrep:
         for isym in range(1, nsym_group + 1):
             ism, issym = [int(x) for x in f.readline().split()]
             assert ism == isym
-            logger.debug("ism,issym",ism,issym)
+            logger.debug("ism,issym", ism, issym)
             if issym == 0:
                 continue
             elif issym != 1:
@@ -242,7 +242,7 @@ class Irrep:
             self.characters = {
                 isym: self.characters[isym]() for isym in self.characters
             }
-        logger.debug("characters are:",self.characters)
+        logger.debug("characters are:", self.characters)
         assert len(self.characters) == self.nsym
 
     def __init__user(self, line, k_point):
@@ -252,7 +252,7 @@ class Irrep:
         :param k_point:
         :return:
         """
-        logger.debug("reading irrep line <{0}> for KP=<{1}> ".format(line,KP.str()))
+        logger.debug("reading irrep line <{0}> for KP=<{1}> ".format(line, k_point.str()))
         self.k = k_point.k
         self.kpname = k_point.name
         line = line.split()
@@ -269,7 +269,7 @@ class Irrep:
             )
         self.characters = {k_point.isym[i]: ch[i] for i in range(self.nsym)}
 
-        logger.debug("the irrep {0}  ch= {1}".format(self.name,self.characters))
+        logger.debug("the irrep {0}  ch= {1}".format(self.name, self.characters))
 
     def show(self):
         """
@@ -310,29 +310,31 @@ class IrrepTable:
             self.__init__user(SGnumber, spinor, name)
             return
         self.number = SGnumber
-        f = open(
+
+
+        with open(
             os.path.dirname(os.path.realpath(__file__))
             + "/TablesIrrepsLittleGroup/TabIrrepLittle_{0}.txt".format(self.number),
             "r",
-        )
-        self.nsym, self.name = f.readline().split()
-        self.spinor = spinor
-        self.nsym = int(self.nsym)
-        self.symmetries = [SymopTable(f.readline()) for i in range(self.nsym)]
-        assert f.readline().strip() == "#"
-        self.NK = int(f.readline())
-        self.irreps = []
-        try:
-            while True:
-                self.irreps.append(Irrep(f=f, nsym_group=self.nsym))
-                logger.debug("irrep appended:")
-                logger.debug(self.irreps[-1].show())
-                f.readline()
-        except EOFError:
-            pass
-        except IndexError as err:
-            logger.debug(err)
-            pass
+        ) as f:
+            self.nsym, self.name = f.readline().split()
+            self.spinor = spinor
+            self.nsym = int(self.nsym)
+            self.symmetries = [SymopTable(f.readline()) for i in range(self.nsym)]
+            assert f.readline().strip() == "#"
+            self.NK = int(f.readline())
+            self.irreps = []
+            try:
+                while True:
+                    self.irreps.append(Irrep(f=f, nsym_group=self.nsym))
+                    logger.debug("irrep appended:")
+                    logger.debug(self.irreps[-1].show())
+                    f.readline()
+            except EOFError:
+                pass
+            except IndexError as err:
+                logger.debug(err)
+                pass
 
         if self.spinor:
             self.irreps = [s for s in self.irreps if s.name.startswith("-")]
@@ -410,42 +412,50 @@ class IrrepTable:
         self.number = SG
         self.spinor = spinor
         if name is None:
-            name="{root}/irreptables/irreps-SG={SG}-{spinor}.dat".format(SG=self.number,spinor="spin" if self.spinor else "scal",root=os.path.dirname(__file__))
-            logger.debug("reading from a standard irrep table <{0}>".format(name) ) 
-        else:         
-            logger.debug("reading from a user-defined irrep table <{0}>".format(name) ) 
-            
-        lines=open(name).readlines()[-1::-1]
-        while len(lines)>0:
-            l=lines.pop().strip().split("=")
-#            logger.debug(l,l[0].lower())
-            if    l[0].lower()=='SG' : assert(int(l[1])==SG)
-            elif  l[0].lower()=='name' : self.name=l[1]
-            elif  l[0].lower()=='nsym' : self.nsym=int(l[1])
-            elif  l[0].lower()=='spinor' : assert(str2bool(l[1])==self.spinor)
-            elif  l[0].lower()=='symmetries':
-                print ('reading symmetries')
-                self.symmetries=[]
-                while len(self.symmetries)<self.nsym :
-                    l=lines.pop()
-#                    logger.debug(l)
-                    try: 
-                       self.symmetries.append( symop_table(l,fromUser=True) )
+            name = "{root}/irreptables/irreps-SG={SG}-{spinor}.dat".format(
+                SG=self.number,
+                spinor="spin" if self.spinor else "scal",
+                root=os.path.dirname(__file__),
+            )
+            logger.debug("reading from a standard irrep table <{0}>".format(name))
+        else:
+            logger.debug("reading from a user-defined irrep table <{0}>".format(name))
+
+        lines = open(name).readlines()[-1::-1]
+        while len(lines) > 0:
+            l = lines.pop().strip().split("=")
+            # logger.debug(l,l[0].lower())
+            if l[0].lower() == "SG":
+                assert int(l[1]) == SG
+            elif l[0].lower() == "name":
+                self.name = l[1]
+            elif l[0].lower() == "nsym":
+                self.nsym = int(l[1])
+            elif l[0].lower() == "spinor":
+                assert str2bool(l[1]) == self.spinor
+            elif l[0].lower() == "symmetries":
+                print("reading symmetries")
+                self.symmetries = []
+                while len(self.symmetries) < self.nsym:
+                    l = lines.pop()
+                    # logger.debug(l)
+                    try:
+                        self.symmetries.append(SymopTable(l, from_user=True))
                     except Exception as err:
                         logger.debug(err)
                         pass
                 break
 
-        logger.debug("symmetries are:\n"+"\n".join(s.str() for s in self.symmetries) )
+        logger.debug("symmetries are:\n" + "\n".join(s.str() for s in self.symmetries))
 
         self.irreps = []
         while len(lines) > 0:
             l = lines.pop().strip()
             try:
                 kp = KPoint(line=l)
-                logger.debug("kpoint successfully read:",kp.str())
+                logger.debug("kpoint successfully read:", kp.str())
             except Exception as err:
-                logger.debug( "error while reading k-point <{0}>".format(l),err)
+                logger.debug("error while reading k-point <{0}>".format(l), err)
                 try:
                     self.irreps.append(Irrep(line=l, k_point=kp))
                 except Exception as err:
