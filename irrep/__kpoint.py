@@ -23,7 +23,7 @@ from .__gvectors import calc_gvectors,symm_eigenvalues,NotSymmetryError,symm_mat
 from .__readfiles import AbinitHeader,Hartree_eV
 from .__readfiles import WAVECARFILE,record_abinit
 from .__aux import compstr
-from .__aux import bohr
+from .__aux import BOHR
 from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
 class Kpoint():
@@ -60,11 +60,6 @@ class Kpoint():
             self.WF,self.ig=self.__init_wannier(NBin,IBstart,IBend,Ecut,kpt=kpt,eigenval=eigenval)
         else:
             raise RuntimeError("unknown code : {}".format(code))
-
-        try:
-            self.upper=self.Energy[IBend]
-        except:
-            self.upper = np.NaN
 
         self.WF/=(np.sqrt(np.abs(np.einsum("ij,ij->i",self.WF.conj(),self.WF)))).reshape(self.Nband,1)
         self.SG=SG
@@ -175,6 +170,10 @@ class Kpoint():
         self.K=r[1:4]
         eigen=np.array(r[4:4+NBin*3]).reshape(NBin,3)[:,0]
         self.Energy=eigen[IBstart:IBend]
+        try:
+            self.upper=eigen[IBend]
+        except:
+            self.upper = np.NaN
 
         ig=calc_gvectors(self.K,self.RecLattice,Ecut0,npw,Ecut,spinor=self.spinor)
         selectG=np.hstack( (ig[3],ig[3]+int(npw/2)) ) if self.spinor else ig[3]
@@ -231,6 +230,11 @@ class Kpoint():
             raise RuntimeError("file {} contains {} bands , expected {}".format(fname,nbnd,NBin))
         nspinor=2 if self.spinor else 1	
 
+        try:
+            self.upper=eigenval[IBend]
+        except:
+            self.upper = np.NaN
+
         ig=calc_gvectors(self.K,self.RecLattice,Ecut,spinor=self.spinor,nplanemax=np.max([ngx,ngy,ngz])//2 )
 
         selectG=tuple(ig[0:3])
@@ -259,6 +263,11 @@ class Kpoint():
         eigen=np.array(kptxml.find("eigenvalues").text.split(),dtype=float)
 
         self.Energy=eigen[IBstart:IBend]*Hartree_eV
+        try:
+            self.upper=eigen[IBend]*Hartree_eV
+        except:
+            self.upper = np.NaN
+
         npw=int(kptxml.find("npw").text)
 #        kg= np.random.randint(100,size=(npw,3))-50
         npwtot=npw*(2 if self.spinor else 1)
