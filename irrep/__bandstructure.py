@@ -147,22 +147,39 @@ class BandStructure():
 
 
     def __init_wannier(self,prefix,Ecut=None,IBstart=None,IBend=None,kplist=None,EF=None,onlysym=False):
-        fwin = [ l.strip().lower() for l in open(prefix+".win").readlines() ]
-        fwin = [ [ s.strip() for s in l.split("=") ] for l in fwin if len(l)>0 and l[0] not in ('!','#') ]
-        ind=np.array([l[0] for l in fwin])
         
-        def get_param(key,tp,default=None):
+        if Ecut is None:
+            raise RuntimeError("Ecut mandatory for Wannier90")
+        
+        fwin = [ l.strip().lower() for l in open(prefix+".win").readlines() ]
+        
+        def split(l):
+            if "=" in l: return l.split("=")
+            elif ":" in l: return l.split(":")
+            else: return l.split()
+        
+        fwin = [ [ s.strip() for s in split(l) ] for l in fwin if len(l)>0 and l[0] not in ('!','#') ]
+        ind=np.array([l[0] for l in fwin])
+        # print(fwin) #com
+
+        def get_param(key,tp,default=None,join=False):
             i=np.where(ind==key)[0]
             if len(i)==0 :
                 if default is None:
-                    raise RuntuimeError("parameter {} was not found in {}.win".format(key,prefix))
+                    raise RuntimeError("parameter {} was not found in {}.win".format(key,prefix))
                 else:
                     return default
             if len(i)>1:
-                raise RuntuimeError("parameter {} was not found {} times in {}.win".format(key,len(i),prefix))
-            print ('i=',i,len(i))
-            print(i,fwin[i[0]])
-            return tp(fwin[i[0]][1])
+                raise RuntimeError("parameter {} was found {} times in {}.win".format(key,len(i),prefix))
+            x = fwin[i[0]][1:] #mp_grid should work
+            if len(x)>1:
+                if join:
+                    x = " ".join(x)
+                else:
+                    raise RuntimeError("length {} found for parameter {}, rather than lenght 1 in {}.win".format(len(x),key,prefix))
+            else:
+                x = fwin[i[0]][1]
+            return tp(x)
         
         NBin=get_param("num_bands",int)
 #        print ("nbands=",NBin)
@@ -173,40 +190,43 @@ class BandStructure():
         self.Lattice=None
         kpred=None
 
-#        kplist-=1
-#        kplist=np.array([k for k in kplist if k>=0 and k<NK])
+        if kplist is None:
+            kplist=np.arange(NK)+1
+        else : 
+            # kplist-=1 #files start from 1 in W90
+            kplist=np.array([k for k in kplist if k>=0 and k<NK])
         found_atoms=False
 ## todo : use an iterator to avoid double looping over lines between "begin" and "end"
         iterwin=iter(fwin)
         def check_end(name):
-            s=next(iterwin)[0]
-            if " ".join(s.split())!="end "+name:
-                raise RuntimeError("expected 'end {}', found {} instead".format(name,s) )
+            s=next(iterwin)
+            if " ".join(s)!="end "+name:
+                raise RuntimeError("expected 'end {}, found {}'".format(name," ".join(s)) )
         for l in iterwin:
             if l[0].startswith("begin"):
-                if l[0].split()[1]=="unit_cell_cart":
+                if l[1]=="unit_cell_cart":
                     if self.Lattice is not None:
                         raise RuntimeError("'begin unit_cell_cart' found more then once  in {}.win".format(prefix))
                     j=0
                     l1=next(iterwin) 
                     if l1[0] in ("bohr","ang"):
                         units=l1[0]
-                        L=[next(iterwin)[0] for i in range(3)]
+                        L=[next(iterwin) for i in range(3)]
                     else:
                         units="ang"
-                        L=[l1][0]+[next(iterwin)[0] for i in range(2)]
-                    self.Lattice=np.array( [ m.split()[:3] for m in L ],dtype=float)
+                        L=l1+[next(iterwin)[0] for i in range(2)]
+                    self.Lattice=np.array(L,dtype=float)
                     if units=="bohr":
                         self.Lattice*=BOHR
                     check_end("unit_cell_cart")
-                elif l[0].split()[1]=="kpoints":
+                elif l[1]=="kpoints":
                     if kpred is not None:
                         raise RuntimeError("'begin kpoints' found more then once  in {}.win".format(prefix))
-                    kpred=np.array([next(iterwin)[0].split()[:3] for i in range(NK)],dtype=float)
+                    kpred=np.array([next(iterwin) for i in range(NK)],dtype=float)
 #                    kpred=np.array([kpred[j].split()[:3] for j in kplist],dtype=float)
                     check_end("kpoints")
-                elif l[0].split()[1].startswith("atoms_"):
-                    if l[0].split()[1][6:10] not in ("cart","frac"):
+                elif l[1].startswith("atoms_"):
+                    if l[1][6:10] not in ("cart","frac"):
                         raise RuntimeError("unrecognised block :  '{}' ".format(l[0]))
                     if found_atoms :
                         raise RuntimeError("'begin atoms_***' found more then once  in {}.win".format(prefix))
@@ -214,18 +234,19 @@ class BandStructure():
                     xred=[]
                     nameat=[]
                     while True:
-                        l1=next(iterwin)[0].split()
+                        l1=next(iterwin)
                         if l1[0]=="end":
-                            if l1[1]!=l[0].split()[1]:
+                            # if l1[1]!=l[0].split()[1]:
+                            if l1[1]!=l[1]:
 #                                print (l1[1],l[0].split()[1])
-                                raise RuntimeError("{}' ended with 'end {}'".format(l[0],l1[1])) 
+                                raise RuntimeError("'{}' ended with 'end {}'".format(" ".join(l),l1[1])) 
                             break 
                         nameat.append(l1[0])
                         xred.append(l1[1:4])
                     typatdic={n:i+1 for i,n in enumerate(set(nameat))}
                     typat=[typatdic[n] for n in nameat]
                     xred=np.array(xred)
-                    if l[0].split()[1][6:10]=="cart":
+                    if l[1][6:10]=="cart":
                         xred=xred.dot(np.linalg.inv(self.Lattice))
 
 #        print ("lattice vectors:\n",self.Lattice)
