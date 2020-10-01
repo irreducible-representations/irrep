@@ -22,7 +22,7 @@ import copy
 from .__spacegroup import SpaceGroup 
 from .__readfiles import AbinitHeader,Hartree_eV
 from .__kpoint import Kpoint
-from .__aux import str2bool,bohr
+from .__aux import str2bool,BOHR
 import functools
 
 from .__readfiles import record_abinit,WAVECARFILE
@@ -197,7 +197,7 @@ class BandStructure():
                         L=[l1][0]+[next(iterwin)[0] for i in range(2)]
                     self.Lattice=np.array( [ m.split()[:3] for m in L ],dtype=float)
                     if units=="bohr":
-                        self.Lattice*=bohr
+                        self.Lattice*=BOHR
                     check_end("unit_cell_cart")
                 elif l[0].split()[1]=="kpoints":
                     if kpred is not None:
@@ -282,13 +282,13 @@ class BandStructure():
 #        print ('spinor=',self.spinor)
         struct=inp.find("atomic_structure")
         nat=struct.attrib['nat']
-        self.Lattice=bohr*np.array([struct.find("cell").find('a{}'.format(i+1)).text.strip().split() for i in range(3)],dtype=float)
+        self.Lattice= BOHR * np.array([struct.find("cell").find('a{}'.format(i + 1)).text.strip().split() for i in range(3)], dtype=float)
         xcart=[]
         typat=[]
         for at in struct.find("atomic_positions").findall("atom"):
             typat.append(atnumbers[at.attrib["name"]])
             xcart.append(at.text.split())
-        xred=(np.array(xcart,dtype=float)*bohr).dot(np.linalg.inv(self.Lattice))
+        xred=(np.array(xcart,dtype=float) * BOHR).dot(np.linalg.inv(self.Lattice))
 #        print ("xred=",xred)
         self.spacegroup=SpaceGroup(cell=(self.Lattice,xred,typat),spinor=self.spinor)
         if onlysym: return
