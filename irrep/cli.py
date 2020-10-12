@@ -28,8 +28,7 @@ import click
 from .__spacegroup import SpaceGroup
 from .__bandstructure import BandStructure
 from .__aux import str2bool, str2list
-
-from irrep import __version__ as version
+from . import __version__ as version
 
 
 @click.version_option(version)
@@ -43,6 +42,8 @@ from irrep import __version__ as version
             # #  #  #  #  #      #
             # #   # #   # #####  #
 
+\b
+version {version}
 \b
 Calculates the expectation values of symmetry operations 
 <Psi_nk | T(g) | Psi_nk >  as well as irreducible representations,
@@ -60,7 +61,7 @@ do not hesitate to contact the author:
 > Stepan S. Tsirkin  
 > University of Zurich  
 > stepan.tsirkin@physik.uzh.ch
-"""
+""".format(version=version)
 )
 @click.option(
     "-Ecut",

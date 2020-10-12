@@ -279,15 +279,13 @@ class SpaceGroup():
         ind=[]
         dt=[]
         errtxt=""
-        invlattice=np.linalg.inv(self.Lattice)
         for j,sym in enumerate(self.symmetries):
             R,t=sym.rotation_refUC(refUC),sym.translation_refUC(refUC,shiftUC)
             found=False
             for i,sym2 in enumerate(table.symmetries):
-                # t1=np.dot(sym2.t-t,invlattice)%1
-                t1=(sym2.t-t)%1
+                t1=np.dot(sym2.t-t,refUC)%1
+                # t1=(sym2.t-t)%1
                 t1[1-t1<1e-5]=0
-
                 if np.allclose(R,sym2.R):
                     if np.allclose(t1,[0,0,0], atol=1e-6):
                         ind.append(i)
