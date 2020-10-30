@@ -21,7 +21,7 @@ import numpy as np
 from math import log,pi
 from scipy.linalg import expm
 import spglib
-from .__irreptable import IrrepTable
+from irreptables import IrrepTable
 import scipy
 from scipy.optimize import minimize
 from .__aux import str_

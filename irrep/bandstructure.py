@@ -19,9 +19,9 @@
 import numpy as np
 import numpy.linalg as la
 import copy
-from .__spacegroup import SpaceGroup 
+from .spacegroup import SpaceGroup 
 from .__readfiles import AbinitHeader,Hartree_eV
-from .__kpoint import Kpoint
+from .kpoint import Kpoint
 from .__aux import str2bool,BOHR
 import functools
 
@@ -48,8 +48,8 @@ class BandStructure():
         if spinor is None :
             raise RuntimeError("spinor should be specified in the command line for VASP bandstructure")
         self.spacegroup=SpaceGroup(inPOSCAR=fPOS,spinor=spinor)
-        if onlysym: return
         self.spinor=spinor
+        if onlysym: return
         self.efermi=(0. if EF is None else EF)
         print ("Efermi = ",self.efermi,EF)
         WCF=WAVECARFILE(fWAV)
@@ -540,8 +540,9 @@ class BandStructure():
             f.write(KP.write_trace_all(degen_thresh,symmetries=symmetries,efermi=self.efermi,kpline=KPL))
 
 
-    def KPOINTSline(self,breakTHRESH=0.1):
-        KPcart=np.array([k.K for k in self.kpoints]).dot(self.RecLattice)
+    def KPOINTSline(self,kpred=None,breakTHRESH=0.1):
+        if kpred is None: kpred=[k.K for k in self.kpoints]
+        KPcart=np.array(kpred).dot(self.RecLattice)
         K=np.zeros(KPcart.shape[0])
         k=np.linalg.norm(KPcart[1:,:]-KPcart[:-1,:],axis=1)
         k[k>breakTHRESH]=0.

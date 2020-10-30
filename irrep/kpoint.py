@@ -22,7 +22,7 @@ from .__gvectors import calc_gvectors,symm_eigenvalues,NotSymmetryError,symm_mat
 #from spacegroup import SymmetryOperation,SpaceGroup
 from .__readfiles import AbinitHeader,Hartree_eV
 from .__readfiles import WAVECARFILE,record_abinit
-from .__aux import compstr
+from .__aux import compstr,is_round
 from .__aux import BOHR
 from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
@@ -79,6 +79,62 @@ class Kpoint():
 #        other.write_characters()
 #        print ("self overlap:\n",self.overlap(self))
         return other
+
+
+    def unfold(self,supercell,kptPBZ,degen_thresh=1e-4):
+        """unfolds a kpoint of a supercell onto the point of the primitivecell kptPBZ
+           returns an array of 2 (5 in case of spinors) columns:
+           E , weight , Sx , Sy , Sz
+           """
+        if not is_round(kptPBZ.dot(supercell.T) -self.K,prec=1e-5) : 
+             raise RuntimeError("unable to unfold {} to {}, withsupercell={}".format(self.K,kptPBZ,supercell))
+        g_shift=( (kptPBZ -self.K.dot(np.linalg.inv(supercell.T))) )
+#        print ("g_shift={}".format(g_shift))
+        selectG= np.array(np.where([ is_round(dg,prec=1e-4) for dg in  (self.ig[:3].T.dot(np.linalg.inv(supercell.T))-g_shift) ])[0])
+#        print ("unfolding {} to {}, selecting {} of {} g-vectors \n".format(self.K,kptPBZ,len(selectG),self.ig.shape[1],selectG,self.ig.T))
+        if self.spinor:
+            selectG=np.hstack( (selectG,selectG+self.NG)  )
+        WF=self.WF[:,selectG]
+        result=[]
+        for b1,b2,E,matrices in  self.get_rho_spin(degen_thresh):
+            proj=np.array([[WF[i].conj().dot(WF[j]) for j in range(b1,b2)] for i in range(b1,b2)])
+            result.append([E,]+[np.trace(proj.dot(M)).real for M in matrices])
+        return np.array(result)
+        
+        
+
+
+    def get_rho_spin(self,degen_thresh=1e-4):
+        if not hasattr(self,'rho_spin'):
+            self.rho_spin={}
+        if degen_thresh not in self.rho_spin:
+                self.rho_spin[degen_thresh]=self.__eval_rho_spin(degen_thresh)
+        return self.rho_spin[degen_thresh]
+
+    @property
+    def NG(self):
+        return self.ig.shape[0]
+
+    def __eval_rho_spin(self,degen_thresh):
+        borders=np.hstack([ [0],np.where(self.Energy[1:]-self.Energy[:-1]>degen_thresh)[0]+1,[self.Nband] ])
+        result=[]
+        for b1,b2 in zip(borders,borders[1:]):
+            E=self.Energy[b1:b2].mean()
+            W=np.array([[self.WF[i].conj().dot(self.WF[j]) for j in range(b1,b2)] for i in range(b1,b2)])
+            if self.spinor:
+                ng=self.NG
+                Smatrix=[[ np.array([[self.WF[i,ng*s:ng*(s+1)].conj().dot(self.WF[j,ng*t:ng*(t+1)]) 
+                              for j in range(b1,b2)] for i in range(b1,b2)])    # band indices
+                                for t in (0,1) ] for s in (0,1)]    # spin indices
+                Sx=Smatrix[0][1]+Smatrix[1][0]
+                Sy=1j*(-Smatrix[0][1]+Smatrix[1][0])
+                Sz=Smatrix[0][0]-Smatrix[1][1]
+                result.append((b1,b2,E,(W,Sx,Sy,Sz)))
+            else: 
+                result.append((b1,b2,E,(W,)))
+        return result
+
+
                     
     def Separate(self,symop,degen_thresh=1e-5,groupKramers=True):
 #   separates the bandstructure according to symmetry eigenvalues returns a dictionar of Kpoint objects eigval:Kpoint

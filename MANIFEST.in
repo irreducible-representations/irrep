@@ -1,1 +1,1 @@
-include irrep/irreptables/*.dat
+include irreptables/tables/*.dat

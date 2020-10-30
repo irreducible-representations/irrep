@@ -14,6 +14,7 @@
 ##  e-mail: stepan.tsirkin@physik.uzh.ch                         #
 ##################################################################
 
+from ._version import __version__
 
 import copy
 import os
@@ -22,7 +23,7 @@ import logging
 
 import numpy as np
 
-from .__aux import str2bool, str2list_space, str_
+from irrep.__aux import str2bool, str2list_space, str_
 
 # using a logger to print useful information during debugging,
 # set to logging.INFO to disable debug messages
@@ -361,7 +362,7 @@ class IrrepTable:
         :return:
         """
         if name is None:
-            name = "irreptables/irreps-SG={SG}-{spinor}.dat".format(
+            name = "tables/irreps-SG={SG}-{spinor}.dat".format(
                 SG=self.number, spinor="spin" if self.spinor else "scal"
             )
         fout = open(name, "w")
@@ -412,7 +413,7 @@ class IrrepTable:
         self.number = SG
         self.spinor = spinor
         if name is None:
-            name = "{root}/irreptables/irreps-SG={SG}-{spinor}.dat".format(
+            name = "{root}/tables/irreps-SG={SG}-{spinor}.dat".format(
                 SG=self.number,
                 spinor="spin" if self.spinor else "scal",
                 root=os.path.dirname(__file__),

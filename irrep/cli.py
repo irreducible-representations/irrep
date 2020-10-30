@@ -25,8 +25,8 @@ import datetime
 import math
 import click
 
-from .__spacegroup import SpaceGroup
-from .__bandstructure import BandStructure
+from .spacegroup import SpaceGroup
+from .bandstructure import BandStructure
 from .__aux import str2bool, str2list
 from . import __version__ as version
 

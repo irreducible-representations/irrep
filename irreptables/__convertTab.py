@@ -15,7 +15,7 @@
 ##################################################################
 
 
-from  .__irreptable import IrrepTable as IRT
+from  . import IrrepTable as IRT
 
 
 

@@ -54,4 +54,9 @@ def str2bool(v1):
 
 
 def str_(x):
-   return str(round(x,5))
+    return str(round(x,5))
+
+
+def is_round(A,prec=1e-14):
+     """ returns true if all values in A are integers, at least within machine precision"""
+     return( np.linalg.norm(A-np.round(A))<prec )
