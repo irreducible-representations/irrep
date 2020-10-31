@@ -184,7 +184,16 @@ class BandStructure():
         NBin=get_param("num_bands",int)
 #        print ("nbands=",NBin)
         self.spinor = str2bool(get_param("spinors",str))
-        self.efermi=get_param("fermi_energy",float,0.) if EF is None else EF
+        if EF is None :
+            try:
+                self.efermi=get_param("fermi_energy",float,0.) if EF is None else EF
+            except Exception as err:
+                print ("WARNING : fermi_energy not found.Setting as zero : `{}`".format(err))
+                self.efermi=0
+        else :
+            self.efermi=EF
+          
+
         NK=np.prod(np.array(get_param("mp_grid",str).split(),dtype=int))
         
         self.Lattice=None
@@ -329,7 +338,11 @@ class BandStructure():
         self.Ecut=Ecut
         self.RecLattice=np.array([np.cross(self.Lattice[(i+1)%3],self.Lattice[(i+2)%3]) for i in range(3)] 
                                        )*2*np.pi/np.linalg.det(self.Lattice)
-        self.efermi=float(bandstr.find('fermi_energy').text)*Hartree_eV
+        try:
+            self.efermi=float(bandstr.find('fermi_energy').text)*Hartree_eV
+        except Exception as err:
+            print ("WARNING : fermi_energy not found.Setting as zero : `{}`".format(err))
+            self.efermi=0
         kpall=bandstr.findall('ks_energies')
         NK=len(kpall)
         if kplist is None:
@@ -546,7 +559,7 @@ class BandStructure():
         K=np.zeros(KPcart.shape[0])
         k=np.linalg.norm(KPcart[1:,:]-KPcart[:-1,:],axis=1)
         k[k>breakTHRESH]=0.
-        K[1:]=np.cumsum(np.linalg.norm(KPcart[1:,:]-KPcart[:-1,:],axis=1))
+        K[1:]=np.cumsum(k)
         return K
 
 
