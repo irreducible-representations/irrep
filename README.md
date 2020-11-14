@@ -79,3 +79,32 @@ The files that form the code are organized following a structure that will be de
 - LICESE: declaration of the license under which the code is made available.
 - setup.py: routines to install the code.
 - uploadpypi.sh: to upgrade the code in Pypi. (only for owner's use)
+
+## Development
+
+To develop on `IrRep`, follow these steps:
+
+1. Clone the repository to your local computer, `git clone ...`
+2. Ensure you have a modern version of Python installed (3.x+). We recommend 3.6 or higher.
+3. Create a new development environment. Either use a virtual environment, for example:
+   ```
+   python -m venv /path/to/my_irrep_dev_env
+   ```
+   or, if you're using [anaconda](), a new conda environment.
+   ```
+   conda create --name my_irrep_dev_env
+   ```
+4. Activate this virtual environment or conda environment, e.g. by running 
+   `source activate /path/to/my_irrep_dev_env/bin/activate` or 
+   `conda activate my_irrep_dev_env` as appropriate.
+5. Go into the repository directory and run `python setup.py develop`.
+6. To run tests you will also need to run `pip install pytest` and then 
+   tests can be run by running `pytest`. Currently, tests will run the 
+   examples in the `examples` directory and verify their output against a 
+   known output.
+7. Make changes to the code as required. The `irrep` command line tool 
+   will also be available inside this environment.
+
+You can verify your development environment by opening a Python interpretor 
+(e.g. running `python`) and running `import irrep` and then `print(irrep.__file__)`.
+This should print the path to your local repository containing irrep.
