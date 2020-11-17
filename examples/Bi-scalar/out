@@ -144,7 +144,7 @@ k-point  11 :[0. 0. 0.]
   -0.8601  |        2     | GM3+(1.0)  |  2.0000   2.0000  -1.0000  -1.0000  -1.0000  -1.0000   0.0000   0.0000  -0.0000  -0.0000  -0.0000  -0.0000
 inversion is # 2
 number of inversions-odd states :  1
-Gap with upper bands :  nan
+Gap with upper bands :  3.663013648936959
 number of inversions-odd states :  1
-Minimal direct gap: inf  eV
-indirect  gap: inf  eV
+Minimal direct gap: 3.663013648936959  eV
+indirect  gap: 3.663013648936959  eV
