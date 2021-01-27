@@ -231,7 +231,7 @@ class BandStructure():
                 elif l[1]=="kpoints":
                     if kpred is not None:
                         raise RuntimeError("'begin kpoints' found more then once  in {}.win".format(prefix))
-                    kpred=np.array([next(iterwin) for i in range(NK)],dtype=float)
+                    kpred=np.array([next(iterwin)[:3] for i in range(NK)],dtype=float)
 #                    kpred=np.array([kpred[j].split()[:3] for j in kplist],dtype=float)
                     check_end("kpoints")
                 elif l[1].startswith("atoms_"):
@@ -395,7 +395,7 @@ class BandStructure():
         if kpnames is not None and refUC is not None:
             for kpname,KP in zip(kpnames,self.kpoints):
                 irreps=self.spacegroup.get_irreps_from_table(refUC,shiftUC,kpname,KP.K)
-                ninv,low,up=KP.write_characters(degen_thresh,irreptable=irreps,symmetries=symmetries,preline=preline,efermi=self.efermi)
+                ninv,low,up=KP.write_characters(degen_thresh,irreptable=irreps,symmetries=symmetries,preline=preline,efermi=self.efermi,plotFile=pFile,kpl=kpline)
                 NBANDINV+=ninv
                 GAP=min(GAP,up-low)
                 Up=min(Up,up)
