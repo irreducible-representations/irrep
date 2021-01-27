@@ -1,10 +1,4 @@
 'NoneType' object has no attribute 'split'
-i= [0] 1
-[0] ['num_bands', '6']
-i= [3] 1
-[3] ['spinors', '.true.']
-i= [29] 1
-[29] ['mp_grid', '8 8 8']
 
 
  ----------INFORMATION ABOUT THE UNIT CELL----------- 
@@ -18,7 +12,7 @@ Primitive vectors :
  [['0.0' '0.0' '0.0']
  ['0.5' '0.5' '-0.5']] 
  Atom type indices: 
- [2, 1]
+ [1, 2]
 
  Reciprocal lattice:
  [[-0.9726293 -0.9726293  0.9726293]
@@ -47,7 +41,7 @@ spinor   : | 1.000+0.000j  0.000+0.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.        0.707107  0.707107] ; angle =  0 , inversion : False 
+axis: [0. 0. 1.] ; angle =  0 , inversion : False 
  #  2
 rotation : | -1   0   0 |     in refUC : | -1   0   0 |
            |  0  -1   0 |                |  0  -1   0 |
@@ -57,13 +51,13 @@ spinor   : | 1.000+0.000j  0.000+0.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [0.       0.707107 0.707107] ; angle =  0 , inversion : True 
+axis: [0. 0. 1.] ; angle =  0 , inversion : True 
  #  3
 rotation : |  1   1   1 |     in refUC : |  0  -1   0 |
            |  0   0  -1 |                |  1   0   0 |
            | -1   0   0 |                |  0   0   1 |
-spinor   : | 0.707-0.707j -0.000-0.000j |
-           | 0.000-0.000j  0.707+0.707j |
+spinor   : | 0.707-0.707j  0.000+0.000j |
+           | 0.000+0.000j  0.707+0.707j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
@@ -72,7 +66,7 @@ axis: [0. 0. 1.] ; angle = 1/2 pi, inversion : False
 rotation : | -1  -1  -1 |     in refUC : |  0   1   0 |
            |  0   0   1 |                | -1   0   0 |
            |  1   0   0 |                |  0   0  -1 |
-spinor   : | 0.707-0.707j -0.000+0.000j |
+spinor   : | 0.707-0.707j  0.000+0.000j |
            | 0.000+0.000j  0.707+0.707j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
@@ -82,12 +76,12 @@ axis: [0. 0. 1.] ; angle = 1/2 pi, inversion : True
 rotation : |  0   1   0 |     in refUC : | -1   0   0 |
            |  1   0   0 |                |  0  -1   0 |
            | -1  -1  -1 |                |  0   0   1 |
-spinor   : | 0.000+1.000j  0.000-0.000j |
-           | 0.000-0.000j  0.000-1.000j |
+spinor   : | 0.000-1.000j  0.000+0.000j |
+           | 0.000+0.000j  0.000+1.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [ 0.  0. -1.] ; angle = 1 pi, inversion : False 
+axis: [0. 0. 1.] ; angle = 1 pi, inversion : False 
  #  6
 rotation : |  0  -1   0 |     in refUC : |  1   0   0 |
            | -1   0   0 |                |  0   1   0 |
@@ -97,27 +91,27 @@ spinor   : | 0.000-1.000j  0.000+0.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.  0.  1.] ; angle = 1 pi, inversion : True 
+axis: [0. 0. 1.] ; angle = 1 pi, inversion : True 
  #  7
 rotation : |  0   0  -1 |     in refUC : |  0   1   0 |
            |  1   1   1 |                | -1   0   0 |
            |  0  -1   0 |                |  0   0   1 |
-spinor   : | 0.707+0.707j  0.000-0.000j |
-           | 0.000-0.000j  0.707-0.707j |
+spinor   : | 0.707+0.707j  0.000+0.000j |
+           | 0.000+0.000j  0.707-0.707j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.  0.  1.] ; angle = -1/2 pi, inversion : False 
+axis: [0. 0. 1.] ; angle = -1/2 pi, inversion : False 
  #  8
 rotation : |  0   0   1 |     in refUC : |  0  -1   0 |
            | -1  -1  -1 |                |  1   0   0 |
            |  0   1   0 |                |  0   0  -1 |
-spinor   : | 0.707+0.707j  0.000-0.000j |
-           |-0.000-0.000j  0.707-0.707j |
+spinor   : | 0.707+0.707j  0.000+0.000j |
+           | 0.000+0.000j  0.707-0.707j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.  0.  1.] ; angle = -1/2 pi, inversion : True 
+axis: [0. 0. 1.] ; angle = -1/2 pi, inversion : True 
  #  9
 rotation : |  0   0   1 |     in refUC : |  1   0   0 |
            | -1  -1  -1 |                |  0  -1   0 |
@@ -147,37 +141,37 @@ spinor   : | 0.000+0.000j  0.707-0.707j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [ 0.707107 -0.707107 -0.      ] ; angle = 1 pi, inversion : False 
+axis: [ 0.707107 -0.707107  0.      ] ; angle = 1 pi, inversion : False 
  #  12
 rotation : |  1   0   0 |     in refUC : |  0   1   0 |
            |  0   1   0 |                |  1   0   0 |
            | -1  -1  -1 |                |  0   0   1 |
-spinor   : | 0.000+0.000j  0.707-0.707j |
-           |-0.707-0.707j -0.000+0.000j |
+spinor   : | 0.000+0.000j -0.707+0.707j |
+           | 0.707+0.707j -0.000+0.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [ 0.707107 -0.707107 -0.      ] ; angle = 1 pi, inversion : True 
+axis: [-0.707107  0.707107  0.      ] ; angle = 1 pi, inversion : True 
  #  13
 rotation : | -1  -1  -1 |     in refUC : | -1   0   0 |
            |  0   0   1 |                |  0   1   0 |
            |  0   1   0 |                |  0   0  -1 |
-spinor   : |-0.000-0.000j  1.000+0.000j |
-           |-1.000+0.000j -0.000+0.000j |
+spinor   : | 0.000+0.000j -1.000+0.000j |
+           | 1.000+0.000j  0.000+0.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0. -1.  0.] ; angle = 1 pi, inversion : False 
+axis: [0. 1. 0.] ; angle = 1 pi, inversion : False 
  #  14
 rotation : |  1   1   1 |     in refUC : |  1   0   0 |
            |  0   0  -1 |                |  0  -1   0 |
            |  0  -1   0 |                |  0   0   1 |
-spinor   : |-0.000+0.000j -1.000-0.000j |
-           | 1.000-0.000j -0.000-0.000j |
+spinor   : | 0.000+0.000j -1.000+0.000j |
+           | 1.000+0.000j  0.000+0.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [ 0.  1. -0.] ; angle = 1 pi, inversion : True 
+axis: [0. 1. 0.] ; angle = 1 pi, inversion : True 
  #  15
 rotation : |  0  -1   0 |     in refUC : |  0   1   0 |
            | -1   0   0 |                |  1   0   0 |
@@ -187,17 +181,17 @@ spinor   : | 0.000+0.000j -0.707-0.707j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [ 0.707107  0.707107 -0.      ] ; angle = 1 pi, inversion : False 
+axis: [0.707107 0.707107 0.      ] ; angle = 1 pi, inversion : False 
  #  16
 rotation : |  0   1   0 |     in refUC : |  0  -1   0 |
            |  1   0   0 |                | -1   0   0 |
            |  0   0   1 |                |  0   0   1 |
-spinor   : | 0.000+0.000j  0.707+0.707j |
-           |-0.707+0.707j -0.000+0.000j |
+spinor   : | 0.000+0.000j -0.707-0.707j |
+           | 0.707-0.707j -0.000+0.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.707107 -0.707107  0.      ] ; angle = 1 pi, inversion : True 
+axis: [0.707107 0.707107 0.      ] ; angle = 1 pi, inversion : True 
  #  17
 rotation : |  0   0   1 |     in refUC : |  0   0   1 |
            |  0   1   0 |                |  1   0   0 |
@@ -207,7 +201,7 @@ spinor   : | 0.500-0.500j -0.500-0.500j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [0.57735 0.57735 0.57735] ; angle = 2/3 pi, inversion : False 
+axis: [-0.57735 -0.57735 -0.57735] ; angle = -2/3 pi, inversion : False 
  #  18
 rotation : |  0   0  -1 |     in refUC : |  0   0  -1 |
            |  0  -1   0 |                | -1   0   0 |
@@ -217,7 +211,7 @@ spinor   : | 0.500-0.500j -0.500-0.500j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [0.57735 0.57735 0.57735] ; angle = 2/3 pi, inversion : True 
+axis: [-0.57735 -0.57735 -0.57735] ; angle = -2/3 pi, inversion : True 
  #  19
 rotation : | -1   0   0 |     in refUC : |  0   0   1 |
            |  0   0  -1 |                |  0  -1   0 |
@@ -232,12 +226,12 @@ axis: [0.707107 0.       0.707107] ; angle = 1 pi, inversion : False
 rotation : |  1   0   0 |     in refUC : |  0   0  -1 |
            |  0   0   1 |                |  0   1   0 |
            |  0   1   0 |                | -1   0   0 |
-spinor   : | 0.000+0.707j  0.000+0.707j |
-           | 0.000+0.707j  0.000-0.707j |
+spinor   : | 0.000-0.707j  0.000-0.707j |
+           | 0.000-0.707j  0.000+0.707j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.707107  0.       -0.707107] ; angle = 1 pi, inversion : True 
+axis: [0.707107 0.       0.707107] ; angle = 1 pi, inversion : True 
  #  21
 rotation : | -1  -1  -1 |     in refUC : |  0   0   1 |
            |  1   0   0 |                | -1   0   0 |
@@ -267,7 +261,7 @@ spinor   : | 0.707+0.000j -0.707+0.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [ 0. -1.  0.] ; angle = -1/2 pi, inversion : False 
+axis: [0. 1. 0.] ; angle = 1/2 pi, inversion : False 
  #  24
 rotation : |  0   1   0 |     in refUC : |  0   0  -1 |
            | -1  -1  -1 |                |  0  -1   0 |
@@ -277,7 +271,7 @@ spinor   : | 0.707+0.000j -0.707+0.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [ 0. -1.  0.] ; angle = -1/2 pi, inversion : True 
+axis: [0. 1. 0.] ; angle = 1/2 pi, inversion : True 
  #  25
 rotation : |  1   0   0 |     in refUC : |  0   0  -1 |
            | -1  -1  -1 |                |  1   0   0 |
@@ -287,7 +281,7 @@ spinor   : | 0.500-0.500j  0.500+0.500j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.57735 -0.57735  0.57735] ; angle = 2/3 pi, inversion : False 
+axis: [ 0.57735  0.57735 -0.57735] ; angle = -2/3 pi, inversion : False 
  #  26
 rotation : | -1   0   0 |     in refUC : |  0   0   1 |
            |  1   1   1 |                | -1   0   0 |
@@ -377,7 +371,7 @@ spinor   : | 0.500+0.500j  0.500+0.500j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [0.57735 0.57735 0.57735] ; angle = -2/3 pi, inversion : True 
+axis: [-0.57735 -0.57735 -0.57735] ; angle = 2/3 pi, inversion : True 
  #  35
 rotation : |  0  -1   0 |     in refUC : |  1   0   0 |
            |  0   0  -1 |                |  0   0   1 |
@@ -427,7 +421,7 @@ spinor   : | 0.000-0.707j -0.707+0.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.        0.707107  0.707107] ; angle = 1 pi, inversion : False 
+axis: [0.       0.707107 0.707107] ; angle = 1 pi, inversion : False 
  #  40
 rotation : |  1   0   0 |     in refUC : |  1   0   0 |
            | -1  -1  -1 |                |  0   0  -1 |
@@ -437,7 +431,7 @@ spinor   : | 0.000-0.707j -0.707+0.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.        0.707107  0.707107] ; angle = 1 pi, inversion : True 
+axis: [0.       0.707107 0.707107] ; angle = 1 pi, inversion : True 
  #  41
 rotation : |  0   1   0 |     in refUC : |  0  -1   0 |
            | -1  -1  -1 |                |  0   0  -1 |
@@ -447,7 +441,7 @@ spinor   : | 0.500-0.500j  0.500-0.500j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.57735  0.57735 -0.57735] ; angle = -2/3 pi, inversion : False 
+axis: [ 0.57735 -0.57735  0.57735] ; angle = 2/3 pi, inversion : False 
  #  42
 rotation : |  0  -1   0 |     in refUC : |  0   1   0 |
            |  1   1   1 |                |  0   0   1 |
@@ -467,17 +461,17 @@ spinor   : | 0.000-0.707j  0.707+0.000j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.       -0.707107  0.707107] ; angle = 1 pi, inversion : False 
+axis: [ 0.       -0.707107  0.707107] ; angle = 1 pi, inversion : False 
  #  44
 rotation : |  0   0   1 |     in refUC : |  1   0   0 |
            |  0   1   0 |                |  0   0   1 |
            |  1   0   0 |                |  0   1   0 |
-spinor   : | 0.000-0.707j  0.707+0.000j |
-           |-0.707+0.000j  0.000+0.707j |
+spinor   : | 0.000+0.707j -0.707+0.000j |
+           | 0.707+0.000j  0.000-0.707j |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.       -0.707107  0.707107] ; angle = 1 pi, inversion : True 
+axis: [ 0.        0.707107 -0.707107] ; angle = 1 pi, inversion : True 
  #  45
 rotation : |  1   0   0 |     in refUC : |  0   1   0 |
            |  0   0   1 |                |  0   0  -1 |
@@ -525,8 +519,8 @@ k-point   1 :[0. 0. 0.]
  number of irreps = 2
    Energy  | multiplicity |   irreps   | sym. operations  
            |              |            |     1        2        3        4        5        6        7        8        9       10       11       12       13       14       15       16       17       18       19       20       21       22       23       24       25       26       27       28       29       30       31       32       33       34       35       36       37       38       39       40       41       42       43       44       45       46       47       48    
-   5.2656  |        2     | -GM8(1.0)  |  2.0000  -2.0000   1.4142  -1.4142   0.0000   0.0000   1.4142  -1.4142   0.0000   0.0000  -0.0000   0.0000  -0.0000   0.0000  -0.0000   0.0000   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000   1.4142  -1.4142   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000   1.4142  -1.4142   1.0000  -1.0000   1.4142  -1.4142   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000   1.4142  -1.4142
-   6.3895  |        4     | -GM11(1.0) |  4.0000  -4.0000  -0.0000   0.0000   0.0000   0.0000  -0.0000   0.0000  -0.0000  -0.0000  -0.0000   0.0000   0.0000  -0.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000   0.0000  -0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000   0.0000  -0.0000
+   5.2656  |        2     | -GM8(1.0)  |  2.0000  -2.0000   1.4142  -1.4142   0.0000   0.0000   1.4142  -1.4142   0.0000   0.0000  -0.0000   0.0000   0.0000   0.0000  -0.0000   0.0000   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000   1.4142  -1.4142   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000   1.4142  -1.4142   1.0000  -1.0000   1.4142  -1.4142   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000   1.4142  -1.4142
+   6.3895  |        4     | -GM11(1.0) |  4.0000  -4.0000  -0.0000   0.0000   0.0000  -0.0000  -0.0000   0.0000  -0.0000  -0.0000  -0.0000   0.0000  -0.0000   0.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000   0.0000  -0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000   0.0000  -0.0000
 inversion is # 2
 number of inversions-odd Kramers pairs :  3
 Gap with upper bands :  nan
@@ -538,7 +532,7 @@ k-point  33 :[0.  0.5 0. ]
    Energy  | multiplicity |       irreps       | sym. operations  
            |              |                    |     1        2       11       12       17       18       27       28       33       34       43       44    
    6.1342  |        2     | -L8(1.0)           |  2.0000   2.0000   0.0000   0.0000   1.0000   1.0000  -0.0000  -0.0000   1.0000   1.0000   0.0000   0.0000
-   6.7424  |        2     | -L4(1.0), -L5(1.0) |  2.0000   2.0000   0.0000   0.0000  -2.0000  -2.0000   0.0000  -0.0000  -2.0000  -2.0000  -0.0000  -0.0000
+   6.7424  |        2     | -L4(1.0), -L5(1.0) |  2.0000   2.0000   0.0000  -0.0000  -2.0000  -2.0000   0.0000  -0.0000  -2.0000  -2.0000   0.0000  -0.0000
    7.4083  |        2     | -L9(1.0)           |  2.0000  -2.0000  -0.0000   0.0000   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000  -0.0000   0.0000
 inversion is # 2
 number of inversions-odd Kramers pairs :  1
@@ -550,9 +544,9 @@ k-point  37 :[0.  0.5 0.5]
  number of irreps = 5
    Energy  | multiplicity |  irreps  | sym. operations  
            |              |          |     1        2        5        6        9       10       13       14       19       20       23       24       27       28       31       32    
-   2.8489  |        2     | -X8(1.0) |  2.0000  -2.0000  -0.0000   0.0000   0.0000   0.0000   0.0000   0.0000  -0.0000   0.0000   1.4142  -1.4142  -0.0000   0.0000   1.4142  -1.4142
+   2.8489  |        2     | -X8(1.0) |  2.0000  -2.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000  -0.0000   0.0000   1.4142  -1.4142  -0.0000   0.0000   1.4142  -1.4142
    4.1934  |        2     | -X8(1.0) |  2.0000  -2.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000   1.4142  -1.4142   0.0000   0.0000   1.4142  -1.4142
-   4.9102  |        2     | -X9(1.0) |  2.0000  -2.0000  -0.0000   0.0000   0.0000   0.0000   0.0000   0.0000  -0.0000  -0.0000  -1.4142   1.4142  -0.0000  -0.0000  -1.4142   1.4142
+   4.9102  |        2     | -X9(1.0) |  2.0000  -2.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000  -0.0000  -0.0000  -1.4142   1.4142  -0.0000  -0.0000  -1.4142   1.4142
 inversion is # 2
 number of inversions-odd Kramers pairs :  3
 Gap with upper bands :  nan
@@ -564,8 +558,8 @@ k-point 419 :[0.75 0.5  0.25]
    Energy  | multiplicity |  irreps  | sym. operations  
            |              |          |     1        6        9       14       36       39       43       48    
    3.5102  |        2     | -W6(1.0) |  2.0000   0.0000   0.0000   0.0000  -1.4142   0.0000  -0.0000  -1.4142
-   3.5846  |        2     | -W7(1.0) |  2.0000  -0.0000   0.0000   0.0000   1.4142  -0.0000  -0.0000   1.4142
-   7.0323  |        2     | -W7(1.0) |  2.0000  -0.0000   0.0000   0.0000   1.4142   0.0000   0.0000   1.4142
+   3.5846  |        2     | -W7(1.0) |  2.0000   0.0000   0.0000   0.0000   1.4142  -0.0000   0.0000   1.4142
+   7.0323  |        2     | -W7(1.0) |  2.0000   0.0000   0.0000   0.0000   1.4142   0.0000   0.0000   1.4142
 no inversion
 number of inversions-odd Kramers pairs IN THE LISTED KPOINTS:  7   Z4=  3
 Minimal direct gap: inf  eV
