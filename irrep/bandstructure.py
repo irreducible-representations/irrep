@@ -395,7 +395,7 @@ class BandStructure():
         if kpnames is not None and refUC is not None:
             for kpname,KP in zip(kpnames,self.kpoints):
                 irreps=self.spacegroup.get_irreps_from_table(refUC,shiftUC,kpname,KP.K)
-                ninv,low,up=KP.write_characters(degen_thresh,irreptable=irreps,symmetries=symmetries,preline=preline,efermi=self.efermi)
+                ninv,low,up=KP.write_characters(degen_thresh,irreptable=irreps,symmetries=symmetries,preline=preline,efermi=self.efermi,plotFile=pFile,kpl=kpline)
                 NBANDINV+=ninv
                 GAP=min(GAP,up-low)
                 Up=min(Up,up)

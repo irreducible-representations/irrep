@@ -169,7 +169,8 @@ do not hesitate to contact the author:
     help="Write gnuplottable files with all symmetry eigenvalues",
 )
 @click.option(
-    "-plotFile", flag_value=True, default=False, help="TODO: help to go here!"
+    "-plotFile", type=str, help="file where bands for plotting will be written."
+    "In development...!"
 )
 @click.option("-EF", type=float, help="TODO: help to go here!")
 @click.option("-degenThresh", type=float, default=1e-4, help="TODO: help to go here!")
@@ -335,6 +336,7 @@ def cli(
                         "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
                     ),
                 )
+            plotfile=None # being implemented, not finished yet...
             sub.write_characters(
                 degen_thresh=degenthresh,
                 refUC=refuc,
