@@ -169,18 +169,33 @@ do not hesitate to contact the author:
     help="Write gnuplottable files with all symmetry eigenvalues",
 )
 @click.option(
-    "-plotFile", flag_value=True, default=False, help="TODO: help to go here!"
+    "-plotFile", 
+    type=str, 
+    help="file where bands for plotting will be written."
+    "In development...!"
 )
-@click.option("-EF", type=float, help="TODO: help to go here!")
-@click.option("-degenThresh", type=float, default=1e-4, help="TODO: help to go here!")
+@click.option("-EF", 
+    type=float, 
+    help="Fermi energy to shift energy-levels. Default: read from DFT output.")
+@click.option("-degenThresh", 
+    type=float, 
+    default=1e-4, 
+    help="Threshold to decide whether energy-levels are degenerate. Default: 1e-4")
 @click.option(
-    "-groupKramers", flag_value=True, default=True, help="TODO: help to go here!"
+    "-groupKramers", 
+    flag_value=True, 
+    default=True, 
+    help="Group wave-functions in pairs of Kramers. Default: True."
 )
-@click.option("-symmetries", type=str, help="TODO: help to go here!")
-@click.option("-suffix", type=str, help="TODO: help to go here!")
 @click.option(
-    "-writebands", flag_value=True, default=True, help="TODO: help to go here!"
-)
+    "-symmetries", 
+    type=str, 
+    help="Indices of symmetries to be printed. Default: all detected symmetries.")
+@click.option(
+    "-suffix", 
+    type=str, 
+    default='tognuplot',
+    help="Suffix to name files containing data for band plotting. Default: tognuplot")
 def cli(
     ecut,
     fwav,
@@ -205,7 +220,6 @@ def cli(
     degenthresh,
     groupkramers,
     symmetries,
-    writebands,
     suffix,
 ):
     """
@@ -320,30 +334,30 @@ def cli(
             return fmt.format(x.imag) + "j"
         return short(x.real, nd) + short(1j * x.imag)
 
-    if writebands:
-        bandstr.write_trace(
+    bandstr.write_trace(
+        degen_thresh=degenthresh,
+        refUC=refuc,
+        shiftUC=shiftuc,
+        symmetries=symmetries,
+    )
+    for k, sub in subbands.items():
+        if isymsep is not None:
+            print(
+                "\n\n\n\n ################################################ \n\n\n next subspace:  ",
+                " , ".join(
+                    "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
+                ),
+            )
+        plotfile=None # being implemented, not finished yet...
+        sub.write_characters(
             degen_thresh=degenthresh,
             refUC=refuc,
             shiftUC=shiftuc,
             symmetries=symmetries,
+            kpnames=kpnames,
+            preline=preline,
+            plotFile=plotfile,
         )
-        for k, sub in subbands.items():
-            if isymsep is not None:
-                print(
-                    "\n\n\n\n ################################################ \n\n\n next subspace:  ",
-                    " , ".join(
-                        "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
-                    ),
-                )
-            sub.write_characters(
-                degen_thresh=degenthresh,
-                refUC=refuc,
-                shiftUC=shiftuc,
-                symmetries=symmetries,
-                kpnames=kpnames,
-                preline=preline,
-                plotFile=plotfile,
-            )
 
     if plotbands:
         for k, sub in subbands.items():
