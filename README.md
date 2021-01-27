@@ -61,22 +61,22 @@ Further contributions from other authors may be tracked on GitHub [contributors 
 
 The files that form the code are organized following a structure that will be described here.
 
-- irrep: directory that contains the files that govern the running of the code.
-  - cli.py: interface to the command line.
-  - __readfiles.py: routines to read data from DFT output files.
-  - bandstructure.py: contains the class `BandStructure`, which reads, organizes, treats the data and displays the results.
-  - kpoint.py: contains the class `Kpoint`, which reads and treats data of a particular k-point and displays results obtained from it.
-  - __gvectors.py: routines for the generation and transformation of plane-waves.
-  - __spacegroup.py: classes to read the crystal structure, deduce the space group and deal with symmetry operations.
-  - __aux.py: auxiliary routines, mainly for type conversion.
-  - __ init__.py: importing version number.
-  - _version.py: version number.
-  - tests: directory containing tests for developing purposes.
-- examples: directory containing input to run examples with different codes and data that has been published in journals, reviews,... In some examples, DFT outputs may not be included due to their large size.
-- tables: tables of irreducible representations and python scripts for working with them. 
-  - __convertTab.py: to convert tables of irreducible representations to a user friendly format. (Only for developing)
-  - __init__.py: classes to read and organize data from tables of irreducible representations.
-- INSTALL: commands for the installation.
-- LICESE: declaration of the license under which the code is made available.
-- setup.py: routines to install the code.
-- uploadpypi.sh: to upgrade the code in Pypi. (only for owner's use)
+- `irrep`: directory that contains the files that govern the running of the code.
+  - `cli.py`: interface to the command line.
+  - `__readfiles.py`: routines to read data from DFT output files.
+  - `bandstructure.py`: contains the class `BandStructure`, which reads, organizes, treats the data and displays the results.
+  - `kpoint.py`: contains the class `Kpoint`, which reads and treats data of a particular k-point and displays results obtained from it.
+  - `__gvectors.py`: routines for the generation and transformation of plane-waves.
+  - `__spacegroup.py`: classes to read the crystal structure, deduce the space group and deal with symmetry operations.
+  - `__aux.py`: auxiliary routines, mainly for type conversion.
+  - `__ init__.py`: importing version number.
+  - `_version.py`: version number.
+  - `tests`: directory containing tests for developing purposes.
+- `examples`: directory containing input to run examples with different codes and data that has been published in journals, reviews,... In some examples, DFT outputs may not be included due to their large size.
+- `tables`: tables of irreducible representations and python scripts for working with them. 
+  - `__convertTab.py`: to convert tables of irreducible representations to a user friendly format. (Only for developing)
+  - `__init__.py`: classes to read and organize data from tables of irreducible representations.
+- `INSTALL`: commands for the installation.
+- `LICESE`: declaration of the license under which the code is made available.
+- `setup.py`: routines to install the code.
+- `uploadpypi.sh`: to upgrade the code in Pypi. (only for owner's use)
