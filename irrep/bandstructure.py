@@ -231,7 +231,7 @@ class BandStructure():
                 elif l[1]=="kpoints":
                     if kpred is not None:
                         raise RuntimeError("'begin kpoints' found more then once  in {}.win".format(prefix))
-                    kpred=np.array([next(iterwin) for i in range(NK)],dtype=float)
+                    kpred=np.array([next(iterwin)[:3] for i in range(NK)],dtype=float)
 #                    kpred=np.array([kpred[j].split()[:3] for j in kplist],dtype=float)
                     check_end("kpoints")
                 elif l[1].startswith("atoms_"):
