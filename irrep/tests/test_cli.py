@@ -113,7 +113,7 @@ def test_wannier_spin_example():
    6.3895  |        4     | -GM11(1.0) |  4.0000  -4.0000  -0.0000   0.0000   0.0000   0.0000  -0.0000   0.0000  -0.0000  -0.0000  -0.0000   0.0000   0.0000  -0.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000   0.0000  -0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000   0.0000  -0.0000
 """
 
-    assert known_output in stdout
+    assert known_output in stdout, stdout
 
     for test_output_file in (
         "irreps.dat",
@@ -158,7 +158,7 @@ def test_bi_hoti():
 inversion is # 2
 number of inversions-odd Kramers pairs :  0"""
 
-    assert known_output in stdout
+    assert known_output in stdout, stdout
 
     for test_output_file in (
             "irreps.dat",
