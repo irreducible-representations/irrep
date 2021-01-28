@@ -69,7 +69,7 @@ The files that form the code are organized following a structure that will be de
   - `__gvectors.py`: routines for the generation and transformation of plane-waves.
   - `__spacegroup.py`: classes to read the crystal structure, deduce the space group and deal with symmetry operations.
   - `__aux.py`: auxiliary routines, mainly for type conversion.
-  - `__ init__.py`: importing version number.
+  - `__init__.py`: importing version number.
   - `_version.py`: version number.
   - `tests`: directory containing tests for developing purposes.
 - `examples`: directory containing input to run examples with different codes and data that has been published in journals, reviews,... In some examples, DFT outputs may not be included due to their large size.
