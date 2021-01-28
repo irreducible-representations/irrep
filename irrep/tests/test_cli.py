@@ -28,7 +28,7 @@ def test_bi_scalar_example():
     with open("test_out", "w") as f:
         f.write(stdout)
 
-    assert return_code == 0
+    assert return_code == 0, output.stderr
 
     assert "GM1+(1.0)" in stdout
     assert "GM2-(1.0)" in stdout
@@ -67,7 +67,7 @@ def test_bi_spinor_example():
     return_code = output.returncode
     stdout = output.stdout
 
-    assert return_code == 0
+    assert return_code == 0, output.stderr
 
     assert "-GM8(1.0)" in stdout
     assert "-GM9(1.0)" in stdout
@@ -103,7 +103,7 @@ def test_wannier_spin_example():
     with open("test_out", "w") as f:
         f.write(stdout)
 
-    assert return_code == 0
+    assert return_code == 0, output.stderr
 
     known_output = """k-point   1 :[0. 0. 0.] 
  number of irreps = 2
@@ -119,5 +119,50 @@ def test_wannier_spin_example():
         "irreps.dat",
         "irreptable-template",
         "trace.txt",
+    ):
+        os.remove(test_output_file)
+
+
+def test_bi_hoti():
+
+    os.chdir(TEST_FILES_PATH / "Bi-hoti")
+
+    command = [
+        "irrep",
+        "-spinor",
+        "-code=vasp",
+        "-kpnames=T,GM,F,L",
+        "-Ecut=50",
+        "-refUC=1,-1,0,0,1,-1,1,1,1",
+        "-EF=5.2156",
+        "-IBstart=5",
+        "-IBend=10"
+    ]
+    output = subprocess.run(command, capture_output=True, text=True)
+
+    return_code = output.returncode
+    stdout = output.stdout
+
+    with open("test_out", "w") as f:
+        f.write(stdout)
+
+    assert return_code == 0, output.stderr
+
+    known_output = """k-point   2 :[0. 0. 0.] 
+ number of irreps = 6
+   Energy  | multiplicity |        irreps        | sym. operations  
+           |              |                      |     1        2        3        4        5        6        7        8        9       10       11       12    
+  -2.7306  |        2     | -GM8(1.0)            |  2.0000   2.0000   1.0000   1.0000   1.0000   1.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+  -0.7762  |        2     | -GM8(1.0)            |  2.0000   2.0000   1.0000   1.0000   1.0000   1.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+  -0.4961  |        2     | -GM4(1.0), -GM5(1.0) |  2.0000   2.0000  -2.0000  -2.0000  -2.0000  -2.0000   0.0000   0.0000   0.0000   0.0000   0.0000   0.0000
+inversion is # 2
+number of inversions-odd Kramers pairs :  0"""
+
+    assert known_output in stdout
+
+    for test_output_file in (
+            "irreps.dat",
+            "irreptable-template",
+            "trace.txt",
     ):
         os.remove(test_output_file)
