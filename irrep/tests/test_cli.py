@@ -30,11 +30,11 @@ def test_bi_scalar_example():
 
     assert return_code == 0, output.stderr
 
-    assert "GM1+(1.0)" in stdout
-    assert "GM2-(1.0)" in stdout
-    assert "GM1+(1.0)" in stdout
-    assert "GM3+(1.0)" in stdout
-    assert "number of inversions-odd states :  1" in stdout
+    assert "GM1+(1.0)" in stdout, stdout
+    assert "GM2-(1.0)" in stdout, stdout
+    assert "GM1+(1.0)" in stdout, stdout
+    assert "GM3+(1.0)" in stdout, stdout
+    assert "number of inversions-odd states :  1" in stdout, stdout
 
     for test_output_file in (
         "irreps.dat",
@@ -69,10 +69,10 @@ def test_bi_spinor_example():
 
     assert return_code == 0, output.stderr
 
-    assert "-GM8(1.0)" in stdout
-    assert "-GM9(1.0)" in stdout
-    assert "-GM8(0.5)" in stdout
-    assert "number of inversions-odd Kramers pairs :  1" in stdout
+    assert "-GM8(1.0)" in stdout, stdout
+    assert "-GM9(1.0)" in stdout, stdout
+    assert "-GM8(0.5)" in stdout, stdout
+    assert "number of inversions-odd Kramers pairs :  1" in stdout, stdout
 
     for test_output_file in (
         "irreps.dat",
@@ -105,15 +105,8 @@ def test_wannier_spin_example():
 
     assert return_code == 0, output.stderr
 
-    known_output = """k-point   1 :[0. 0. 0.] 
- number of irreps = 2
-   Energy  | multiplicity |   irreps   | sym. operations  
-           |              |            |     1        2        3        4        5        6        7        8        9       10       11       12       13       14       15       16       17       18       19       20       21       22       23       24       25       26       27       28       29       30       31       32       33       34       35       36       37       38       39       40       41       42       43       44       45       46       47       48    
-   5.2656  |        2     | -GM8(1.0)  |  2.0000  -2.0000   1.4142  -1.4142   0.0000   0.0000   1.4142  -1.4142   0.0000   0.0000  -0.0000   0.0000  -0.0000   0.0000  -0.0000   0.0000   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000   1.4142  -1.4142   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000   1.4142  -1.4142   1.0000  -1.0000   1.4142  -1.4142   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000  -0.0000   0.0000   1.0000  -1.0000   1.4142  -1.4142
-   6.3895  |        4     | -GM11(1.0) |  4.0000  -4.0000  -0.0000   0.0000   0.0000   0.0000  -0.0000   0.0000  -0.0000  -0.0000  -0.0000   0.0000   0.0000  -0.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000   0.0000  -0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000  -0.0000   0.0000  -1.0000   1.0000   0.0000  -0.0000
-"""
-
-    assert known_output in stdout, stdout
+    assert "5.2656  |        2     | -GM8(1.0)" in stdout, stdout
+    assert "6.3895  |        4     | -GM11(1.0)" in stdout, stdout
 
     for test_output_file in (
         "irreps.dat",
