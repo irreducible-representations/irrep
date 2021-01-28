@@ -27,7 +27,7 @@ from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
 
 
-class Kpoint():
+class Kpoint:
 
     @LazyProperty
     def symmetries(self):
