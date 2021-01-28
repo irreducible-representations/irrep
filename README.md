@@ -1,5 +1,7 @@
 # IrRep
 
+[![Tests Workflow Status](https://github.com/stepan-tsirkin/irrep/workflows/tests/badge.svg)](https://github.com/stepan-tsirkin/irrep/actions?query=workflow%3Atests)
+
 This is a code to determine symmetry eigenvalues of electronic states obtained by DFT codes, as well as irreducible representations, 
 wannier charge centers (1D) and many more
 
