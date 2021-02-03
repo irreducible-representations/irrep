@@ -30,14 +30,17 @@ from .__readfiles import record_abinit,WAVECARFILE
 class BandStructure():
 
 
-    def __init__(self,fWAV=None,fWFK=None,prefix=None,fPOS=None,Ecut=None,IBstart=None,IBend=None,kplist=None,spinor=None,code="vasp",EF=None,onlysym=False):
+    def __init__(self,fWAV=None,fWFK=None,prefix=None,fPOS=None,Ecut=None,IBstart=None,IBend=None,kplist=None,spinor=None,code="vasp",EF=None,onlysym=False,spin_channel=None):
         code=code.lower()
+        if spin_channel is not None:
+            spin_channel=spin_channel.lower()
+        if spin_channel=='down' : spin_channel='dw'
         if code=="vasp":
            self.__init_vasp(fWAV,fPOS,Ecut,IBstart,IBend,kplist,spinor,EF=EF,onlysym=onlysym)
         elif code=="abinit":
            self.__init_abinit(fWFK,Ecut,IBstart,IBend,kplist,EF=EF,onlysym=onlysym)
         elif code=="espresso":
-           self.__init_espresso(prefix,Ecut,IBstart,IBend,kplist,EF=EF,onlysym=onlysym)
+           self.__init_espresso(prefix,Ecut,IBstart,IBend,kplist,EF=EF,onlysym=onlysym,spin_channel=spin_channel)
         elif code=="wannier90":
            self.__init_wannier(prefix,Ecut,IBstart,IBend,kplist,EF=EF,onlysym=onlysym)
         else :
@@ -297,7 +300,7 @@ class BandStructure():
 
 
 
-    def __init_espresso(self,prefix,Ecut=None,IBstart=None,IBend=None,kplist=None,EF=None,onlysym=False):
+    def __init_espresso(self,prefix,Ecut=None,IBstart=None,IBend=None,kplist=None,EF=None,onlysym=False,spin_channel=None):
         import xml.etree.ElementTree as ET
         mytree = ET.parse(prefix+'.save/data-file-schema.xml')
         myroot = mytree.getroot()
@@ -309,7 +312,7 @@ class BandStructure():
         assert (len(atnames)==ntyp)
         atnumbers={atn:i+1 for i,atn in enumerate(atnames)}
         self.spinor=str2bool(bandstr.find('noncolin').text)
-#        print ('spinor=',self.spinor)
+        print ('spinor=',self.spinor)
         struct=inp.find("atomic_structure")
         nat=struct.attrib['nat']
         self.Lattice= BOHR * np.array([struct.find("cell").find('a{}'.format(i + 1)).text.strip().split() for i in range(3)], dtype=float)
@@ -324,7 +327,35 @@ class BandStructure():
         if onlysym: return
         Ecut0=float(inp.find('basis').find('ecutwfc').text)*Hartree_eV
 
-        NBin=int(bandstr.find('nbnd').text)
+        IBstartE=0
+        try:
+            NBin_dw=int(bandstr.find('nbnd_dw').text)
+            NBin_up=int(bandstr.find('nbnd_up').text)
+            spinpol=True
+            print ("spin-polarised bandstructure composed of {} up and {} dw states".format(NBin_dw,NBin_up))
+            NBin_dw+NBin_up
+        except AttributeError as err: 
+            spinpol=False
+            NBin=int(bandstr.find('nbnd').text)
+
+
+        IBstartE=0
+        if self.spinor and spinpol:
+            raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
+        if spinpol :
+            if spin_channel is None:
+                raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
+            assert (spin_channel in ['dw','up'])
+            if spin_channel=='dw':
+                IBstartE=NBin_up
+                NBin=NBin_dw
+            else : 
+                NBin=NBin_up
+        else :
+            if spin_channel is not None:
+                raise ValueError("Found a non-polarized bandstructure, but spin channel is set to {}".format(spin_channel))
+
+
 
         IBstart=0 if (IBstart is None or IBstart<=0) else IBstart-1
         if  IBend is None or IBend<=0 or IBend>NBin: 
@@ -356,8 +387,8 @@ class BandStructure():
         self.kpoints=[]
         flag=-1
         for ik in kplist:
-            kp=Kpoint(ik, NBin,IBstart,IBend,Ecut,Ecut0,self.RecLattice,SG=self.spacegroup,spinor=self.spinor,
-                          code="espresso",kptxml=kpall[ik],prefix=prefix) 
+            kp=Kpoint(ik, None,IBstart,IBend,Ecut,Ecut0,self.RecLattice,SG=self.spacegroup,spinor=self.spinor,
+                          code="espresso",kptxml=kpall[ik],prefix=prefix,spin_channel=spin_channel,IBstartE=IBstartE) 
             self.kpoints.append(kp)
             flag=ik
 

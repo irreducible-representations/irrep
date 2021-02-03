@@ -26,6 +26,7 @@ from .__aux import compstr,is_round
 from .__aux import BOHR
 from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
+
 class Kpoint():
 
     @LazyProperty
@@ -43,7 +44,7 @@ class Kpoint():
 
     def __init__(self,ik,NBin,IBstart,IBend,Ecut,Ecut0,RecLattice,SG=None,spinor=None,
                  code="vasp",kpt=None,npw_=None,fWFK=None,WCF=None,prefix=None,kptxml=None,
-                           flag=-1,usepaw=0,eigenval=None):
+                           flag=-1,usepaw=0,eigenval=None,spin_channel=None,IBstartE=0):
         self.spinor=spinor
         self.ik0=ik+1  # the index in the WAVECAR (count start from 1)
         self.Nband=IBend-IBstart
@@ -55,7 +56,7 @@ class Kpoint():
         elif code.lower()=="abinit":
             self.WF,self.ig=self.__init_abinit(fWFK,ik,NBin,IBstart,IBend,Ecut,Ecut0,kpt=kpt,npw_=npw_,flag=flag,usepaw=usepaw)
         elif code.lower()=="espresso":
-            self.WF,self.ig=self.__init_espresso(prefix,ik,IBstart,IBend,Ecut,Ecut0,kptxml=kptxml)
+            self.WF,self.ig=self.__init_espresso(prefix,ik,IBstart,IBend,Ecut,Ecut0,kptxml=kptxml,spin_channel=spin_channel,IBstartE=IBstartE)
         elif code.lower()=="wannier":
             self.WF,self.ig=self.__init_wannier(NBin,IBstart,IBend,Ecut,kpt=kpt,eigenval=eigenval)
         else:
@@ -313,14 +314,14 @@ class Kpoint():
 
 
 
-    def __init_espresso(self,prefix,ik,IBstart,IBend,Ecut,Ecut0,kptxml,thresh=1e-4):
+    def __init_espresso(self,prefix,ik,IBstart,IBend,Ecut,Ecut0,kptxml,thresh=1e-4,spin_channel=None,IBstartE=0):
         self.K=np.array(kptxml.find("k_point").text.split(),dtype=float)
 
         eigen=np.array(kptxml.find("eigenvalues").text.split(),dtype=float)
 
-        self.Energy=eigen[IBstart:IBend]*Hartree_eV
+        self.Energy=eigen[IBstartE+IBstart:IBstartE+IBend]*Hartree_eV
         try:
-            self.upper=eigen[IBend]*Hartree_eV
+            self.upper=eigen[IBstartE+IBend]*Hartree_eV
         except:
             self.upper = np.NaN
 
@@ -328,10 +329,11 @@ class Kpoint():
 #        kg= np.random.randint(100,size=(npw,3))-50
         npwtot=npw*(2 if self.spinor else 1)
         CG= np.zeros((IBend-IBstart,npwtot),dtype=complex )
+        wfcname="wfc{}{}".format({None:"","dw":"dw","up":"up"}[spin_channel],ik+1)
         try:
-            fWFC=FF("{}.save/WFC{}.dat".format(prefix,ik+1),"r")
+            fWFC=FF("{}.save/{}.dat".format(prefix,wfcname.lower()),"r")
         except FileNotFoundError:
-            fWFC=FF("{}.save/wfc{}.dat".format(prefix,ik+1),"r")
+            fWFC=FF("{}.save/{}.dat".format(prefix,wfcname.upper()),"r")
  
         rec=record_abinit(fWFC,'i4,3f8,i4,i4,f8')[0]
 #        print ('rec=',rec)
