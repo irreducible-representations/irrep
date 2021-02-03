@@ -1,5 +1,7 @@
 # IrRep
 
+[![Tests Workflow Status](https://github.com/stepan-tsirkin/irrep/workflows/tests/badge.svg)](https://github.com/stepan-tsirkin/irrep/actions?query=workflow%3Atests)
+
 This is a code to determine symmetry eigenvalues of electronic states obtained by DFT codes, as well as irreducible representations, 
 wannier charge centers (1D) and many more
 
@@ -69,7 +71,7 @@ The files that form the code are organized following a structure that will be de
   - `__gvectors.py`: routines for the generation and transformation of plane-waves.
   - `__spacegroup.py`: classes to read the crystal structure, deduce the space group and deal with symmetry operations.
   - `__aux.py`: auxiliary routines, mainly for type conversion.
-  - `__ init__.py`: importing version number.
+  - `__init__.py`: importing version number.
   - `_version.py`: version number.
   - `tests`: directory containing tests for developing purposes.
 - `examples`: directory containing input to run examples with different codes and data that has been published in journals, reviews,... In some examples, DFT outputs may not be included due to their large size.
@@ -77,6 +79,35 @@ The files that form the code are organized following a structure that will be de
   - `__convertTab.py`: to convert tables of irreducible representations to a user friendly format. (Only for developing)
   - `__init__.py`: classes to read and organize data from tables of irreducible representations.
 - `INSTALL`: commands for the installation.
-- `LICESE`: declaration of the license under which the code is made available.
+- `LICENSE`: declaration of the license under which the code is made available.
 - `setup.py`: routines to install the code.
 - `uploadpypi.sh`: to upgrade the code in Pypi. (only for owner's use)
+
+## Development
+
+To develop on `IrRep`, follow these steps:
+
+1. Clone the repository to your local computer, `git clone ...`
+2. Ensure you have a modern version of Python installed (3.x+). We recommend 3.6 or higher.
+3. Create a new development environment. Either use a virtual environment, for example:
+   ```
+   python -m venv /path/to/my_irrep_dev_env
+   ```
+   or, if you're using [anaconda](), a new conda environment.
+   ```
+   conda create --name my_irrep_dev_env
+   ```
+4. Activate this virtual environment or conda environment, e.g. by running 
+   `source activate /path/to/my_irrep_dev_env/bin/activate` or 
+   `conda activate my_irrep_dev_env` as appropriate.
+5. Go into the repository directory and run `python setup.py develop`.
+6. To run tests you will also need to run `pip install pytest` and then 
+   tests can be run by running `pytest`. Currently, tests will run the 
+   examples in the `examples` directory and verify their output against a 
+   known output.
+7. Make changes to the code as required. The `irrep` command line tool 
+   will also be available inside this environment.
+
+You can verify your development environment by opening a Python interpretor 
+(e.g. running `python`) and running `import irrep` and then `print(irrep.__file__)`.
+This should print the path to your local repository containing irrep.
