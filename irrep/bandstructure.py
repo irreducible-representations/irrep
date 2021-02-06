@@ -44,8 +44,14 @@ class BandStructure:
         code="vasp",
         EF=None,
         onlysym=False,
+        spin_channel=None
     ):
         code = code.lower()
+
+        if spin_channel is not None:
+            spin_channel=spin_channel.lower()
+        if spin_channel=='down' : spin_channel='dw'
+
         if code == "vasp":
             self.__init_vasp(
                 fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym
@@ -56,7 +62,7 @@ class BandStructure:
             )
         elif code == "espresso":
             self.__init_espresso(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym
+                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, spin_channel=spin_channel
             )
         elif code == "wannier90":
             self.__init_wannier(
@@ -136,6 +142,7 @@ class BandStructure:
         print("Energy cutoff in WAVECAR : ", Ecut0)
         print("Energy cutoff reduced to : ", Ecut)
         #        print (kplist,NK)
+
         if kplist is None:
             kplist = range(NK)
         else:
@@ -448,7 +455,8 @@ class BandStructure:
                 raise RuntimeError("wrong band indices")
             eigenval = eigenval[:, 2].reshape(NK, NBin)
         except Exception as err:
-            raise RuntimeError(" error reading {} : {}".format(feig, err))
+            raise RuntimeError(" error reading {} : {}".format(feig,err))
+  
 
         IBstart = 0 if (IBstart is None or IBstart <= 0) else IBstart - 1
         if IBend is None or IBend <= 0 or IBend > NBin:
@@ -485,11 +493,13 @@ class BandStructure:
         kplist=None,
         EF=None,
         onlysym=False,
+        spin_channel=None
     ):
         import xml.etree.ElementTree as ET
 
         mytree = ET.parse(prefix + ".save/data-file-schema.xml")
         myroot = mytree.getroot()
+
         inp = myroot.find("input")
         outp = myroot.find("output")
         bandstr = outp.find("band_structure")
@@ -524,7 +534,34 @@ class BandStructure:
             return
         Ecut0 = float(inp.find("basis").find("ecutwfc").text) * Hartree_eV
 
-        NBin = int(bandstr.find("nbnd").text)
+        IBstartE=0
+        try:
+            NBin_dw=int(bandstr.find('nbnd_dw').text)
+            NBin_up=int(bandstr.find('nbnd_up').text)
+            spinpol=True
+            print ("spin-polarised bandstructure composed of {} up and {} dw states".format(NBin_dw,NBin_up))
+            NBin_dw+NBin_up
+        except AttributeError as err: 
+            spinpol=False
+            NBin=int(bandstr.find('nbnd').text)
+
+
+        IBstartE=0
+        if self.spinor and spinpol:
+            raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
+        if spinpol :
+            if spin_channel is None:
+                raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
+            assert (spin_channel in ['dw','up'])
+            if spin_channel=='dw':
+                IBstartE=NBin_up
+                NBin=NBin_dw
+            else : 
+                NBin=NBin_up
+        else :
+            if spin_channel is not None:
+                raise ValueError("Found a non-polarized bandstructure, but spin channel is set to {}".format(spin_channel))
+
 
         IBstart = 0 if (IBstart is None or IBstart <= 0) else IBstart - 1
         if IBend is None or IBend <= 0 or IBend > NBin:
@@ -578,6 +615,8 @@ class BandStructure:
                 code="espresso",
                 kptxml=kpall[ik],
                 prefix=prefix,
+                spin_channel=spin_channel,
+                IBstartE=IBstartE
             )
             self.kpoints.append(kp)
             flag = ik
