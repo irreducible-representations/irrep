@@ -62,11 +62,26 @@ def calc_gvectors(
     igp = np.zeros(3)
     igall = []
     Eg = []
+    flag = True
     for N in range(nplanemax):
         if N % 10 == 0:
+            memory = np.full(10, True)
             print(N, len(igall))
-        if len(igall) >= nplane / (2 if spinor else 1):
-            break
+        # if len(igall) >= nplane / (2 if spinor else 1):
+        #     break
+        if len(igall) >= nplane / 2:    # Only enters if vasp
+            if spinor:
+                break
+            else:      # Sure that not spinors?
+                if np.all(memory) and flag:
+                    flag = False
+                    print("WARNING: g_vectors is stuck calculating",
+                          "plane waves of energy larger than",
+                          "cutoff Ecut = {}. Please,".format(Ecut),
+                          "make sure that the VASP calculation does",
+                          "not include SOC and set -spinot if it does."
+                    )
+
         for ig3 in range(-N, N + 1):
             for ig2 in range(-(N - abs(ig3)), N - abs(ig3) + 1):
                 for ig1 in set([-(N - abs(ig3) - abs(ig2)), N - abs(ig3) - abs(ig2)]):
@@ -75,6 +90,7 @@ def calc_gvectors(
                     if etot < Ecut:
                         igall.append(igp)
                         Eg.append(etot)
+                        memory[N % 10] = False
 
     ncnt = len(igall)
     #    print ("\n".join("{0:+4d}  {1:4d} {2:4d}  |  {3:6d}".format(ig[0],ig[1],ig[2],np.abs(ig).sum()) for ig in igall) )
