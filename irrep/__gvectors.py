@@ -79,7 +79,7 @@ def calc_gvectors(
                           "plane waves of energy larger than",
                           "cutoff Ecut = {}. Please,".format(Ecut),
                           "make sure that the VASP calculation does",
-                          "not include SOC and set -spinot if it does."
+                          "not include SOC and set -spinor if it does."
                     )
 
         for ig3 in range(-N, N + 1):
