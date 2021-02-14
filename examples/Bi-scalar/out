@@ -42,7 +42,7 @@ rotation : |  1   0   0 |     in refUC : |  1   0   0 |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [0. 0. 1.] ; angle =  0 , inversion : False 
+axis: [0. 1. 0.] ; angle =  0 , inversion : False 
  #  2
 rotation : | -1   0   0 |     in refUC : | -1   0   0 |
            |  0  -1   0 |                |  0  -1   0 |
@@ -50,7 +50,7 @@ rotation : | -1   0   0 |     in refUC : | -1   0   0 |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [0. 0. 1.] ; angle =  0 , inversion : True 
+axis: [0. 1. 0.] ; angle =  0 , inversion : True 
  #  3
 rotation : |  0   0   1 |     in refUC : |  0  -1   0 |
            |  1   0   0 |                |  1  -1   0 |
@@ -90,7 +90,7 @@ rotation : |  0   0  -1 |     in refUC : | -1   0   0 |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [0.866025 0.5      0.      ] ; angle = 1 pi, inversion : False 
+axis: [-0.866025 -0.5       0.      ] ; angle = 1 pi, inversion : False 
  #  8
 rotation : |  0   0   1 |     in refUC : |  1   0   0 |
            |  0   1   0 |                |  1  -1   0 |
@@ -98,7 +98,7 @@ rotation : |  0   0   1 |     in refUC : |  1   0   0 |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.866025 -0.5       0.      ] ; angle = 1 pi, inversion : True 
+axis: [ 0.866025  0.5      -0.      ] ; angle = 1 pi, inversion : True 
  #  9
 rotation : |  0  -1   0 |     in refUC : |  0   1   0 |
            | -1   0   0 |                |  1   0   0 |
@@ -106,7 +106,7 @@ rotation : |  0  -1   0 |     in refUC : |  0   1   0 |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [ 0.866025 -0.5       0.      ] ; angle = 1 pi, inversion : False 
+axis: [-0.866025  0.5       0.      ] ; angle = 1 pi, inversion : False 
  #  10
 rotation : |  0   1   0 |     in refUC : |  0  -1   0 |
            |  1   0   0 |                | -1   0   0 |
@@ -114,7 +114,7 @@ rotation : |  0   1   0 |     in refUC : |  0  -1   0 |
  translation : [   0.000000   0.000000   0.000000 ] 
      in the reference unit cell :
      translation : [   0.000000   0.000000   0.000000 ] 
-axis: [-0.866025  0.5       0.      ] ; angle = 1 pi, inversion : True 
+axis: [ 0.866025 -0.5      -0.      ] ; angle = 1 pi, inversion : True 
  #  11
 rotation : | -1   0   0 |     in refUC : |  1  -1   0 |
            |  0   0  -1 |                |  0  -1   0 |
