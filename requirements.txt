@@ -1,6 +1,6 @@
-numpy
-scipy>=1.0
-spglib>=1.14
-lazy_property
-Click
-irreptables
+numpy==1.19.5
+scipy==1.6.0
+spglib==1.14
+lazy_property==0.0.1
+Click==7.0
+irreptables==1.0.0
