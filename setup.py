@@ -12,7 +12,7 @@ setuptools.setup(
     description="A tool to get symmetry proberties of ab-initio wavefunctions, irreduible representations and more.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=open("requirements.txt").readlines(),
+    install_requires=["numpy", "scipy>=1.0", "spglib>=1.14", "lazy_property", "Click","irreptables"],
     include_package_data=False,
     url="https://github.com/stepan-tsirkin/irrep",
     packages=["irrep"],
