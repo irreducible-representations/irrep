@@ -40,7 +40,6 @@ def test_bi_scalar_example():
         "irreps.dat",
         "irreptable-template",
         "trace.txt",
-        "test_out"
     ):
         os.remove(test_output_file)
 
@@ -79,7 +78,6 @@ def test_bi_spinor_example():
         "irreps.dat",
         "irreptable-template",
         "trace.txt",
-        "test_out"
     ):
         os.remove(test_output_file)
 
@@ -114,7 +112,6 @@ def test_wannier_spin_example():
         "irreps.dat",
         "irreptable-template",
         "trace.txt",
-        "test_out"
     ):
         os.remove(test_output_file)
 
@@ -173,7 +170,6 @@ def test_bi_hoti():
             "irreps.dat",
             "irreptable-template",
             "trace.txt",
-            "test_out"
     ):
         os.remove(test_output_file)
 
@@ -208,7 +204,6 @@ def test_C2B2Gd_vasp_scalar():
             "irreps.dat",
             "irreptable-template",
             "trace.txt",
-            "test_out"
     ):
         os.remove(test_output_file)
 
@@ -244,6 +239,5 @@ def test_C2B2Gd_vasp_spinor():
             "irreps.dat",
             "irreptable-template",
             "trace.txt",
-            "test_out"
     ):
         os.remove(test_output_file)
