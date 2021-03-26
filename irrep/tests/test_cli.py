@@ -40,6 +40,7 @@ def test_bi_scalar_example():
         "irreps.dat",
         "irreptable-template",
         "trace.txt",
+        "test_out"
     ):
         os.remove(test_output_file)
 
@@ -78,6 +79,7 @@ def test_bi_spinor_example():
         "irreps.dat",
         "irreptable-template",
         "trace.txt",
+        "test_out"
     ):
         os.remove(test_output_file)
 
@@ -112,6 +114,7 @@ def test_wannier_spin_example():
         "irreps.dat",
         "irreptable-template",
         "trace.txt",
+        "test_out"
     ):
         os.remove(test_output_file)
 
@@ -170,5 +173,77 @@ def test_bi_hoti():
             "irreps.dat",
             "irreptable-template",
             "trace.txt",
+            "test_out"
+    ):
+        os.remove(test_output_file)
+
+
+def test_C2B2Gd_vasp_scalar():
+
+    os.chdir(TEST_FILES_PATH / "C2B2Gd-vasp-scalar")
+
+    command = [
+        "irrep",
+        "-code=vasp",
+        "-kpnames=GM",
+        "-kpoints=1",
+        "-Ecut=50",
+    ]
+    output = subprocess.run(command, capture_output=True, text=True)
+
+    return_code = output.returncode
+    stdout = output.stdout
+
+    with open("test_out", "w") as f:
+        f.write(stdout)
+
+    assert return_code == 0, output.stderr
+
+    assert "-36.8423  |        1     | GM1+(1.0)" in stdout, stdout
+    assert "-36.8127  |        1     | GM3+(1.0)" in stdout, stdout
+    assert "-15.1605  |        2     | GM5-(1.0)" in stdout, stdout
+    assert "-14.8319  |        1     | GM3-(1.0)" in stdout, stdout
+
+    for test_output_file in (
+            "irreps.dat",
+            "irreptable-template",
+            "trace.txt",
+            "test_out"
+    ):
+        os.remove(test_output_file)
+
+
+def test_C2B2Gd_vasp_spinor():
+
+    os.chdir(TEST_FILES_PATH / "C2B2Gd-vasp-spinor")
+
+    command = [
+        "irrep",
+        "-code=vasp",
+        "-spinor",
+        "-kpnames=GM",
+        "-kpoints=1",
+        "-Ecut=50",
+    ]
+    output = subprocess.run(command, capture_output=True, text=True)
+
+    return_code = output.returncode
+    stdout = output.stdout
+
+    with open("test_out", "w") as f:
+        f.write(stdout)
+
+    assert return_code == 0, output.stderr
+
+    assert "-36.9423  |        2     | -GM7(1.0)" in stdout, stdout
+    assert "-36.9129  |        2     | -GM7(1.0)" in stdout, stdout
+    assert "-17.6854  |        2     | -GM9(1.0)" in stdout, stdout
+    assert "-17.5432  |        2     | -GM9(1.0)" in stdout, stdout
+
+    for test_output_file in (
+            "irreps.dat",
+            "irreptable-template",
+            "trace.txt",
+            "test_out"
     ):
         os.remove(test_output_file)
