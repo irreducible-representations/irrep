@@ -50,7 +50,6 @@ the code is mainly written by:
 
 > Stepan S. Tsirkin   
 > University of Zurich  
-> stepan.tsirkin@physik.uzh.ch  
 
 after a fruitful discussion of formalism with Maia G. Vergniory (Donostia International Physics Center/IKERBASQUE, Basque Country, Spain) 
 
