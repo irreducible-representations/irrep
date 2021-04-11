@@ -129,17 +129,37 @@ class CharFunction:
 
 class KPoint:
     """
-
+    Orginizes the info about a maximal k-point and contains routines to print 
+    it. This info is obtained by parsing the parameter `line` or passed 
+    directly as `name`, `k` and `isym`.
+    
+    Parameters
+    ----------
+    name : str
+        Label of the k-point.
+    k : array, shape=(3,)
+        Direct coordinates of the k-point.
+    isym : array
+        Indices of symmetry operations in the little co-group. Indices make 
+        reference to the symmetry operations stored in the header of the file 
+        and stored in `IrrepTable.symmetries`. 
+    line : str
+        Line to be parsed. 
+    
+    Attributes
+    ----------
+    name : str
+        Label of the k-point. 
+    k : array, shape=(3,) 
+        Direct coordinates of the k-point.
+    isym : array
+        Indices of symmetry operations in the little co-group. Indices make 
+        reference to the symmetry operations stored in the header of the file 
+        and stored in `IrrepTable.symmetries`. 
     """
 
     def __init__(self, name=None, k=None, isym=None, line=None):
-        """
 
-        :param name:
-        :param k:
-        :param isym:
-        :param line:
-        """
         if line is not None:
             line_ = line.split(":")
             if line_[0].split()[0] != "kpoint":
@@ -156,9 +176,19 @@ class KPoint:
 
     def __eq__(self, other):
         """
+        Compares the attributes of this class with those of class instance 
+        `other`.
 
-        :param other:
-        :return:
+        Parameters
+        ----------
+        other : class
+            Instance of class `KPoint`.
+
+        Returns
+        -------
+        bool
+            `True` if all attributes have identical value, `False` otherwise.
+
         """
         if self.name != other.name:
             return False
@@ -170,12 +200,27 @@ class KPoint:
 
     def show(self):
         """
+        Create a `str` containing the values of all attributes.
 
-        :return:
+        Returns
+        -------
+        str
+            Line showing the values of all attributes.
+
         """
         return "{0} : {1}  symmetries : {2}".format(self.name, self.k, self.isym)
 
     def str(self):
+        '''
+        Create a `str` containing the values of all attributes.
+
+        Returns
+        -------
+        str
+            Line that, when parsed, would lead to an instance of class `KPoint` 
+            with identical values of attributes.
+
+        '''
         return "{0} : {1}  : {2}".format(
             self.name,
             " ".join(str(x) for x in self.k),
@@ -297,16 +342,21 @@ class Irrep:
 class IrrepTable:
     """
 
+    Parameters
+    ----------
+    SGnumber : int
+        Number of the space-group.
+    spinor : bool
+        `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+    fromUser : bool, default=True
+        
+    name : , default=None
+
+    Attributes
+    ----------
     """
 
     def __init__(self, SGnumber, spinor, fromUser=True, name=None):
-        """
-
-        :param SGnumber:
-        :param spinor:
-        :param fromUser:
-        :param name:
-        """
         if fromUser:
             self.__init__user(SGnumber, spinor, name)
             return
@@ -405,10 +455,14 @@ class IrrepTable:
     def __init__user(self, SG, spinor, name):
         """
 
-        :param SG:
-        :param spinor:
-        :param name:
-        :return:
+        Parameters
+        ----------
+        SG : int
+            Number of the space-group.
+        spinor : bool 
+            `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+        name : str
+            File from which irreps will be read.
         """
         self.number = SG
         self.spinor = spinor
