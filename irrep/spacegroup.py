@@ -321,26 +321,26 @@ class SpaceGroup():
     '''
 
     def __cell_vasp(self, inPOSCAR):
-    '''
-    Parses POSCAR.
+        '''
+        Parses POSCAR.
 
-    Parameters
-    ----------
-    inPOSCAR : str, default=None 
-        POSCAR file from which lattice vectors, atomic species and positions of
-        ions will be read.
-    
-    Returns
-    ------
-    lattice : array
-        3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
-        and **c** are given in rows. 
-    positions : array
-        Each row contains the direct coordinates of an ion's position. 
-    numbers : list
-        Each element is a number identifying the atomic species of an ion.
+        Parameters
+        ----------
+        inPOSCAR : str, default=None 
+            POSCAR file from which lattice vectors, atomic species and positions of
+            ions will be read.
+        
+        Returns
+        ------
+        lattice : array
+            3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
+            and **c** are given in rows. 
+        positions : array
+            Each row contains the direct coordinates of an ion's position. 
+        numbers : list
+            Each element is a number identifying the atomic species of an ion.
 
-    '''
+        '''
         fpos = (l.strip() for l in open(inPOSCAR))
         title = next(fpos)
         lattice = float(
@@ -376,36 +376,36 @@ class SpaceGroup():
         return lattice, positions, numbers
 
     def _findsym(self, inPOSCAR, cell):
-    '''
-    Finds the space-group and constructs a list of symmetry operations
-    
-    Parameters
-    ----------
-    inPOSCAR : str, default=None 
-        POSCAR file from which lattice vectors, atomic species and positions of
-        ions will be read.
-    cell : list
-        `cell[0]` is a 3x3 array where cartesian coordinates of basis 
-        vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array
-        where each row contains the direct coordinates of an ion's position. 
-        `cell[2]` is an array where each element is a number identifying the 
-        atomic species of an ion. See `cell` parameter of function 
-        `get_symmetry` in 
-        `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
-    
-    Returns
-    -------
-    list
-        Each element is an instance of class `SymmetryOperation` corresponding 
-        to a symmetry in the point group of the space-group.
-    str
-        Symbol of the space-group in Hermann-Mauguin notation. 
-    int
-        Number of the space-group.
-    array
-        3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
-        and **c** are given in rows. 
-    '''
+        '''
+        Finds the space-group and constructs a list of symmetry operations
+        
+        Parameters
+        ----------
+        inPOSCAR : str, default=None 
+            POSCAR file from which lattice vectors, atomic species and positions of
+            ions will be read.
+        cell : list
+            `cell[0]` is a 3x3 array where cartesian coordinates of basis 
+            vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array
+            where each row contains the direct coordinates of an ion's position. 
+            `cell[2]` is an array where each element is a number identifying the 
+            atomic species of an ion. See `cell` parameter of function 
+            `get_symmetry` in 
+            `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
+        
+        Returns
+        -------
+        list
+            Each element is an instance of class `SymmetryOperation` corresponding 
+            to a symmetry in the point group of the space-group.
+        str
+            Symbol of the space-group in Hermann-Mauguin notation. 
+        int
+            Number of the space-group.
+        array
+            3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
+            and **c** are given in rows. 
+        '''
         if cell is None:
             cell = self.__cell_vasp(inPOSCAR=inPOSCAR)
 #    cell1=tuple( [cell.lattice,cell.positions,cell.numbers] )
