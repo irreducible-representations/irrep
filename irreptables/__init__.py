@@ -257,17 +257,44 @@ class KPoint:
 
 class Irrep:
     """
+    Deskriptionea
 
+    Parameters
+    ----------
+    f : file object, default=None 
+        It corresponds to the file containing the info about the space-group 
+        and its irreps.
+    nsym_group : int, default=None
+        Number of symmetry operations in the "point-group" of the space-group.
+    line : str, default=None
+        Line with the description of an irrep, read from the file containing 
+        info about the space-group and irreps.
+    k_point : class instance, default=None
+        Instance of class `KPoint`. It is `None` when file is old (deprecated?)
+
+    Attributes
+    ----------
+    k : array, shape=(3,) 
+        Attribute `k` of class `KPoint`. It is an array of direct coordinates 
+        of a k-point.
+    kpname : str
+        Attribute `name` of class `KPoint`. It is the label of a k-point.
+    has_rkmk :
+    name : str
+        Label of the irrep.
+    dim : int
+        Dimension of the irrep.
+    nsym : int
+        Number of symmetry operations in the little co-group of the k-point.
+    reality : bool
+        `True` if characters of all symmetry operations are real, `False` 
+        otherwise.
+    characters :
+    hasuvw :
     """
 
     def __init__(self, f=None, nsym_group=None, line=None, k_point=None):
-        """
 
-        :param f:
-        :param nsym_group:
-        :param line:
-        :param k_point:
-        """
         if k_point is not None:
             self.__init__user(line, k_point)
             return
@@ -321,9 +348,14 @@ class Irrep:
     def __init__user(self, line, k_point):
         """
 
-        :param line:
-        :param k_point:
-        :return:
+        Parameters
+        ----------
+        line : str, default=None
+            Line with the description of an irrep, read from the file containing 
+            info about the space-group and irreps.
+        k_point : class instance, default=None
+            Instance of class `KPoint`. It is `None` when file is old (deprecated?)
+
         """
         logger.debug("reading irrep line <{0}> for KP=<{1}> ".format(line, k_point.str()))
         self.k = k_point.k
@@ -368,6 +400,8 @@ class Irrep:
 
 class IrrepTable:
     """
+    Parse file corresponding to a space-group, storing the info in attributes. 
+    Also contains methods to print and write this info in a file.
 
     Parameters
     ----------
@@ -392,6 +426,8 @@ class IrrepTable:
         Symbol of the space-group in Hermann-Mauguin notation. 
     spinor : bool
         `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+    nsym : int
+       Number of symmetry operations in the "point-group" of the space-group. 
     symmetries : list
         Each component is an instance of class `SymopTable` corresponding to a 
         symmetry operation of the space-group.
@@ -453,9 +489,14 @@ class IrrepTable:
 
     def save4user(self, name=None):
         """
+        Creates the a file with info about the space-group and irreps. It is 
+        used to create the files included in `IrRep`, with `name`=`None`.
 
-        :param name:
-        :return:
+        Parameters
+        ----------
+        name : str, default=None
+            File in which info about the space-group and irreps will be written.
+
         """
         if name is None:
             name = "tables/irreps-SG={SG}-{spinor}.dat".format(
