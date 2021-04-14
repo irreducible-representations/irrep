@@ -129,7 +129,7 @@ class SymopTable:
 
 class CharFunction:
     """
-
+    deprecated?
     """
 
     def __init__(self, abcde):
@@ -257,7 +257,8 @@ class KPoint:
 
 class Irrep:
     """
-    Deskriptionea
+    Parses the line containing the description of the irrep, stores the info in 
+    its attributes. The methods print descriptions of the irrep. 
 
     Parameters
     ----------
@@ -279,7 +280,7 @@ class Irrep:
         of a k-point.
     kpname : str
         Attribute `name` of class `KPoint`. It is the label of a k-point.
-    has_rkmk :
+    has_rkmk : deprecated?
     name : str
         Label of the irrep.
     dim : int
@@ -289,8 +290,10 @@ class Irrep:
     reality : bool
         `True` if characters of all symmetry operations are real, `False` 
         otherwise.
-    characters :
-    hasuvw :
+    characters : dict
+        Each key is the index of a symmetry operation in the little co-group 
+        and the corresponding value is the trace of that symmetry in the irrep.
+    hasuvw : deprecated?
     """
 
     def __init__(self, f=None, nsym_group=None, line=None, k_point=None):
@@ -347,7 +350,9 @@ class Irrep:
 
     def __init__user(self, line, k_point):
         """
-
+        Parse line containing info about an irrep and store this info in 
+        attributes.
+ 
         Parameters
         ----------
         line : str, default=None
@@ -378,15 +383,21 @@ class Irrep:
 
     def show(self):
         """
-
-        :return:
+        Print label of the k-point and info about the irrep.
         """
         print(self.kpname, self.name, self.dim, self.reality)
 
     def str(self):
         """
+        Generate a line describing the irrep and its character.
 
-        :return:
+        Returns
+        -------
+        str
+            Line describing the irrep, which as it is written in the table of 
+            space-groups included in `IrRep`. This line contains the label, 
+            dimension and character of the irrep.
+
         """
         logger.debug(self.characters)
         ch = np.array([self.characters[isym] for isym in sorted(self.characters)])
