@@ -219,7 +219,7 @@ class SpaceGroup():
         cartesian=False
         if l[0].lower()=='c':
             cartesian=True
-        elif l[0]/lower()!='d':
+        elif l[0].lower()!='d':
             raise RuntimeError(
                 'only "direct" or "cartesian"atomic coordinates are supproted')
         positions = np.zeros((np.sum(nat), 3))
