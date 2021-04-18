@@ -39,17 +39,36 @@ class SymmetryOperation():
     Contains information to describe a symmetry operation and methods to apply 
     to it.
 
+    Parameters
+    ----------
+    rotation : array, shape=(3,3)
+        Matrix describing the tranformation of basis vectors of the unit cell 
+        under the symmetry operation.
+    translation : array, shape=(3,)
+        Translational part of the symmetry operation, in terms of the basis 
+        vectors of the unit cell.
+    Lattice : array, shape=(3,3) 
+        Cartesian coordinates of basis  vectors **a**, **b** and **c** are 
+        given in rows. 
+    ind : int
+        Index of the symmetry operation.
+    spinor : bool, default=true
+        `True` if wave functions are spinors, `False` if they are scalars.
+
     Attributes
     ---------
     ind : int
-
-    rotation : array
-
-    Lattice : array
-
-    translation : array
-
-    axis : angle
+        Index of the symmetry operation.
+    rotation : array, shape=(3,3)
+        Matrix describing the tranformation of basis vectors of the unit cell 
+        under the symmetry operation.
+    translation : array, shape=(3,)
+        Translational part of the symmetry operation, in terms of the basis 
+        vectors of the unit cell.
+    Lattice : array, shape=(3,3) 
+        Cartesian coordinates of basis  vectors **a**, **b** and **c** are 
+        given in rows. 
+    axis : 
 
     angle : 
    
@@ -58,6 +77,7 @@ class SymmetryOperation():
     angle_str :
 
     spinor : bool
+        `True` if wave functions are spinors, `False` if they are scalars.
 
     spinor_rotation :      
 
@@ -95,6 +115,18 @@ class SymmetryOperation():
             "{0} pi rotation cannot be in the space group".format(api))
 
     def _get_operation_type(self):
+        '''
+        Description goes here.
+
+        Returns
+        -------
+        tuple
+            The first element is an array describing the rotation axis. The 
+            second element describes the rotation angle. The third element is a 
+            boolean, `True` if the symmetry is inversion, a reflection or a 
+            rotoinversion (determinant -1).
+
+        '''
         rotxyz = self.Lattice.T.dot(
             self.rotation).dot(
             np.linalg.inv(
@@ -302,12 +334,11 @@ class SpaceGroup():
         Symbol of the space-group in Hermann-Mauguin notation. 
     number : int 
         Number of the space-group.
-    Lattice : array 
-        3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
-        and **c** are given in rows. 
-    RecLattice : array 
-        3x3 array where cartesian coordinates of reciprocal basis vectors are
-        given in rows.
+    Lattice : array, shape=(3,3) 
+        Cartesian coordinates of basis  vectors **a**, **b** and **c** are 
+        given in rows. 
+    RecLattice : array, shape=(3,3)
+        Cartesian coordinates of reciprocal basis vectors are given in rows.
 
     Notes
     -----
@@ -662,7 +693,7 @@ class SpaceGroup():
         '''
         #        self.show()
         table = IrrepTable(self.number, self.spinor)
-        if self.number != table.number:
+        if self.number != table.number: #deprecated: IrrepTable assigns IrrepTable.number=SpaceGroup.number -> always match
             raise RuntimeError(
                 "numbers of the symmetry groups do not match : {0} and {1}".format(
                     self.number, SG.number))
