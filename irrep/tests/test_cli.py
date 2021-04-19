@@ -8,15 +8,15 @@ TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 def test_bi_scalar_example():
 
     os.chdir(TEST_FILES_PATH / "Bi-scalar")
-
     command = [
         "irrep",
         "-Ecut=50",
         "-code=abinit",
-        "-fWFK=Bi_WFK",
+        "-fWFK=O_DS2_WFK",
         "-refUC=0,-1,1,1,0,-1,-1,-1,-1",
-        "-kpoints=11",
-        "-IBend=5",
+        "-kpoints=1",
+        "-IBstart=11",
+        "-IBend=15",
         "-kpnames=GM",
     ]
 
@@ -29,12 +29,10 @@ def test_bi_scalar_example():
         f.write(stdout)
 
     assert return_code == 0, output.stderr
-
     assert "GM1+(1.0)" in stdout, stdout
     assert "GM2-(1.0)" in stdout, stdout
     assert "GM1+(1.0)" in stdout, stdout
     assert "GM3+(1.0)" in stdout, stdout
-    assert "number of inversions-odd states :  1" in stdout, stdout
 
     for test_output_file in (
         "irreps.dat",
@@ -50,12 +48,14 @@ def test_bi_spinor_example():
 
     command = [
         "irrep",
+        "-spinor",
         "-Ecut=50",
         "-code=abinit",
-        "-fWFK=Bi_WFK",
+        "-fWFK=O_DS2_WFK",
         "-refUC=0,-1,1,1,0,-1,-1,-1,-1",
-        "-kpoints=11",
-        "-IBend=5",
+        "-kpoints=1",
+        "-IBend=21",
+        "-IBend=32",
         "-kpnames=GM",
     ]
 
@@ -71,8 +71,10 @@ def test_bi_spinor_example():
 
     assert "-GM8(1.0)" in stdout, stdout
     assert "-GM9(1.0)" in stdout, stdout
-    assert "-GM8(0.5)" in stdout, stdout
-    assert "number of inversions-odd Kramers pairs :  1" in stdout, stdout
+    assert "-GM8(1.0)" in stdout, stdout
+    assert "-GM8(1.0)" in stdout, stdout
+    assert "-GM4(1.0), -GM5(0.99999)" in stdout, stdout
+    assert "-GM9(1.0)" in stdout, stdout
 
     for test_output_file in (
         "irreps.dat",

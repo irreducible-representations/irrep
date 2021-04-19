@@ -1,0 +1,50 @@
+ixc 11
+ndtset 3
+pawspnorb 1
+istwfk *1
+
+#=================================================================================
+
+#STRUCTURE
+
+acell 1.0 1.0 1.0 angstrom   #a parameter in Angstroms
+rprim   2.2740000000000000 1.3128945121372089 3.9506666666666668
+       -2.2740000000000000 1.3128945121372089 3.9506666666666668
+        0.0000000000000000 -2.6257890242744177 3.9506666666666668
+ntypat 1          # There is only one type of atom
+znucl 83          # The keyword "znucl" refers to the atomic number of the 
+natom 2           # There are 28 atoms
+typat 1 1
+xred   
+0.7630000000000002 0.7630000000000002 0.7630000000000002
+0.2369999999999998 0.2369999999999998 0.2369999999999998
+
+#====================CONVERGENCE ==============================================================================================
+
+ecut 500 eV
+pawecutdg 1000 eV
+nstep 200
+occopt 4 #Cold-smearing (Marzari) METALS
+tsmear 0.001 #smearing (10 times smaller than default)
+enunit 1
+nband 90
+nbdbuf 15
+
+# DATASET 1: SELF-CONSISTENT CALCULATION
+
+iscf1 17
+kptopt1 4
+ngkpt1 7 7 7
+toldfe1 1.0d-11
+prtwf1 0
+#irdden1 1
+
+# DATASET 2: CALCULATE WAVE FUNCTIONS
+
+iscf2 -2
+getden2 1
+kptopt2 0
+kpt2 0.0 0.0 0.0
+nkpt2 1
+tolwfr2 1.0d-5
+prtwf2 1
