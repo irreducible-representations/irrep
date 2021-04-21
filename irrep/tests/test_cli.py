@@ -83,19 +83,18 @@ def test_bi_spinor_example():
     ):
         os.remove(test_output_file)
 
-
-def test_wannier_spin_example():
+def test_wannier_scalar_example():
 
     os.chdir(TEST_FILES_PATH / "wannier-spin")
 
     command = [
         "irrep",
         "-code=wannier90",
-        "-prefix=PbTe",
-        "-kpoints=1,33,37,419",
-        "-Ecut=30",
-        "-kpnames=GM,L,X,W",
-        "-refUC=-1,+1,-1,-1,+1,+1,+1,+1,-1"
+        "-prefix=wannier90",
+        "-kpoints=1,6",
+        "-Ecut=50",
+        "-IBend=8",
+        "-kpnames=GM,M"
     ]
     output = subprocess.run(command, capture_output=True, text=True)
 
@@ -107,8 +106,11 @@ def test_wannier_spin_example():
 
     assert return_code == 0, output.stderr
 
-    assert "5.2656  |        2     | -GM8(1.0)" in stdout, stdout
-    assert "6.3895  |        4     | -GM11(1.0)" in stdout, stdout
+    assert "|        1     | GM1+(1.0)  |" in stdout, stdout
+    assert "|        1     | GM1+(1.0)  |" in stdout, stdout
+    assert "|        1     | M1+(1.0) |" in stdout, stdout
+    assert "|        1     | M4+(1.0) |" in stdout, stdout
+
 
     for test_output_file in (
         "irreps.dat",
@@ -116,6 +118,77 @@ def test_wannier_spin_example():
         "trace.txt",
     ):
         os.remove(test_output_file)
+
+def test_wannier_spin_example():
+
+    os.chdir(TEST_FILES_PATH / "wannier-spin")
+
+    command = [
+        "irrep",
+        "-code=wannier90",
+        "-prefix=NaAs",
+        "-kpoints=1,8",
+        "-Ecut=50",
+        "-kpnames=GM,A"
+    ]
+irrep -code=wannier90 -prefix=NaAs -Ecut=50 -kpnames=GM,A -kpoints=1,8 > out
+    output = subprocess.run(command, capture_output=True, text=True)
+
+    return_code = output.returncode
+    stdout = output.stdout
+
+    with open("test_out", "w") as f:
+        f.write(stdout)
+
+    assert return_code == 0, output.stderr
+
+    assert "|        2     | -GM7(1.0)  |" in stdout, stdout
+    assert "|        2     | -GM9(1.0)  |" in stdout, stdout
+    assert "|        2     | -GM9(1.0)  |" in stdout, stdout
+    assert "|        2     | -A9(1.0) |" in stdout, stdout
+    assert "|        2     | -A8(1.0) |" in stdout, stdout
+    assert "|        2     | -A6(1.0) |" in stdout, stdout
+
+
+    for test_output_file in (
+        "irreps.dat",
+        "irreptable-template",
+        "trace.txt",
+    ):
+        os.remove(test_output_file)
+
+#def test_wannier_spin_example():
+#
+#    os.chdir(TEST_FILES_PATH / "wannier-spin")
+#
+#    command = [
+#        "irrep",
+#        "-code=wannier90",
+#        "-prefix=PbTe",
+#        "-kpoints=1,33,37,419",
+#        "-Ecut=30",
+#        "-kpnames=GM,L,X,W",
+#        "-refUC=-1,+1,-1,-1,+1,+1,+1,+1,-1"
+#    ]
+#    output = subprocess.run(command, capture_output=True, text=True)
+#
+#    return_code = output.returncode
+#    stdout = output.stdout
+#
+#    with open("test_out", "w") as f:
+#        f.write(stdout)
+#
+#    assert return_code == 0, output.stderr
+#
+#    assert "5.2656  |        2     | -GM8(1.0)" in stdout, stdout
+#    assert "6.3895  |        4     | -GM11(1.0)" in stdout, stdout
+#
+#    for test_output_file in (
+#        "irreps.dat",
+#        "irreptable-template",
+#        "trace.txt",
+#    ):
+#        os.remove(test_output_file)
 
 
 def test_bi_hoti():
