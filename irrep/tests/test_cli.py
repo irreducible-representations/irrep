@@ -121,7 +121,7 @@ def test_wannier_scalar_example():
 
 def test_wannier_spin_example():
 
-    os.chdir(TEST_FILES_PATH / "wannier-spinors-NiAs")
+    os.chdir(TEST_FILES_PATH / "wannier-spinors-NaAs")
 
     command = [
         "irrep",
