@@ -341,7 +341,7 @@ class BandStructure:
             kplist = np.arange(NK) + 1
         else:
             # kplist-=1 #files start from 1 in W90
-            kplist = np.array([k for k in kplist if k >= 0 and k < NK])
+            kplist = np.array([k for k in kplist if k > 0 and k <= NK])
         found_atoms = False
         # todo : use an iterator to avoid double looping over lines between
         # "begin" and "end"
