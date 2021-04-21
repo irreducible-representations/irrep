@@ -1,0 +1,8 @@
+&inputpp
+  outdir     =  './tmp'
+  prefix     =  'NaAs'
+  seedname   =  'NaAs'
+  write_amn  =  .false.
+  write_mmn  =  .false.
+  write_unk  =  .true.
+/
