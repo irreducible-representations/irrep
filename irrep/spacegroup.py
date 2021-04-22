@@ -216,9 +216,12 @@ class SpaceGroup():
         l = next(fpos)
         if l[0] in ['s', 'S']:
             l = next(fpos)
-        if not (l[0]) in ['d', 'D']:
+        cartesian=False
+        if l[0].lower()=='c':
+            cartesian=True
+        elif l[0].lower()!='d':
             raise RuntimeError(
-                'only "direct" atomic coordinates are supproted')
+                'only "direct" or "cartesian"atomic coordinates are supproted')
         positions = np.zeros((np.sum(nat), 3))
         i = 0
         for l in fpos:
@@ -234,6 +237,8 @@ class SpaceGroup():
             raise RuntimeError(
                 "not all atomic positions were read : {0} of {1}".format(
                     i, sum(nat)))
+        if cartesian: 
+            positions = positions.dot(np.linalg.inv(lattice))
         return lattice, positions, numbers
 
     def _findsym(self, inPOSCAR, cell):
