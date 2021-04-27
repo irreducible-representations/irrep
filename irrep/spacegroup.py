@@ -116,15 +116,16 @@ class SymmetryOperation():
 
     def _get_operation_type(self):
         '''
-        Description goes here.
+        Calculates the rotation axis and angle of the symmetry and if it 
+        preserves handedness or not.
 
         Returns
         -------
         tuple
             The first element is an array describing the rotation axis. The 
             second element describes the rotation angle. The third element is a 
-            boolean, `True` if the symmetry is inversion, a reflection or a 
-            rotoinversion (determinant -1).
+            boolean, `True` if the symmetry preserves handedness 
+            (determinant -1).
 
         '''
         rotxyz = self.Lattice.T.dot(
