@@ -71,10 +71,6 @@ def test_bi_spinor_example():
 
     assert "-GM8(1.0)" in stdout, stdout
     assert "-GM9(1.0)" in stdout, stdout
-    assert "-GM8(1.0)" in stdout, stdout
-    assert "-GM8(1.0)" in stdout, stdout
-    assert "-GM4(1.0), -GM5(0.99999)" in stdout, stdout
-    assert "-GM9(1.0)" in stdout, stdout
 
     for test_output_file in (
         "irreps.dat",
