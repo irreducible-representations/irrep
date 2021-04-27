@@ -341,7 +341,7 @@ class BandStructure:
             kplist = np.arange(NK) + 1
         else:
             # kplist-=1 #files start from 1 in W90
-            kplist = np.array([k for k in kplist if k >= 0 and k < NK])
+            kplist = np.array([k for k in kplist if k > 0 and k <= NK])
         found_atoms = False
         # todo : use an iterator to avoid double looping over lines between
         # "begin" and "end"
@@ -370,7 +370,7 @@ class BandStructure:
                         L = [next(iterwin) for i in range(3)]
                     else:
                         units = "ang"
-                        L = l1 + [next(iterwin)[0] for i in range(2)]
+                        L = [l1] + [next(iterwin) for i in range(2)]
                     self.Lattice = np.array(L, dtype=float)
                     if units == "bohr":
                         self.Lattice *= BOHR
@@ -415,7 +415,7 @@ class BandStructure:
                         xred.append(l1[1:4])
                     typatdic = {n: i + 1 for i, n in enumerate(set(nameat))}
                     typat = [typatdic[n] for n in nameat]
-                    xred = np.array(xred)
+                    xred = np.array(xred, dtype=float)
                     if l[1][6:10] == "cart":
                         xred = xred.dot(np.linalg.inv(self.Lattice))
 

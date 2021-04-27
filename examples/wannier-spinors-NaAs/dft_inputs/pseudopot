@@ -1,0 +1,15 @@
+Na.rel-pbe-spn-kjpaw_psl.1.0.0.UPF
+Generated using "atomic" code by A. Dal Corso  v.6.3
+Author: ADC
+Generation date:  6Sep2018
+Pseudopotential type: PAW
+Element: Na
+Functional:  SLA  PW   PBX  PBC
+
+As.rel-pbe-n-kjpaw_psl.1.0.0.UPF
+Generated using "atomic" code by A. Dal Corso  v.6.3
+Author: ADC
+Generation date:  6Sep2018
+Pseudopotential type: PAW
+Element: As
+Functional:  SLA  PW   PBX  PBC

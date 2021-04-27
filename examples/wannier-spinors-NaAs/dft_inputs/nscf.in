@@ -1,0 +1,46 @@
+&CONTROL
+  calculation='bands'
+!  restart_mode='from_scratch',
+  prefix='NaAs',
+  pseudo_dir = './pseudo',
+  outdir='./tmp',
+  verbosity='high'
+ /
+&SYSTEM
+  ibrav= 6,
+  A=4.2533
+  B=4.2533
+  C=4.5587
+  nat= 2,
+  ntyp= 2,
+  nbnd= 22,
+  ecutwfc =60,
+  ecutrho =300,
+  occupations='smearing',
+  smearing='mp',
+  degauss=0.02,
+  lspinorb=.TRUE.,
+  noncolin=.TRUE.
+  starting_magnetization(1)=0.0
+  starting_magnetization(2)=0.0
+ /
+&ELECTRONS
+  conv_thr =  1d-8
+  mixing_beta = 0.7
+ /
+ATOMIC_SPECIES
+  Na     11     Na.upf
+  As     33     As.upf
+ATOMIC_POSITIONS {crystal}
+Na 0.0000000000000000  0.0000000000000000  0.0000000000000000
+As 0.5000000000000000  0.5000000000000000  0.5000000000000000
+K_POINTS crystal
+8
+  0.00000000  0.00000000  0.00000000  1.250000e-01
+  0.00000000  0.00000000  0.50000000  1.250000e-01
+  0.00000000  0.50000000  0.00000000  1.250000e-01
+  0.00000000  0.50000000  0.50000000  1.250000e-01
+  0.50000000  0.00000000  0.00000000  1.250000e-01
+  0.50000000  0.00000000  0.50000000  1.250000e-01
+  0.50000000  0.50000000  0.00000000  1.250000e-01
+  0.50000000  0.50000000  0.50000000  1.250000e-01

@@ -1,0 +1,92 @@
+# CuBi2O4 with SOC
+#
+# Calculation of the bands with the convergence parameters:
+#Cutoff: 600eV
+#kpoints: 8x8x12
+#tsmear: Marzari 0.001
+#experimental parameters and positions.
+
+ixc 11
+ndtset 2
+pawspnorb 1
+istwfk *1
+
+#=================================================================================
+
+#STRUCTURE
+
+acell 8.475 8.475 5.806 angstrom   #a parameter in Angstroms
+rprim  1  0  0             # Tetragonal cell (to be scaled by acell)
+       0  1  0   
+       0  0  1
+
+ntypat 3          # There is only one type of atom
+znucl 8 83 29          # The keyword "znucl" refers to the atomic number of the 
+natom 28           # There are 28 atoms
+typat 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3         # 16 O, 8 Bi, 4 Cu
+xred              # This keyword indicate that the location of the atoms: 1st O, 2nd Bi, 3rd Cu
+  0.049   0.141   0.089 
+  0.451   0.359   0.089 
+  0.359   0.049   0.089 
+  0.141   0.451   0.089
+  0.951   0.641   0.411 
+  0.549   0.859   0.411 
+  0.641   0.549   0.411 
+  0.859   0.951   0.411
+  0.951   0.859   0.911 
+  0.549   0.641   0.911 
+  0.641   0.951   0.911 
+  0.859   0.549   0.911 
+  0.049   0.359   0.589 
+  0.451   0.141   0.589 
+  0.359   0.451   0.589 
+  0.141   0.049   0.589
+  0.418   0.582   0.250
+  0.082   0.918   0.250
+  0.918   0.418   0.250 
+  0.582   0.082   0.250
+  0.582   0.418   0.750
+  0.918   0.082   0.750
+  0.082   0.582   0.750
+  0.418   0.918   0.750
+  0.250   0.250   0.078
+  0.750   0.750   0.422
+  0.750   0.750   0.922
+  0.250   0.250   0.578
+
+#====================CONVERGENCE ==============================================================================================
+
+ecut 500 eV
+pawecutdg 1000 eV
+nstep 200
+occopt 4 #Cold-smearing (Marzari) METALS
+tsmear 0.001 #smearing (10 times smaller than default)
+enunit 1
+nband 316
+
+iscf1 17
+kptopt1 4
+ngkpt1 5 5 7
+toldfe1 1.0d-11
+prtwf1 0
+#irdden1 1
+
+iscf2 -2
+getden2 -1
+kptopt2 -11
+ndivk2 60 60 80 120 60 60 80 1 120 1 120   
+kptbounds2  0.0 0.0 0.0 #Gamma
+            0.0 0.5 0.0 #X
+            0.5 0.5 0.0 #M
+            0.0 0.0 0.0 #Gamma
+            0.0 0.0 0.5 #Z
+            0.0 0.5 0.5 #R
+            0.5 0.5 0.5 #A
+            0.0 0.0 0.5 #Z
+            0.0 0.5 0.0 #X
+            0.0 0.5 0.5 #R
+            0.5 0.5 0.0 #M
+            0.5 0.5 0.5 #A
+tolwfr2 1.0d-5
+prtwf2 1
+nbdbuf 20

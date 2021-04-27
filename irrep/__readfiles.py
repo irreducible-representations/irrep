@@ -109,15 +109,16 @@ class AbinitHeader():
         # & npwarr(1:nkpt),so_psp(1:npsp),symafm(1:nsym),symrel(1:3,1:3,1:nsym),typat(1:natom),&
         # & kpt(1:3,1:nkpt),occ(1:bantot),tnons(1:3,1:nsym),znucltypat(1:ntypat),wtk(1:nkpt)
 #    wtk=record[11]
-        self.npwarr = record[2]
-        istwfk = record[0]
-        if set(istwfk) != {1}:
-            raise ValueError(
-                "istwfk should be 1 for all kpoints. found {0}".format(istwfk))
         self.typat = record[6]
         self.kpt = record[7]
-
         self.nband = record[1]
+        self.npwarr, self.istwfk = record[2], record[0]
+        self.__fix_arrays() # fix istwfk, npwarr and nband when nkpt==1
+
+        # checks 
+        if self.istwfk != {1}:
+            raise ValueError(
+                "istwfk should be 1 for all kpoints. found {0}".format(self.istwfk))
         assert(np.sum(self.nband) == bandtot)
         #print (kpt,nband)
 
@@ -151,3 +152,13 @@ class AbinitHeader():
 #        print(record)
             record = fWFK.read_record('f8')
 #        print(record)
+
+    def __fix_arrays(self):
+        '''when nkpt=1, some integers must be converted to iterables, to avoid problems with indices'''
+        if self.nkpt == 1:
+            # istwfk and npwarr are int, should be set, array and array
+            self.istwfk = set([self.istwfk])
+            self.npwarr = np.array([self.npwarr]) 
+            self.nband  = np.array([self.nband])
+        else:
+            self.istwfk = set(self.istwfk)

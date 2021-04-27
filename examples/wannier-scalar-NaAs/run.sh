@@ -1,0 +1,2 @@
+irrep -code=wannier90 -prefix=wannier90 -Ecut=50 -kpnames=GM,M,Z,A -kpoints=1,6,13,18 -IBend=8 > out
+rm trace.txt irreps.dat irreptable-template
