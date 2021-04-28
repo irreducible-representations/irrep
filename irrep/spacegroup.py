@@ -744,6 +744,32 @@ class SpaceGroup():
             Label of the maximal k-point.
         K : array, shape=(3,)
             Direct coordinates of the k-point.
+
+        Returns
+        -------
+        tab : dict
+            Each key is the label of an irrep, each value another `dict`. Keys 
+            of every secondary `dict` are indices of symmetries (starting from 
+            1 and following order of operations as returned by `spglib`) and 
+            values are traces of symmetries.
+
+        Raises
+        ------
+        RuntimeError
+            DEPRECATED RAISE
+        RuntimeError
+            Translational or rotational parts read from tables and found by 
+            `spglib` do not match for a symmetry operation.
+        RuntimeError
+            A symmetry from the tables matches with many symmetries found by 
+            `spglib`.
+        RuntimeError
+            The label of a k-point given in the CLI matches with the label of a 
+            k-point read from tables, but direct coordinates of these 
+            k-vectors do not match.
+        RuntimeError
+            There is not any k-point in the tables whose label matches that 
+            given in parameter `kpname`.
         """
         #        self.show()
         table = IrrepTable(self.number, self.spinor)
