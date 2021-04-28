@@ -68,20 +68,20 @@ class SymmetryOperation():
     Lattice : array, shape=(3,3) 
         Cartesian coordinates of basis  vectors **a**, **b** and **c** are 
         given in rows. 
-    axis : 
-
-    angle : 
-   
+    axis : array, shape=(3,)
+        Rotation axis of the symmetry.
+    angle : float
+        Rotation angle of the symmmetry, in radians.
     inversion : bool
- 
-    angle_str :
-
+        `False` if the symmetry preserves handedness (identity, rotation, 
+        translation or screw rotation), `True` otherwise (inversion, reflection 
+        roto-inversion or glide reflection).
+    angle_str : str
+        String of rotation angle in radians.
     spinor : bool
         `True` if wave functions are spinors, `False` if they are scalars.
-
-    spinor_rotation :      
-
-
+    spinor_rotation : array, shape=(2,2)
+        Matrix describing how spinors transform under the symmetry.
 
     '''
 
@@ -102,6 +102,19 @@ class SymmetryOperation():
                                     np.einsum('i,ijk->jk', self.axis, pauli_sigma))
 
     def get_angle_str(self):
+        '''Give str of rotation angle.
+
+        Returns
+        -------
+        str
+            Rotation angle in radians.
+        
+        Raises
+        ------
+        RuntimeError
+            Angle does not belong to 1, 2, 3, 4 or 6-fold rotation.
+
+        '''
         accur = 1e-4
         def is_close_int(x): return abs((x + 0.5) % 1 - 0.5) < accur
         api = self.angle / np.pi
@@ -161,6 +174,27 @@ class SymmetryOperation():
         return (axis, angle, inversion)
 
     def rotation_refUC(self, refUC):
+        '''Calculate the matrix of the symmetry in the reference cell choice.
+        
+        Parameters
+        ----------
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+
+        Returns
+        -------
+        R1 : array, shape=(3,3)
+            Matrix for the transformation of basis vectors forming the 
+            reference unit cell.
+
+        Raises
+        ------
+        RuntimeError
+            If the matrix contains non-integer elements after the transformation.
+
+        '''
+
         R = np.linalg.inv(refUC).T.dot(self.rotation).dot(refUC.T)
         R1 = np.array(R.round(), dtype=int)
         if (abs(R - R1).max() > 1e-6):
