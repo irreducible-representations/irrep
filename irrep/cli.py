@@ -93,8 +93,7 @@ do not hesitate to contact the author:
 @click.option(
     "-prefix",
     type=str,
-    help="Prefix for QuantumEspresso calculations (data should be in prefix.save). "
-    'Only used if code is "espresso".',
+    help="Prefix used for Quantum Espresso calculations (data should be in prefix.save) or seedname of Wannier90 files. ",
 )
 @click.option(
     "-IBstart",

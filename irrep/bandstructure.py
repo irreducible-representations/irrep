@@ -30,6 +30,69 @@ from .spacegroup import SpaceGroup
 
 
 class BandStructure:
+    """
+    DESCRIPTION
+
+    Parameters
+    ----------
+    fWAV : str, default=None
+        Filename for wavefunction in VASP WAVECAR format.
+    fWFK : str, default=None
+        Filename for wavefunction in ABINIT WFK format.
+    prefix : str, default=None
+        Prefix used for Quantum Espresso calculations or seedname of Wannier90 
+        files.
+    fPOS : str, default=None
+        Filename for wavefunction in VASP POSCAR format.
+    Ecut : float, default=None
+        Plane-wave cutoff in eV to consider in the expansion of wave-functions.
+    IBstart : int, default=None
+        First band to be considered.
+    IBend : int, default=None
+        Last band to be considered.
+    kplist : , default=None
+        List of indices of k-points to be considered.
+    spinor : bool, default=None
+        `True` if wave functions are spinors, `False` if they are scalars.
+    code : str, default='vasp'
+        DFT code used. Set "vasp", "abinit", "espresso" or "wannier90".
+    EF : float, default=None
+        Fermi-energy.
+    onlysym : bool, default=False
+        Exit after printing info about space-group.
+    spin_channel : , default=None
+        "DESCRIPTION"
+
+    Attributes
+    ----------
+    spacegroup : class
+        Instance of `SpaceGroup`.
+    spinor : bool
+        `True` if wave functions are spinors, `False` if they are scalars. It 
+        will be read from DFT files. Mandatory for `vasp`.
+    efermi : float
+        Fermi-energy. If input `EF` was set, it will take its value. Else, the 
+        code will try to read it from DFT files (except if `code`=`vasp`) and 
+        set it to 0 if it could not.
+    Ecut0 : float
+        Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
+        DFT files. Insignificant if `code`=`wannier90`.
+    Ecut : float
+        Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
+        Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
+        the value of this is negative or larger than `Ecut0`.
+    Lattice : array, shape=(3,3) 
+        Each row contains cartesian coordinates of a basis vector forming the 
+        unit-cell in real space.
+    RecLattice : array, shape=(3,3)
+        Each row contains the cartesian coordinates of a basis vector forming 
+        the unit-cell in reciprocal space.
+    kpoints : list
+        Each element is an instance of `class` `Kpoint` corresponding to a 
+        k-point specified in input parameter `kpoints`. If this input was not 
+        set, all k-points found in DFT files will be considered.
+    """
+
     def __init__(
         self,
         fWAV=None,
@@ -83,6 +146,30 @@ class BandStructure:
         EF=None,
         onlysym=False,
     ):
+        """
+        Initialization for vasp. Read data and save it in attributes.
+
+        Parameters
+        ----------
+        fWAV : str, default=None
+            Filename for wavefunction in VASP WAVECAR format.
+        fPOS : str, default=None
+            Filename for wavefunction in VASP POSCAR format.
+        Ecut : float, default=None
+            Plane-wave cutoff in eV to consider in the expansion of wave-functions.
+        IBstart : int, default=None
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        kplist : , default=None
+            List of indices of k-points to be considered.
+        spinor : bool, default=None
+            `True` if wave functions are spinors, `False` if they are scalars.
+        EF : float, default=None
+            Fermi-energy.
+        onlysym : bool, default=False
+            Exit after printing info about space-group.
+        """
         if spinor is None:
             raise RuntimeError(
                 "spinor should be specified in the command line for VASP bandstructure"
@@ -175,6 +262,26 @@ class BandStructure:
         EF=None,
         onlysym=False,
     ):
+        """
+        Initialization for abinit. Read data and store it in attributes.
+
+        Parameters
+        ----------
+        WFKname : str
+            Filename for wavefunction in ABINIT WFK format.
+        Ecut : float, default=None
+            Plane-wave cutoff in eV to consider in the expansion of wave-functions.
+        IBstart : int, default=None
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        kplist : , default=None
+            List of indices of k-points to be considered.
+        EF : float, default=None
+            Fermi-energy.
+        onlysym : bool, default=False
+            Exit after printing info about space-group.
+        """
 
         header = AbinitHeader(WFKname)
         usepaw = header.usepaw
@@ -263,7 +370,27 @@ class BandStructure:
         EF=None,
         onlysym=False,
     ):
+        """
+        Initialization for wannier90. Read data and store it in attibutes.
 
+        Parameters
+        ----------
+        prefix : str, default=None
+            Prefix used for Quantum Espresso calculations or seedname of Wannier90 
+            files.
+        Ecut : float, default=None
+            Plane-wave cutoff in eV to consider in the expansion of wave-functions.
+        IBstart : int, default=None
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        kplist : , default=None
+            List of indices of k-points to be considered.
+        EF : float, default=None
+            Fermi-energy.
+        onlysym : bool, default=False
+            Exit after printing info about space-group.
+        """
         if Ecut is None:
             raise RuntimeError("Ecut mandatory for Wannier90")
 
@@ -495,6 +622,29 @@ class BandStructure:
         onlysym=False,
         spin_channel=None
     ):
+        """
+        Initialization for Quantum Espresso. Read data and store in attributes.
+
+        Parameters
+        ----------
+        prefix : str, default=None
+            Prefix used for Quantum Espresso calculations or seedname of Wannier90 
+            files.
+        Ecut : float, default=None
+            Plane-wave cutoff in eV to consider in the expansion of wave-functions.
+        IBstart : int, default=None
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        kplist : , default=None
+            List of indices of k-points to be considered.
+        EF : float, default=None
+            Fermi-energy.
+        onlysym : bool, default=False
+            Exit after printing info about space-group.
+        spin_channel : str, default=None
+            DESCPRITION
+        """
         import xml.etree.ElementTree as ET
 
         mytree = ET.parse(prefix + ".save/data-file-schema.xml")

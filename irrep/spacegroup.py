@@ -50,8 +50,8 @@ class SymmetryOperation():
         Translational part of the symmetry operation, in terms of the basis 
         vectors of the unit cell.
     Lattice : array, shape=(3,3) 
-        Cartesian coordinates of basis  vectors **a**, **b** and **c** are 
-        given in rows. 
+        Each row contains cartesian coordinates of a basis vector forming the 
+        unit-cell in real space.
     ind : int
         Index of the symmetry operation.
     spinor : bool, default=true
@@ -68,8 +68,8 @@ class SymmetryOperation():
         Translational part of the symmetry operation, in terms of the basis 
         vectors of the unit cell.
     Lattice : array, shape=(3,3) 
-        Cartesian coordinates of basis  vectors **a**, **b** and **c** are 
-        given in rows. 
+        Each row contains cartesian coordinates of a basis vector forming the 
+        unit-cell in real space.
     axis : array, shape=(3,)
         Rotation axis of the symmetry.
     angle : float
@@ -394,10 +394,11 @@ class SpaceGroup():
     number : int 
         Number of the space-group.
     Lattice : array, shape=(3,3) 
-        Cartesian coordinates of basis  vectors **a**, **b** and **c** are 
-        given in rows. 
+        Each row contains cartesian coordinates of a basis vector forming the 
+        unit-cell in real space.
     RecLattice : array, shape=(3,3)
-        Cartesian coordinates of reciprocal basis vectors are given in rows.
+        Each row contains the cartesian coordinates of a basis vector forming 
+        the unit-cell in reciprocal space.
 
     Notes
     -----
