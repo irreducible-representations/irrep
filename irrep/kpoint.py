@@ -27,8 +27,58 @@ from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
 
 class Kpoint:
+    """
+    DESCRIPTION
 
+    Parameters
+    ----------
+    ik : int
+        Index of kpoint, starting count from 0.
+    NBin : int
+        Number of bands considered at every k-point in the DFT calculation.
+    IBstart : int, default=None
+        First band to be considered.
+    IBend : int, default=None
+        Last band to be considered.
+    Ecut : float
+        Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
+        Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
+        the value of this is negative or larger than `Ecut0`.
+    Ecut0 : float
+        Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
+        DFT files. Insignificant if `code`=`wannier90`.
+    RecLattice : array, shape=(3,3)
+        Each row contains the cartesian coordinates of a basis vector forming 
+        the unit-cell in reciprocal space.
+    SG : class, default=None
+        Instance of `class` `SpaceGroup`.
+    spinor : bool, default=None
+        `True` if wave functions are spinors, `False` if they are scalars.
+    code : str, default='vasp'
+        DFT code used. Set "vasp", "abinit", "espresso" or "wannier90".
+    kpt : list or array, default=None
+        Direct coordinates of the k-point.
+    npw_ : int, default=None
+        Number of plane-waves considered in the expansion of wave-functions. 
+    fWFK : file object, default=None
+        File object corresponding to Abinit's WFK. Returned by `FortranFile`.
+    WCF : class, default=None
+        Instance of `class` `WAVECARFILE`.
+    prefix : str, default=None
+        Prefix used for Quantum Espresso calculations or seedname of Wannier90 
+        files.
+    kptxml : 
+        DESCRIPTION
+    flag : int, default=-1
+        Index of the k-point, used when parsing WFK file (Abinit). Info is read 
+        for all k-points, but stored only for k-points whose index is passed 
+        through `flag`.
+    usepaw : int, default=None
+    eigenval : ,default=None
+    spin_channel : str, default=None
+    IBstartE : int, default=0
 
+    """
 
     @LazyProperty
     def symmetries(self):
