@@ -861,10 +861,10 @@ class BandStructure:
         kpnames : list, default=None
             Labels of maximal k-points at which irreps of bands must be computed. 
             If it is not specified, only traces will be printed, not irreps.
-        symmetries : int, default=None
-            Index of symmetry operations whose description will be printed. 
-            Run `IrRep` with flag `onlysym` to check the index corresponding 
-            to each symmetry operation.
+        symmetries : list, default=None
+            Each element is an instance of class `SymmetryOperation` corresponding 
+            to a symmetry in the point group of the space-group whose traces 
+            should be printed.
         preline : str, default=''
         plotFile : str, default=None
         

@@ -604,6 +604,38 @@ class Kpoint:
         self, prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml,
            spin_channel=None,IBstartE=0
     ):
+        """
+        Initialization QE. Read info and store it in attributes.
+
+        Parameters
+        ----------
+        prefix : str
+            Prefix used for Quantum Espresso calculations or seedname of 
+            Wannier90 files.
+        ik : int
+            Index of kpoint, starting count from 0.
+        IBstart : int, default=None
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        Ecut : float
+            Plane-wave cutoff (in eV) to consider in the expansion of 
+            wave-functions. Will be set equal to `Ecut0` if input parameter 
+            `Ecut` was not set or the value of this is negative or larger than 
+            `Ecut0`.
+        Ecut0 : float
+            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
+            DFT files. Insignificant if `code`=`wannier90`.
+        kptxml
+            `Element` object (see `ElementTree XML API`) corresponding to a 
+            k-point.
+        spin_channel : str
+            Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
+        IBstartE : int
+            Only used with Quantum Espresso. Index of first band in particular 
+            spin channel. If `spin_channel`='dw', `IBstartE` is equal to the 
+            number of bands in spin-up channel.
+        """
         self.K = np.array(kptxml.find("k_point").text.split(), dtype=float)
 
         eigen = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)
@@ -656,7 +688,9 @@ class Kpoint:
 
     def __sortIG(self, kg, kpt, CG, RecLattice, Ecut0, Ecut):
         """
-        DESCRIPTION
+        Apply plane-wave cutoff specified in CLI to the expansion of 
+        wave-functions and sort the coefficients and plane-waves in ascending 
+        order in energy.
 
         Parameters
         ----------
@@ -741,6 +775,31 @@ class Kpoint:
         plotFile=None,
         kpl="",
     ):
+        """
+        DESCRIPTION
+
+        Parameters
+        ----------
+        degen_thresh : float, default=1e-8
+            Threshold energy used to decide whether a set of wave-functions are
+            degenerate in energy.
+        irreptable : dict
+            Returned by method `get_irreps_from_table` of class `SpaceGroup`. 
+            Each key is the label of an irrep, each value another `dict`. Keys 
+            of every secondary `dict` are indices of symmetries (starting from 
+            1 and following order of operations as returned by `spglib`) and 
+            values are traces of symmetries.
+        symmetries : list, default=None
+            Each element is an instance of class `SymmetryOperation` 
+            corresponding to a symmetry in the point group of the space-group
+            whose traces should be printed.
+        preline : str, default=''
+        efermi : float, default=0.0
+            Fermi-energy.
+        plotFile : str, default=None
+        kpl : str, default=''
+
+        """
         if symmetries is None:
             sym = {s.ind: s for s in self.symmetries}
         else:

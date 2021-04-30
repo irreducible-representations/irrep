@@ -731,7 +731,7 @@ class SpaceGroup():
 
     def get_irreps_from_table(self, refUC, shiftUC, kpname, K):
         """
-        
+        Read irreps of the little-group of a maximal k-point. 
         
         Parameters
         ----------
