@@ -844,31 +844,31 @@ class BandStructure:
         preline="",
         plotFile=None,
     ):
-    """
-    Calculate irreps, number of band-inversion, smallest direct gap and 
-    indirect gap and print them.
+        """
+        Calculate irreps, number of band-inversion, smallest direct gap and 
+        indirect gap and print them.
 
-    Parameters
-    ----------
-    degen_thresh : float, default=0
+        Parameters
+        ----------
+        degen_thresh : float, default=0
 
-    refUC : array, default=None
-        3x3 array describing the transformation of vectors defining the 
-        unit cell to the standard setting.
-    shiftUC : array, default=np.zeros(3)
-        Translation taking the origin of the unit cell used in the DFT 
-        calculation to that of the standard setting.
-    kpnames : list, default=None
-        Labels of maximal k-points at which irreps of bands must be computed. 
-        If it is not specified, only traces will be printed, not irreps.
-    symmetries : int, default=None
-        Index of symmetry operations whose description will be printed. 
-        Run `IrRep` with flag `onlysym` to check the index corresponding 
-        to each symmetry operation.
-    preline : str, default=''
-    plotFile : str, default=None
-    
-    """
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+        kpnames : list, default=None
+            Labels of maximal k-points at which irreps of bands must be computed. 
+            If it is not specified, only traces will be printed, not irreps.
+        symmetries : int, default=None
+            Index of symmetry operations whose description will be printed. 
+            Run `IrRep` with flag `onlysym` to check the index corresponding 
+            to each symmetry operation.
+        preline : str, default=''
+        plotFile : str, default=None
+        
+        """
         #        if refUC is not None:
         #        self.spacegroup.show(refUC=refUC,shiftUC=shiftUC)
         #        self.spacegroup.show2(refUC=refUC)
