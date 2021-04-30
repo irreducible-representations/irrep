@@ -488,7 +488,6 @@ class Kpoint:
             Only used for Abinit. 1 if pseudopotentials are PAW, 0 otherwise. When 
             `usepaw`=0, normalization of wave-functions is checked.
         """
-
         assert not (kpt is None)
         self.K = kpt
         print("reading k-point", ik)
@@ -529,7 +528,27 @@ class Kpoint:
 
         return self.__sortIG(kg, kpt, CG, self.RecLattice, Ecut0, Ecut, thresh=1e-4)
 
-    def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval, thresh=1e-4):
+    def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval):
+        """
+        Initialization for wannier90. Read info and store it in attributes.
+       
+        Parameters
+        ----------
+        NBin : int
+            Number of bands considered at every k-point in the DFT calculation.
+        IBstart : int
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        Ecut : float
+            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
+            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
+            the value of this is negative or larger than `Ecut0`.
+        kpt : list or array
+            Direct coordinates of the k-point.
+        eigenval : array, default=None
+            Contains all energy-levels in a particular k-point.
+        """
         self.K = np.array(kpt, dtype=float)
         self.Energy = eigenval[IBstart:IBend]
         fname = "UNK{:05d}.{}".format(self.ik0, "NC" if self.spinor else "1")
