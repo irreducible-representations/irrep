@@ -67,16 +67,23 @@ class Kpoint:
     prefix : str, default=None
         Prefix used for Quantum Espresso calculations or seedname of Wannier90 
         files.
-    kptxml : 
-        DESCRIPTION
+    kptxml
+        `Element` object (see `ElementTree XML API`) corresponding to a k-point.
     flag : int, default=-1
         Index of the k-point, used when parsing WFK file (Abinit). Info is read 
         for all k-points, but stored only for k-points whose index is passed 
         through `flag`.
     usepaw : int, default=None
-    eigenval : ,default=None
+        Only used for Abinit. 1 if pseudopotentials are PAW, 0 otherwise. When 
+        `usepaw`=0, normalization of wave-functions is checked.
+    eigenval : array, default=None
+        Contains all energy-levels in a particular k-point.
     spin_channel : str, default=None
+        Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
     IBstartE : int, default=0
+        Only used with Quantum Espresso. Index of first band in particular spin 
+        channel. If `spin_channel`='dw', `IBstartE` is equal to the number of 
+        bands in spin-up channel.
 
     """
 
@@ -383,6 +390,27 @@ class Kpoint:
         return subspaces
 
     def __init_vasp(self, WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0):
+        """
+        Initialization for vasp. Read data and save it in attributes.
+
+        Parameters
+        ----------
+        WCF : class
+            Instance of `class` `WAVECARFILE`.
+        ik : int
+            Index of kpoint, starting count from 0.
+        NBin : int
+            Number of bands considered at every k-point in the DFT calculation.
+        IBstart : int
+            First band to be considered.
+        Ecut
+            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
+            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
+            the value of this is negative or larger than `Ecut0`.
+        Ecut0
+            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
+            DFT files. Insignificant if `code`=`wannier90`.
+        """
         r = WCF.record(2 + ik * (NBin + 1))
         # get the number of planewave coefficients. It should be even for spinor wavefunctions
         #    print (r)
@@ -427,6 +455,33 @@ class Kpoint:
         flag=-1,
         usepaw=0,
     ):
+        """
+        Initialization for Abinit. Read data and store it in attibutes.
+
+        Parameters
+        ----------
+        fWFK : file object, default=None
+            File object corresponding to Abinit's WFK. Returned by `FortranFile`.
+        ik : int
+            Index of kpoint, starting count from 0.
+        NBin : int
+            Number of bands considered at every k-point in the DFT calculation.
+        IBstart : int, default=None
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        Ecut : float
+            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
+            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
+            the value of this is negative or larger than `Ecut0`.
+        Ecut0 : float
+            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
+            DFT files. Insignificant if `code`=`wannier90`.
+        kpt : list or array, default=None
+            Direct coordinates of the k-point.
+        npw_ : int, default=None
+            Number of plane-waves considered in the expansion of wave-functions. 
+        """
 
         assert not (kpt is None)
         self.K = kpt

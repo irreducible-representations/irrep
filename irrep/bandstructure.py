@@ -694,7 +694,7 @@ class BandStructure:
         onlysym : bool, default=False
             Exit after printing info about space-group.
         spin_channel : str, default=None
-            DESCPRITION
+            Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
         """
         import xml.etree.ElementTree as ET
 
