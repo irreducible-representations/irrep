@@ -451,22 +451,21 @@ class Kpoint:
         Ecut0,
         kpt,
         npw_,
-        thresh=1e-4,
-        flag=-1,
-        usepaw=0,
+        flag,
+        usepaw,
     ):
         """
         Initialization for Abinit. Read data and store it in attibutes.
 
         Parameters
         ----------
-        fWFK : file object, default=None
+        fWFK : file object
             File object corresponding to Abinit's WFK. Returned by `FortranFile`.
         ik : int
             Index of kpoint, starting count from 0.
         NBin : int
             Number of bands considered at every k-point in the DFT calculation.
-        IBstart : int, default=None
+        IBstart : int
             First band to be considered.
         IBend : int, default=None
             Last band to be considered.
@@ -477,10 +476,17 @@ class Kpoint:
         Ecut0 : float
             Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
             DFT files. Insignificant if `code`=`wannier90`.
-        kpt : list or array, default=None
+        kpt : list or array
             Direct coordinates of the k-point.
-        npw_ : int, default=None
+        npw_ : int
             Number of plane-waves considered in the expansion of wave-functions. 
+        flag : int
+            Index of the k-point, used when parsing WFK file (Abinit). Info is read 
+            for all k-points, but stored only for k-points whose index is passed 
+            through `flag`.
+        usepaw : int
+            Only used for Abinit. 1 if pseudopotentials are PAW, 0 otherwise. When 
+            `usepaw`=0, normalization of wave-functions is checked.
         """
 
         assert not (kpt is None)
@@ -521,7 +527,7 @@ class Kpoint:
         except BaseException:
             self.upper = np.NaN
 
-        return self.__sortIG(kg, kpt, CG, self.RecLattice, Ecut0, Ecut, thresh=thresh)
+        return self.__sortIG(kg, kpt, CG, self.RecLattice, Ecut0, Ecut, thresh=1e-4)
 
     def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval, thresh=1e-4):
         self.K = np.array(kpt, dtype=float)
