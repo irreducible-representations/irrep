@@ -526,7 +526,7 @@ class Kpoint:
         except BaseException:
             self.upper = np.NaN
 
-        return self.__sortIG(kg, kpt, CG, self.RecLattice, Ecut0, Ecut, thresh=1e-4)
+        return self.__sortIG(kg, kpt, CG, self.RecLattice, Ecut0, Ecut)
 
     def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval):
         """
@@ -601,7 +601,7 @@ class Kpoint:
         return WF, ig
 
     def __init_espresso(
-        self, prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml, thresh=1e-4,
+        self, prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml,
            spin_channel=None,IBstartE=0
     ):
         self.K = np.array(kptxml.find("k_point").text.split(), dtype=float)
@@ -652,9 +652,51 @@ class Kpoint:
             if ib >= IBstart:
                 CG[ib - IBstart] = cg_tmp[0::2] + 1.0j * cg_tmp[1::2]
 
-        return self.__sortIG(kg, self.K, CG, B, Ecut0, Ecut, thresh=thresh)
+        return self.__sortIG(kg, self.K, CG, B, Ecut0, Ecut)
 
-    def __sortIG(self, kg, kpt, CG, RecLattice, Ecut0, Ecut, thresh=1e-4):
+    def __sortIG(self, kg, kpt, CG, RecLattice, Ecut0, Ecut):
+        """
+        DESCRIPTION
+
+        Parameters
+        ----------
+        kg : array
+            Each row contains the integer coefficients of a reciprocal lattice 
+            vector taking part in the plane-wave expansion of wave-functions at 
+            the current k-point.
+        kpt : array, shape=(3,)
+            Direct coordinates of the k-point.
+        CG : array
+            `CG[i,j]` contains the complex coefficient corresponding to 
+            :math:`j^{th}` plane-wave in the expansion of :math:`i^{th}` 
+            wave-function. TODO: ADD NOTE WITH NUMBER OF COLS, SPINOR...
+        RecLattice : array, shape=(3,3)
+            Each row contains the cartesian coordinates of a basis vector forming 
+            the unit-cell in reciprocal space.
+        Ecut : float
+            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
+            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
+            the value of this is negative or larger than `Ecut0`.
+        Ecut0 : float
+            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
+            DFT files. Insignificant if `code`=`wannier90`.
+
+        Returns
+        -------
+        CG : array
+            Contains the coefficients (same row-column formatting as argument 
+            `CG`) of the expansion of wave-functions corresponding to 
+            plane-waves of energy smaller than `Ecut`. Columns (plane-waves) 
+            are shorted based on their energy, from smaller to larger.
+        igall : array
+            Every column corresponds to a plane-wave of energy smaller than 
+            `Ecut`. The number of rows is 6: the first 3 contain direct 
+            coordinates of the plane-wave, the third row stores indices needed
+            to short plane-waves based on energy (ascending order). Fitfth 
+            (sixth) row contains the index of the first (last) plane-wave with 
+            the same energy as the plane-wave of the current column.
+        """
+        thresh = 1e-4 # default thresh to distinguish energies of plane-waves
         KG = (kg + kpt).dot(RecLattice)
         npw = kg.shape[0]
         eKG = Hartree_eV * (la.norm(KG, axis=1) ** 2) / 2
