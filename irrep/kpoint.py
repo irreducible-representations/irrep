@@ -790,9 +790,7 @@ class Kpoint:
             1 and following order of operations as returned by `spglib`) and 
             values are traces of symmetries.
         symmetries : list, default=None
-            Each element is an instance of class `SymmetryOperation` 
-            corresponding to a symmetry in the point group of the space-group
-            whose traces should be printed.
+            Index of symmetry operations whose description will be printed. 
         preline : str, default=''
         efermi : float, default=0.0
             Fermi-energy.

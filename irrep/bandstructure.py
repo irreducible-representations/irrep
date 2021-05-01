@@ -836,7 +836,7 @@ class BandStructure:
 
     def write_characters(
         self,
-        degen_thresh=0,
+        degen_thresh=1e-8,
         refUC=None,
         shiftUC=np.zeros(3),
         kpnames=None,
@@ -862,9 +862,7 @@ class BandStructure:
             Labels of maximal k-points at which irreps of bands must be computed. 
             If it is not specified, only traces will be printed, not irreps.
         symmetries : list, default=None
-            Each element is an instance of class `SymmetryOperation` corresponding 
-            to a symmetry in the point group of the space-group whose traces 
-            should be printed.
+            Index of symmetry operations whose description will be printed. 
         preline : str, default=''
         plotFile : str, default=None
         
