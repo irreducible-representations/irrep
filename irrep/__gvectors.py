@@ -45,17 +45,10 @@ def calc_gvectors(
     nplanemax=10000,
 ):
     """ 
-    calculating g-vectors for a point K with energy cutoff Ecut
-    nplane is used to check the correctness
-    optionally one may provide a lower cutoff Ecut1, to exclude higher g-vectors
-    returns an integer array of column-vectors igall[6,ncnt1],
-    thresh - threshould for defining the g-vectors with the same energy
-    where
-        first three components are the reciprocal lattice coordinates
-        the fourth - is the index of the g-vectors (with the reduced Ecut1)
-        the 5th and the 6th - the start and end of the group of g-vectors with the same energy
-    in the original list (with Ecut from WAVECAR)
-    
+    Generates G-vectors taking part in the plane-wave expansion of 
+    wave-functions in a particular k-point. Optionally, a cutoff `Ecut1` is 
+    applied to get rid of large G-vectors.
+
     Parameters
     ----------
     K : array
@@ -84,10 +77,10 @@ def calc_gvectors(
     igall : array
         Every column corresponds to a plane-wave of energy smaller than 
         `Ecut`. The number of rows is 6: the first 3 contain direct 
-        coordinates of the plane-wave, the third row stores indices needed
+        coordinates of the plane-wave, the fourth row stores indices needed
         to short plane-waves based on energy (ascending order). Fitfth 
-        (sixth) row contains the index of the first (last) plane-wave with 
-        the same energy as the plane-wave of the current column.
+        (sixth) row contains the index of the first (last) groups of 
+        plane-waves of identical energy.
     
 """
     if Ecut1 <= 0:
@@ -135,7 +128,7 @@ def calc_gvectors(
     ncnt = len(igall)
     #    print ("\n".join("{0:+4d}  {1:4d} {2:4d}  |  {3:6d}".format(ig[0],ig[1],ig[2],np.abs(ig).sum()) for ig in igall) )
     #    print (len(igall),len(set(igall)))
-    if nplane < np.Inf:
+    if nplane < np.Inf: # vasp
         if spinor:
             if 2 * ncnt != nplane:
                 raise RuntimeError(
@@ -178,10 +171,32 @@ def calc_gvectors(
 
 
 def transformed_g(kpt, ig, RecLattice, A):
-    """This function calculates how the transformation matrix A reorders the reciprocal
-lattice vectors ig[6,ng], returns an array rotind, defined as
-rotind[i]=j if A*ig[:,i]==ig[:,j]  (where igTr is the array of transformed g-vectors)
-RecLattice -- rows are the vectors of the reciprocal lattice
+    """
+    Determines how the transformation matrix A reorders the reciprocal
+    lattice vectors taking part in the plane-wave expansion of wave-functions.
+
+    Parameters
+    ----------
+    kpt : array, shape=(3,)
+        Direct coordinates of the k-point.
+    ig : array
+        Every column corresponds to a plane-wave of energy smaller than 
+        `Ecut`. The number of rows is 6: the first 3 contain direct 
+        coordinates of the plane-wave, the fourth row stores indices needed
+        to short plane-waves based on energy (ascending order). Fitfth 
+        (sixth) row contains the index of the first (last) groups of 
+        plane-waves of identical energy.
+    RecLattice : array, shape=(3,3)
+        Each row contains the cartesian coordinates of a basis vector forming 
+        the unit-cell in reciprocal space.
+    A : array, shape=(3,3)
+        Matrix describing the tranformation of basis vectors of the unit cell 
+        under the symmetry operation.
+    
+    Returns
+    -------
+    rotind : array
+        `rotind[i]`=`j` if `A`*`ig[:,i]`==`ig[:,j]`.
 """
     #    Btrr=RecLattice.dot(A).dot(np.linalg.inv(RecLattice))
     #    Btr=np.array(np.round(Btrr),dtype=int) # The transformed rec. lattice expressed in the basis of the original rec. lattice
@@ -237,7 +252,10 @@ def symm_eigenvalues(
     RecLattice : array, shape=(3,3)
         Each row contains the cartesian coordinates of a basis vector forming 
         the unit-cell in reciprocal space.
-    WF
+    WF : array
+        `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
+        plane-wave in the expansion of the wave-function in :math:`i^{th}`
+        band. It contains only plane-waves if energy smaller than `Ecut`.
     igall : array
         Returned by `__sortIG`.
         Every column corresponds to a plane-wave of energy smaller than 
@@ -257,6 +275,10 @@ def symm_eigenvalues(
     spinor : bool, default=True
         `True` if wave functions are spinors, `False` if they are scalars.
 
+    Returns
+    -------
+    array
+        Each element is the trace of the symmetry operation in a wave-function.
     """
     npw1 = igall.shape[1]
     multZ = np.exp(
