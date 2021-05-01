@@ -51,7 +51,7 @@ class Kpoint:
         Each row contains the cartesian coordinates of a basis vector forming 
         the unit-cell in reciprocal space.
     SG : class, default=None
-        Instance of `class` `SpaceGroup`.
+        Instance of `SpaceGroup`.
     spinor : bool, default=None
         `True` if wave functions are spinors, `False` if they are scalars.
     code : str, default='vasp'
@@ -84,9 +84,45 @@ class Kpoint:
         Only used with Quantum Espresso. Index of first band in particular spin 
         channel. If `spin_channel`='dw', `IBstartE` is equal to the number of 
         bands in spin-up channel.
+    
+    Attibutes
+    ---------
+    spinor : bool
+        `True` if wave functions are spinors, `False` if they are scalars.
+    ik0 : int
+        Index of the k-point, starting the count from 1.
+    Nband : int
+        Number of bands whose traces should be calculated.
+    RecLattice : array, shape=(3,3)
+        Each row contains the cartesian coordinates of a basis vector forming 
+        the unit-cell in reciprocal space.
+    WF
+    igall : array
+        Returned by `__sortIG`.
+        Every column corresponds to a plane-wave of energy smaller than 
+        `Ecut`. The number of rows is 6: the first 3 contain direct 
+        coordinates of the plane-wave, the third row stores indices needed
+        to short plane-waves based on energy (ascending order). Fitfth 
+        (sixth) row contains the index of the first (last) plane-wave with 
+        the same energy as the plane-wave of the current column.
+    SG : class
+        Instance of `SpaceGroup`.
+    K : array, shape=(3,)
+        Direct coordinates of the k-point.
+    Energy : array
+        Energy-levels of bands whose traces should be calculated.
+    upper : float
+        Energy of the first band above the set of bands whose traces should be 
+        calculated. It will be set to `numpy.NaN` if the last band matches the 
+        last band in the DFT calculation (default `IBstart`).
+    symmetries : dict
+        Each keys is the instance of class `SymmetryOperation` corresponding to 
+        a symmetry in the space-group and its value is an `array` with the 
+        traces of that symmetry. 
 
     """
-
+    
+    # creates attribute symmetries, if it was not created before
     @LazyProperty
     def symmetries(self):
         symmetries = {}
