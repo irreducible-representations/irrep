@@ -439,13 +439,29 @@ class Kpoint:
             Number of bands considered at every k-point in the DFT calculation.
         IBstart : int
             First band to be considered.
-        Ecut
+        IBend : int
+            Last band to be considered.
+        Ecut : float
             Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
             Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
             the value of this is negative or larger than `Ecut0`.
-        Ecut0
+        Ecut0 : float
             Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
             DFT files. Insignificant if `code`=`wannier90`.
+
+        Returns
+        -------
+        WF : array
+            `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
+            plane-wave in the expansion of the wave-function in :math:`i^{th}`
+            band. Only plane-waves if energy smaller than `Ecut` are kept.
+        ig : array
+            Every column corresponds to a plane-wave of energy smaller than 
+            `Ecut`. The number of rows is 6: the first 3 contain direct 
+            coordinates of the plane-wave, the fourth row stores indices needed
+            to short plane-waves based on energy (ascending order). Fitfth 
+            (sixth) row contains the index of the first (last) groups of 
+            plane-waves of identical energy.
         """
         r = WCF.record(2 + ik * (NBin + 1))
         # get the number of planewave coefficients. It should be even for spinor wavefunctions
@@ -523,6 +539,22 @@ class Kpoint:
         usepaw : int
             Only used for Abinit. 1 if pseudopotentials are PAW, 0 otherwise. When 
             `usepaw`=0, normalization of wave-functions is checked.
+
+        Returns
+        -------
+        array
+            Contains the coefficients (same row-column formatting as argument 
+            `CG`) of the expansion of wave-functions corresponding to 
+            plane-waves of energy smaller than `Ecut`. Columns (plane-waves) 
+            are shorted based on their energy, from smaller to larger. 
+            Only plane-waves if energy smaller than `Ecut` are kept.
+        array
+            Every column corresponds to a plane-wave of energy smaller than 
+            `Ecut`. The number of rows is 6: the first 3 contain direct 
+            coordinates of the plane-wave, the third row stores indices needed
+            to short plane-waves based on energy (ascending order). Fitfth 
+            (sixth) row contains the index of the first (last) plane-wave with 
+            the same energy as the plane-wave of the current column.
         """
         assert not (kpt is None)
         self.K = kpt
@@ -584,6 +616,20 @@ class Kpoint:
             Direct coordinates of the k-point.
         eigenval : array, default=None
             Contains all energy-levels in a particular k-point.
+
+        Returns
+        -------
+        WF : array
+            `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
+            plane-wave in the expansion of the wave-function in :math:`i^{th}`
+            band. Only plane-waves if energy smaller than `Ecut` are kept.
+        ig : array
+            Every column corresponds to a plane-wave of energy smaller than 
+            `Ecut`. The number of rows is 6: the first 3 contain direct 
+            coordinates of the plane-wave, the fourth row stores indices needed
+            to short plane-waves based on energy (ascending order). Fitfth 
+            (sixth) row contains the index of the first (last) groups of 
+            plane-waves of identical energy.
         """
         self.K = np.array(kpt, dtype=float)
         self.Energy = eigenval[IBstart:IBend]
@@ -619,6 +665,20 @@ class Kpoint:
         selectG = tuple(ig[0:3])
 
         def _readWF_1(skip=False):
+            """
+            Parse coefficients of a wave-function corresponding to one element
+            of the spinor.
+
+            Parameters
+            ----------
+            skip : bool, default=False
+                Read coefficients but do not return them.
+            
+            Returns
+            -------
+            array
+                Coefficients of the plane-wave expansion.
+            """
             cg_tmp = record_abinit(fUNK, "{}f8".format(ngtot * 2))
             if skip:
                 return np.array([0], dtype=complex)
@@ -629,6 +689,20 @@ class Kpoint:
             return cg_tmp[selectG]
 
         def _readWF(skip=False):
+            """
+            Read and return the coefficients of the plane-wave expansion of a 
+            wave-function.
+
+            Parameters
+            ----------
+            skip : bool, default=False
+                Read coefficients but do not return them.
+
+            Returns
+            -------
+            array
+                Coefficients of the plane-wave expansion.
+            """
             return np.hstack([_readWF_1(skip) for i in range(nspinor)])
 
         for ib in range(IBstart):
@@ -671,6 +745,22 @@ class Kpoint:
             Only used with Quantum Espresso. Index of first band in particular 
             spin channel. If `spin_channel`='dw', `IBstartE` is equal to the 
             number of bands in spin-up channel.
+        
+        Returns
+        -------
+        array
+            Contains the coefficients (same row-column formatting as argument 
+            `CG`) of the expansion of wave-functions corresponding to 
+            plane-waves of energy smaller than `Ecut`. Columns (plane-waves) 
+            are shorted based on their energy, from smaller to larger. 
+            Only plane-waves if energy smaller than `Ecut` are kept.
+        array
+            Every column corresponds to a plane-wave of energy smaller than 
+            `Ecut`. The number of rows is 6: the first 3 contain direct 
+            coordinates of the plane-wave, the third row stores indices needed
+            to short plane-waves based on energy (ascending order). Fitfth 
+            (sixth) row contains the index of the first (last) plane-wave with 
+            the same energy as the plane-wave of the current column.
         """
         self.K = np.array(kptxml.find("k_point").text.split(), dtype=float)
 
