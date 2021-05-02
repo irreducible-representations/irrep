@@ -300,7 +300,45 @@ def symm_eigenvalues(
 def symm_matrix(
     K, RecLattice, WF, igall, A=np.eye(3), S=np.eye(2), T=np.zeros(3), spinor=True
 ):
-    # computes the matrix S_mn = <Psi_m|T|Psi_n>
+    """
+    Computes the matrix S_mn = <Psi_m|{A|T}|Psi_n>
+
+    Parameters
+    ----------
+    K : array, shape=(3,)
+        Direct coordinates of the k-point.
+    RecLattice : array, shape=(3,3)
+        Each row contains the cartesian coordinates of a basis vector forming 
+        the unit-cell in reciprocal space.
+    WF : array
+        `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
+        plane-wave in the expansion of the wave-function in :math:`i^{th}`
+        band. It contains only plane-waves if energy smaller than `Ecut`.
+    igall : array
+        Returned by `__sortIG`.
+        Every column corresponds to a plane-wave of energy smaller than 
+        `Ecut`. The number of rows is 6: the first 3 contain direct 
+        coordinates of the plane-wave, the third row stores indices needed
+        to short plane-waves based on energy (ascending order). Fitfth 
+        (sixth) row contains the index of the first (last) plane-wave with 
+        the same energy as the plane-wave of the current column.
+    A : array, shape=(3,3)
+        Matrix describing the tranformation of basis vectors of the unit cell 
+        under the symmetry operation.
+    S : array, shape=(2,2)
+        Matrix describing how spinors transform under the symmetry.
+    T : array, shape=(3,)
+        Translational part of the symmetry operation, in terms of the basis 
+        vectors of the unit cell.
+    spinor : bool, default=True
+        `True` if wave functions are spinors, `False` if they are scalars.
+
+    Returns
+    -------
+    array
+        Matrix of the symmetry operation in the basis of eigenstates of the 
+        Bloch Hamiltonian :math:`H(k)`.
+    """
     npw1 = igall.shape[1]
     multZ = np.exp(-1.0j * (2 * np.pi * A.dot(T).dot(igall[:3, :] + K[:, None])))
     igrot = transformed_g(K, igall, RecLattice, A)
