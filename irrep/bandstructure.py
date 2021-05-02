@@ -850,7 +850,7 @@ class BandStructure:
 
         Parameters
         ----------
-        degen_thresh : float, default=0
+        degen_thresh : float, default=1e-8
             Threshold energy used to decide whether a set of wave-functions are
             degenerate in energy.
         refUC : array, default=None
@@ -933,6 +933,11 @@ class BandStructure:
         """
         Return number of bands (if equal over all k-points), raise RuntimeError 
         otherwise.
+
+        Returns
+        -------
+        int
+            Number of bands in every k-point.
         """
         nbarray = [k.Nband for k in self.kpoints]
         if len(set(nbarray)) > 1:
@@ -951,12 +956,33 @@ class BandStructure:
 
     def write_trace(
         self,
-        degen_thresh=0,
+        degen_thresh=1e-8,
         refUC=None,
         shiftUC=np.zeros(3),
         kpnames=None,
         symmetries=None,
     ):
+        """
+        Generate `trace.txt` file to upload to program `CheckTopologicalMat` 
+        in `BCS <https://www.cryst.ehu.es/cgi-bin/cryst/programs/topological.pl>`_ .
+
+        Parameters
+        ----------
+        degen_thresh : float, default=1e-8
+            Threshold energy used to decide whether a set of wave-functions are
+            degenerate in energy.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+        kpnames : list, default=None
+            Labels of maximal k-points at which irreps of bands must be computed. 
+            If it is not specified, only traces will be printed, not irreps.
+        symmetries : list, default=None
+            Index of symmetry operations whose description will be printed. 
+        """
         f = open("trace.txt", "w")
         f.write(
             (

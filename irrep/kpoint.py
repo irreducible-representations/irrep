@@ -1110,6 +1110,24 @@ class Kpoint:
         return NBANDINV, self.Energy[-1], self.upper
 
     def write_trace(self, degen_thresh=1e-8, symmetries=None, efermi=0.0):
+        """
+        Write in `trace.txt` block corresponding to a single k-point.
+
+        Parameters
+        ----------
+        degen_thresh : float, default=1e-8
+            Threshold energy used to decide whether a set of wave-functions are
+            degenerate in energy.
+        symmetries : list, default=None
+            Index of symmetry operations whose description will be printed. 
+        efermi : float, default=0.0
+            Fermi-energy. Used as origin for energy-levels. 
+
+        Returns
+        -------
+        res : str
+            Block to write in `trace.txt` with description of a single k-point.
+        """
         if symmetries is None:
             sym = {s.ind: s for s in self.symmetries}
         else:
