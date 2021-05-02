@@ -125,6 +125,24 @@ class Kpoint:
     # creates attribute symmetries, if it was not created before
     @LazyProperty
     def symmetries(self):
+        """
+        Sets the attribute `Kpoint.symmetries` to a dictionary with symmetry 
+        operations of the little-(co)group and their traces. Works as a 
+        lazy-property.
+
+        Returns
+        -------
+        symmetries : dict
+            Each key is an instance of `class` `SymmetryOperation` corresponding 
+            to an operation in the little-(co)group and the attach value is an 
+            array with the traces of the operation.
+    
+        Notes
+        -----
+        For more about `lazy-property`, check the documentation `here <https://pypi.org/project/lazy-property/>_ .
+        """
+
+
         symmetries = {}
         #        print ("calculating symmetry eigenvalues for E={0}, WF={1} SG={2}".format(self.Energy,self.WF.shape,self.SG) )
         if not (self.SG is None):
@@ -902,7 +920,9 @@ class Kpoint:
         kpl="",
     ):
         """
-        DESCRIPTION
+        Calculate traces and determine and print irreps in a k-point. Write them 
+        in file passed as `plotFile` (for plotting) and `irreps.dat`. Also 
+        calculates and prints the number of band-inversions.
 
         Parameters
         ----------
@@ -918,11 +938,26 @@ class Kpoint:
         symmetries : list, default=None
             Index of symmetry operations whose description will be printed. 
         preline : str, default=''
+            Characters to write before labels of irreps in file `irreps.dat`.
         efermi : float, default=0.0
             Fermi-energy.
-        plotFile : str, default=None
-        kpl : str, default=''
+        plotFile : file object, default=None
+            File in which energy-levels and corresponding irreps will be written 
+            to later place irreps in band structure plot.
+        kpl : float, default=''
+            Length accumulated until the k-point. Can be used to locate irreps 
+            in the x-axis of a band structure plot.
 
+        Returns
+        -------
+        int
+            Number of inversion-odd states.
+        float
+            Last energy-level within the considered range of states.
+        float
+            First energy-level above the range of considered bands. If the last 
+            band in the range of considered bands coincides with the last band 
+            calculated by DFT, it will be set to `numpy.NaN`.
         """
         if symmetries is None:
             sym = {s.ind: s for s in self.symmetries}
@@ -958,6 +993,9 @@ class Kpoint:
             irreps = ["None"] * (len(borders) - 1)
         else:
             try:
+                # irreps is a list. Each element is a dict corresponding to a 
+                # group of degen. states. Every key is an irrep and its value 
+                # the multiplicity of the irrep in the rep. of degen. states
                 irreps = [
                     {
                         ir: np.array(
@@ -973,6 +1011,7 @@ class Kpoint:
                 print("irreptable:", irreptable)
                 print([sym.ind for sym in self.symmetries])
                 raise ke
+            # generate str describing irrep corresponding to sets of states
             irreps = [
                 ", ".join(
                     ir
@@ -983,13 +1022,13 @@ class Kpoint:
                         else ""
                     )
                     + ")"
-                    for ir in irr
-                    if abs(irr[ir]) > 1e-3
+                    for ir in irr # irreps of little-group
+                    if abs(irr[ir]) > 1e-3 # check multiplicity
                 )
-                for irr in irreps
+                for irr in irreps # group of degen. states
             ]
         #            irreps=[ "None" ]*(len(borders)-1)
-        irreplen = max(len(irr) for irr in irreps)
+        irreplen = max(len(irr) for irr in irreps) # len of largest line
         if irreplen % 2 == 1:
             irreplen += 1
         s2 = " " * int(irreplen / 2 - 3)

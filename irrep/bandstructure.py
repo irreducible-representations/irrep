@@ -845,13 +845,14 @@ class BandStructure:
         plotFile=None,
     ):
         """
-        Calculate irreps, number of band-inversion, smallest direct gap and 
-        indirect gap and print them.
+        Calculate irreps, number of band-inversion (if little-group contains 
+        inversion), smallest direct gap and indirect gap and print all of them.
 
         Parameters
         ----------
         degen_thresh : float, default=0
-
+            Threshold energy used to decide whether a set of wave-functions are
+            degenerate in energy.
         refUC : array, default=None
             3x3 array describing the transformation of vectors defining the 
             unit cell to the standard setting.
@@ -864,8 +865,10 @@ class BandStructure:
         symmetries : list, default=None
             Index of symmetry operations whose description will be printed. 
         preline : str, default=''
+            Characters to write before labels of irreps in file `irreps.dat`.
         plotFile : str, default=None
-        
+            Name of file in which energy-levels and corresponding irreps will be 
+            written to later place irreps in band structure plot.
         """
         #        if refUC is not None:
         #        self.spacegroup.show(refUC=refUC,shiftUC=shiftUC)
