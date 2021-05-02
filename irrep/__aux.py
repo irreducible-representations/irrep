@@ -23,11 +23,41 @@ BOHR = constants.physical_constants['Bohr radius'][0] / constants.angstrom
 
 
 def str2list(string):
+    """
+    Generate `list` from `str`, where elements are separated by '-'.
+    Used when parsing parameters set in CLI.
+
+    Parameters
+    ----------
+    string : str
+        `str`to be parsed.
+
+    Returns
+    -------
+    array
+
+    Notes
+    -----
+    Ranges can be generated as part of the output `array`. For example, 
+    `str2list('1,3-5,7)` will give as ouput `array([1,3,4,5,7])`.
+    """
     return np.hstack([np.arange(*(np.array(s.split("-"), dtype=int) + np.array([0, 1])))
                       if "-" in s else np.array([int(s)]) for s in string.split(",")])
 
 
 def compstr(string):
+    """
+    Convers `str` to `float` or `complex`.
+
+    Parameters
+    ----------
+    string : str
+        String to convert.
+    Returns
+    -------
+    float or complex
+        `float` if `string` does not have imaginary part, `complex` otherwise.
+    """
     if "i" in string:
         if "+" in string:
             return float(string.split("+")[0]) + 1j * \
@@ -40,6 +70,24 @@ def compstr(string):
 
 
 def str2list_space(string):
+    """
+    Generate `list` from `str`, where elements are separated by a space ''. 
+    Used when parsing parameters set in CLI.
+
+    Parameters
+    ----------
+    string : str
+        `str`to be parsed.
+
+    Returns
+    -------
+    array
+
+    Notes
+    -----
+    Ranges can be generated as part of the output `array`. For example, 
+    `str2list('1,3-5,7)` will give as ouput `array([1,3,4,5,7])`.
+    """
     #    print ("str2list  <{0}> ".format(string))
     res = np.hstack([np.arange(*(np.array(s.split("-"), dtype=int) + np.array([0, 1])))
                      if "-" in s else np.array([int(s)]) for s in string.split()])
@@ -48,6 +96,23 @@ def str2list_space(string):
 
 
 def str2bool(v1):
+    """
+    Convert `str` to `bool`.
+
+    Parameter
+    ---------
+    v2 : str
+        String to convert.
+    
+    Returns
+    -------
+    bool
+
+    Raises
+    ------
+    RuntimeError
+        `v1` does not start with 'F', 'f', 'T' nor 't'.
+    """
     v = v1.lower().strip('. ')
     if v[0] == "f":
         return False
@@ -59,9 +124,34 @@ def str2bool(v1):
 
 
 def str_(x):
+    """
+    Round `x` to 5 floating points and return as `str`.
+
+    Parameters
+    ----------
+    x : str
+
+    Returns
+    -------
+    str
+    """
     return str(round(x, 5))
 
 
 def is_round(A, prec=1e-14):
-    """ returns true if all values in A are integers, at least within machine precision"""
+    """
+    Returns true if all values in A are integers.
+
+    Parameters
+    ----------
+    A : array
+        `array` for which the check should be done.
+    prec : float, default=1e-14 (machine precision).
+        Threshold to apply.
+
+    Returns
+    -------
+    bool
+        `True` if all elements are integers, `False` otherwise.
+    """
     return(np.linalg.norm(A - np.round(A)) < prec)
