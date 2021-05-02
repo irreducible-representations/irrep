@@ -369,7 +369,6 @@ class SpaceGroup():
     inPOSCAR : str, default=None 
         POSCAR file from which lattice vectors, atomic species and positions of
         ions will be read.
-
     cell : tuple, default=None
         `cell[0]` is a 3x3 array where cartesian coordinates of basis 
         vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array
@@ -378,7 +377,6 @@ class SpaceGroup():
         atomic species of an ion. See `cell` parameter of function 
         `get_symmetry` in 
         `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
-
     spinor : bool, default=True
         `True` if wave-functions are spinors (SOC), `False` if they are scalars.
 
