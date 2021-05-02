@@ -77,7 +77,6 @@ class SymopTable:
         ----------  
         line : str
             Line to be parsed, which describes the symmetry operation.
-            
         '''
         numbers = line.split()
         self.R = np.array(numbers[:9], dtype=int).reshape(3, 3)
@@ -104,7 +103,6 @@ class SymopTable:
         Returns
         -------
         str
-
         """
         return (
             "   ".join(" ".join(str(x) for x in r) for r in self.R)
@@ -215,7 +213,6 @@ class KPoint:
         -------
         bool
             `True` if all attributes have identical value, `False` otherwise.
-
         """
         if self.name != other.name:
             return False
@@ -233,7 +230,6 @@ class KPoint:
         -------
         str
             Line showing the values of all attributes.
-
         """
         return "{0} : {1}  symmetries : {2}".format(self.name, self.k, self.isym)
 
@@ -246,7 +242,6 @@ class KPoint:
         str
             Line that, when parsed, would lead to an instance of class `KPoint` 
             with identical values of attributes.
-
         '''
         return "{0} : {1}  : {2}".format(
             self.name,
@@ -360,7 +355,6 @@ class Irrep:
             info about the space-group and irreps.
         k_point : class instance, default=None
             Instance of class `KPoint`. It is `None` when file is old (deprecated?)
-
         """
         logger.debug("reading irrep line <{0}> for KP=<{1}> ".format(line, k_point.str()))
         self.k = k_point.k
@@ -397,7 +391,6 @@ class Irrep:
             Line describing the irrep, which as it is written in the table of 
             space-groups included in `IrRep`. This line contains the label, 
             dimension and character of the irrep.
-
         """
         logger.debug(self.characters)
         ch = np.array([self.characters[isym] for isym in sorted(self.characters)])
@@ -507,7 +500,6 @@ class IrrepTable:
         ----------
         name : str, default=None
             File in which info about the space-group and irreps will be written.
-
         """
         if name is None:
             name = "tables/irreps-SG={SG}-{spinor}.dat".format(
@@ -563,7 +555,6 @@ class IrrepTable:
             `True` if wave-functions are spinors (SOC), `False` if they are scalars.
         name : str
             File from which irreps will be read.
-
         """
         self.number = SG
         self.spinor = spinor
