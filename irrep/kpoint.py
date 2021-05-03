@@ -231,8 +231,26 @@ class Kpoint:
     #        print("WF=\n",WF)
 
     def copy_sub(self, E, WF):
+        """
+        Create an instance of class `Kpoint` for a restricted set of states.
+
+        Parameters
+        ----------
+        E : array
+            Energy-levels of states.
+        WF : array
+            Coefficients of the plane-wave expansion of wave-funcitons. Each row 
+            corresponds to a wave-function.
+
+        Returns
+        -------
+        other : class
+            Instance of `Kpoints` corresponding to the group of states passed. 
+            They are shorted by energy-levels.
+
+        """
         #        print ("making a subspace with E={0}\n WF = {1}".format(E,WF.shape))
-        other = copy.copy(self)
+        other = copy.copy(self) # copy of whose class
         sortE = np.argsort(E)
         other.Energy = E[sortE]
         other.WF = WF[sortE]
@@ -336,8 +354,26 @@ class Kpoint:
         return result
 
     def Separate(self, symop, degen_thresh=1e-5, groupKramers=True):
-        # separates the bandstructure according to symmetry eigenvalues returns
-        # a dictionar of Kpoint objects eigval:Kpoint
+        """
+        Separate the band structure in a particular k-point according to the 
+        eigenvalues of a symmetry operation.
+
+        Parameters
+        ----------
+        isymop : int
+            Index of symmetry used for the separation.
+        degen_thresh : float, default=1e-5
+            Energy threshold used to determine degeneracy of energy-levels.
+        groupKramers : bool, default=True
+            If `True`, states will be coupled by Kramers' pairs..
+
+        Returns
+        -------
+        subspaces : dict
+            Each key is an eigenvalue of the symmetry operation and the
+            corresponding value is an instance of `class` `Kpoint` for the 
+            states with that eigenvalue of the symmetry operation.
+        """
         borders = np.hstack(
             [
                 [0],
@@ -355,6 +391,7 @@ class Kpoint:
             S=symop.spinor_rotation,
             T=symop.translation,
         )
+        # check orthogonality
         S1 = self.WF.conj().dot(self.WF.T)
         check = np.max(abs(S1 - np.eye(S1.shape[0])))
         if check > 1e-5:
@@ -375,6 +412,7 @@ class Kpoint:
                 for a in A
             )
 
+        # check that S is block-diagonal
         Sblock = np.copy(S)
         for b1, b2 in zip(borders, borders[1:]):
             Sblock[b1:b2, b1:b2] = 0
@@ -383,6 +421,7 @@ class Kpoint:
             print("WARNING: off-block:  \n", check)
             print(short(Sblock))
 
+        # calculate eigenvalues and eigenvectors in each block
         for b1, b2 in zip(borders, borders[1:]):
             W, V = la.eig(S[b1:b2, b1:b2])
             #            print (b1,b2,"symmetry submatrix \n",short(S[b1:b2,b1:b2]))
@@ -393,7 +432,7 @@ class Kpoint:
                     np.hstack((np.zeros(b1), v, np.zeros(self.Nband - b2)))
                 )
         w = np.array(eigenvalues)
-        v = np.array(eigenvectors).T
+        v = np.array(eigenvectors).T # each col an eigenvector
         Eloc = np.array(Eloc)
 
         #        print ("eigenvalues:",w)
@@ -426,6 +465,7 @@ class Kpoint:
                 v1 = v
                 subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF))
         else:
+            
             w1 = np.argsort(np.angle(w))
             w = w[w1]
             v = v[:, w1]
