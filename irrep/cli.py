@@ -316,11 +316,11 @@ def cli(
 
     if wcc:
         for k in subbands:
-            print("eigenvalue {0}".format(k))
+            print("symmetry eigenvalue {0}".format(k))
             # subbands[k].write_characters(degen_thresh=0.001,refUC=refUC,symmetries=symmetries)
             wcc = subbands[k].wcc()
             print(
-                "eigenvalue : #{0} \n  WCC are : {1} \n sumWCC={2}".format(
+                "symmetry eigenvalue : {0} \n  WCC are : {1} \n sumWCC={2}".format(
                     k, wcc, np.sum(wcc) % 1
                 )
             )

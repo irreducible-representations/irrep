@@ -266,10 +266,21 @@ class Kpoint:
         return other
 
     def unfold(self, supercell, kptPBZ, degen_thresh=1e-4):
-        """unfolds a kpoint of a supercell onto the point of the primitivecell kptPBZ
-           returns an array of 2 (5 in case of spinors) columns:
-           E , weight , Sx , Sy , Sz
-           """
+        """
+        Unfolds a kpoint of a supercell onto the point of the primitive cell 
+        kptPBZ.
+
+        Parameters
+        ----------
+        supercell
+        kptPBZ
+        degen_thresh : float, default=1e-4
+
+        Returns
+        -------
+        array
+            It contains 2 elements (5 with SOC): E , weight , Sx , Sy , Sz
+        """
         if not is_round(kptPBZ.dot(supercell.T) - self.K, prec=1e-5):
             raise RuntimeError(
                 "unable to unfold {} to {}, withsupercell={}".format(
@@ -310,6 +321,7 @@ class Kpoint:
 
     @property
     def NG(self):
+        """Getter for the number of plane-waves in current k-point"""
         return self.ig.shape[0]
 
     def __eval_rho_spin(self, degen_thresh):
@@ -409,6 +421,19 @@ class Kpoint:
         Eloc = []
 
         def short(A):
+            """
+            Format array to print it.            
+            
+            Parameters
+            ----------
+            A : array
+                Matrix that should be printed.
+                
+            Returns
+            -------
+            str
+                Description of the matrix. Ready to be printed.
+            """
             return "".join(
                 "   ".join("{0:+5.2f} {1:+5.2f}".format(x.real, x.imag) for x in a)
                 + "\n"
@@ -979,7 +1004,7 @@ class Kpoint:
             1 and following order of operations as returned by `spglib`) and 
             values are traces of symmetries.
         symmetries : list, default=None
-            Index of symmetry operations whose description will be printed. 
+            Index of symmetry operations whose traces will be printed. 
         preline : str, default=''
             Characters to write before labels of irreps in file `irreps.dat`.
         efermi : float, default=0.0
@@ -1162,7 +1187,7 @@ class Kpoint:
             Threshold energy used to decide whether a set of wave-functions are
             degenerate in energy.
         symmetries : list, default=None
-            Index of symmetry operations whose description will be printed. 
+            Index of symmetry operations whose traces will be printed. 
         efermi : float, default=0.0
             Fermi-energy. Used as origin for energy-levels. 
 
@@ -1212,6 +1237,26 @@ class Kpoint:
         return res
 
     def write_trace_all(self, degen_thresh=1e-8, symmetries=None, efermi=0.0, kpline=0):
+        """
+        Generate a block describing energy-levels and traces in a k-point.
+
+        Parameters
+        ----------
+        degen_thresh : float, default=1e-8
+            Threshold energy used to decide whether a set of wave-functions are
+            degenerate in energy.
+        symmetries : list, default=None
+            Index of symmetry operations whose traces will be printed. 
+        efermi : float, default=0.0
+            Fermi-energy. Used as origin for energy-levels. 
+        kpline : float, default=0
+            Cumulative length of the path up to current k-point.
+
+        Returns
+        -------
+        str
+            Block with the Description of energy-levels and traces in a k-point.
+        """
         preline = "{0:10.6f}     {1:10.6f}  {2:10.6f}  {3:10.6f}  ".format(
             kpline, *tuple(self.K)
         )
@@ -1233,7 +1278,7 @@ class Kpoint:
                 [char0[i][start:end].sum() for start, end in zip(borders, borders[1:])]
             )
             for i in char0
-        }
+        } # keys are indices of symmetries, values are arrays with traces
         E = np.array(
             [self.Energy[start:end].mean() for start, end in zip(borders, borders[1:])]
         )

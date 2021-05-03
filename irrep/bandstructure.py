@@ -1156,6 +1156,15 @@ class BandStructure:
         return z, emin - emax, (emin + emax) / 2, locgap
 
     def wcc(self):
+        """
+        Calculate Wilson loops.
+
+        Returns
+        -------
+        array
+            Eigenvalues of the Wilson loop operator, divided by :math:`2\pi`.
+
+        """
         overlaps = [
             x.overlap(y)
             for x, y in zip(self.kpoints, self.kpoints[1:] + [self.kpoints[0]])
@@ -1168,6 +1177,16 @@ class BandStructure:
         return np.sort((np.angle(np.linalg.eig(wilson)) / (2 * np.pi)) % 1)
 
     def write_bands(self, locs=None):
+        """
+        Generate lines for a band structure plot, with values for the x-axis 
+        (cummulative length along k-path) and y-axis (energy-levels).
+
+        Returns
+        -------
+        str
+            Lines to write into a file that will be parsed to plot the band 
+            structure.
+        """
         #        print (locs)
         kpline = self.KPOINTSline()
         nbmax = max(k.Nband for k in self.kpoints)
@@ -1199,12 +1218,31 @@ class BandStructure:
 
     def write_trace_all(
         self,
-        degen_thresh=0,
+        degen_thresh=1e-8,
         refUC=None,
         shiftUC=np.zeros(3),
         symmetries=None,
         fname="trace_all.dat",
     ):
+        """
+        Write in a file the description of symmetry operations and energy-levels 
+        and irreps in calculated in all k-points.
+
+        Parameters
+        ----------
+        degen_thresh : float, default=1e-8
+            Threshold energy used to decide whether a set of wave-functions are
+            degenerate in energy.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+        symmetries : list, default=None
+            Index of symmetry operations whose traces will be printed. 
+        fname : str, default=trace_all.dat
+        """
         f = open(fname, "w")
         kpline = self.KPOINTSline()
         f.write(
@@ -1213,6 +1251,7 @@ class BandStructure:
                 + "# {1}  # Spin-orbit coupling. No: 0, Yes: 1\n"  #
             ).format(self.getNbands(), 1 if self.spinor else 0)
         )
+        # add lines describing symmetry operations
         f.write(
             "\n".join(
                 ("#" + l)
