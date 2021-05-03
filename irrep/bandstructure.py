@@ -830,6 +830,7 @@ class BandStructure:
     #        exit()
 
     def getNK():
+        """Getter for `self.kpoints`."""
         return len(self.kpoints)
 
     NK = property(getNK)
@@ -1009,15 +1010,35 @@ class BandStructure:
             )
 
     def Separate(self, isymop, degen_thresh=1e-5, groupKramers=True):
+        """
+        Separate band structure according to the eigenvalues of a symmetry 
+        operation.
+        
+        Parameters
+        ----------
+        isymop : int
+            Index of symmetry used for the separation.
+        degen_thresh : float, default=1e-5
+            Energy threshold used to determine degeneracy of energy-levels.
+        groupKramers : bool, default=True
+            If `True`, states will be coupled by Kramers' pairs..
+
+        Returns
+        -------
+        subspaces : dict
+            Each key is an eigenvalue of the symmetry operation and the
+            corresponding value is an instance of `class` `BandStructure` for 
+            the subspace of that eigenvalue.
+        """
         if isymop == 1:
             return {1: self}
         symop = self.spacegroup.symmetries[isymop - 1]
-        print("Separating by symmetry operation # ", isymop)
+        #print("Separating by symmetry operation # ", isymop)
         symop.show()
         kpseparated = [
             kp.Separate(symop, degen_thresh=degen_thresh, groupKramers=groupKramers)
             for kp in self.kpoints
-        ]
+        ] # each element is a dict with separated bandstructure of a k-point
         allvalues = np.array(sum((list(kps.keys()) for kps in kpseparated), []))
         #        print (allvalues)
         #        for kps in kpseparated :
@@ -1036,7 +1057,7 @@ class BandStructure:
             if len(borders) > 2:
                 allvalues = set(
                     [allvalues[b1:b2].mean() for b1, b2 in zip(borders, borders[1:])]
-                )
+                ) # unrepeated Re parts of all eigenvalues
                 subspaces = {}
                 for v in allvalues:
                     other = copy.copy(self)
@@ -1046,7 +1067,7 @@ class BandStructure:
                         vk0 = vk[np.argmin(np.abs(v - vk))]
                         if abs(vk0 - v) < 0.05:
                             other.kpoints.append(K[vk0])
-                        subspaces[v] = other
+                        subspaces[v] = other # unnecessary indent ?
                 return subspaces
             else:
                 return dict({allvalues.mean(): self})
