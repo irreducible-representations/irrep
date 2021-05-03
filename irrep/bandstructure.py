@@ -31,7 +31,10 @@ from .spacegroup import SpaceGroup
 
 class BandStructure:
     """
-    DESCRIPTION
+    Parses files and organizes info about the whole band structure in 
+    attributes. Contains methods to calculate and write traces (and irreps), 
+    for the separation of the band structure in terms of a symmetry operation 
+    and for the calculation of the Zak phase.
 
     Parameters
     ----------
@@ -1101,6 +1104,25 @@ class BandStructure:
                 return dict({allvalues.mean(): self})
 
     def zakphase(self):
+        """
+        Calculate Zak phases along a path for a set of states.
+
+        Returns
+        -------
+        z : array
+            `z[i]` contains the total  (trace) zak phase (divided by 
+            :math:`2\pi`) for the subspace of the first i-bands.
+        array
+            The :math:`i^{th}` element is the gap between :math:`i^{th}` 
+            :math:`(i+1)^{th}` bands in the considered set of bands. 
+        array
+            The :math:`i^{th}` element is the mean energy between :math:`i^{th}` 
+            :math:`(i+1)^{th}` bands in the considered set of bands. 
+        array
+            Each line contains the local gaps between pairs of bands in a 
+            k-point of the path. The :math:`i^{th}` column is the local gap 
+            between :math:`i^{th}` and :math:`(i+1)^{th}` bands.
+        """
         overlaps = [
             x.overlap(y)
             for x, y in zip(self.kpoints, self.kpoints[1:] + [self.kpoints[0]])
@@ -1111,6 +1133,8 @@ class BandStructure:
         print("   sum  ", np.sum(np.angle(O[0, 0]) for O in overlaps) / np.pi)
         #        overlaps.append(self.kpoints[-1].overlap(self.kpoints[0],g=np.array( (self.kpoints[-1].K-self.kpoints[0].K).round(),dtype=int )  )  )
         nmax = np.min([o.shape for o in overlaps])
+        # calculate zak phase in incresing dimension of the subspace (1 band,
+        # 2 bands, 3 bands,...)
         z = np.angle(
             [[la.det(O[:n, :n]) for n in range(1, nmax + 1)] for O in overlaps]
         ).sum(axis=0) % (2 * np.pi)

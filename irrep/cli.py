@@ -301,11 +301,11 @@ def cli(
 
     if zak:
         for k in subbands:
-            print("eigenvalue {0}".format(k))
+            print("symmetry eigenvalue : {0} \n Traces are : ".format(k))
             subbands[k].write_characters(
                 degen_thresh=0.001, refUC=refuc, symmetries=symmetries
             )
-            print("eigenvalue : #{0} \n Zak phases are : ".format(k))
+            print("symmetry eigenvalue : {0} \n Zak phases are : ".format(k))
             zak = subbands[k].zakphase()
             for n, (z, gw, gc, lgw) in enumerate(zip(*zak)):
                 print(
@@ -326,6 +326,21 @@ def cli(
             )
 
     def short(x, nd=3):
+        """
+        Format `float` or `complex` number.
+
+        Parameter
+        ---------
+        x : int, float or complex
+            Number to format.
+        nd : int, default=3
+            Number of decimals.
+
+        Returns
+        -------
+        str
+            Formatted number, with `nd` decimals saved.
+        """
         fmt = "{{0:+.{0}f}}".format(nd)
         if abs(x.imag) < 10 ** (-nd):
             return fmt.format(x.real)
@@ -359,6 +374,7 @@ def cli(
         )
 
     if plotbands:
+        print("plotbands = True --> writing bands")
         for k, sub in subbands.items():
             if isymsep is not None:
                 print(

@@ -28,7 +28,10 @@ from lazy_property import LazyProperty
 
 class Kpoint:
     """
-    DESCRIPTION
+    Parses files and organizes info about the states and energy-levels of a 
+    particular k-point in attributes. Contains methods to calculate and write 
+    traces (and irreps), for the separation of the band structure in terms of a 
+    symmetry operation and for the calculation of the Zak phase.
 
     Parameters
     ----------
@@ -1255,7 +1258,19 @@ class Kpoint:
         return res
 
     def overlap(self, other):
-        """ Calculates the overlap matrix <u_m(k) | u_n(k'+g) > """
+        """ 
+        Calculates the overlap matrix < u_m(k) | u_n(k+g) >.
+
+        Parameters
+        ----------
+        other : class
+            Instance of `Kpoints` corresponding to k+g (next k-point in path).
+
+        Returns
+        -------
+        res : array
+            Matrix of `complex` elements  < u_m(k) | u_n(k+g) >.
+        """
         g = np.array((self.K - other.K).round(), dtype=int)
         igall = np.hstack((self.ig[:3], other.ig[:3] - g[:, None]))
         igmax = igall.max(axis=1)
@@ -1264,6 +1279,8 @@ class Kpoint:
         #        print (self.ig.T)
         #        print (igsize)
         res = np.zeros((self.Nband, other.Nband), dtype=complex)
+        
+        # short again coefficients of expansions
         for s in [0, 1] if self.spinor else [0]:
             WF1 = np.zeros((self.Nband, igsize[0], igsize[1], igsize[2]), dtype=complex)
             WF2 = np.zeros(
