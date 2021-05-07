@@ -19,10 +19,10 @@
 import numpy as np
 import numpy.linalg as la
 import copy
-from .__gvectors import calc_gvectors, symm_eigenvalues, NotSymmetryError, symm_matrix
-from .__readfiles import Hartree_eV
-from .__readfiles import record_abinit
-from .__aux import compstr, is_round
+from .gvectors import calc_gvectors, symm_eigenvalues, NotSymmetryError, symm_matrix
+from .readfiles import Hartree_eV
+from .readfiles import record_abinit
+from .aux import compstr, is_round
 from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
 

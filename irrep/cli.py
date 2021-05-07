@@ -27,7 +27,7 @@ import click
 
 from .spacegroup import SpaceGroup
 from .bandstructure import BandStructure
-from .__aux import str2bool, str2list
+from .aux import str2bool, str2list
 from . import __version__ as version
 
 

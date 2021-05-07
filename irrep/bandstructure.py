@@ -22,9 +22,9 @@ import functools
 import numpy as np
 import numpy.linalg as la
 
-from .__aux import str2bool, BOHR
-from .__readfiles import AbinitHeader, Hartree_eV
-from .__readfiles import WAVECARFILE
+from .aux import str2bool, BOHR
+from .readfiles import AbinitHeader, Hartree_eV
+from .readfiles import WAVECARFILE
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 
