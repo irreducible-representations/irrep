@@ -49,7 +49,7 @@ class Kpoint:
         the value of this is negative or larger than `Ecut0`.
     Ecut0 : float
         Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
-        DFT files. Insignificant if `code`=`wannier90`.
+        DFT files. Insignificant if `code` = `wannier90`.
     RecLattice : array, shape=(3,3)
         Each row contains the cartesian coordinates of a basis vector forming 
         the unit-cell in reciprocal space.
@@ -64,14 +64,15 @@ class Kpoint:
     npw_ : int, default=None
         Number of plane-waves considered in the expansion of wave-functions. 
     fWFK : file object, default=None
-        File object corresponding to Abinit's WFK. Returned by `FortranFile`.
+        File object corresponding to file WFK of Abinit. Returned by 
+        `FortranFile`.
     WCF : class, default=None
         Instance of `class` `WAVECARFILE`.
     prefix : str, default=None
         Prefix used for Quantum Espresso calculations or seedname of Wannier90 
         files.
     kptxml
-        `Element` object (see `ElementTree XML API`) corresponding to a k-point.
+        `Element` object (see `ElementTree XML API` ) corresponding to a k-point.
     flag : int, default=-1
         Index of the k-point, used when parsing WFK file (Abinit). Info is read 
         for all k-points, but stored only for k-points whose index is passed 
@@ -88,8 +89,8 @@ class Kpoint:
         channel. If `spin_channel`='dw', `IBstartE` is equal to the number of 
         bands in spin-up channel.
     
-    Attibutes
-    ---------
+    Attributes
+    ----------
     spinor : bool
         `True` if wave functions are spinors, `False` if they are scalars.
     ik0 : int
@@ -99,7 +100,9 @@ class Kpoint:
     RecLattice : array, shape=(3,3)
         Each row contains the cartesian coordinates of a basis vector forming 
         the unit-cell in reciprocal space.
-    WF
+    WF : array
+        Coefficients of wave-functions in the plane-wave expansion. A row for 
+        each wave-function.
     igall : array
         Returned by `__sortIG`.
         Every column corresponds to a plane-wave of energy smaller than 
@@ -118,10 +121,6 @@ class Kpoint:
         Energy of the first band above the set of bands whose traces should be 
         calculated. It will be set to `numpy.NaN` if the last band matches the 
         last band in the DFT calculation (default `IBstart`).
-    symmetries : dict
-        Each keys is the instance of class `SymmetryOperation` corresponding to 
-        a symmetry in the space-group and its value is an `array` with the 
-        traces of that symmetry. 
 
     """
     
@@ -142,7 +141,7 @@ class Kpoint:
     
         Notes
         -----
-        For more about `lazy-property`, check the documentation `here <https://pypi.org/project/lazy-property/>_ .
+        For more about `lazy-property`, check the documentation `here <https://pypi.org/project/lazy-property/>`_ .
         """
 
 
@@ -380,7 +379,7 @@ class Kpoint:
         degen_thresh : float, default=1e-5
             Energy threshold used to determine degeneracy of energy-levels.
         groupKramers : bool, default=True
-            If `True`, states will be coupled by Kramers' pairs..
+            If `True`, states will be coupled by pairs of Kramers.
 
         Returns
         -------

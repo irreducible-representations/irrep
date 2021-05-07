@@ -63,8 +63,8 @@ class BandStructure:
         Fermi-energy.
     onlysym : bool, default=False
         Exit after printing info about space-group.
-    spin_channel : , default=None
-        "DESCRIPTION"
+    spin_channel : str, default=None
+        Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
 
     Attributes
     ----------

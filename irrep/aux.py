@@ -30,7 +30,7 @@ def str2list(string):
     Parameters
     ----------
     string : str
-        `str`to be parsed.
+        `str` to be parsed.
 
     Returns
     -------
@@ -39,7 +39,7 @@ def str2list(string):
     Notes
     -----
     Ranges can be generated as part of the output `array`. For example, 
-    `str2list('1,3-5,7)` will give as ouput `array([1,3,4,5,7])`.
+    `str2list('1,3-5,7')` will give as ouput `array([1,3,4,5,7])`.
     """
     return np.hstack([np.arange(*(np.array(s.split("-"), dtype=int) + np.array([0, 1])))
                       if "-" in s else np.array([int(s)]) for s in string.split(",")])
@@ -77,7 +77,7 @@ def str2list_space(string):
     Parameters
     ----------
     string : str
-        `str`to be parsed.
+        `str` to be parsed.
 
     Returns
     -------
@@ -86,7 +86,7 @@ def str2list_space(string):
     Notes
     -----
     Ranges can be generated as part of the output `array`. For example, 
-    `str2list('1,3-5,7)` will give as ouput `array([1,3,4,5,7])`.
+    `str2list('1,3-5,7')` will give as ouput `array([1,3,4,5,7])`.
     """
     #    print ("str2list  <{0}> ".format(string))
     res = np.hstack([np.arange(*(np.array(s.split("-"), dtype=int) + np.array([0, 1])))
