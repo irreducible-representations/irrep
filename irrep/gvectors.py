@@ -21,6 +21,10 @@ from numpy.linalg import det, norm
 
 
 class NotSymmetryError(RuntimeError):
+    """
+    Pass if we attemp to apply to a k-vector a symmetry that does not belong 
+    to its little-group.
+    """
     pass
 
 
@@ -57,16 +61,16 @@ def calc_gvectors(
         Each row contains the cartesian coordinates of a basis vector forming 
         the unit-cell in reciprocal space.
     Ecut : float
-        Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
+        Plane-wave cutoff (in eV) used in the DFT calulation. Always read from 
         DFT files.
     nplane : int, default=np.Inf
         Number of plane-waves in the expansion of wave-functions (read from DFT 
         files). Only significant for VASP. 
-    Ecut1 : float
+    Ecut1 : float, default=Ecut
         Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
     thresh : float, default=1e-3
-        Threshould for defining the g-vectors with the same energy
-    spinor : bool
+        Threshold for defining the g-vectors with the same energy.
+    spinor : bool, default=True
         `True` if wave functions are spinors, `False` if they are scalars. It 
         will be read from DFT files. Mandatory for `vasp`.
     nplanemax : int, default=10000
@@ -79,8 +83,8 @@ def calc_gvectors(
         `Ecut`. The number of rows is 6: the first 3 contain direct 
         coordinates of the plane-wave, the fourth row stores indices needed
         to short plane-waves based on energy (ascending order). Fitfth 
-        (sixth) row contains the index of the first (last) groups of 
-        plane-waves of identical energy.
+        (sixth) row contains the index of the first (last) plane-wave with 
+        the same energy as the plane-wave of the current column.
     
 """
     if Ecut1 <= 0:
@@ -172,7 +176,7 @@ def calc_gvectors(
 
 def transformed_g(kpt, ig, RecLattice, A):
     """
-    Determines how the transformation matrix A reorders the reciprocal
+    Determines how the transformation matrix `A` reorders the reciprocal
     lattice vectors taking part in the plane-wave expansion of wave-functions.
 
     Parameters
@@ -255,12 +259,12 @@ def symm_eigenvalues(
     WF : array
         `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
         plane-wave in the expansion of the wave-function in :math:`i^{th}`
-        band. It contains only plane-waves if energy smaller than `Ecut`.
+        band. It contains only plane-waves of energy smaller than `Ecut`.
     igall : array
         Returned by `__sortIG`.
         Every column corresponds to a plane-wave of energy smaller than 
         `Ecut`. The number of rows is 6: the first 3 contain direct 
-        coordinates of the plane-wave, the third row stores indices needed
+        coordinates of the plane-wave, the fourth row stores indices needed
         to short plane-waves based on energy (ascending order). Fitfth 
         (sixth) row contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.
@@ -273,7 +277,7 @@ def symm_eigenvalues(
         Translational part of the symmetry operation, in terms of the basis 
         vectors of the unit cell.
     spinor : bool, default=True
-        `True` if wave functions are spinors, `False` if they are scalars.
+        `True` if wave-functions are spinors, `False` if they are scalars.
 
     Returns
     -------
@@ -318,7 +322,7 @@ def symm_matrix(
         Returned by `__sortIG`.
         Every column corresponds to a plane-wave of energy smaller than 
         `Ecut`. The number of rows is 6: the first 3 contain direct 
-        coordinates of the plane-wave, the third row stores indices needed
+        coordinates of the plane-wave, the fourth row stores indices needed
         to short plane-waves based on energy (ascending order). Fitfth 
         (sixth) row contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.

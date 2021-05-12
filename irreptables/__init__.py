@@ -96,7 +96,7 @@ class SymopTable:
 
         Parameters
         ----------
-        spinor : bool
+        spinor : bool, default=True
             `True` if the matrix describing the transformation of spinor 
             components should be written.
 
@@ -154,21 +154,21 @@ class CharFunction:
 
 class KPoint:
     """
-    Orginizes the info about a maximal k-point and contains routines to print 
+    Organizes the info about a maximal k-point and contains routines to print 
     it. This info is obtained by parsing the parameter `line` or passed 
     directly as `name`, `k` and `isym`.
     
     Parameters
     ----------
-    name : str
+    name : str, default=None
         Label of the k-point.
-    k : array, shape=(3,)
+    k : array, default=None
         Direct coordinates of the k-point.
-    isym : array
+    isym : array, default=None
         Indices of symmetry operations in the little co-group. Indices make 
         reference to the symmetry operations stored in the header of the file 
         and stored in `IrrepTable.symmetries`. 
-    line : str
+    line : str, default=None
         Line to be parsed. 
     
     Attributes
@@ -252,8 +252,8 @@ class KPoint:
 
 class Irrep:
     """
-    Parses the line containing the description of the irrep, stores the info in 
-    its attributes. The methods print descriptions of the irrep. 
+    Parses the line containing the description of the irrep and stores the info 
+    in its attributes. Contains methods print descriptions of the irrep. 
 
     Parameters
     ----------
@@ -271,10 +271,9 @@ class Irrep:
     Attributes
     ----------
     k : array, shape=(3,) 
-        Attribute `k` of class `KPoint`. It is an array of direct coordinates 
-        of a k-point.
+        Direct coordinates of a k-point.
     kpname : str
-        Attribute `name` of class `KPoint`. It is the label of a k-point.
+        It is the label of a k-point.
     has_rkmk : deprecated?
     name : str
         Label of the irrep.
@@ -283,7 +282,7 @@ class Irrep:
     nsym : int
         Number of symmetry operations in the little co-group of the k-point.
     reality : bool
-        `True` if characters of all symmetry operations are real, `False` 
+        `True` if traces of all symmetry operations are real, `False` 
         otherwise.
     characters : dict
         Each key is the index of a symmetry operation in the little co-group 
@@ -388,8 +387,8 @@ class Irrep:
         Returns
         -------
         str
-            Line describing the irrep, which as it is written in the table of 
-            space-groups included in `IrRep`. This line contains the label, 
+            Line describing the irrep, as it is written in the table of the
+            space-group included in `IrRep`. This line contains the label, 
             dimension and character of the irrep.
         """
         logger.debug(self.characters)
@@ -415,7 +414,7 @@ class IrrepTable:
         `True` if the matrix describing the transformation of spinor components 
         should be read.
     fromUser : bool, default=True
-        `True` if the file to be is one already included in `IrRep`. `False` if 
+        `True` if the file to be read is one already included in `IrRep`. `False` if 
         the file to be read is an old (deprecated?) file.
     name : str, default=None
         Name of the file from which info about the space-group and irreps 
@@ -434,7 +433,7 @@ class IrrepTable:
        Number of symmetry operations in the "point-group" of the space-group. 
     symmetries : list
         Each component is an instance of class `SymopTable` corresponding to a 
-        symmetry operation of the space-group.
+        symmetry operation in the "point-group" of the space-group.
     NK : int
         Number of maximal k-points in the Brillouin zone.
     irreps : list
@@ -493,8 +492,8 @@ class IrrepTable:
 
     def save4user(self, name=None):
         """
-        Creates the a file with info about the space-group and irreps. It is 
-        used to create the files included in `IrRep`, with `name`=`None`.
+        Creates a file with info about the space-group and irreps. It is 
+        used to create the files included in `IrRep` (when `name=None`).
 
         Parameters
         ----------

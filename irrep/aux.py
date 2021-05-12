@@ -101,7 +101,7 @@ def str2bool(v1):
 
     Parameter
     ---------
-    v2 : str
+    v1 : str
         String to convert.
     
     Returns
@@ -140,7 +140,7 @@ def str_(x):
 
 def is_round(A, prec=1e-14):
     """
-    Returns true if all values in A are integers.
+    Returns `True` if all values in A are integers.
 
     Parameters
     ----------

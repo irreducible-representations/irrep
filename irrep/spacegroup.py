@@ -29,7 +29,6 @@ pauli_sigma = np.array(
 
 
 class WrongRotation(RuntimeError):
-    '''USED SOMEWHERE ?'''
     def __init__(self, rotation):
         super(WrongRotation, self).__init__(
             "strange rotation :\n {0}".format(rotation))
@@ -52,10 +51,10 @@ class SymmetryOperation():
     Lattice : array, shape=(3,3) 
         Each row contains cartesian coordinates of a basis vector forming the 
         unit-cell in real space.
-    ind : int
+    ind : int, default=-1
         Index of the symmetry operation.
     spinor : bool, default=true
-        `True` if wave functions are spinors, `False` if they are scalars.
+        `True` if wave-functions are spinors, `False` if they are scalars.
 
     Attributes
     ---------
@@ -79,9 +78,9 @@ class SymmetryOperation():
         translation or screw rotation), `True` otherwise (inversion, reflection 
         roto-inversion or glide reflection).
     angle_str : str
-        String of rotation angle in radians.
+        String describing the rotation angle in radians.
     spinor : bool
-        `True` if wave functions are spinors, `False` if they are scalars.
+        `True` if wave-functions are spinors, `False` if they are scalars.
     spinor_rotation : array, shape=(2,2)
         Matrix describing how spinors transform under the symmetry.
     """
@@ -179,7 +178,7 @@ class SymmetryOperation():
         
         Parameters
         ----------
-        refUC : array, default=None
+        refUC : array
             3x3 array describing the transformation of vectors defining the 
             unit cell to the standard setting.
 
@@ -361,14 +360,14 @@ class SymmetryOperation():
 
 class SpaceGroup():
     """
-    Contais information about the space-group and methods to detect and 
-    describe it.
+    Determine the space-group and save info in attributes. Contains methods to 
+    describe and print info about the space-group.
 
     Parameters
     ----------
     inPOSCAR : str, default=None 
-        POSCAR file from which lattice vectors, atomic species and positions of
-        ions will be read.
+        Name of the POSCAR file from which lattice vectors, atomic species and 
+        positions of ions will be read.
     cell : tuple, default=None
         `cell[0]` is a 3x3 array where cartesian coordinates of basis 
         vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array

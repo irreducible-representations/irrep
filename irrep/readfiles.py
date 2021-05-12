@@ -23,19 +23,50 @@ from sys import stdout
 
 
 class WAVECARFILE:
+    """
+    Routines to read info from file WAVECAR of VASP.
+
+    Parameters
+    ----------
+    fname : str, default=None
+        Name of the WAVECAR file.
+    RL : int, default=3
+        Length parameter used to locate info in the file.
+
+    Attributes
+    ----------
+    f : file object
+        Corresponds to `fname`.
+    rl : int
+        Equal to parameter `RL`.
+    """
 
     def __init__(self, fname=None, RL=3):
         self.f = open(fname, "rb")
         self.rl = 3
 
     def record(self, irec, cnt=np.Inf, dtype=float):
-        "an auxilary function to get records from WAVECAR"
+        """An auxilary function to get records from WAVECAR"""
         self.f.seek(irec * self.rl)
         return np.fromfile(self.f, dtype=dtype, count=min(self.rl, cnt))
 
 
 def record_abinit(fWFK, st):
-    "an auxilary function to get records from WAVECAR"
+    """
+    An auxilary function to get records from WAVECAR
+
+    Parameters
+    ----------
+    fWFK : file object
+        Corresponds to the WFK file of Abinit.
+    st : str
+        Format to be read.
+
+    Returns
+    -------
+    r : str
+        String read.
+    """
     r = fWFK.read_record(st)
     if scipy.__version__.split(".")[0] == "0":
         r = r[0]
@@ -47,6 +78,40 @@ Hartree_eV = 2 * Rydberg_eV
 
 
 class AbinitHeader():
+    """
+    Parse header of the WFK file of Abinit.
+
+    Paramters
+    ---------
+    fname : str
+        Name of the WFK file of Abinit.
+
+    Attributes
+    ----------
+    fWFK : file object
+        Corresponds to the WFK file.
+    rprim : array, shape=(3,3)
+        Each row contains cartesian coordinates of a basis vector forming the 
+        unit-cell in real space.
+    ecut : float
+        Plane-wave cutoff (in eV) to consider in the expansion of 
+        wave-functions.
+    usepaw : int
+        1 if pseudopotentials are PAW, 0 otherwise.
+    typat : array
+        Each element is a number identifying the atomic species of an ion. 
+        atomic species of an ion. See `cell` parameter of function 
+        `get_symmetry` in 
+        `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
+    kpt : array
+        Each row contains the direct coordinates of a k-point.
+    nband : array
+        Each element contains the number of bands in a k-point.
+    xred : array
+        Each row contains the direct coordinates of an ion's position. 
+    efermi : float
+        Fermi-level.
+    """
 
     def __init__(self, fname):
 

@@ -34,37 +34,39 @@ class BandStructure:
     Parses files and organizes info about the whole band structure in 
     attributes. Contains methods to calculate and write traces (and irreps), 
     for the separation of the band structure in terms of a symmetry operation 
-    and for the calculation of the Zak phase.
+    and for the calculation of the Zak phase and wannier charge centers.
 
     Parameters
     ----------
     fWAV : str, default=None
-        Filename for wavefunction in VASP WAVECAR format.
+        Name of file containing wave-functions in VASP (WAVECAR format).
     fWFK : str, default=None
-        Filename for wavefunction in ABINIT WFK format.
+        Name of file containing wave-functions in ABINIT (WFK format).
     prefix : str, default=None
         Prefix used for Quantum Espresso calculations or seedname of Wannier90 
         files.
     fPOS : str, default=None
-        Filename for wavefunction in VASP POSCAR format.
+        Name of file containing the crystal structure in VASP (POSCAR format).
     Ecut : float, default=None
         Plane-wave cutoff in eV to consider in the expansion of wave-functions.
     IBstart : int, default=None
         First band to be considered.
     IBend : int, default=None
         Last band to be considered.
-    kplist : , default=None
+    kplist : array, default=None
         List of indices of k-points to be considered.
     spinor : bool, default=None
-        `True` if wave functions are spinors, `False` if they are scalars.
+        `True` if wave functions are spinors, `False` if they are scalars. 
+        Mandatory for VASP.
     code : str, default='vasp'
-        DFT code used. Set "vasp", "abinit", "espresso" or "wannier90".
+        DFT code used. Set to 'vasp', 'abinit', 'espresso' or 'wannier90'.
     EF : float, default=None
         Fermi-energy.
     onlysym : bool, default=False
         Exit after printing info about space-group.
     spin_channel : str, default=None
-        Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
+        Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down. 
+        Only applied in the interface to Quantum Espresso.
 
     Attributes
     ----------
@@ -72,14 +74,14 @@ class BandStructure:
         Instance of `SpaceGroup`.
     spinor : bool
         `True` if wave functions are spinors, `False` if they are scalars. It 
-        will be read from DFT files. Mandatory for `vasp`.
+        will be read from DFT files.
     efermi : float
-        Fermi-energy. If input `EF` was set, it will take its value. Else, the 
-        code will try to read it from DFT files (except if `code`=`vasp`) and 
+        Fermi-energy. If input `EF` was set in CLI, it will take its value. Else, the 
+        code will try to read it from DFT files (except if `code=vasp`) and 
         set it to 0 if it could not.
     Ecut0 : float
-        Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
-        DFT files. Insignificant if `code`=`wannier90`.
+        Plane-wave cutoff (in eV) used in DFT calulations. Always read from 
+        DFT files. Insignificant if `code`='wannier90'.
     Ecut : float
         Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
         Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
@@ -91,7 +93,7 @@ class BandStructure:
         Each row contains the cartesian coordinates of a basis vector forming 
         the unit-cell in reciprocal space.
     kpoints : list
-        Each element is an instance of `class` `Kpoint` corresponding to a 
+        Each element is an instance of `class Kpoint` corresponding to a 
         k-point specified in input parameter `kpoints`. If this input was not 
         set, all k-points found in DFT files will be considered.
     """
@@ -855,7 +857,7 @@ class BandStructure:
         Parameters
         ----------
         degen_thresh : float, default=1e-8
-            Threshold energy used to decide whether a set of wave-functions are
+            Threshold energy used to decide whether wave-functions are
             degenerate in energy.
         refUC : array, default=None
             3x3 array describing the transformation of vectors defining the 
@@ -872,7 +874,7 @@ class BandStructure:
             Characters to write before labels of irreps in file `irreps.dat`.
         plotFile : str, default=None
             Name of file in which energy-levels and corresponding irreps will be 
-            written to later place irreps in band structure plot.
+            written to later place irreps in a band structure plot.
         """
         #        if refUC is not None:
         #        self.spacegroup.show(refUC=refUC,shiftUC=shiftUC)
@@ -967,13 +969,13 @@ class BandStructure:
         symmetries=None,
     ):
         """
-        Generate `trace.txt` file to upload to program `CheckTopologicalMat` 
+        Generate `trace.txt` file to upload to the program `CheckTopologicalMat` 
         in `BCS <https://www.cryst.ehu.es/cgi-bin/cryst/programs/topological.pl>`_ .
 
         Parameters
         ----------
         degen_thresh : float, default=1e-8
-            Threshold energy used to decide whether a set of wave-functions are
+            Threshold energy used to decide whether wave-functions are
             degenerate in energy.
         refUC : array, default=None
             3x3 array describing the transformation of vectors defining the 
@@ -1024,7 +1026,7 @@ class BandStructure:
         degen_thresh : float, default=1e-5
             Energy threshold used to determine degeneracy of energy-levels.
         groupKramers : bool, default=True
-            If `True`, states will be coupled by Kramers' pairs..
+            If `True`, states will be coupled by Kramers' pairs.
 
         Returns
         -------
@@ -1113,11 +1115,11 @@ class BandStructure:
             `z[i]` contains the total  (trace) zak phase (divided by 
             :math:`2\pi`) for the subspace of the first i-bands.
         array
-            The :math:`i^{th}` element is the gap between :math:`i^{th}` 
+            The :math:`i^{th}` element is the gap between :math:`i^{th}` and
             :math:`(i+1)^{th}` bands in the considered set of bands. 
         array
             The :math:`i^{th}` element is the mean energy between :math:`i^{th}` 
-            :math:`(i+1)^{th}` bands in the considered set of bands. 
+            and :math:`(i+1)^{th}` bands in the considered set of bands. 
         array
             Each line contains the local gaps between pairs of bands in a 
             k-point of the path. The :math:`i^{th}` column is the local gap 
@@ -1178,8 +1180,8 @@ class BandStructure:
 
     def write_bands(self, locs=None):
         """
-        Generate lines for a band structure plot, with values for the x-axis 
-        (cummulative length along k-path) and y-axis (energy-levels).
+        Generate lines for a band structure plot, with cummulative length of the
+        k-path as values for the x-axis and energy-levels for the y-axis.
 
         Returns
         -------
@@ -1225,13 +1227,13 @@ class BandStructure:
         fname="trace_all.dat",
     ):
         """
-        Write in a file the description of symmetry operations and energy-levels 
-        and irreps in calculated in all k-points.
+        Write in a file the description of symmetry operations, energy-levels 
+        and irreps calculated in all k-points.
 
         Parameters
         ----------
         degen_thresh : float, default=1e-8
-            Threshold energy used to decide whether a set of wave-functions are
+            Threshold energy used to decide whether wave-functions are
             degenerate in energy.
         refUC : array, default=None
             3x3 array describing the transformation of vectors defining the 
@@ -1242,6 +1244,7 @@ class BandStructure:
         symmetries : list, default=None
             Index of symmetry operations whose traces will be printed. 
         fname : str, default=trace_all.dat
+            Name of output file.
         """
         f = open(fname, "w")
         kpline = self.KPOINTSline()
@@ -1285,8 +1288,8 @@ class BandStructure:
         -------
         array
             Each element is the cumulative distance along the path up to a 
-            k-point. The first element is 0 and the length matches the number 
-            of k-points in the path.
+            k-point. The first element is 0, so that the number of elements
+            matches the number of k-points in the path.
         """
         if kpred is None:
             kpred = [k.K for k in self.kpoints]
