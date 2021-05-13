@@ -22,7 +22,7 @@ from scipy.linalg import expm
 import spglib
 from irreptables import IrrepTable
 from scipy.optimize import minimize
-from .__aux import str_
+from .aux import str_
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -35,6 +35,55 @@ class WrongRotation(RuntimeError):
 
 
 class SymmetryOperation():
+    """
+    Contains information to describe a symmetry operation and methods to get 
+    info about the symmetry, transform it to a reference choice of unit cell 
+    and print a description of it.
+
+    Parameters
+    ----------
+    rotation : array, shape=(3,3)
+        Matrix describing the tranformation of basis vectors of the unit cell 
+        under the symmetry operation.
+    translation : array, shape=(3,)
+        Translational part of the symmetry operation, in terms of the basis 
+        vectors of the unit cell.
+    Lattice : array, shape=(3,3) 
+        Each row contains cartesian coordinates of a basis vector forming the 
+        unit-cell in real space.
+    ind : int, default=-1
+        Index of the symmetry operation.
+    spinor : bool, default=true
+        `True` if wave-functions are spinors, `False` if they are scalars.
+
+    Attributes
+    ---------
+    ind : int
+        Index of the symmetry operation.
+    rotation : array, shape=(3,3)
+        Matrix describing the tranformation of basis vectors of the unit cell 
+        under the symmetry operation.
+    translation : array, shape=(3,)
+        Translational part of the symmetry operation, in terms of the basis 
+        vectors of the unit cell.
+    Lattice : array, shape=(3,3) 
+        Each row contains cartesian coordinates of a basis vector forming the 
+        unit-cell in real space.
+    axis : array, shape=(3,)
+        Rotation axis of the symmetry.
+    angle : float
+        Rotation angle of the symmmetry, in radians.
+    inversion : bool
+        `False` if the symmetry preserves handedness (identity, rotation, 
+        translation or screw rotation), `True` otherwise (inversion, reflection 
+        roto-inversion or glide reflection).
+    angle_str : str
+        String describing the rotation angle in radians.
+    spinor : bool
+        `True` if wave-functions are spinors, `False` if they are scalars.
+    spinor_rotation : array, shape=(2,2)
+        Matrix describing how spinors transform under the symmetry.
+    """
 
     def __init__(self, rot, trans, Lattice, ind=-1, spinor=True):
         self.ind = ind
@@ -53,6 +102,19 @@ class SymmetryOperation():
                                     np.einsum('i,ijk->jk', self.axis, pauli_sigma))
 
     def get_angle_str(self):
+        """
+        Give str of rotation angle.
+
+        Returns
+        -------
+        str
+            Rotation angle in radians.
+        
+        Raises
+        ------
+        RuntimeError
+            Angle does not belong to 1, 2, 3, 4 or 6-fold rotation.
+        """
         accur = 1e-4
         def is_close_int(x): return abs((x + 0.5) % 1 - 0.5) < accur
         api = self.angle / np.pi
@@ -66,6 +128,18 @@ class SymmetryOperation():
             "{0} pi rotation cannot be in the space group".format(api))
 
     def _get_operation_type(self):
+        """
+        Calculates the rotation axis and angle of the symmetry and if it 
+        preserves handedness or not.
+
+        Returns
+        -------
+        tuple
+            The first element is an array describing the rotation axis. The 
+            second element describes the rotation angle. The third element is a 
+            boolean, `True` if the symmetry preserves handedness 
+            (determinant -1).
+        """
         rotxyz = self.Lattice.T.dot(
             self.rotation).dot(
             np.linalg.inv(
@@ -99,6 +173,26 @@ class SymmetryOperation():
         return (axis, angle, inversion)
 
     def rotation_refUC(self, refUC):
+        """
+        Calculate the matrix of the symmetry in the reference cell choice.
+        
+        Parameters
+        ----------
+        refUC : array
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+
+        Returns
+        -------
+        R1 : array, shape=(3,3)
+            Matrix for the transformation of basis vectors forming the 
+            reference unit cell.
+
+        Raises
+        ------
+        RuntimeError
+            If the matrix contains non-integer elements after the transformation.
+        """
         R = np.linalg.inv(refUC).T.dot(self.rotation).dot(refUC.T)
         R1 = np.array(R.round(), dtype=int)
         if (abs(R - R1).max() > 1e-6):
@@ -107,6 +201,23 @@ class SymmetryOperation():
         return R1
 
     def translation_refUC(self, refUC, shiftUC):
+        """
+        Calculate translation in reference choice of unit cell.
+
+        Parameters
+        ----------
+        refUC : array
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+
+        Returns
+        -------
+        array
+            Translation in reference choice of unit cell.
+        """
         return (
             self.translation +
             shiftUC -
@@ -114,8 +225,18 @@ class SymmetryOperation():
             np.linalg.inv(refUC))
 
     def show(self, refUC=None, shiftUC=np.zeros(3)):
-        # refUC - row-vectors, expressing the reference unit cell vectors in
-        # terms of the lattice used in calculation
+        """
+        Print description of symmetry operation.
+        
+        Parameters
+        ----------
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+        """
         print(" # ", self.ind)
         rotstr = [s +
                   " ".join("{0:3d}".format(x) for x in row) +
@@ -172,6 +293,23 @@ class SymmetryOperation():
             self.axis.round(6), self.angle_str, self.inversion))
 
     def str(self, refUC=None, shiftUC=np.zeros(3)):
+        """
+        Construct description of symmetry operation.
+
+        Parameters
+        ----------
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+
+        Returns
+        -------
+        str
+            Description to print.
+        """
         if refUC is None:
             refUC = np.eye(3, dtype=int)
 #       refUC - row-vectors, expressing the reference unit cell vectors in terms of the lattice used in calculation
@@ -184,6 +322,27 @@ class SymmetryOperation():
                 "    ".join("  ".join(str_(x) for x in X) for X in (np.abs(S.reshape(-1)), np.angle(S.reshape(-1)) / np.pi))))
 
     def str2(self, refUC=None, shiftUC=np.zeros(3)):
+        """
+        Print matrix of a symmetry operation in the format: 
+        {{R|t}}-> R11,R12,...,R23,R33,t1,t2,t3 and, when SOC was included, the 
+        elements of the matrix describing the transformation of the spinor in 
+        the format:
+        Re(S11),Im(S11),Re(S12),...,Re(S22),Im(S22).
+        
+        Parameters
+        ----------
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+
+        Returns
+        -------
+        str
+            Description to print.
+        """
         if refUC is None:
             refUC = np.eye(3, dtype=int)
         if shiftUC is None:
@@ -200,8 +359,74 @@ class SymmetryOperation():
 
 
 class SpaceGroup():
+    """
+    Determine the space-group and save info in attributes. Contains methods to 
+    describe and print info about the space-group.
+
+    Parameters
+    ----------
+    inPOSCAR : str, default=None 
+        Name of the POSCAR file from which lattice vectors, atomic species and 
+        positions of ions will be read.
+    cell : tuple, default=None
+        `cell[0]` is a 3x3 array where cartesian coordinates of basis 
+        vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array
+        where each row contains the direct coordinates of an ion's position. 
+        `cell[2]` is an array where each element is a number identifying the 
+        atomic species of an ion. See `cell` parameter of function 
+        `get_symmetry` in 
+        `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
+    spinor : bool, default=True
+        `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+
+    Attributes
+    ----------
+    spinor : bool
+        `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+    symmetries : list
+        Each element is an instance of class `SymmetryOperation` corresponding 
+        to a symmetry in the point group of the space-group.
+    name : str 
+        Symbol of the space-group in Hermann-Mauguin notation. 
+    number : int 
+        Number of the space-group.
+    Lattice : array, shape=(3,3) 
+        Each row contains cartesian coordinates of a basis vector forming the 
+        unit-cell in real space.
+    RecLattice : array, shape=(3,3)
+        Each row contains the cartesian coordinates of a basis vector forming 
+        the unit-cell in reciprocal space.
+
+    Notes
+    -----
+    The symmetry operations to which elements in the attribute `symmetries` 
+    correspond are the operations belonging to the point group of the 
+    space-group :math:`G`, i.e. the coset representations :math:`g_i` 
+    taking part in the coset decomposition of :math:`G` w.r.t the translation 
+    subgroup :math:`T`:
+    ..math:: G=T+ g_1 T + g_2 T +...+ g_N T 
+    """
 
     def __cell_vasp(self, inPOSCAR):
+        """
+        Parses POSCAR.
+
+        Parameters
+        ----------
+        inPOSCAR : str, default=None 
+            POSCAR file from which lattice vectors, atomic species and positions of
+            ions will be read.
+        
+        Returns
+        ------
+        lattice : array
+            3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
+            and **c** are given in rows. 
+        positions : array
+            Each row contains the direct coordinates of an ion's position. 
+        numbers : list
+            Each element is a number identifying the atomic species of an ion.
+        """
         fpos = (l.strip() for l in open(inPOSCAR))
         title = next(fpos)
         lattice = float(
@@ -242,6 +467,36 @@ class SpaceGroup():
         return lattice, positions, numbers
 
     def _findsym(self, inPOSCAR, cell):
+        """
+        Finds the space-group and constructs a list of symmetry operations
+        
+        Parameters
+        ----------
+        inPOSCAR : str, default=None 
+            POSCAR file from which lattice vectors, atomic species and positions of
+            ions will be read.
+        cell : list
+            `cell[0]` is a 3x3 array where cartesian coordinates of basis 
+            vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array
+            where each row contains the direct coordinates of an ion's position. 
+            `cell[2]` is an array where each element is a number identifying the 
+            atomic species of an ion. See `cell` parameter of function 
+            `get_symmetry` in 
+            `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
+        
+        Returns
+        -------
+        list
+            Each element is an instance of class `SymmetryOperation` corresponding 
+            to a symmetry in the point group of the space-group.
+        str
+            Symbol of the space-group in Hermann-Mauguin notation. 
+        int
+            Number of the space-group.
+        array
+            3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
+            and **c** are given in rows. 
+        """
         if cell is None:
             cell = self.__cell_vasp(inPOSCAR=inPOSCAR)
 #    cell1=tuple( [cell.lattice,cell.positions,cell.numbers] )
@@ -282,6 +537,22 @@ class SpaceGroup():
         print("\n Reciprocal lattice:\n", self.RecLattice)
 
     def show(self, refUC=None, shiftUC=np.zeros(3), symmetries=None):
+        """
+        Print description of space-group and symmetry operations.
+        
+        Parameters
+        ----------
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+        symmetries : int, default=None
+            Index of symmetry operations whose description will be printed. 
+            Run `IrRep` with flag `onlysym` to check the index corresponding 
+            to each symmetry operation.
+        """
         print('')
         print("\n ---------- INFORMATION ABOUT THE SPACE GROUP ---------- \n")
         print('')
@@ -304,15 +575,53 @@ class SpaceGroup():
 
 
     def write_trace(self, refUC=None, shiftUC=np.zeros(3)):
+        """
+        Construct description of matrices of symmetry operations of the 
+        space-group in the format: 
+        {{R|t}}-> R11,R12,...,R23,R33,t1,t2,t3 and, when SOC was included, the 
+        elements of the matrix describing the transformation of the spinor in 
+        the format:
+        Re(S11),Im(S11),Re(S12),...,Re(S22),Im(S22).
+        
+        Parameters
+        ----------
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+
+        Returns
+        -------
+        str
+            String describing matrices of symmetry operations.
+        """
         res = (" {0} \n"  # Number of Symmetry operations
-               # In the following lines, one symmetry operation for each operation of the point group in the format: {{R|t}}-> R11,R12,...,R23,R33,t1,t2,t3
-               # and, when Spin-orbit=1, the "spinor components" of the symmetry operation in\ the format Re(S11),Im(S11),Re(S12),...,Re(S22),Im(S22)\n"""
+               # In the following lines, one symmetry operation for each operation of the point group n"""
                ).format(len(self.symmetries))
         for symop in self.symmetries:
             res += symop.str2(refUC=refUC, shiftUC=shiftUC)
         return(res)
 
     def str(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
+        """
+        Print description of space-group and its symmetry operations.
+        
+        Parameters
+        ----------
+        refUC : array, default=np.eye(3)
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+
+        Returns
+        -------
+        str
+            Description to print.
+        """
         return (
             "SG={SG}\n name={name} \n nsym= {nsym}\n spinor={spinor}\n".format(
                 SG=self.number,
@@ -328,17 +637,77 @@ class SpaceGroup():
             "\n\n")
 
     def __match_spinor_rotations(self, S1, S2):
+        """
+        Determine the sign difference between matrices describing the 
+        transformation of spinors found by `spglib` and those read from tables.
+
+        Parameters
+        ----------
+        S1 : list
+            Contains the matrices for the transformation of spinors 
+            corresponding to symmetry operations found by `spglib`.
+        S2 : list
+            Contains the matrices for the transformation of spinors 
+            corresponding to symmetry operations read from tables.
+
+        Returns
+        -------
+        array
+            The `j`-th element is the matrix to match the `j`-th matrices of 
+            `S1` and `S2`.
+        """
         #        for s1,s2 in zip (S1,S2):
         #            np.savetxt(stdout,np.hstack( (s1,s2) ),fmt="%8.5f%+8.5fj "*4)
         n = 2
 
-        def RR(x): return np.array([[x1 + 1j * x2 for x1, x2 in zip(l1, l2)]
-                                    for l1, l2 in zip(x[:n * n].reshape((n, n)), x[n * n:].reshape((n, n)))])
+        def RR(x): 
+            """
+            Constructs a 2x2 complex matrix out of a list containing real and 
+            imaginary parts.
 
-        def residue_matrix(r): return sum([min(abs(r.dot(b).dot(
-            r.T.conj()) - s * a).sum() for s in (1, -1)) for a, b in zip(S1, S2)])
+            Parameters
+            ----------
+            x : list, length=8
+                Length is 8. `x[:4]` contains the real parts, `x[4:]` the 
+                imaginary parts.
+            
+            Returns
+            -------
+            array, shape=(2,2)
+                Matrix of complex elements. 
+            """
+            return np.array([[x1 + 1j * x2 for x1, x2 in zip(l1, l2)] for l1, l2 in zip(x[:n * n].reshape((n, n)), x[n * n:].reshape((n, n)))])
 
-        def residue(x): return residue_matrix(RR(x)) / len(S1)
+        def residue_matrix(r): 
+            """
+            Calculate the residue of a matrix.
+
+            Parameters
+            ----------
+            r : array
+                Matrix used as ansatz for the minimization.
+
+            Returns
+            -------
+            float            
+            """
+            return sum([min(abs(r.dot(b).dot(r.T.conj()) - s * a).sum() for s in (1, -1)) for a, b in zip(S1, S2)])
+
+        def residue(x): 
+            """
+            Calculate the normalized residue.
+
+            Parameters
+            ----------
+            x : list, length=8
+                Length is 8. `x[:4]` contains the real parts, `x[4:]` the 
+                imaginary parts.
+            
+            Returns
+            -------
+            float
+            """
+            return residue_matrix(RR(x)) / len(S1)
 
         for i in range(11):
             x0 = np.random.random(2 * n * n)
@@ -359,12 +728,55 @@ class SpaceGroup():
             a)).diagonal().mean().real.round() for a, b in zip(S1, S2)], dtype=int)
 
     def __gen_refUC():
+        '''used somewhere?'''
         nmax = 3
 
     def get_irreps_from_table(self, refUC, shiftUC, kpname, K):
+        """
+        Read irreps of the little-group of a maximal k-point. 
+        
+        Parameters
+        ----------
+        refUC : array
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+        kpname : str
+            Label of the maximal k-point.
+        K : array, shape=(3,)
+            Direct coordinates of the k-point.
+
+        Returns
+        -------
+        tab : dict
+            Each key is the label of an irrep, each value another `dict`. Keys 
+            of every secondary `dict` are indices of symmetries (starting from 
+            1 and following order of operations as returned by `spglib`) and 
+            values are traces of symmetries.
+
+        Raises
+        ------
+        RuntimeError
+            DEPRECATED RAISE
+        RuntimeError
+            Translational or rotational parts read from tables and found by 
+            `spglib` do not match for a symmetry operation.
+        RuntimeError
+            A symmetry from the tables matches with many symmetries found by 
+            `spglib`.
+        RuntimeError
+            The label of a k-point given in the CLI matches with the label of a 
+            k-point read from tables, but direct coordinates of these 
+            k-vectors do not match.
+        RuntimeError
+            There is not any k-point in the tables whose label matches that 
+            given in parameter `kpname`.
+        """
         #        self.show()
         table = IrrepTable(self.number, self.spinor)
-        if self.number != table.number:
+        if self.number != table.number: #deprecated: IrrepTable assigns IrrepTable.number=SpaceGroup.number -> always match
             raise RuntimeError(
                 "numbers of the symmetry groups do not match : {0} and {1}".format(
                     self.number, SG.number))
