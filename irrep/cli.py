@@ -27,7 +27,7 @@ import click
 
 from .spacegroup import SpaceGroup
 from .bandstructure import BandStructure
-from .__aux import str2bool, str2list
+from .aux import str2bool, str2list
 from . import __version__ as version
 
 
@@ -93,8 +93,7 @@ do not hesitate to contact the author:
 @click.option(
     "-prefix",
     type=str,
-    help="Prefix for QuantumEspresso calculations (data should be in prefix.save). "
-    'Only used if code is "espresso".',
+    help="Prefix used for Quantum Espresso calculations (data should be in prefix.save) or seedname of Wannier90 files. ",
 )
 @click.option(
     "-IBstart",
@@ -302,11 +301,11 @@ def cli(
 
     if zak:
         for k in subbands:
-            print("eigenvalue {0}".format(k))
+            print("symmetry eigenvalue : {0} \n Traces are : ".format(k))
             subbands[k].write_characters(
                 degen_thresh=0.001, refUC=refuc, symmetries=symmetries
             )
-            print("eigenvalue : #{0} \n Zak phases are : ".format(k))
+            print("symmetry eigenvalue : {0} \n Zak phases are : ".format(k))
             zak = subbands[k].zakphase()
             for n, (z, gw, gc, lgw) in enumerate(zip(*zak)):
                 print(
@@ -317,16 +316,31 @@ def cli(
 
     if wcc:
         for k in subbands:
-            print("eigenvalue {0}".format(k))
+            print("symmetry eigenvalue {0}".format(k))
             # subbands[k].write_characters(degen_thresh=0.001,refUC=refUC,symmetries=symmetries)
             wcc = subbands[k].wcc()
             print(
-                "eigenvalue : #{0} \n  WCC are : {1} \n sumWCC={2}".format(
+                "symmetry eigenvalue : {0} \n  WCC are : {1} \n sumWCC={2}".format(
                     k, wcc, np.sum(wcc) % 1
                 )
             )
 
     def short(x, nd=3):
+        """
+        Format `float` or `complex` number.
+
+        Parameter
+        ---------
+        x : int, float or complex
+            Number to format.
+        nd : int, default=3
+            Number of decimals.
+
+        Returns
+        -------
+        str
+            Formatted number, with `nd` decimals saved.
+        """
         fmt = "{{0:+.{0}f}}".format(nd)
         if abs(x.imag) < 10 ** (-nd):
             return fmt.format(x.real)
@@ -360,6 +374,7 @@ def cli(
         )
 
     if plotbands:
+        print("plotbands = True --> writing bands")
         for k, sub in subbands.items():
             if isymsep is not None:
                 print(

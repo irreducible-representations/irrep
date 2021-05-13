@@ -19,19 +19,129 @@
 import numpy as np
 import numpy.linalg as la
 import copy
-from .__gvectors import calc_gvectors, symm_eigenvalues, NotSymmetryError, symm_matrix
-from .__readfiles import Hartree_eV
-from .__readfiles import record_abinit
-from .__aux import compstr, is_round
+from .gvectors import calc_gvectors, symm_eigenvalues, NotSymmetryError, symm_matrix
+from .readfiles import Hartree_eV
+from .readfiles import record_abinit
+from .aux import compstr, is_round
 from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
 
 class Kpoint:
+    """
+    Parses files and organizes info about the states and energy-levels of a 
+    particular k-point in attributes. Contains methods to calculate and write 
+    traces (and irreps), for the separation of the band structure in terms of a 
+    symmetry operation and for the calculation of the Zak phase.
 
+    Parameters
+    ----------
+    ik : int
+        Index of kpoint, starting count from 0.
+    NBin : int
+        Number of bands considered at the k-point in the DFT calculation.
+    IBstart : int
+        First band to be considered.
+    IBend : int
+        Last band to be considered.
+    Ecut : float
+        Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
+    Ecut0 : float
+        Plane-wave cutoff (in eV) used in the DFT calulation. Always read from 
+        DFT files. Insignificant if `code`='wannier90'.
+    RecLattice : array, shape=(3,3)
+        Each row contains the cartesian coordinates of a basis vector forming 
+        the unit-cell in reciprocal space.
+    SG : class, default=None
+        Instance of `SpaceGroup`.
+    spinor : bool, default=None
+        `True` if wave functions are spinors, `False` if they are scalars.
+    code : str, default='vasp'
+        DFT code used. Set to 'vasp', 'abinit', 'espresso' or 'wannier90'.
+    kpt : list or array, default=None
+        Direct coordinates of the k-point.
+    npw_ : int, default=None
+        Number of plane-waves considered in the expansion of wave-functions. 
+    fWFK : file object, default=None
+        File object corresponding to WFK file of Abinit. Returned by 
+        `FortranFile`.
+    WCF : class, default=None
+        Instance of `class WAVECARFILE`.
+    prefix : str, default=None
+        Prefix used for Quantum Espresso calculations or seedname of Wannier90 
+        files.
+    kptxml : default=None
+        `Element` object (see `ElementTree XML API` ) corresponding to a k-point.
+    flag : int, default=-1
+        When parsing WFK file (Abinit), info for all k-points is read, but 
+        stored only for k-points whose index is matches `flag`.
+    usepaw : int, default=None
+        Only used for Abinit. 1 if pseudopotentials are PAW, 0 otherwise. When 
+        `usepaw` is 0, normalization of wave-functions is checked.
+    eigenval : array, default=None
+        Contains all energy-levels in a particular k-point.
+    spin_channel : str, default=None
+        Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
+        Only applied in the interface to Quantum Espresso.
+    IBstartE : int, default=0
+        Only used with Quantum Espresso. Index of first band in particular spin 
+        channel. If `spin_channel` is 'dw', `IBstartE` is equal to the number of 
+        bands in spin-up channel.
+    
+    Attributes
+    ----------
+    spinor : bool
+        `True` if wave-functions are spinors, `False` if they are scalars.
+    ik0 : int
+        Index of the k-point, starting the count from 1.
+    Nband : int
+        Number of bands whose traces should be calculated.
+    RecLattice : array, shape=(3,3)
+        Each row contains the cartesian coordinates of a basis vector forming 
+        the unit-cell in reciprocal space.
+    WF : array
+        Coefficients of wave-functions in the plane-wave expansion. A row for 
+        each wave-function, a column for each plane-wave.
+    igall : array
+        Returned by `__sortIG`.
+        Every column corresponds to a plane-wave of energy smaller than 
+        `Ecut`. The number of rows is 6: the first 3 contain direct 
+        coordinates of the plane-wave, the fourth row stores indices needed
+        to short plane-waves based on energy (ascending order). Fitfth 
+        (sixth) row contains the index of the first (last) plane-wave with 
+        the same energy as the plane-wave of the current column.
+    SG : class
+        Instance of `SpaceGroup`.
+    K : array, shape=(3,)
+        Direct coordinates of the k-point.
+    Energy : array
+        Energy-levels of bands whose traces should be calculated.
+    upper : float
+        Energy of the first band above the set of bands whose traces should be 
+        calculated. It will be set to `numpy.NaN` if the last band matches the 
+        last band in the DFT calculation (default `IBend`).
 
-
+    """
+    
+    # creates attribute symmetries, if it was not created before
     @LazyProperty
     def symmetries(self):
+        """
+        Sets the attribute `Kpoint.symmetries` to a dictionary. Works as a 
+        lazy-property.
+
+        Returns
+        -------
+        symmetries : dict
+            Each key is an instance of `class` `SymmetryOperation` corresponding 
+            to an operation in the little-(co)group and the attached value is an 
+            array with the traces of the operation.
+    
+        Notes
+        -----
+        For more about `lazy-property`, check the documentation `here <https://pypi.org/project/lazy-property/>`_ .
+        """
+
+
         symmetries = {}
         #        print ("calculating symmetry eigenvalues for E={0}, WF={1} SG={2}".format(self.Energy,self.WF.shape,self.SG) )
         if not (self.SG is None):
@@ -120,8 +230,26 @@ class Kpoint:
     #        print("WF=\n",WF)
 
     def copy_sub(self, E, WF):
+        """
+        Create an instance of class `Kpoint` for a restricted set of states.
+
+        Parameters
+        ----------
+        E : array
+            Energy-levels of states.
+        WF : array
+            Coefficients of the plane-wave expansion of wave-functions. Each row 
+            corresponds to a wave-function, each row to a plane-wave.
+
+        Returns
+        -------
+        other : class
+            Instance of `Kpoints` corresponding to the group of states passed. 
+            They are shorted by energy-levels.
+
+        """
         #        print ("making a subspace with E={0}\n WF = {1}".format(E,WF.shape))
-        other = copy.copy(self)
+        other = copy.copy(self) # copy of whose class
         sortE = np.argsort(E)
         other.Energy = E[sortE]
         other.WF = WF[sortE]
@@ -134,10 +262,21 @@ class Kpoint:
         return other
 
     def unfold(self, supercell, kptPBZ, degen_thresh=1e-4):
-        """unfolds a kpoint of a supercell onto the point of the primitivecell kptPBZ
-           returns an array of 2 (5 in case of spinors) columns:
-           E , weight , Sx , Sy , Sz
-           """
+        """
+        Unfolds a kpoint of a supercell onto the point of the primitive cell 
+        `kptPBZ`.
+
+        Parameters
+        ----------
+        supercell
+        kptPBZ
+        degen_thresh : float, default=1e-4
+
+        Returns
+        -------
+        array
+            It contains 2 elements (5 with SOC): E , weight , Sx , Sy , Sz
+        """
         if not is_round(kptPBZ.dot(supercell.T) - self.K, prec=1e-5):
             raise RuntimeError(
                 "unable to unfold {} to {}, withsupercell={}".format(
@@ -178,6 +317,7 @@ class Kpoint:
 
     @property
     def NG(self):
+        """Getter for the number of plane-waves in current k-point"""
         return self.ig.shape[0]
 
     def __eval_rho_spin(self, degen_thresh):
@@ -225,8 +365,26 @@ class Kpoint:
         return result
 
     def Separate(self, symop, degen_thresh=1e-5, groupKramers=True):
-        # separates the bandstructure according to symmetry eigenvalues returns
-        # a dictionar of Kpoint objects eigval:Kpoint
+        """
+        Separate the band structure in a particular k-point according to the 
+        eigenvalues of a symmetry operation.
+
+        Parameters
+        ----------
+        isymop : int
+            Index of symmetry used for the separation.
+        degen_thresh : float, default=1e-5
+            Energy threshold used to determine degeneracy of energy-levels.
+        groupKramers : bool, default=True
+            If `True`, states will be coupled by pairs of Kramers.
+
+        Returns
+        -------
+        subspaces : dict
+            Each key is an eigenvalue of the symmetry operation and the
+            corresponding value is an instance of `class` `Kpoint` for the 
+            states with that eigenvalue.
+        """
         borders = np.hstack(
             [
                 [0],
@@ -244,6 +402,7 @@ class Kpoint:
             S=symop.spinor_rotation,
             T=symop.translation,
         )
+        # check orthogonality
         S1 = self.WF.conj().dot(self.WF.T)
         check = np.max(abs(S1 - np.eye(S1.shape[0])))
         if check > 1e-5:
@@ -258,12 +417,26 @@ class Kpoint:
         Eloc = []
 
         def short(A):
+            """
+            Format array to print it.            
+            
+            Parameters
+            ----------
+            A : array
+                Matrix that should be printed.
+                
+            Returns
+            -------
+            str
+                Description of the matrix. Ready to be printed.
+            """
             return "".join(
                 "   ".join("{0:+5.2f} {1:+5.2f}".format(x.real, x.imag) for x in a)
                 + "\n"
                 for a in A
             )
 
+        # check that S is block-diagonal
         Sblock = np.copy(S)
         for b1, b2 in zip(borders, borders[1:]):
             Sblock[b1:b2, b1:b2] = 0
@@ -272,6 +445,7 @@ class Kpoint:
             print("WARNING: off-block:  \n", check)
             print(short(Sblock))
 
+        # calculate eigenvalues and eigenvectors in each block
         for b1, b2 in zip(borders, borders[1:]):
             W, V = la.eig(S[b1:b2, b1:b2])
             #            print (b1,b2,"symmetry submatrix \n",short(S[b1:b2,b1:b2]))
@@ -282,7 +456,7 @@ class Kpoint:
                     np.hstack((np.zeros(b1), v, np.zeros(self.Nband - b2)))
                 )
         w = np.array(eigenvalues)
-        v = np.array(eigenvectors).T
+        v = np.array(eigenvectors).T # each col an eigenvector
         Eloc = np.array(Eloc)
 
         #        print ("eigenvalues:",w)
@@ -315,6 +489,7 @@ class Kpoint:
                 v1 = v
                 subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF))
         else:
+            
             w1 = np.argsort(np.angle(w))
             w = w[w1]
             v = v[:, w1]
@@ -333,6 +508,43 @@ class Kpoint:
         return subspaces
 
     def __init_vasp(self, WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0):
+        """
+        Initialization for vasp. Read data and save it in attributes.
+
+        Parameters
+        ----------
+        WCF : class
+            Instance of `class` `WAVECARFILE`.
+        ik : int
+            Index of kpoint, starting count from 0.
+        NBin : int
+            Number of bands considered at every k-point in the DFT calculation.
+        IBstart : int
+            First band to be considered.
+        IBend : int
+            Last band to be considered.
+        Ecut : float
+            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
+            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
+            the value of this is negative or larger than `Ecut0`.
+        Ecut0 : float
+            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
+            DFT files. Insignificant if `code`=`wannier90`.
+
+        Returns
+        -------
+        WF : array
+            `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
+            plane-wave in the expansion of the wave-function in :math:`i^{th}`
+            band. Only plane-waves if energy smaller than `Ecut` are kept.
+        ig : array
+            Every column corresponds to a plane-wave of energy smaller than 
+            `Ecut`. The number of rows is 6: the first 3 contain direct 
+            coordinates of the plane-wave, the fourth row stores indices needed
+            to short plane-waves based on energy (ascending order). Fitfth 
+            (sixth) row contains the index of the first (last) groups of 
+            plane-waves of identical energy.
+        """
         r = WCF.record(2 + ik * (NBin + 1))
         # get the number of planewave coefficients. It should be even for spinor wavefunctions
         #    print (r)
@@ -373,11 +585,59 @@ class Kpoint:
         Ecut0,
         kpt,
         npw_,
-        thresh=1e-4,
-        flag=-1,
-        usepaw=0,
+        flag,
+        usepaw,
     ):
+        """
+        Initialization for Abinit. Read data and store it in attibutes.
 
+        Parameters
+        ----------
+        fWFK : file object
+            File object corresponding to Abinit's WFK. Returned by `FortranFile`.
+        ik : int
+            Index of kpoint, starting count from 0.
+        NBin : int
+            Number of bands considered at every k-point in the DFT calculation.
+        IBstart : int
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        Ecut : float
+            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
+            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
+            the value of this is negative or larger than `Ecut0`.
+        Ecut0 : float
+            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
+            DFT files. Insignificant if `code`=`wannier90`.
+        kpt : list or array
+            Direct coordinates of the k-point.
+        npw_ : int
+            Number of plane-waves considered in the expansion of wave-functions. 
+        flag : int
+            Index of the k-point, used when parsing WFK file (Abinit). Info is read 
+            for all k-points, but stored only for k-points whose index is passed 
+            through `flag`.
+        usepaw : int
+            Only used for Abinit. 1 if pseudopotentials are PAW, 0 otherwise. When 
+            `usepaw`=0, normalization of wave-functions is checked.
+
+        Returns
+        -------
+        array
+            Contains the coefficients (same row-column formatting as argument 
+            `CG`) of the expansion of wave-functions corresponding to 
+            plane-waves of energy smaller than `Ecut`. Columns (plane-waves) 
+            are shorted based on their energy, from smaller to larger. 
+            Only plane-waves if energy smaller than `Ecut` are kept.
+        array
+            Every column corresponds to a plane-wave of energy smaller than 
+            `Ecut`. The number of rows is 6: the first 3 contain direct 
+            coordinates of the plane-wave, the third row stores indices needed
+            to short plane-waves based on energy (ascending order). Fitfth 
+            (sixth) row contains the index of the first (last) plane-wave with 
+            the same energy as the plane-wave of the current column.
+        """
         assert not (kpt is None)
         self.K = kpt
         print("reading k-point", ik)
@@ -416,9 +676,43 @@ class Kpoint:
         except BaseException:
             self.upper = np.NaN
 
-        return self.__sortIG(kg, kpt, CG, self.RecLattice, Ecut0, Ecut, thresh=thresh)
+        return self.__sortIG(kg, kpt, CG, self.RecLattice, Ecut0, Ecut)
 
-    def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval, thresh=1e-4):
+    def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval):
+        """
+        Initialization for wannier90. Read info and store it in attributes.
+       
+        Parameters
+        ----------
+        NBin : int
+            Number of bands considered at every k-point in the DFT calculation.
+        IBstart : int
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        Ecut : float
+            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
+            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
+            the value of this is negative or larger than `Ecut0`.
+        kpt : list or array
+            Direct coordinates of the k-point.
+        eigenval : array, default=None
+            Contains all energy-levels in a particular k-point.
+
+        Returns
+        -------
+        WF : array
+            `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
+            plane-wave in the expansion of the wave-function in :math:`i^{th}`
+            band. Only plane-waves if energy smaller than `Ecut` are kept.
+        ig : array
+            Every column corresponds to a plane-wave of energy smaller than 
+            `Ecut`. The number of rows is 6: the first 3 contain direct 
+            coordinates of the plane-wave, the fourth row stores indices needed
+            to short plane-waves based on energy (ascending order). Fitfth 
+            (sixth) row contains the index of the first (last) groups of 
+            plane-waves of identical energy.
+        """
         self.K = np.array(kpt, dtype=float)
         self.Energy = eigenval[IBstart:IBend]
         fname = "UNK{:05d}.{}".format(self.ik0, "NC" if self.spinor else "1")
@@ -453,6 +747,20 @@ class Kpoint:
         selectG = tuple(ig[0:3])
 
         def _readWF_1(skip=False):
+            """
+            Parse coefficients of a wave-function corresponding to one element
+            of the spinor.
+
+            Parameters
+            ----------
+            skip : bool, default=False
+                Read coefficients but do not return them.
+            
+            Returns
+            -------
+            array
+                Coefficients of the plane-wave expansion.
+            """
             cg_tmp = record_abinit(fUNK, "{}f8".format(ngtot * 2))
             if skip:
                 return np.array([0], dtype=complex)
@@ -463,6 +771,20 @@ class Kpoint:
             return cg_tmp[selectG]
 
         def _readWF(skip=False):
+            """
+            Read and return the coefficients of the plane-wave expansion of a 
+            wave-function.
+
+            Parameters
+            ----------
+            skip : bool, default=False
+                Read coefficients but do not return them.
+
+            Returns
+            -------
+            array
+                Coefficients of the plane-wave expansion.
+            """
             return np.hstack([_readWF_1(skip) for i in range(nspinor)])
 
         for ib in range(IBstart):
@@ -471,9 +793,57 @@ class Kpoint:
         return WF, ig
 
     def __init_espresso(
-        self, prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml, thresh=1e-4,
+        self, prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml,
            spin_channel=None,IBstartE=0
     ):
+        """
+        Initialization QE. Read info and store it in attributes.
+
+        Parameters
+        ----------
+        prefix : str
+            Prefix used for Quantum Espresso calculations or seedname of 
+            Wannier90 files.
+        ik : int
+            Index of kpoint, starting count from 0.
+        IBstart : int, default=None
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        Ecut : float
+            Plane-wave cutoff (in eV) to consider in the expansion of 
+            wave-functions. Will be set equal to `Ecut0` if input parameter 
+            `Ecut` was not set or the value of this is negative or larger than 
+            `Ecut0`.
+        Ecut0 : float
+            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
+            DFT files. Insignificant if `code`=`wannier90`.
+        kptxml
+            `Element` object (see `ElementTree XML API`) corresponding to a 
+            k-point.
+        spin_channel : str
+            Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
+        IBstartE : int
+            Only used with Quantum Espresso. Index of first band in particular 
+            spin channel. If `spin_channel`='dw', `IBstartE` is equal to the 
+            number of bands in spin-up channel.
+        
+        Returns
+        -------
+        array
+            Contains the coefficients (same row-column formatting as argument 
+            `CG`) of the expansion of wave-functions corresponding to 
+            plane-waves of energy smaller than `Ecut`. Columns (plane-waves) 
+            are shorted based on their energy, from smaller to larger. 
+            Only plane-waves if energy smaller than `Ecut` are kept.
+        array
+            Every column corresponds to a plane-wave of energy smaller than 
+            `Ecut`. The number of rows is 6: the first 3 contain direct 
+            coordinates of the plane-wave, the third row stores indices needed
+            to short plane-waves based on energy (ascending order). Fitfth 
+            (sixth) row contains the index of the first (last) plane-wave with 
+            the same energy as the plane-wave of the current column.
+        """
         self.K = np.array(kptxml.find("k_point").text.split(), dtype=float)
 
         eigen = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)
@@ -522,9 +892,53 @@ class Kpoint:
             if ib >= IBstart:
                 CG[ib - IBstart] = cg_tmp[0::2] + 1.0j * cg_tmp[1::2]
 
-        return self.__sortIG(kg, self.K, CG, B, Ecut0, Ecut, thresh=thresh)
+        return self.__sortIG(kg, self.K, CG, B, Ecut0, Ecut)
 
-    def __sortIG(self, kg, kpt, CG, RecLattice, Ecut0, Ecut, thresh=1e-4):
+    def __sortIG(self, kg, kpt, CG, RecLattice, Ecut0, Ecut):
+        """
+        Apply plane-wave cutoff specified in CLI to the expansion of 
+        wave-functions and sort the coefficients and plane-waves in ascending 
+        order in energy.
+
+        Parameters
+        ----------
+        kg : array
+            Each row contains the integer coefficients of a reciprocal lattice 
+            vector taking part in the plane-wave expansion of wave-functions at 
+            the current k-point.
+        kpt : array, shape=(3,)
+            Direct coordinates of the k-point.
+        CG : array
+            `CG[i,j]` contains the complex coefficient corresponding to 
+            :math:`j^{th}` plane-wave in the expansion of :math:`i^{th}` 
+            wave-function. TODO: ADD NOTE WITH NUMBER OF COLS, SPINOR...
+        RecLattice : array, shape=(3,3)
+            Each row contains the cartesian coordinates of a basis vector forming 
+            the unit-cell in reciprocal space.
+        Ecut : float
+            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
+            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
+            the value of this is negative or larger than `Ecut0`.
+        Ecut0 : float
+            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
+            DFT files. Insignificant if `code`=`wannier90`.
+
+        Returns
+        -------
+        CG : array
+            Contains the coefficients (same row-column formatting as argument 
+            `CG`) of the expansion of wave-functions corresponding to 
+            plane-waves of energy smaller than `Ecut`. Columns (plane-waves) 
+            are shorted based on their energy, from smaller to larger.
+        igall : array
+            Every column corresponds to a plane-wave of energy smaller than 
+            `Ecut`. The number of rows is 6: the first 3 contain direct 
+            coordinates of the plane-wave, the fourth row stores indices needed
+            to short plane-waves based on energy (ascending order). Fitfth 
+            (sixth) row contains the index of the first (last) plane-wave with 
+            the same energy as the plane-wave of the current column.
+        """
+        thresh = 1e-4 # default thresh to distinguish energies of plane-waves
         KG = (kg + kpt).dot(RecLattice)
         npw = kg.shape[0]
         eKG = Hartree_eV * (la.norm(KG, axis=1) ** 2) / 2
@@ -569,6 +983,46 @@ class Kpoint:
         plotFile=None,
         kpl="",
     ):
+        """
+        Calculate traces and determine and print irreps in a k-point. Write them 
+        in files passed as `plotFile` (for plotting) and `irreps.dat`. Also 
+        calculates and prints the number of band-inversions.
+
+        Parameters
+        ----------
+        degen_thresh : float, default=1e-8
+            Threshold energy used to decide whether wave-functions are
+            degenerate in energy.
+        irreptable : dict, default=None
+            Returned by method `get_irreps_from_table` of class `SpaceGroup`. 
+            Each key is the label of an irrep, each value another `dict`. Keys 
+            of every secondary `dict` are indices of symmetries (starting from 
+            1 and following order of operations as returned by `spglib`) and 
+            values are traces of symmetries.
+        symmetries : list, default=None
+            Index of symmetry operations whose traces will be printed. 
+        preline : str, default=''
+            Characters to write before labels of irreps in file `irreps.dat`.
+        efermi : float, default=0.0
+            Fermi-energy. Used as origin for energy-levels.
+        plotFile : file object, default=None
+            File in which energy-levels and corresponding irreps will be written 
+            to later place irreps in a band structure plot.
+        kpl : float, default=''
+            Length accumulated until the k-point. Can be used to locate irreps 
+            in the x-axis of a band structure plot.
+
+        Returns
+        -------
+        int
+            Number of inversion-odd states.
+        float
+            Last energy-level within the considered range of states.
+        float
+            First energy-level above the range of considered bands. If the last 
+            band in the range of considered bands coincides with the last band 
+            calculated by DFT, it will be set to `numpy.NaN`.
+        """
         if symmetries is None:
             sym = {s.ind: s for s in self.symmetries}
         else:
@@ -603,6 +1057,9 @@ class Kpoint:
             irreps = ["None"] * (len(borders) - 1)
         else:
             try:
+                # irreps is a list. Each element is a dict corresponding to a 
+                # group of degen. states. Every key is an irrep and its value 
+                # the multiplicity of the irrep in the rep. of degen. states
                 irreps = [
                     {
                         ir: np.array(
@@ -618,6 +1075,7 @@ class Kpoint:
                 print("irreptable:", irreptable)
                 print([sym.ind for sym in self.symmetries])
                 raise ke
+            # generate str describing irrep corresponding to sets of states
             irreps = [
                 ", ".join(
                     ir
@@ -628,13 +1086,13 @@ class Kpoint:
                         else ""
                     )
                     + ")"
-                    for ir in irr
-                    if abs(irr[ir]) > 1e-3
+                    for ir in irr # irreps of little-group
+                    if abs(irr[ir]) > 1e-3 # check multiplicity
                 )
-                for irr in irreps
+                for irr in irreps # group of degen. states
             ]
         #            irreps=[ "None" ]*(len(borders)-1)
-        irreplen = max(len(irr) for irr in irreps)
+        irreplen = max(len(irr) for irr in irreps) # len of largest line
         if irreplen % 2 == 1:
             irreplen += 1
         s2 = " " * int(irreplen / 2 - 3)
@@ -716,6 +1174,25 @@ class Kpoint:
         return NBANDINV, self.Energy[-1], self.upper
 
     def write_trace(self, degen_thresh=1e-8, symmetries=None, efermi=0.0):
+        """
+        Write in `trace.txt` the block corresponding to a single k-point.
+
+        Parameters
+        ----------
+        degen_thresh : float, default=1e-8
+            Threshold energy used to decide whether wave-functions are
+            degenerate in energy.
+        symmetries : list, default=None
+            Index of symmetry operations whose traces will be printed. 
+        efermi : float, default=0.0
+            Fermi-energy. Used as origin for energy-levels. 
+
+        Returns
+        -------
+        res : str
+            Block to write in `trace.txt` with description of traces in a
+            single k-point.
+        """
         if symmetries is None:
             sym = {s.ind: s for s in self.symmetries}
         else:
@@ -757,6 +1234,26 @@ class Kpoint:
         return res
 
     def write_trace_all(self, degen_thresh=1e-8, symmetries=None, efermi=0.0, kpline=0):
+        """
+        Generate a block describing energy-levels and traces in a k-point.
+
+        Parameters
+        ----------
+        degen_thresh : float, default=1e-8
+            Threshold energy used to decide whether wave-functions are
+            degenerate in energy.
+        symmetries : list, default=None
+            Index of symmetry operations whose traces will be printed. 
+        efermi : float, default=0.0
+            Fermi-energy. Used as origin for energy-levels. 
+        kpline : float, default=0
+            Cumulative length of the path up to current k-point.
+
+        Returns
+        -------
+        str
+            Block with the description of energy-levels and traces in a k-point.
+        """
         preline = "{0:10.6f}     {1:10.6f}  {2:10.6f}  {3:10.6f}  ".format(
             kpline, *tuple(self.K)
         )
@@ -778,7 +1275,7 @@ class Kpoint:
                 [char0[i][start:end].sum() for start, end in zip(borders, borders[1:])]
             )
             for i in char0
-        }
+        } # keys are indices of symmetries, values are arrays with traces
         E = np.array(
             [self.Energy[start:end].mean() for start, end in zip(borders, borders[1:])]
         )
@@ -803,7 +1300,19 @@ class Kpoint:
         return res
 
     def overlap(self, other):
-        """ Calculates the overlap matrix <u_m(k) | u_n(k'+g) > """
+        """ 
+        Calculates the overlap matrix of elements < u_m(k) | u_n(k+g) >.
+
+        Parameters
+        ----------
+        other : class
+            Instance of `Kpoints` corresponding to `k+g` (next k-point in path).
+
+        Returns
+        -------
+        res : array
+            Matrix of `complex` elements  < u_m(k) | u_n(k+g) >.
+        """
         g = np.array((self.K - other.K).round(), dtype=int)
         igall = np.hstack((self.ig[:3], other.ig[:3] - g[:, None]))
         igmax = igall.max(axis=1)
@@ -812,6 +1321,8 @@ class Kpoint:
         #        print (self.ig.T)
         #        print (igsize)
         res = np.zeros((self.Nband, other.Nband), dtype=complex)
+        
+        # short again coefficients of expansions
         for s in [0, 1] if self.spinor else [0]:
             WF1 = np.zeros((self.Nband, igsize[0], igsize[1], igsize[2]), dtype=complex)
             WF2 = np.zeros(

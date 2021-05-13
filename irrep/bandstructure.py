@@ -22,14 +22,82 @@ import functools
 import numpy as np
 import numpy.linalg as la
 
-from .__aux import str2bool, BOHR
-from .__readfiles import AbinitHeader, Hartree_eV
-from .__readfiles import WAVECARFILE
+from .aux import str2bool, BOHR
+from .readfiles import AbinitHeader, Hartree_eV
+from .readfiles import WAVECARFILE
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 
 
 class BandStructure:
+    """
+    Parses files and organizes info about the whole band structure in 
+    attributes. Contains methods to calculate and write traces (and irreps), 
+    for the separation of the band structure in terms of a symmetry operation 
+    and for the calculation of the Zak phase and wannier charge centers.
+
+    Parameters
+    ----------
+    fWAV : str, default=None
+        Name of file containing wave-functions in VASP (WAVECAR format).
+    fWFK : str, default=None
+        Name of file containing wave-functions in ABINIT (WFK format).
+    prefix : str, default=None
+        Prefix used for Quantum Espresso calculations or seedname of Wannier90 
+        files.
+    fPOS : str, default=None
+        Name of file containing the crystal structure in VASP (POSCAR format).
+    Ecut : float, default=None
+        Plane-wave cutoff in eV to consider in the expansion of wave-functions.
+    IBstart : int, default=None
+        First band to be considered.
+    IBend : int, default=None
+        Last band to be considered.
+    kplist : array, default=None
+        List of indices of k-points to be considered.
+    spinor : bool, default=None
+        `True` if wave functions are spinors, `False` if they are scalars. 
+        Mandatory for VASP.
+    code : str, default='vasp'
+        DFT code used. Set to 'vasp', 'abinit', 'espresso' or 'wannier90'.
+    EF : float, default=None
+        Fermi-energy.
+    onlysym : bool, default=False
+        Exit after printing info about space-group.
+    spin_channel : str, default=None
+        Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down. 
+        Only applied in the interface to Quantum Espresso.
+
+    Attributes
+    ----------
+    spacegroup : class
+        Instance of `SpaceGroup`.
+    spinor : bool
+        `True` if wave functions are spinors, `False` if they are scalars. It 
+        will be read from DFT files.
+    efermi : float
+        Fermi-energy. If input `EF` was set in CLI, it will take its value. Else, the 
+        code will try to read it from DFT files (except if `code=vasp`) and 
+        set it to 0 if it could not.
+    Ecut0 : float
+        Plane-wave cutoff (in eV) used in DFT calulations. Always read from 
+        DFT files. Insignificant if `code`='wannier90'.
+    Ecut : float
+        Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
+        Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
+        the value of this is negative or larger than `Ecut0`.
+    Lattice : array, shape=(3,3) 
+        Each row contains cartesian coordinates of a basis vector forming the 
+        unit-cell in real space.
+    RecLattice : array, shape=(3,3)
+        Each row contains the cartesian coordinates of a basis vector forming 
+        the unit-cell in reciprocal space.
+    kpoints : list
+        Each element is an instance of `class Kpoint` corresponding to a 
+        k-point specified in input parameter `kpoints`. If this input was not 
+        set, all k-points found in DFT files will be considered.
+    """
+
     def __init__(
         self,
         fWAV=None,
@@ -83,6 +151,30 @@ class BandStructure:
         EF=None,
         onlysym=False,
     ):
+        """
+        Initialization for vasp. Read data and save it in attributes.
+
+        Parameters
+        ----------
+        fWAV : str, default=None
+            Filename for wavefunction in VASP WAVECAR format.
+        fPOS : str, default=None
+            Filename for wavefunction in VASP POSCAR format.
+        Ecut : float, default=None
+            Plane-wave cutoff in eV to consider in the expansion of wave-functions.
+        IBstart : int, default=None
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        kplist : , default=None
+            List of indices of k-points to be considered.
+        spinor : bool, default=None
+            `True` if wave functions are spinors, `False` if they are scalars.
+        EF : float, default=None
+            Fermi-energy.
+        onlysym : bool, default=False
+            Exit after printing info about space-group.
+        """
         if spinor is None:
             raise RuntimeError(
                 "spinor should be specified in the command line for VASP bandstructure"
@@ -175,6 +267,26 @@ class BandStructure:
         EF=None,
         onlysym=False,
     ):
+        """
+        Initialization for abinit. Read data and store it in attributes.
+
+        Parameters
+        ----------
+        WFKname : str
+            Filename for wavefunction in ABINIT WFK format.
+        Ecut : float, default=None
+            Plane-wave cutoff in eV to consider in the expansion of wave-functions.
+        IBstart : int, default=None
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        kplist : , default=None
+            List of indices of k-points to be considered.
+        EF : float, default=None
+            Fermi-energy.
+        onlysym : bool, default=False
+            Exit after printing info about space-group.
+        """
 
         header = AbinitHeader(WFKname)
         usepaw = header.usepaw
@@ -263,13 +375,41 @@ class BandStructure:
         EF=None,
         onlysym=False,
     ):
+        """
+        Initialization for wannier90. Read data and store it in attibutes.
 
+        Parameters
+        ----------
+        prefix : str, default=None
+            Prefix used for Quantum Espresso calculations or seedname of Wannier90 
+            files.
+        Ecut : float, default=None
+            Plane-wave cutoff in eV to consider in the expansion of wave-functions.
+        IBstart : int, default=None
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        kplist : , default=None
+            List of indices of k-points to be considered.
+        EF : float, default=None
+            Fermi-energy.
+        onlysym : bool, default=False
+            Exit after printing info about space-group.
+        """
         if Ecut is None:
             raise RuntimeError("Ecut mandatory for Wannier90")
 
         fwin = [l.strip().lower() for l in open(prefix + ".win").readlines()]
 
         def split(l):
+            """
+            Determine symbol used for assignment and split accordingly.
+
+            Parameters
+            ---------
+            l : str
+                Part of a line read from .win file.
+            """
             if "=" in l:
                 return l.split("=")
             elif ":" in l:
@@ -286,6 +426,36 @@ class BandStructure:
         # print(fwin) #com
 
         def get_param(key, tp, default=None, join=False):
+            """
+            Return value of a parameter in .win file.
+
+            Parameters
+            ----------
+            key : str
+                Wannier90 input parameter.
+            tp : function
+                Function to apply to the value of the parameter, before 
+                returning it.
+            default
+                Default value to return in case parameter `key` is not found.
+            join : bool, default=False
+                If the value of parameter `key` contains more than one element, 
+                they will be concatenated with a blank space if `join` is set 
+                to `True`. Used when the parameter is `mpgrid`.
+
+            Returns
+            -------
+            Type(`tp`)
+                Return the value of the parameter, after applying function 
+                passed es keyword `tp`.
+
+            Raises
+            ------
+            RuntimeError
+                The parameter is not found in .win file, it is found more than 
+                once or its value is formed by many elements but it is not
+                `mpgrid`.
+            """
             i = np.where(ind == key)[0]
             if len(i) == 0:
                 if default is None:
@@ -348,6 +518,19 @@ class BandStructure:
         iterwin = iter(fwin)
 
         def check_end(name):
+            """
+            Check if block in .win file is closed.
+
+            Parameters
+            ----------
+            name : str
+                Name of the block in .win file.
+            
+            Raises
+            ------
+            RuntimeError
+                Block is not closed.
+            """
             s = next(iterwin)
             if " ".join(s) != "end " + name:
                 raise RuntimeError(
@@ -495,6 +678,29 @@ class BandStructure:
         onlysym=False,
         spin_channel=None
     ):
+        """
+        Initialization for Quantum Espresso. Read data and store in attributes.
+
+        Parameters
+        ----------
+        prefix : str, default=None
+            Prefix used for Quantum Espresso calculations or seedname of Wannier90 
+            files.
+        Ecut : float, default=None
+            Plane-wave cutoff in eV to consider in the expansion of wave-functions.
+        IBstart : int, default=None
+            First band to be considered.
+        IBend : int, default=None
+            Last band to be considered.
+        kplist : , default=None
+            List of indices of k-points to be considered.
+        EF : float, default=None
+            Fermi-energy.
+        onlysym : bool, default=False
+            Exit after printing info about space-group.
+        spin_channel : str, default=None
+            Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
+        """
         import xml.etree.ElementTree as ET
 
         mytree = ET.parse(prefix + ".save/data-file-schema.xml")
@@ -629,13 +835,14 @@ class BandStructure:
     #        exit()
 
     def getNK():
+        """Getter for `self.kpoints`."""
         return len(self.kpoints)
 
     NK = property(getNK)
 
     def write_characters(
         self,
-        degen_thresh=0,
+        degen_thresh=1e-8,
         refUC=None,
         shiftUC=np.zeros(3),
         kpnames=None,
@@ -643,6 +850,32 @@ class BandStructure:
         preline="",
         plotFile=None,
     ):
+        """
+        Calculate irreps, number of band-inversion (if little-group contains 
+        inversion), smallest direct gap and indirect gap and print all of them.
+
+        Parameters
+        ----------
+        degen_thresh : float, default=1e-8
+            Threshold energy used to decide whether wave-functions are
+            degenerate in energy.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+        kpnames : list, default=None
+            Labels of maximal k-points at which irreps of bands must be computed. 
+            If it is not specified, only traces will be printed, not irreps.
+        symmetries : list, default=None
+            Index of symmetry operations whose description will be printed. 
+        preline : str, default=''
+            Characters to write before labels of irreps in file `irreps.dat`.
+        plotFile : str, default=None
+            Name of file in which energy-levels and corresponding irreps will be 
+            written to later place irreps in a band structure plot.
+        """
         #        if refUC is not None:
         #        self.spacegroup.show(refUC=refUC,shiftUC=shiftUC)
         #        self.spacegroup.show2(refUC=refUC)
@@ -703,18 +936,25 @@ class BandStructure:
         print("indirect  gap:", Up - Low, " eV")
 
     def getNbands(self):
-        # returns the number of bands (if equal over all k-points) of
-        # RuntimeError otherwise
+        """
+        Return number of bands (if equal over all k-points), raise RuntimeError 
+        otherwise.
+
+        Returns
+        -------
+        int
+            Number of bands in every k-point.
+        """
         nbarray = [k.Nband for k in self.kpoints]
         if len(set(nbarray)) > 1:
             raise RuntimeError(
-                "the numbers of bands differs over k-points:{0} \n cannot write tracce.txt \n".format(
+                "the numbers of bands differs over k-points:{0} \n cannot write trace.txt \n".format(
                     nbarray
                 )
             )
         if len(nbarray) == 0:
             raise RuntimeError(
-                "do we have any k-points??? NB={0} \n cannot write tracce.txt \n".format(
+                "do we have any k-points??? NB={0} \n cannot write trace.txt \n".format(
                     nbarray
                 )
             )
@@ -722,12 +962,33 @@ class BandStructure:
 
     def write_trace(
         self,
-        degen_thresh=0,
+        degen_thresh=1e-8,
         refUC=None,
         shiftUC=np.zeros(3),
         kpnames=None,
         symmetries=None,
     ):
+        """
+        Generate `trace.txt` file to upload to the program `CheckTopologicalMat` 
+        in `BCS <https://www.cryst.ehu.es/cgi-bin/cryst/programs/topological.pl>`_ .
+
+        Parameters
+        ----------
+        degen_thresh : float, default=1e-8
+            Threshold energy used to decide whether wave-functions are
+            degenerate in energy.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+        kpnames : list, default=None
+            Labels of maximal k-points at which irreps of bands must be computed. 
+            If it is not specified, only traces will be printed, not irreps.
+        symmetries : list, default=None
+            Index of symmetry operations whose description will be printed. 
+        """
         f = open("trace.txt", "w")
         f.write(
             (
@@ -754,15 +1015,35 @@ class BandStructure:
             )
 
     def Separate(self, isymop, degen_thresh=1e-5, groupKramers=True):
+        """
+        Separate band structure according to the eigenvalues of a symmetry 
+        operation.
+        
+        Parameters
+        ----------
+        isymop : int
+            Index of symmetry used for the separation.
+        degen_thresh : float, default=1e-5
+            Energy threshold used to determine degeneracy of energy-levels.
+        groupKramers : bool, default=True
+            If `True`, states will be coupled by Kramers' pairs.
+
+        Returns
+        -------
+        subspaces : dict
+            Each key is an eigenvalue of the symmetry operation and the
+            corresponding value is an instance of `class` `BandStructure` for 
+            the subspace of that eigenvalue.
+        """
         if isymop == 1:
             return {1: self}
         symop = self.spacegroup.symmetries[isymop - 1]
-        print("Separating by symmetry operation # ", isymop)
+        #print("Separating by symmetry operation # ", isymop)
         symop.show()
         kpseparated = [
             kp.Separate(symop, degen_thresh=degen_thresh, groupKramers=groupKramers)
             for kp in self.kpoints
-        ]
+        ] # each element is a dict with separated bandstructure of a k-point
         allvalues = np.array(sum((list(kps.keys()) for kps in kpseparated), []))
         #        print (allvalues)
         #        for kps in kpseparated :
@@ -781,7 +1062,7 @@ class BandStructure:
             if len(borders) > 2:
                 allvalues = set(
                     [allvalues[b1:b2].mean() for b1, b2 in zip(borders, borders[1:])]
-                )
+                ) # unrepeated Re parts of all eigenvalues
                 subspaces = {}
                 for v in allvalues:
                     other = copy.copy(self)
@@ -791,7 +1072,7 @@ class BandStructure:
                         vk0 = vk[np.argmin(np.abs(v - vk))]
                         if abs(vk0 - v) < 0.05:
                             other.kpoints.append(K[vk0])
-                        subspaces[v] = other
+                        subspaces[v] = other # unnecessary indent ?
                 return subspaces
             else:
                 return dict({allvalues.mean(): self})
@@ -825,6 +1106,25 @@ class BandStructure:
                 return dict({allvalues.mean(): self})
 
     def zakphase(self):
+        """
+        Calculate Zak phases along a path for a set of states.
+
+        Returns
+        -------
+        z : array
+            `z[i]` contains the total  (trace) zak phase (divided by 
+            :math:`2\pi`) for the subspace of the first i-bands.
+        array
+            The :math:`i^{th}` element is the gap between :math:`i^{th}` and
+            :math:`(i+1)^{th}` bands in the considered set of bands. 
+        array
+            The :math:`i^{th}` element is the mean energy between :math:`i^{th}` 
+            and :math:`(i+1)^{th}` bands in the considered set of bands. 
+        array
+            Each line contains the local gaps between pairs of bands in a 
+            k-point of the path. The :math:`i^{th}` column is the local gap 
+            between :math:`i^{th}` and :math:`(i+1)^{th}` bands.
+        """
         overlaps = [
             x.overlap(y)
             for x, y in zip(self.kpoints, self.kpoints[1:] + [self.kpoints[0]])
@@ -835,6 +1135,8 @@ class BandStructure:
         print("   sum  ", np.sum(np.angle(O[0, 0]) for O in overlaps) / np.pi)
         #        overlaps.append(self.kpoints[-1].overlap(self.kpoints[0],g=np.array( (self.kpoints[-1].K-self.kpoints[0].K).round(),dtype=int )  )  )
         nmax = np.min([o.shape for o in overlaps])
+        # calculate zak phase in incresing dimension of the subspace (1 band,
+        # 2 bands, 3 bands,...)
         z = np.angle(
             [[la.det(O[:n, :n]) for n in range(1, nmax + 1)] for O in overlaps]
         ).sum(axis=0) % (2 * np.pi)
@@ -856,6 +1158,15 @@ class BandStructure:
         return z, emin - emax, (emin + emax) / 2, locgap
 
     def wcc(self):
+        """
+        Calculate Wilson loops.
+
+        Returns
+        -------
+        array
+            Eigenvalues of the Wilson loop operator, divided by :math:`2\pi`.
+
+        """
         overlaps = [
             x.overlap(y)
             for x, y in zip(self.kpoints, self.kpoints[1:] + [self.kpoints[0]])
@@ -868,6 +1179,16 @@ class BandStructure:
         return np.sort((np.angle(np.linalg.eig(wilson)) / (2 * np.pi)) % 1)
 
     def write_bands(self, locs=None):
+        """
+        Generate lines for a band structure plot, with cummulative length of the
+        k-path as values for the x-axis and energy-levels for the y-axis.
+
+        Returns
+        -------
+        str
+            Lines to write into a file that will be parsed to plot the band 
+            structure.
+        """
         #        print (locs)
         kpline = self.KPOINTSline()
         nbmax = max(k.Nband for k in self.kpoints)
@@ -899,12 +1220,32 @@ class BandStructure:
 
     def write_trace_all(
         self,
-        degen_thresh=0,
+        degen_thresh=1e-8,
         refUC=None,
         shiftUC=np.zeros(3),
         symmetries=None,
         fname="trace_all.dat",
     ):
+        """
+        Write in a file the description of symmetry operations, energy-levels 
+        and irreps calculated in all k-points.
+
+        Parameters
+        ----------
+        degen_thresh : float, default=1e-8
+            Threshold energy used to decide whether wave-functions are
+            degenerate in energy.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+        symmetries : list, default=None
+            Index of symmetry operations whose traces will be printed. 
+        fname : str, default=trace_all.dat
+            Name of output file.
+        """
         f = open(fname, "w")
         kpline = self.KPOINTSline()
         f.write(
@@ -913,6 +1254,7 @@ class BandStructure:
                 + "# {1}  # Spin-orbit coupling. No: 0, Yes: 1\n"  #
             ).format(self.getNbands(), 1 if self.spinor else 0)
         )
+        # add lines describing symmetry operations
         f.write(
             "\n".join(
                 ("#" + l)
@@ -930,6 +1272,25 @@ class BandStructure:
             )
 
     def KPOINTSline(self, kpred=None, breakTHRESH=0.1):
+        """
+        Calculate cumulative length along a path in reciprocal space.
+
+        Parameters
+        ----------
+        kpred : list, default=None
+            Each element contains the direct coordinates of a k-point in the
+            attribute `kpoints`.
+        breakTHRESH : float, default=0.1
+            If the distance between two neighboring k-points in the path is 
+            larger than `breakTHRESH`, it is taken to be 0.
+
+        Returns
+        -------
+        array
+            Each element is the cumulative distance along the path up to a 
+            k-point. The first element is 0, so that the number of elements
+            matches the number of k-points in the path.
+        """
         if kpred is None:
             kpred = [k.K for k in self.kpoints]
         KPcart = np.array(kpred).dot(self.RecLattice)

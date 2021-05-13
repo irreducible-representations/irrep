@@ -23,7 +23,7 @@ import logging
 
 import numpy as np
 
-from irrep.__aux import str2bool, str2list_space, str_
+from irrep.aux import str2bool, str2list_space, str_
 
 # using a logger to print useful information during debugging,
 # set to logging.INFO to disable debug messages
@@ -32,17 +32,31 @@ logger.setLevel(logging.DEBUG)
 
 
 class SymopTable:
-    """
-    Docstring to go here,
-    """
+    '''
+    Parses a `str` that  describes a symmetry operation of the space-group and 
+    stores info about it in attributes.
+
+    Parameters
+    ----------
+    line : str
+        Line to be parsed, which describes a symmetry operation.
+    from_user : bool, default=False
+        `True` if `line` was read from files of irreps already included in 
+        `IrRep` (MI: from_user=True deprecated?)
+
+    Attributes
+    ----------
+    R : array, shape=(3,3)
+        Rotational part, describing the transformation of basis vectors (not 
+        cartesian coordinates!).
+    t : array, shape=(3,)
+        Direct coordinates of the translation vector.
+    S : array, shape=(2,2)
+        SU(2) matrix describing the transformation of spinor components.
+    '''
 
     def __init__(self, line, from_user=False):
-        """
-        Docstring to go here.
 
-        :param line: explanation + type of kwarg to go here.
-        :param from_user: explanation + type of kwarg to go here.
-        """
         if from_user:
             self.__init__from_user(line)
             return
@@ -55,12 +69,15 @@ class SymopTable:
         ).reshape(2, 2)
 
     def __init__from_user(self, line):
-        """
-        Docstring to go here.
+        '''
+        Initialize class attributes by parsing line read from files included in 
+        `IrRep`. 
 
-        :param line: explanation + type of kwarg to go here.
-        :return:
-        """
+        Parameters
+        ----------  
+        line : str
+            Line to be parsed, which describes the symmetry operation.
+        '''
         numbers = line.split()
         self.R = np.array(numbers[:9], dtype=int).reshape(3, 3)
         self.t = np.array(numbers[9:12], dtype=float)
@@ -74,10 +91,18 @@ class SymopTable:
 
     def str(self, spinor=True):
         """
-        Docstring to go here.
+        Create a `str` describing the symmetry operation as implemented in the 
+        files included in `IrRep`.
 
-        :param spinor:
-        :return:
+        Parameters
+        ----------
+        spinor : bool, default=True
+            `True` if the matrix describing the transformation of spinor 
+            components should be written.
+
+        Returns
+        -------
+        str
         """
         return (
             "   ".join(" ".join(str(x) for x in r) for r in self.R)
@@ -102,7 +127,7 @@ class SymopTable:
 
 class CharFunction:
     """
-
+    deprecated?
     """
 
     def __init__(self, abcde):
@@ -129,17 +154,37 @@ class CharFunction:
 
 class KPoint:
     """
-
+    Organizes the info about a maximal k-point and contains routines to print 
+    it. This info is obtained by parsing the parameter `line` or passed 
+    directly as `name`, `k` and `isym`.
+    
+    Parameters
+    ----------
+    name : str, default=None
+        Label of the k-point.
+    k : array, default=None
+        Direct coordinates of the k-point.
+    isym : array, default=None
+        Indices of symmetry operations in the little co-group. Indices make 
+        reference to the symmetry operations stored in the header of the file 
+        and stored in `IrrepTable.symmetries`. 
+    line : str, default=None
+        Line to be parsed. 
+    
+    Attributes
+    ----------
+    name : str
+        Label of the k-point. 
+    k : array, shape=(3,) 
+        Direct coordinates of the k-point.
+    isym : array
+        Indices of symmetry operations in the little co-group. Indices make 
+        reference to the symmetry operations stored in the header of the file 
+        and stored in `IrrepTable.symmetries`. 
     """
 
     def __init__(self, name=None, k=None, isym=None, line=None):
-        """
 
-        :param name:
-        :param k:
-        :param isym:
-        :param line:
-        """
         if line is not None:
             line_ = line.split(":")
             if line_[0].split()[0] != "kpoint":
@@ -156,9 +201,18 @@ class KPoint:
 
     def __eq__(self, other):
         """
+        Compares the attributes of this class with those of class instance 
+        `other`.
 
-        :param other:
-        :return:
+        Parameters
+        ----------
+        other : class
+            Instance of class `KPoint`.
+
+        Returns
+        -------
+        bool
+            `True` if all attributes have identical value, `False` otherwise.
         """
         if self.name != other.name:
             return False
@@ -170,12 +224,25 @@ class KPoint:
 
     def show(self):
         """
+        Create a `str` containing the values of all attributes.
 
-        :return:
+        Returns
+        -------
+        str
+            Line showing the values of all attributes.
         """
         return "{0} : {1}  symmetries : {2}".format(self.name, self.k, self.isym)
 
     def str(self):
+        '''
+        Create a `str` containing the values of all attributes.
+
+        Returns
+        -------
+        str
+            Line that, when parsed, would lead to an instance of class `KPoint` 
+            with identical values of attributes.
+        '''
         return "{0} : {1}  : {2}".format(
             self.name,
             " ".join(str(x) for x in self.k),
@@ -185,17 +252,46 @@ class KPoint:
 
 class Irrep:
     """
+    Parses the line containing the description of the irrep and stores the info 
+    in its attributes. Contains methods print descriptions of the irrep. 
 
+    Parameters
+    ----------
+    f : file object, default=None 
+        It corresponds to the file containing the info about the space-group 
+        and its irreps.
+    nsym_group : int, default=None
+        Number of symmetry operations in the "point-group" of the space-group.
+    line : str, default=None
+        Line with the description of an irrep, read from the file containing 
+        info about the space-group and irreps.
+    k_point : class instance, default=None
+        Instance of class `KPoint`. It is `None` when file is old (deprecated?)
+
+    Attributes
+    ----------
+    k : array, shape=(3,) 
+        Direct coordinates of a k-point.
+    kpname : str
+        It is the label of a k-point.
+    has_rkmk : deprecated?
+    name : str
+        Label of the irrep.
+    dim : int
+        Dimension of the irrep.
+    nsym : int
+        Number of symmetry operations in the little co-group of the k-point.
+    reality : bool
+        `True` if traces of all symmetry operations are real, `False` 
+        otherwise.
+    characters : dict
+        Each key is the index of a symmetry operation in the little co-group 
+        and the corresponding value is the trace of that symmetry in the irrep.
+    hasuvw : deprecated?
     """
 
     def __init__(self, f=None, nsym_group=None, line=None, k_point=None):
-        """
 
-        :param f:
-        :param nsym_group:
-        :param line:
-        :param k_point:
-        """
         if k_point is not None:
             self.__init__user(line, k_point)
             return
@@ -248,10 +344,16 @@ class Irrep:
 
     def __init__user(self, line, k_point):
         """
-
-        :param line:
-        :param k_point:
-        :return:
+        Parse line containing info about an irrep and store this info in 
+        attributes.
+ 
+        Parameters
+        ----------
+        line : str, default=None
+            Line with the description of an irrep, read from the file containing 
+            info about the space-group and irreps.
+        k_point : class instance, default=None
+            Instance of class `KPoint`. It is `None` when file is old (deprecated?)
         """
         logger.debug("reading irrep line <{0}> for KP=<{1}> ".format(line, k_point.str()))
         self.k = k_point.k
@@ -274,15 +376,20 @@ class Irrep:
 
     def show(self):
         """
-
-        :return:
+        Print label of the k-point and info about the irrep.
         """
         print(self.kpname, self.name, self.dim, self.reality)
 
     def str(self):
         """
+        Generate a line describing the irrep and its character.
 
-        :return:
+        Returns
+        -------
+        str
+            Line describing the irrep, as it is written in the table of the
+            space-group included in `IrRep`. This line contains the label, 
+            dimension and character of the irrep.
         """
         logger.debug(self.characters)
         ch = np.array([self.characters[isym] for isym in sorted(self.characters)])
@@ -296,17 +403,46 @@ class Irrep:
 
 class IrrepTable:
     """
+    Parse file corresponding to a space-group, storing the info in attributes. 
+    Also contains methods to print and write this info in a file.
+
+    Parameters
+    ----------
+    SGnumber : int
+        Number of the space-group.
+    spinor : bool
+        `True` if the matrix describing the transformation of spinor components 
+        should be read.
+    fromUser : bool, default=True
+        `True` if the file to be read is one already included in `IrRep`. `False` if 
+        the file to be read is an old (deprecated?) file.
+    name : str, default=None
+        Name of the file from which info about the space-group and irreps 
+        should be read. If `None`, the code will try to open a file already 
+        included in it.
+
+    Attributes
+    ----------
+    number : int
+        Number of the space-group.
+    name : str
+        Symbol of the space-group in Hermann-Mauguin notation. 
+    spinor : bool
+        `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+    nsym : int
+       Number of symmetry operations in the "point-group" of the space-group. 
+    symmetries : list
+        Each component is an instance of class `SymopTable` corresponding to a 
+        symmetry operation in the "point-group" of the space-group.
+    NK : int
+        Number of maximal k-points in the Brillouin zone.
+    irreps : list
+        Each component is an instance of class `IrRep` corresponding to an 
+        irrep of the little group of a maximal k-point.
 
     """
 
     def __init__(self, SGnumber, spinor, fromUser=True, name=None):
-        """
-
-        :param SGnumber:
-        :param spinor:
-        :param fromUser:
-        :param name:
-        """
         if fromUser:
             self.__init__user(SGnumber, spinor, name)
             return
@@ -346,10 +482,9 @@ class IrrepTable:
         self.symmetries = self.symmetries[0 : self.nsym]
 
     def show(self):
-        """
-
-        :return:
-        """
+        '''
+        Print info about symmetry operations and irreps.  
+        '''
         for i, s in enumerate(self.symmetries):
             print(i + 1, "\n", s.R, "\n", s.t, "\n", s.S, "\n\n")
         for irr in self.irreps:
@@ -357,9 +492,13 @@ class IrrepTable:
 
     def save4user(self, name=None):
         """
+        Creates a file with info about the space-group and irreps. It is 
+        used to create the files included in `IrRep` (when `name=None`).
 
-        :param name:
-        :return:
+        Parameters
+        ----------
+        name : str, default=None
+            File in which info about the space-group and irreps will be written.
         """
         if name is None:
             name = "tables/irreps-SG={SG}-{spinor}.dat".format(
@@ -404,11 +543,17 @@ class IrrepTable:
 
     def __init__user(self, SG, spinor, name):
         """
+        Parse file containing info about space-group, its symmetry operations 
+        and irreps.
 
-        :param SG:
-        :param spinor:
-        :param name:
-        :return:
+        Parameters
+        ----------
+        SG : int
+            Number of the space-group.
+        spinor : bool 
+            `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+        name : str
+            File from which irreps will be read.
         """
         self.number = SG
         self.spinor = spinor

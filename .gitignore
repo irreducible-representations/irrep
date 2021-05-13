@@ -145,3 +145,4 @@ cython_debug/
 
 # vim multi-tab
 *.vim
+*.swp
