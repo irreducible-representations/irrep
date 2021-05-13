@@ -140,8 +140,6 @@ class Kpoint:
         -----
         For more about `lazy-property`, check the documentation `here <https://pypi.org/project/lazy-property/>`_ .
         """
-
-
         symmetries = {}
         #        print ("calculating symmetry eigenvalues for E={0}, WF={1} SG={2}".format(self.Energy,self.WF.shape,self.SG) )
         if not (self.SG is None):
@@ -246,7 +244,6 @@ class Kpoint:
         other : class
             Instance of `Kpoints` corresponding to the group of states passed. 
             They are shorted by energy-levels.
-
         """
         #        print ("making a subspace with E={0}\n WF = {1}".format(E,WF.shape))
         other = copy.copy(self) # copy of whose class
