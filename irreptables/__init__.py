@@ -40,9 +40,6 @@ class SymopTable:
     ----------
     line : str
         Line to be parsed, which describes a symmetry operation.
-    from_user : bool, default=False
-        `True` if `line` was read from files of irreps already included in 
-        `IrRep` (MI: from_user=True deprecated?)
 
     Attributes
     ----------
@@ -55,29 +52,7 @@ class SymopTable:
         SU(2) matrix describing the transformation of spinor components.
     '''
 
-    def __init__(self, line, from_user=False):
-
-        if from_user:
-            self.__init__from_user(line)
-            return
-        numbers = line.split()
-        self.R = np.array(numbers[:9], dtype=int).reshape(3, 3)
-        self.t = np.array(numbers[9:12], dtype=float)
-        self.S = (
-            np.array(numbers[12::2], dtype=float)
-            * np.exp(1j * np.pi * np.array(numbers[13::2], dtype=float))
-        ).reshape(2, 2)
-
-    def __init__from_user(self, line):
-        '''
-        Initialize class attributes by parsing line read from files included in 
-        `IrRep`. 
-
-        Parameters
-        ----------  
-        line : str
-            Line to be parsed, which describes the symmetry operation.
-        '''
+    def __init__(self, line):
         numbers = line.split()
         self.R = np.array(numbers[:9], dtype=int).reshape(3, 3)
         self.t = np.array(numbers[9:12], dtype=float)
@@ -470,7 +445,7 @@ class IrrepTable:
                     l = lines.pop()
                     # logger.debug(l)
                     try:
-                        self.symmetries.append(SymopTable(l, from_user=True))
+                        self.symmetries.append(SymopTable(l))
                     except Exception as err:
                         logger.debug(err)
                         pass
