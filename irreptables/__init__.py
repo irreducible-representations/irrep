@@ -100,33 +100,6 @@ class SymopTable:
         )
 
 
-class CharFunction:
-    """
-    deprecated?
-    """
-
-    def __init__(self, abcde):
-        """
-
-        :param abcde:
-        """
-        self.abcde = copy.deepcopy(abcde)
-
-    def __call__(self, u=0, v=0, w=0):
-        """
-
-        :param u:
-        :param v:
-        :param w:
-        :return:
-        """
-        return sum(
-            aaa[0]
-            * np.exp(1j * np.pi * (sum(a * u for a, u in zip(aaa[1:], (1, u, v, w)))))
-            for aaa in self.abcde
-        )
-
-
 class KPoint:
     """
     Organizes the info about a maximal k-point and contains routines to print 
