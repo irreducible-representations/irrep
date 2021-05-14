@@ -241,7 +241,7 @@ class Irrep:
         Line with the description of an irrep, read from the file containing 
         info about the space-group and irreps.
     k_point : class instance, default=None
-        Instance of class `KPoint`. It is `None` when file is old (deprecated?)
+        Instance of class `KPoint`.
 
     Attributes
     ----------
@@ -265,71 +265,7 @@ class Irrep:
     hasuvw : deprecated?
     """
 
-    def __init__(self, f=None, nsym_group=None, line=None, k_point=None):
-
-        if k_point is not None:
-            self.__init__user(line, k_point)
-            return
-        s = f.readline().split()
-        logger.debug(s)
-        self.k = np.array(s[:3], dtype=float)
-        self.has_rkmk = True if s[3] == "1" else "0" if s[3] == 0 else None
-        self.name = s[4]
-        self.kpname = s[7]
-        self.dim = int(s[5])
-        self.nsym = int(int(s[6]) / 2)
-        self.reality = int(s[8])
-        self.characters = {}
-        self.hasuvw = False
-        for isym in range(1, nsym_group + 1):
-            ism, issym = [int(x) for x in f.readline().split()]
-            assert ism == isym
-            logger.debug("ism,issym", ism, issym)
-            if issym == 0:
-                continue
-            elif issym != 1:
-                raise RuntimeError("issym should be 0 or 1, <{0}> found".format(issym))
-            abcde = []
-            hasuvw = []
-            for i in range(self.dim):
-                for j in range(self.dim):
-                    l1, l2 = [f.readline() for k in range(2)]
-                    if i != j:
-                        continue  # we need only diagonal elements
-                    l1 = l1.strip()
-                    if l1 == "1":
-                        hasuvw.append(False)
-                    elif l1 == "2":
-                        hasuvw.append(True)
-                    else:
-                        raise RuntimeError(
-                            "hasuvw should be 1 or 2. <{0}> found".format(l1)
-                        )
-                    abcde.append(np.array(l2.split(), dtype=float))
-            if any(hasuvw):
-                self.hasuvw = True
-            if isym <= nsym_group / 2:
-                self.characters[isym] = CharFunction(abcde)
-        if not self.hasuvw:
-            self.characters = {
-                isym: self.characters[isym]() for isym in self.characters
-            }
-        logger.debug("characters are:", self.characters)
-        assert len(self.characters) == self.nsym
-
-    def __init__user(self, line, k_point):
-        """
-        Parse line containing info about an irrep and store this info in 
-        attributes.
- 
-        Parameters
-        ----------
-        line : str, default=None
-            Line with the description of an irrep, read from the file containing 
-            info about the space-group and irreps.
-        k_point : class instance, default=None
-            Instance of class `KPoint`. It is `None` when file is old (deprecated?)
-        """
+    def __init__(self, line, k_point):
         logger.debug("reading irrep line <{0}> for KP=<{1}> ".format(line, k_point.str()))
         self.k = k_point.k
         self.kpname = k_point.name
@@ -346,8 +282,8 @@ class Irrep:
                 * np.array(line[2 + self.nsym : 2 + 2 * self.nsym], dtype=float)
             )
         self.characters = {k_point.isym[i]: ch[i] for i in range(self.nsym)}
-
         logger.debug("the irrep {0}  ch= {1}".format(self.name, self.characters))
+        assert len(self.characters) == self.nsym
 
     def show(self):
         """
