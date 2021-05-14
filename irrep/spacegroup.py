@@ -776,10 +776,6 @@ class SpaceGroup():
         """
         #        self.show()
         table = IrrepTable(self.number, self.spinor)
-        if self.number != table.number: #deprecated: IrrepTable assigns IrrepTable.number=SpaceGroup.number -> always match
-            raise RuntimeError(
-                "numbers of the symmetry groups do not match : {0} and {1}".format(
-                    self.number, SG.number))
 #        if self.name!=table.name     : raise RuntimeError(  "names of the symmetry groups do not match : {0} and {1}".format(self.name,table.name) )
         ind = []
         dt = []
