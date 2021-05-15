@@ -222,7 +222,6 @@ class Irrep:
         Direct coordinates of a k-point.
     kpname : str
         It is the label of a k-point.
-    has_rkmk : deprecated?
     name : str
         Label of the irrep.
     dim : int
@@ -235,7 +234,6 @@ class Irrep:
     characters : dict
         Each key is the index of a symmetry operation in the little co-group 
         and the corresponding value is the trace of that symmetry in the irrep.
-    hasuvw : deprecated?
     """
 
     def __init__(self, line, k_point):
@@ -385,53 +383,3 @@ class IrrepTable:
         for irr in self.irreps:
             irr.show()
 
-    def save4user(self, name=None):
-        """
-        Creates a file with info about the space-group and irreps. It is 
-        used to create the files included in `IrRep` (when `name=None`).
-
-        Parameters
-        ----------
-        name : str, default=None
-            File in which info about the space-group and irreps will be written.
-        """
-        if name is None:
-            name = "tables/irreps-SG={SG}-{spinor}.dat".format(
-                SG=self.number, spinor="spin" if self.spinor else "scal"
-            )
-        fout = open(name, "w")
-        fout.write(
-            "SG={SG}\n name={name} \n nsym= {nsym}\n spinor={spinor}\n".format(
-                SG=self.number, name=self.name, nsym=self.nsym, spinor=self.spinor
-            )
-        )
-        fout.write(
-            "symmetries=\n"
-            + "\n".join(s.str(self.spinor) for s in self.symmetries)
-            + "\n\n"
-        )
-
-        kpoints = {}
-
-        for irr in self.irreps:
-            if not irr.hasuvw:
-                kp = KPoint(irr.kpname, irr.k, set(irr.characters.keys()))
-                if (
-                    len(
-                        set(
-                            [0.123, 0.313, 1.123, 0.877, 0.427, 0.246, 0.687]
-                        ).intersection(list(kp.k))
-                    )
-                    == 0
-                ):
-                    try:
-                        assert kpoints[kp.name] == kp
-                    except KeyError:
-                        kpoints[kp.name] = kp
-
-        for kp in kpoints.values():
-            fout.write("\n kpoint  " + kp.str() + "\n")
-            for irr in self.irreps:
-                if irr.kpname == kp.name:
-                    fout.write(irr.str() + "\n")
-        fout.close()
