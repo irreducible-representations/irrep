@@ -28,12 +28,6 @@ pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
 
 
-class WrongRotation(RuntimeError):
-    def __init__(self, rotation):
-        super(WrongRotation, self).__init__(
-            "strange rotation :\n {0}".format(rotation))
-
-
 class SymmetryOperation():
     """
     Contains information to describe a symmetry operation and methods to get 
