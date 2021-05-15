@@ -759,8 +759,6 @@ class SpaceGroup():
         Raises
         ------
         RuntimeError
-            DEPRECATED RAISE
-        RuntimeError
             Translational or rotational parts read from tables and found by 
             `spglib` do not match for a symmetry operation.
         RuntimeError

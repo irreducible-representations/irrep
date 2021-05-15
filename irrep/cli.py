@@ -27,7 +27,7 @@ import click
 
 from .spacegroup import SpaceGroup
 from .bandstructure import BandStructure
-from .aux import str2bool, str2list
+from .aux import str2bool, str2list, short
 from . import __version__ as version
 
 
@@ -325,28 +325,6 @@ def cli(
                 )
             )
 
-    def short(x, nd=3):
-        """
-        Format `float` or `complex` number.
-
-        Parameter
-        ---------
-        x : int, float or complex
-            Number to format.
-        nd : int, default=3
-            Number of decimals.
-
-        Returns
-        -------
-        str
-            Formatted number, with `nd` decimals saved.
-        """
-        fmt = "{{0:+.{0}f}}".format(nd)
-        if abs(x.imag) < 10 ** (-nd):
-            return fmt.format(x.real)
-        if abs(x.real) < 10 ** (-nd):
-            return fmt.format(x.imag) + "j"
-        return short(x.real, nd) + short(1j * x.imag)
 
     bandstr.write_trace(
         degen_thresh=degenthresh,
