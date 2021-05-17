@@ -181,6 +181,8 @@ def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor):
 
     Parameters
     ----------
+    ik : int
+        Index of the k-point.
     kg : array
         Each row contains the integer coefficients of a reciprocal lattice 
         vector taking part in the plane-wave expansion of wave-functions at 
