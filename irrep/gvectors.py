@@ -246,7 +246,7 @@ def transformed_g(kpt, ig, RecLattice, A):
 
 
 def symm_eigenvalues(
-    K, RecLattice, WF, igall, A=np.eye(3), S=np.eye(2), T=np.zeros(3), spinor=True
+    K, RecLattice, WF, igall, A, S, T, spinor
 ):
     """
     Calculate the traces of a symmetry operation for the wave-functions in a 
@@ -279,7 +279,7 @@ def symm_eigenvalues(
     T : array, shape=(3,)
         Translational part of the symmetry operation, in terms of the basis 
         vectors of the unit cell.
-    spinor : bool, default=True
+    spinor : bool
         `True` if wave-functions are spinors, `False` if they are scalars.
 
     Returns
@@ -305,7 +305,7 @@ def symm_eigenvalues(
 
 
 def symm_matrix(
-    K, RecLattice, WF, igall, A=np.eye(3), S=np.eye(2), T=np.zeros(3), spinor=True
+    K, RecLattice, WF, igall, A, S, T, spinor
 ):
     """
     Computes the matrix S_mn = <Psi_m|{A|T}|Psi_n>
@@ -337,7 +337,7 @@ def symm_matrix(
     T : array, shape=(3,)
         Translational part of the symmetry operation, in terms of the basis 
         vectors of the unit cell.
-    spinor : bool, default=True
+    spinor : bool
         `True` if wave functions are spinors, `False` if they are scalars.
 
     Returns

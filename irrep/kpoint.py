@@ -150,10 +150,10 @@ class Kpoint:
                         self.RecLattice,
                         self.WF,
                         self.ig,
-                        spinor=self.spinor,
-                        A=symop.rotation,
-                        S=symop.spinor_rotation,
-                        T=symop.translation,
+                        symop.rotation,
+                        symop.spinor_rotation,
+                        symop.translation,
+                        self.spinor,
                     )
                 except NotSymmetryError as err:
                     pass  # print  ( err )
@@ -394,10 +394,10 @@ class Kpoint:
             self.RecLattice,
             self.WF,
             self.ig,
-            spinor=self.spinor,
-            A=symop.rotation,
-            S=symop.spinor_rotation,
-            T=symop.translation,
+            symop.rotation,
+            symop.spinor_rotation,
+            symop.translation,
+            self.spinor,
         )
         # check orthogonality
         S1 = self.WF.conj().dot(self.WF.T)
