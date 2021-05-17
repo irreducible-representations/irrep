@@ -108,7 +108,6 @@ def calc_gvectors(
                 if len(igall) >= nplane: # spinor=F, all plane waves found
                     break
                 elif np.all(memory): # probably spinor wrong set as spinor=F
-                    flag = False
                     raise RuntimeError(
                           "calc_gvectors is stuck "
                           "calculating plane waves of energy larger "
