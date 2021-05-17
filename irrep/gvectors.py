@@ -230,12 +230,16 @@ def transformed_g(kpt, ig, RecLattice, A):
                 break
         if rotind[i] == -1:
             raise RuntimeError(
-                "no pair found for the transformed g-vector igTr[{i}]={igtr}  ig[{i}]={ig} in the original g-vectors set (kpoint{kp}). Other g-vectors with same energy:\n{other} ".format(
-                    i=i,
-                    ig=ig[:3, i],
-                    igtr=igTr[:, i],
-                    kp=kpt,
-                    other=ig[:3, ig[4, i] : ig[5, i]],
+                    "Error in the transformation of plane-waves in k-point={}: "
+                    .format(kpt) +
+                    "Not pair found for the g-vector igTr[{i}]={igtr}"
+                    .format(i=i, igtr=igTr[:,i]) +
+                    "obtained when transforming the g-vector ig[{i}]={ig} "
+                    .format(i=i, ig=ig[:3,i] +
+                    "with the matrix {B}, where B=inv(A).T with A={A}"
+                    .format(B=B, A=A) +
+                    "other g-vectors with the same energy:\n{other}"
+                    .format(other)
                 )
             )
     return rotind
