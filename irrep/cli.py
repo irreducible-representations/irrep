@@ -313,6 +313,7 @@ def cli(
                         n=n + 1, z=z / np.pi, gap=gw, cent=gc, lg=lgw
                     )
                 )
+            exit()
 
     if wcc:
         for k in subbands:
@@ -324,6 +325,7 @@ def cli(
                     k, wcc, np.sum(wcc) % 1
                 )
             )
+        exit()
 
 
     bandstr.write_trace(
