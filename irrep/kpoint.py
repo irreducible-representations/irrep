@@ -19,7 +19,7 @@
 import numpy as np
 import numpy.linalg as la
 import copy
-from .gvectors import calc_gvectors, symm_eigenvalues, NotSymmetryError, symm_matrix
+from .gvectors import calc_gvectors, symm_eigenvalues, NotSymmetryError, symm_matrix, sortIG
 from .readfiles import Hartree_eV
 from .readfiles import record_abinit
 from .aux import compstr, is_round
@@ -102,7 +102,7 @@ class Kpoint:
         Coefficients of wave-functions in the plane-wave expansion. A row for 
         each wave-function, a column for each plane-wave.
     igall : array
-        Returned by `__sortIG`.
+        Returned by `sortIG`.
         Every column corresponds to a plane-wave of energy smaller than 
         `Ecut`. The number of rows is 6: the first 3 contain direct 
         coordinates of the plane-wave, the fourth row stores indices needed
@@ -673,7 +673,7 @@ class Kpoint:
         except BaseException:
             self.upper = np.NaN
 
-        return self.__sortIG(kg, kpt, CG, self.RecLattice, Ecut0, Ecut)
+        return sortIG(self.ik0, kg, kpt, CG, self.RecLattice, Ecut0, Ecut, self.spinor)
 
     def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval):
         """
@@ -889,86 +889,8 @@ class Kpoint:
             if ib >= IBstart:
                 CG[ib - IBstart] = cg_tmp[0::2] + 1.0j * cg_tmp[1::2]
 
-        return self.__sortIG(kg, self.K, CG, B, Ecut0, Ecut)
+        return sortIG(self.ik0, kg, self.K, CG, B, Ecut0, Ecut, self.spinor)
 
-    def __sortIG(self, kg, kpt, CG, RecLattice, Ecut0, Ecut):
-        """
-        Apply plane-wave cutoff specified in CLI to the expansion of 
-        wave-functions and sort the coefficients and plane-waves in ascending 
-        order in energy.
-
-        Parameters
-        ----------
-        kg : array
-            Each row contains the integer coefficients of a reciprocal lattice 
-            vector taking part in the plane-wave expansion of wave-functions at 
-            the current k-point.
-        kpt : array, shape=(3,)
-            Direct coordinates of the k-point.
-        CG : array
-            `CG[i,j]` contains the complex coefficient corresponding to 
-            :math:`j^{th}` plane-wave in the expansion of :math:`i^{th}` 
-            wave-function. TODO: ADD NOTE WITH NUMBER OF COLS, SPINOR...
-        RecLattice : array, shape=(3,3)
-            Each row contains the cartesian coordinates of a basis vector forming 
-            the unit-cell in reciprocal space.
-        Ecut : float
-            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
-            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
-            the value of this is negative or larger than `Ecut0`.
-        Ecut0 : float
-            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
-            DFT files. Insignificant if `code`=`wannier90`.
-
-        Returns
-        -------
-        CG : array
-            Contains the coefficients (same row-column formatting as argument 
-            `CG`) of the expansion of wave-functions corresponding to 
-            plane-waves of energy smaller than `Ecut`. Columns (plane-waves) 
-            are shorted based on their energy, from smaller to larger.
-        igall : array
-            Every column corresponds to a plane-wave of energy smaller than 
-            `Ecut`. The number of rows is 6: the first 3 contain direct 
-            coordinates of the plane-wave, the fourth row stores indices needed
-            to short plane-waves based on energy (ascending order). Fitfth 
-            (sixth) row contains the index of the first (last) plane-wave with 
-            the same energy as the plane-wave of the current column.
-        """
-        thresh = 1e-4 # default thresh to distinguish energies of plane-waves
-        KG = (kg + kpt).dot(RecLattice)
-        npw = kg.shape[0]
-        eKG = Hartree_eV * (la.norm(KG, axis=1) ** 2) / 2
-        print(
-            "Found cutoff: {0:12.6f} eV   Largest plane wave energy in K-point {1:4d}: {2:12.6f} eV".format(
-                Ecut0, self.ik0, np.max(eKG)
-            )
-        )
-        assert Ecut0 * 1.000000001 > np.max(eKG)
-        sel = np.where(eKG < Ecut)[0]
-        npw1 = sel.shape[0]
-
-        KG = KG[sel]
-        kg = kg[sel]
-        eKG = eKG[sel]
-        srt = np.argsort(eKG)
-        eKG = eKG[srt]
-        igall = np.zeros((6, len(sel)), dtype=int)
-        igall[:3, :] = kg[srt].T
-        igall[3, :] = srt
-        wall = (
-            [0] + list(np.where(eKG[1:] - eKG[:-1] > thresh)[0] + 1) + [igall.shape[1]]
-        )
-        for i in range(len(wall) - 1):
-            igall[4, wall[i] : wall[i + 1]] = wall[i]
-            igall[5, wall[i] : wall[i + 1]] = wall[i + 1]
-
-        if self.spinor:
-            CG = CG[:, np.hstack((sel[srt], sel[srt] + npw))]
-        else:
-            CG = CG[:, sel[srt]]
-
-        return CG, igall
 
     def write_characters(
         self,
