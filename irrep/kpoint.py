@@ -891,7 +891,6 @@ class Kpoint:
 
         return sortIG(self.ik0, kg, self.K, CG, B, Ecut0, Ecut, self.spinor)
 
-
     def write_characters(
         self,
         degen_thresh=1e-8,
