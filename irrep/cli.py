@@ -327,7 +327,6 @@ def cli(
             )
         exit()
 
-
     bandstr.write_trace(
         degen_thresh=degenthresh,
         refUC=refuc,

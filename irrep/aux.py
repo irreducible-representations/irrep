@@ -155,6 +155,7 @@ def is_round(A, prec=1e-14):
         `True` if all elements are integers, `False` otherwise.
     """
     return(np.linalg.norm(A - np.round(A)) < prec)
+
     
 def short(x, nd=3):
     """
