@@ -19,6 +19,7 @@
 import numpy as np
 import scipy
 from scipy.io import FortranFile as FF
+from wannierberri.__utility import FortranFileR as FFR
 from sys import stdout
 
 
@@ -50,13 +51,19 @@ class AbinitHeader():
 
     def __init__(self, fname):
 
-        self.fWFK = FF(fname, "r")
-        fWFK = self.fWFK
-        record = fWFK.read_record('a6,2i4')
+        try : 
+            fWFK = FF(fname,"r")
+            record = fWFK.read_record('a6,2i4')
+        except :   ## for newer version this will work. 
+            fWFK.close()
+            fWFK = FFR(fname)
+            record = fWFK.read_record('a8,2i4')
 #    print (record)
         stdout.flush()
         codsvn = record[0][0].decode('ascii')
         headform, fform = record[0][1]
+        print ( f"codsvn='{codsvn}', headform={headform}, fform={fform} ")
+        self.fWFK = fWFK
         defversion = '8.6.3 '
         if not (codsvn == defversion):
             print(
