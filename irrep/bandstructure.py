@@ -1072,7 +1072,7 @@ class BandStructure:
                         vk0 = vk[np.argmin(np.abs(v - vk))]
                         if abs(vk0 - v) < 0.05:
                             other.kpoints.append(K[vk0])
-                        subspaces[v] = other # unnecessary indent ?
+                    subspaces[v] = other # unnecessary indent ?
                 return subspaces
             else:
                 return dict({allvalues.mean(): self})

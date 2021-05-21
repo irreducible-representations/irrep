@@ -28,12 +28,6 @@ pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
 
 
-class WrongRotation(RuntimeError):
-    def __init__(self, rotation):
-        super(WrongRotation, self).__init__(
-            "strange rotation :\n {0}".format(rotation))
-
-
 class SymmetryOperation():
     """
     Contains information to describe a symmetry operation and methods to get 
@@ -759,8 +753,6 @@ class SpaceGroup():
         Raises
         ------
         RuntimeError
-            DEPRECATED RAISE
-        RuntimeError
             Translational or rotational parts read from tables and found by 
             `spglib` do not match for a symmetry operation.
         RuntimeError
@@ -776,10 +768,6 @@ class SpaceGroup():
         """
         #        self.show()
         table = IrrepTable(self.number, self.spinor)
-        if self.number != table.number: #deprecated: IrrepTable assigns IrrepTable.number=SpaceGroup.number -> always match
-            raise RuntimeError(
-                "numbers of the symmetry groups do not match : {0} and {1}".format(
-                    self.number, SG.number))
 #        if self.name!=table.name     : raise RuntimeError(  "names of the symmetry groups do not match : {0} and {1}".format(self.name,table.name) )
         ind = []
         dt = []
@@ -807,16 +795,29 @@ class SpaceGroup():
                             "\nt(table)-t(spglib) (mod. lattice translation):",
                             t1)
                         raise RuntimeError(
-                            "symmetry {0} with R={1},t={2}, t1={3} was not matched to tables".format(
-                                j + 1, R, t, t1))
+                            "Error matching translational part for symmetry " +
+                            "{}. A symmetry with identical rotational part \n"
+                            .format(j+1) +
+                            "R=\n{} \nhas been found in tables, but their "
+                            .format(R) +
+                            "translational parts do not match: \n" +
+                            "t(table) = {} \nt(found) = {} \n"
+                            .format(sym2.t, t) +
+                            "t(table)-t(spglib) (mod. lattice translation)= {}"
+                             .format(t1))
             if not found:
                 raise RuntimeError(
-                    "symmetry {0} with R={1},t={2} was not matched to tables".format(
-                        j + 1, R, t))
+                    "Error matching rotational part for symmetry {0}. In the "
+                    .format(j+1) +
+                     "tables there is not any symmetry with identical " + 
+                     "rotational part. \nR(found) = \n{} \nt(found) = {}"
+                     .format(R, t))
 
         if (len(set(ind)) != len(self.symmetries)):
             raise RuntimeError(
-                "Error in matching symmetries detected by spglib with the symmetries in the tables. Try to modify the refUC and shiftUC parameters")
+                "Error in matching symmetries detected by spglib with the \
+                 symmetries in the tables. Try to modify the refUC and shiftUC \
+                 parameters")
         if self.spinor:
             S1 = [sym.spinor_rotation for sym in self.symmetries]
             S2 = [table.symmetries[i].S for i in ind]
