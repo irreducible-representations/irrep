@@ -112,7 +112,9 @@ class BandStructure:
         code="vasp",
         EF=None,
         onlysym=False,
-        spin_channel=None
+        spin_channel=None,
+        refUC = None,
+        shiftUC = None
     ):
         code = code.lower()
 
@@ -138,6 +140,29 @@ class BandStructure:
             )
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
+
+        # set tranformation to convenctional cell
+        if refUC and shiftUC: # both specified in CLI
+            self.refUC = np.array(refUC.split(","), dtype=float).reshape((3, 3))
+            self.shiftUC = np.array(shiftUC.split(","), dtype=float).reshape(3)
+            print('refUC and shiftUC read from CLI')
+        elif refUC and not shiftUC: # shiftUC not in CLI
+            self.refUC = np.array(refUC.split(","), dtype=float).reshape((3, 3))
+            self.shiftUC = np.zeros(3, dtype=float)
+            print(('refUC was specified in CLI, but shiftUC was not. Taking '
+                   'shiftUC=(0,0,0).'))
+        elif not refUC and shiftUC: # refUC not in CLI
+            self.refUC = np.eye(3, dtype=float)
+            self.shiftUC = np.array(shiftUC.split(","), dtype=float).reshape(3)
+            print(('shitfUC was specified in CLI, but refUC was not. Taking '
+                   '3x3 identity matrix as refUC.'))
+        else: # neither in CLI, so derive them
+            print('automatize...')
+            # following 2 lines are temporary, while implementing automatization
+            self.refUC = np.eye(3, dtype=float)
+            self.shiftUC = np.zeros(3, dtype=float)
+
+        # todo: check origin choice if centrosymmetric
 
     def __init_vasp(
         self,

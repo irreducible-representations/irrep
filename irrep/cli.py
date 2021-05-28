@@ -136,6 +136,7 @@ do not hesitate to contact the author:
 @click.option(
     "-refUC",
     type=str,
+    default=None,
     help="The lattice vectors of the reference unit cell (as given in the crystallographic tables) "
     "expressed in terms of the unit cell vectors used in the calculation. "
     "Nine comma-separated numbers.",
@@ -143,6 +144,7 @@ do not hesitate to contact the author:
 @click.option(
     "-shiftUC",
     type=str,
+    default=None,
     help="The vector to shift the calculated unit cell origin (in units of the calculated lattice), "
     "to get the unit cell as defined in crystallographic tables. Three comma-separated numbers.",
 )
@@ -231,10 +233,10 @@ def cli(
     #     print("{}\t{}".format(k, v))
 
     # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
-    if refuc:
-        refuc = np.array(refuc.split(","), dtype=float).reshape((3, 3))
-    if shiftuc:
-        shiftuc = np.array(shiftuc.split(","), dtype=float).reshape(3)
+    #if refuc:
+    #    refuc = np.array(refuc.split(","), dtype=float).reshape((3, 3))
+    #if shiftuc:
+    #    shiftuc = np.array(shiftuc.split(","), dtype=float).reshape(3)
 
     # parse input arguments into lists if supplied
     if symmetries:
@@ -256,8 +258,8 @@ def cli(
         print(err)
         preline = ""
 
-    if (refuc is not None) and (shiftuc is None):
-        shiftuc = np.zeros(3)
+#    if (refuc is not None) and (shiftuc is None):
+#        shiftuc = np.zeros(3)
 
     bandstr = BandStructure(
         fWAV=fwav,
@@ -272,8 +274,13 @@ def cli(
         code=code,
         EF=ef,
         onlysym=onlysym,
+        refUC = refuc,
+        shiftUC = shiftuc
     )
-    bandstr.spacegroup.show(refUC=refuc, shiftUC=shiftuc, symmetries=symmetries)
+    bandstr.spacegroup.show(refUC=bandstr.refUC, 
+                            shiftUC=bandstr.shiftUC,
+                            symmetries=symmetries
+                            )
 
     if onlysym:
         exit()

@@ -218,7 +218,7 @@ class SymmetryOperation():
             self.rotation.dot(shiftUC)).dot(
             np.linalg.inv(refUC))
 
-    def show(self, refUC=None, shiftUC=np.zeros(3)):
+    def show(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
         Print description of symmetry operation.
         
@@ -239,10 +239,12 @@ class SymmetryOperation():
                                           "|", " " *
                                           11 +
                                           "|"], self.rotation, [" |", " |", " |"])]
-        if (refUC is not None) or ((shiftUC is not None)
-                                   and np.linalg.norm(shiftUC) > 1e-5):
-            if refUC is None:
-                refUC = np.eye(3)
+   #     if (refUC is not None) or ((shiftUC is not None)
+   #                                and np.linalg.norm(shiftUC) > 1e-5):
+   #         if refUC is None:
+   #              refUC = np.eye(3)
+        if (not np.allclose(refUC, np.eye(3)) or 
+            not np.allclose(shiftUC, np.zeros(3))):  
             fstr = ("{0:3d}")
             R = self.rotation_refUC(refUC)
             rotstr1 = [" " *
@@ -272,7 +274,8 @@ class SymmetryOperation():
                     x %
                     1) for x in self.translation.round(6)) +
             " ] ")
-        if refUC is not None:
+        if (not np.allclose(refUC, np.eye(3)) or 
+            not np.allclose(shiftUC, np.zeros(3))):  
             print("     in the reference unit cell :")
             print(
                 "     translation : [ " +
@@ -493,8 +496,6 @@ class SpaceGroup():
         """
         if cell is None:
             cell = self.__cell_vasp(inPOSCAR=inPOSCAR)
-#    cell1=tuple( [cell.lattice,cell.positions,cell.numbers] )
-#    print (cell)
         print('')
         print('\n ----------INFORMATION ABOUT THE UNIT CELL----------- \n')
         print('')
@@ -505,32 +506,40 @@ class SpaceGroup():
             cell[1],
             '\n Atom type indices: \n',
             cell[2])
-        symmetries = spglib.get_symmetry(cell)
-#    print ("symmetriesreturned by spglib : ",symmetries)
+        dataset = spglib.get_symmetry_dataset(cell)
         symmetries = [
             SymmetryOperation(
                 rot,
-                symmetries['translations'][i],
+                dataset['translations'][i],
                 cell[0],
                 ind=i + 1,
                 spinor=self.spinor) for i,
             rot in enumerate(
-                symmetries['rotations'])]
+                dataset['rotations'])]
         nsym = len(symmetries)
-        s = spglib.get_spacegroup(cell).split(" ")
 
-        return symmetries, s[0], int(s[1].strip("()")), cell[0]
+        return (symmetries, 
+                dataset['international'],
+                dataset['number'], 
+                cell[0], 
+                dataset['transformation_matrix'],
+                dataset['origin_shift']
+                )
 
     def __init__(self, inPOSCAR=None, cell=None, spinor=True):
         self.spinor = spinor
-        self.symmetries, self.name, self.number, self.Lattice = self._findsym(
-            inPOSCAR, cell)
+        (self.symmetries, 
+         self.name, 
+         self.number, 
+         self.Lattice, 
+         refUC_tmp, 
+         shiftUC_tmp) = self._findsym(inPOSCAR, cell)
         self.RecLattice = np.array([np.cross(self.Lattice[(i + 1) %
                                                           3], self.Lattice[(i + 2) %
                                                                            3]) for i in range(3)]) * 2 * np.pi / np.linalg.det(self.Lattice)
         print("\n Reciprocal lattice:\n", self.RecLattice)
 
-    def show(self, refUC=None, shiftUC=np.zeros(3), symmetries=None):
+    def show(self, refUC=np.eye(3), shiftUC=np.zeros(3), symmetries=None):
         """
         Print description of space-group and symmetry operations.
         
@@ -550,10 +559,11 @@ class SpaceGroup():
         print('')
         print("\n ---------- INFORMATION ABOUT THE SPACE GROUP ---------- \n")
         print('')
-        print(
-            "Space group # {0} has {1} symmetry operations  ".format(
-                self.number, len(
-                    self.symmetries)))
+        print("Space group {0} (# {1}) has {2} symmetry operations  ".format(
+            self.name,
+            self.number, 
+            len(self.symmetries))
+            )
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
                 symop.show(refUC=refUC, shiftUC=shiftUC)
