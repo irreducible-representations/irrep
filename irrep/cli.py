@@ -340,8 +340,6 @@ def cli(
 
     bandstr.write_trace(
         degen_thresh=degenthresh,
-        refUC=refuc,
-        shiftUC=shiftuc,
         symmetries=symmetries,
     )
     for k, sub in subbands.items():

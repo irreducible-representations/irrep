@@ -988,8 +988,6 @@ class BandStructure:
     def write_trace(
         self,
         degen_thresh=1e-8,
-        refUC=None,
-        shiftUC=np.zeros(3),
         kpnames=None,
         symmetries=None,
     ):
@@ -1022,7 +1020,11 @@ class BandStructure:
             ).format(self.getNbands(), 1 if self.spinor else 0)
         )
 
-        f.write(self.spacegroup.write_trace(refUC=refUC, shiftUC=shiftUC))
+        f.write(
+                self.spacegroup.write_trace(refUC=self.refUC, 
+                                            shiftUC=self.shiftUC
+                                            )
+                )
         # Number of maximal k-vectors in the space group. In the next files
         # introduce the components of the maximal k-vectors))
         f.write("  {0}  \n".format(len(self.kpoints)))
@@ -1030,7 +1032,7 @@ class BandStructure:
             f.write(
                 "   ".join(
                     "{0:10.6f}".format(x)
-                    for x in (refUC.dot(KP.K) if refUC is not None else KP.K)
+                    for x in self.refUC.dot(KP.K)
                 )
                 + "\n"
             )
