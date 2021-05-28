@@ -289,7 +289,7 @@ class SymmetryOperation():
         print("axis: {0} ; angle = {1}, inversion : {2} ".format(
             self.axis.round(6), self.angle_str, self.inversion))
 
-    def str(self, refUC=None, shiftUC=np.zeros(3)):
+    def str(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
         Construct description of symmetry operation.
 
@@ -307,9 +307,6 @@ class SymmetryOperation():
         str
             Description to print.
         """
-        if refUC is None:
-            refUC = np.eye(3, dtype=int)
-#       refUC - row-vectors, expressing the reference unit cell vectors in terms of the lattice used in calculation
 #        print ( "symmetry # ",self.ind )
         R = self.rotation_refUC(refUC)
         t = self.translation_refUC(refUC, shiftUC)

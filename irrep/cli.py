@@ -285,13 +285,17 @@ def cli(
     if onlysym:
         exit()
 
-    if refuc is None:
-        refuc = np.eye(3)
-    if shiftuc is None:
-        shiftuc = np.zeros(3)
+    #if refuc is None:
+    #    refuc = np.eye(3)
+    #if shiftuc is None:
+    #    shiftuc = np.zeros(3)
 
     with open("irreptable-template", "w") as f:
-        f.write(bandstr.spacegroup.str(refUC=refuc, shiftUC=shiftuc))
+        f.write(
+                bandstr.spacegroup.str(refUC=bandstr.refUC, 
+                                       shiftUC=bandstr.shiftUC
+                                       )
+                )
 
     subbands = {(): bandstr}
 
