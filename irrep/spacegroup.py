@@ -536,7 +536,7 @@ class SpaceGroup():
                                                                            3]) for i in range(3)]) * 2 * np.pi / np.linalg.det(self.Lattice)
         print("\n Reciprocal lattice:\n", self.RecLattice)
         self.determine_basis_transf(refUC1=refUC, shiftUC1=shiftUC, 
-                                    refUC2=refUC_tmp, shiftUC2=refUC_tmp)
+                                    refUC2=refUC_tmp, shiftUC2=shiftUC_tmp)
 
     def show(self, symmetries=None):
         """
@@ -900,8 +900,14 @@ class SpaceGroup():
             #self.shiftUC = np.zeros(3, dtype=float)
 
             # adapt spglib's convenction for basis trans. to IrRep's one
-            self.refUC = refUC2.T
-            self.shiftUC = -shiftUC2
+            self.refUC = np.linalg.inv(refUC2).T
+            self.shiftUC = shiftUC2
+            print(
+                  "refUC and shiftUC calculated by the code. \n"
+                  +"refUC=\n{}"
+                  .format(self.refUC)
+                  +"\nshiftUC=\n {}"
+                  .format(self.shiftUC)
+                  )
 
         # todo: check origin choice if centrosymmetric
-        exit()
