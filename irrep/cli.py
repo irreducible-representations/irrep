@@ -277,10 +277,7 @@ def cli(
         refUC = refuc,
         shiftUC = shiftuc
     )
-    bandstr.spacegroup.show(refUC=bandstr.refUC, 
-                            shiftUC=bandstr.shiftUC,
-                            symmetries=symmetries
-                            )
+    bandstr.spacegroup.show(symmetries=symmetries)
 
     if onlysym:
         exit()
@@ -292,9 +289,7 @@ def cli(
 
     with open("irreptable-template", "w") as f:
         f.write(
-                bandstr.spacegroup.str(refUC=bandstr.refUC, 
-                                       shiftUC=bandstr.shiftUC
-                                       )
+                bandstr.spacegroup.str()
                 )
 
     subbands = {(): bandstr}
@@ -314,7 +309,7 @@ def cli(
         for k in subbands:
             print("symmetry eigenvalue : {0} \n Traces are : ".format(k))
             subbands[k].write_characters(
-                degen_thresh=0.001, refUC=refuc, symmetries=symmetries
+                degen_thresh=0.001, symmetries=symmetries
             )
             print("symmetry eigenvalue : {0} \n Zak phases are : ".format(k))
             zak = subbands[k].zakphase()
@@ -353,8 +348,6 @@ def cli(
         plotfile=None # being implemented, not finished yet...
         sub.write_characters(
             degen_thresh=degenthresh,
-            refUC=refuc,
-            shiftUC=shiftuc,
             symmetries=symmetries,
             kpnames=kpnames,
             preline=preline,

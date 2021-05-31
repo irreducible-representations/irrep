@@ -124,45 +124,23 @@ class BandStructure:
 
         if code == "vasp":
             self.__init_vasp(
-                fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym
+                fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC
             )
         elif code == "abinit":
             self.__init_abinit(
-                fWFK, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym
+                fWFK, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC
             )
         elif code == "espresso":
             self.__init_espresso(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, spin_channel=spin_channel
+                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, spin_channel=spin_channel, refUC=refUC, shiftUC=shiftUC
             )
         elif code == "wannier90":
             self.__init_wannier(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym
+                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC
             )
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
 
-        # set tranformation to convenctional cell
-        if refUC and shiftUC: # both specified in CLI
-            self.refUC = np.array(refUC.split(","), dtype=float).reshape((3, 3))
-            self.shiftUC = np.array(shiftUC.split(","), dtype=float).reshape(3)
-            print('refUC and shiftUC read from CLI')
-        elif refUC and not shiftUC: # shiftUC not in CLI
-            self.refUC = np.array(refUC.split(","), dtype=float).reshape((3, 3))
-            self.shiftUC = np.zeros(3, dtype=float)
-            print(('refUC was specified in CLI, but shiftUC was not. Taking '
-                   'shiftUC=(0,0,0).'))
-        elif not refUC and shiftUC: # refUC not in CLI
-            self.refUC = np.eye(3, dtype=float)
-            self.shiftUC = np.array(shiftUC.split(","), dtype=float).reshape(3)
-            print(('shitfUC was specified in CLI, but refUC was not. Taking '
-                   '3x3 identity matrix as refUC.'))
-        else: # neither in CLI, so derive them
-            print('automatize...')
-            # following 2 lines are temporary, while implementing automatization
-            self.refUC = np.eye(3, dtype=float)
-            self.shiftUC = np.zeros(3, dtype=float)
-
-        # todo: check origin choice if centrosymmetric
 
     def __init_vasp(
         self,
@@ -175,6 +153,8 @@ class BandStructure:
         spinor=None,
         EF=None,
         onlysym=False,
+        refUC=None,
+        shiftUC=None,
     ):
         """
         Initialization for vasp. Read data and save it in attributes.
@@ -204,7 +184,7 @@ class BandStructure:
             raise RuntimeError(
                 "spinor should be specified in the command line for VASP bandstructure"
             )
-        self.spacegroup = SpaceGroup(inPOSCAR=fPOS, spinor=spinor)
+        self.spacegroup = SpaceGroup(inPOSCAR=fPOS, spinor=spinor, refUC=refUC, shiftUC=shiftUC)
         self.spinor = spinor
         if onlysym:
             return
@@ -291,6 +271,8 @@ class BandStructure:
         kplist=None,
         EF=None,
         onlysym=False,
+        refUC=None,
+        shiftUC=None,
     ):
         """
         Initialization for abinit. Read data and store it in attributes.
@@ -317,7 +299,7 @@ class BandStructure:
         usepaw = header.usepaw
         self.spinor = header.spinor
         self.spacegroup = SpaceGroup(
-            cell=(header.rprimd, header.xred, header.typat), spinor=self.spinor
+            cell=(header.rprimd, header.xred, header.typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC
         )
         if onlysym:
             return
@@ -399,6 +381,8 @@ class BandStructure:
         kplist=None,
         EF=None,
         onlysym=False,
+        refUC=None,
+        shiftUC=None,
     ):
         """
         Initialization for wannier90. Read data and store it in attibutes.
@@ -641,7 +625,7 @@ class BandStructure:
         )
 
         self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, xred, typat), spinor=self.spinor
+            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC
         )
         if onlysym:
             return
@@ -701,7 +685,9 @@ class BandStructure:
         kplist=None,
         EF=None,
         onlysym=False,
-        spin_channel=None
+        spin_channel=None,
+        refUC=None,
+        shiftUC=None,
     ):
         """
         Initialization for Quantum Espresso. Read data and store in attributes.
@@ -759,7 +745,7 @@ class BandStructure:
         xred = (np.array(xcart, dtype=float) * BOHR).dot(np.linalg.inv(self.Lattice))
         #        print ("xred=",xred)
         self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, xred, typat), spinor=self.spinor
+            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC
         )
         if onlysym:
             return
@@ -868,8 +854,6 @@ class BandStructure:
     def write_characters(
         self,
         degen_thresh=1e-8,
-        refUC=None,
-        shiftUC=np.zeros(3),
         kpnames=None,
         symmetries=None,
         preline="",
@@ -913,11 +897,9 @@ class BandStructure:
         GAP = np.Inf
         Low = -np.Inf
         Up = np.inf
-        if kpnames is not None and refUC is not None:
+        if kpnames is not None:
             for kpname, KP in zip(kpnames, self.kpoints):
-                irreps = self.spacegroup.get_irreps_from_table(
-                    refUC, shiftUC, kpname, KP.K
-                )
+                irreps = self.spacegroup.get_irreps_from_table(kpname, KP.K)
                 ninv, low, up = KP.write_characters(
                     degen_thresh,
                     irreptable=irreps,
@@ -1021,9 +1003,7 @@ class BandStructure:
         )
 
         f.write(
-                self.spacegroup.write_trace(refUC=self.refUC, 
-                                            shiftUC=self.shiftUC
-                                            )
+                self.spacegroup.write_trace()
                 )
         # Number of maximal k-vectors in the space group. In the next files
         # introduce the components of the maximal k-vectors))
@@ -1032,7 +1012,7 @@ class BandStructure:
             f.write(
                 "   ".join(
                     "{0:10.6f}".format(x)
-                    for x in self.refUC.dot(KP.K)
+                    for x in self.spacegroup.refUC.dot(KP.K)
                 )
                 + "\n"
             )
@@ -1248,8 +1228,6 @@ class BandStructure:
     def write_trace_all(
         self,
         degen_thresh=1e-8,
-        refUC=None,
-        shiftUC=np.zeros(3),
         symmetries=None,
         fname="trace_all.dat",
     ):
@@ -1285,9 +1263,7 @@ class BandStructure:
         f.write(
             "\n".join(
                 ("#" + l)
-                for l in self.spacegroup.write_trace(
-                    refUC=refUC, shiftUC=shiftUC
-                ).split("\n")
+                for l in self.spacegroup.write_trace().split("\n")
             )
             + "\n\n"
         )

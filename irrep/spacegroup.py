@@ -523,7 +523,7 @@ class SpaceGroup():
                 dataset['origin_shift']
                 )
 
-    def __init__(self, inPOSCAR=None, cell=None, spinor=True):
+    def __init__(self, inPOSCAR=None, cell=None, spinor=True, refUC=None, shiftUC=None):
         self.spinor = spinor
         (self.symmetries, 
          self.name, 
@@ -535,8 +535,10 @@ class SpaceGroup():
                                                           3], self.Lattice[(i + 2) %
                                                                            3]) for i in range(3)]) * 2 * np.pi / np.linalg.det(self.Lattice)
         print("\n Reciprocal lattice:\n", self.RecLattice)
+        self.determine_basis_transf(refUC1=refUC, shiftUC1=shiftUC, 
+                                    refUC2=refUC_tmp, shiftUC2=refUC_tmp)
 
-    def show(self, refUC=np.eye(3), shiftUC=np.zeros(3), symmetries=None):
+    def show(self, symmetries=None):
         """
         Print description of space-group and symmetry operations.
         
@@ -563,7 +565,7 @@ class SpaceGroup():
             )
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
-                symop.show(refUC=refUC, shiftUC=shiftUC)
+                symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
 
 
 #  def show2(self,refUC=None,shiftUC=np.zeros(3)):
@@ -575,7 +577,7 @@ class SpaceGroup():
 #       symop.show2(refUC=refUC,shiftUC=shiftUC)
 
 
-    def write_trace(self, refUC=None, shiftUC=np.zeros(3)):
+    def write_trace(self):
         """
         Construct description of matrices of symmetry operations of the 
         space-group in the format: 
@@ -602,10 +604,10 @@ class SpaceGroup():
                # In the following lines, one symmetry operation for each operation of the point group n"""
                ).format(len(self.symmetries))
         for symop in self.symmetries:
-            res += symop.str2(refUC=refUC, shiftUC=shiftUC)
+            res += symop.str2(refUC=self.refUC, shiftUC=self.shiftUC)
         return(res)
 
-    def str(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
+    def str(self):
         """
         Print description of space-group and its symmetry operations.
         
@@ -633,8 +635,8 @@ class SpaceGroup():
             "symmetries=\n" +
             "\n".join(
                 s.str(
-                    refUC,
-                    shiftUC) for s in self.symmetries) +
+                    self.refUC,
+                    self.shiftUC) for s in self.symmetries) +
             "\n\n")
 
     def __match_spinor_rotations(self, S1, S2):
@@ -732,7 +734,7 @@ class SpaceGroup():
         '''used somewhere?'''
         nmax = 3
 
-    def get_irreps_from_table(self, refUC, shiftUC, kpname, K):
+    def get_irreps_from_table(self, kpname, K):
         """
         Read irreps of the little-group of a maximal k-point. 
         
@@ -781,10 +783,10 @@ class SpaceGroup():
         errtxt = ""
         for j, sym in enumerate(self.symmetries):
             R, t = sym.rotation_refUC(
-                refUC), sym.translation_refUC(refUC, shiftUC)
+                self.refUC), sym.translation_refUC(self.refUC, self.shiftUC)
             found = False
             for i, sym2 in enumerate(table.symmetries):
-                t1 = np.dot(sym2.t - t, refUC) % 1
+                t1 = np.dot(sym2.t - t, self.refUC) % 1
                 # t1=(sym2.t-t)%1
                 t1[1 - t1 < 1e-5] = 0
                 if np.allclose(R, sym2.R):
@@ -836,7 +838,7 @@ class SpaceGroup():
         tab = {}
         for irr in table.irreps:
             if irr.kpname == kpname:
-                k1 = np.round(np.linalg.inv(refUC).dot(irr.k), 5) % 1
+                k1 = np.round(np.linalg.inv(self.refUC).dot(irr.k), 5) % 1
                 k2 = np.round(K, 5) % 1
                 if not all(np.isclose(k1, k2)):
                     raise RuntimeError(
@@ -862,7 +864,7 @@ class SpaceGroup():
                 "the k-point with name {0} is not found in the spacegroup {1}. found only :\n{2}".format(
                     kpname, table.number, "\n ".join(
                         "{0}({1}/{2})".format(
-                            irr.kpname, irr.k, np.linalg.inv(refUC).dot(
+                            irr.kpname, irr.k, np.linalg.inv(self.refUC).dot(
                                 irr.k) %
                             1) for irr in table.irreps)))
 #            raise RuntimeError("the k-point with name {0} is not found in the spacegroup {1}. found only {2}".format(kpname,table.number,set([irr.kpname for irr in table.irreps]) ) )
@@ -871,3 +873,35 @@ class SpaceGroup():
 #            irr.characters[i]
 # return( { irr.name: np.array([irr.characters[i]*signs[j] for j,i in
 # enumerate(ind)]) for irr in table.irreps if irr.kpname==kpname})
+
+    def determine_basis_transf(self, refUC1, shiftUC1, refUC2, shiftUC2):
+        """ 
+        Determine basis transformation according to input in CLI and spglib 
+        """
+        # set tranformation to convenctional cell
+        if refUC1 and shiftUC1: # both specified in CLI
+            self.refUC = np.array(refUC1.split(","), dtype=float).reshape((3, 3))
+            self.shiftUC = np.array(shiftUC1.split(","), dtype=float).reshape(3)
+            print('refUC and shiftUC read from CLI')
+        elif refUC1 and not shiftUC1: # shiftUC not in CLI
+            self.refUC = np.array(refUC1.split(","), dtype=float).reshape((3, 3))
+            self.shiftUC = np.zeros(3, dtype=float)
+            print(('refUC was specified in CLI, but shiftUC was not. Taking '
+                   'shiftUC=(0,0,0).'))
+        elif not refUC1 and shiftUC1: # refUC not in CLI
+            self.refUC = np.eye(3, dtype=float)
+            self.shiftUC = np.array(shiftUC1.split(","), dtype=float).reshape(3)
+            print(('shitfUC was specified in CLI, but refUC was not. Taking '
+                   '3x3 identity matrix as refUC.'))
+        else: # neither in CLI, so derive them
+            print('automatize...')
+            ## following 2 lines are temporary, while implementing automatization
+            #self.refUC = np.eye(3, dtype=float)
+            #self.shiftUC = np.zeros(3, dtype=float)
+
+            # adapt spglib's convenction for basis trans. to IrRep's one
+            self.refUC = refUC2.T
+            self.shiftUC = -shiftUC2
+
+        # todo: check origin choice if centrosymmetric
+        exit()
