@@ -535,8 +535,12 @@ class SpaceGroup():
                                                           3], self.Lattice[(i + 2) %
                                                                            3]) for i in range(3)]) * 2 * np.pi / np.linalg.det(self.Lattice)
         print("\n Reciprocal lattice:\n", self.RecLattice)
-        self.determine_basis_transf(refUC1=refUC, shiftUC1=shiftUC, 
-                                    refUC2=refUC_tmp, shiftUC2=shiftUC_tmp)
+        self.refUC, self.shiftUC = self.determine_basis_transf(
+                                       refUC1=refUC, 
+                                       shiftUC1=shiftUC, 
+                                       refUC2=refUC_tmp, 
+                                       shiftUC2=shiftUC_tmp
+                                       )
 
     def show(self, symmetries=None):
         """
@@ -879,35 +883,38 @@ class SpaceGroup():
         Determine basis transformation according to input in CLI and spglib 
         """
         # set tranformation to convenctional cell
+        flag = False
         if refUC1 and shiftUC1: # both specified in CLI
-            self.refUC = np.array(refUC1.split(","), dtype=float).reshape((3, 3))
-            self.shiftUC = np.array(shiftUC1.split(","), dtype=float).reshape(3)
+            refUC = np.array(refUC1.split(","), dtype=float).reshape((3, 3))
+            shiftUC = np.array(shiftUC1.split(","), dtype=float).reshape(3)
             print('refUC and shiftUC read from CLI')
         elif refUC1 and not shiftUC1: # shiftUC not in CLI
-            self.refUC = np.array(refUC1.split(","), dtype=float).reshape((3, 3))
-            self.shiftUC = np.zeros(3, dtype=float)
+            refUC = np.array(refUC1.split(","), dtype=float).reshape((3, 3))
+            shiftUC = np.zeros(3, dtype=float)
             print(('refUC was specified in CLI, but shiftUC was not. Taking '
                    'shiftUC=(0,0,0).'))
         elif not refUC1 and shiftUC1: # refUC not in CLI
-            self.refUC = np.eye(3, dtype=float)
-            self.shiftUC = np.array(shiftUC1.split(","), dtype=float).reshape(3)
+            refUC = np.eye(3, dtype=float)
+            shiftUC = np.array(shiftUC1.split(","), dtype=float).reshape(3)
             print(('shitfUC was specified in CLI, but refUC was not. Taking '
                    '3x3 identity matrix as refUC.'))
-        else: # neither in CLI, so derive them
-            print('automatize...')
-            ## following 2 lines are temporary, while implementing automatization
-            #self.refUC = np.eye(3, dtype=float)
-            #self.shiftUC = np.zeros(3, dtype=float)
-
+        else: # neither in CLI
             # adapt spglib's convenction for basis trans. to IrRep's one
-            self.refUC = np.linalg.inv(refUC2).T
-            self.shiftUC = shiftUC2
+            refUC = np.linalg.inv(refUC2).T
+            shiftUC = shiftUC2
+            # if centrosymmetric, check if origin in inversion center
+            for i in range(len(self.symmetries)):
+                if (np.allclose(self.symmetries[i].rotation, -np.eye(3))
+                        and not np.allclose(self.symmetries[i].translation_refUC(refUC, shiftUC), np.zeros(3))):
+                    print(("The origin of the unit cell is not in "
+                           "the inversion center"))
+                    shiftUC -= (0.5*self.symmetries[i].translation + shiftUC2)
+                    break
             print(
                   "refUC and shiftUC calculated by the code. \n"
                   +"refUC=\n{}"
-                  .format(self.refUC)
+                  .format(refUC)
                   +"\nshiftUC=\n {}"
-                  .format(self.shiftUC)
+                  .format(shiftUC)
                   )
-
-        # todo: check origin choice if centrosymmetric
+        return refUC, shiftUC
