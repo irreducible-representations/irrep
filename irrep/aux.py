@@ -179,4 +179,3 @@ def short(x, nd=3):
     if abs(x.real) < 10 ** (-nd):
         return fmt.format(x.imag) + "j"
     return short(x.real, nd) + short(1j * x.imag)
-
