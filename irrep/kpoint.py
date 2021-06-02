@@ -265,24 +265,25 @@ class Kpoint:
 
         Parameters
         ----------
-        supercell : np.array((3,3), dtype=int)
-            describes how the lattice vectors of the (super)cell used in the calculation
-            are expressed in the basis vectors of the primitive cell
-        kptPBZ    : np.array((3), dtype=float)
-            the coordinates of the k-point in the primitive Brillouin zone (PBZ), on which 
-            the present kpoint should be unfolded
+        supercell : array, shape=(3,3)
+            Describes how the lattice vectors of the (super)cell used in the 
+            calculation are expressed in the basis vectors of the primitive 
+            cell.
+        kptPBZ : array, shape=(3,)
+            Coordinates of the k-point in the primitive Brillouin zone (PBZ), 
+            on which the present kpoint should be unfolded.
         degen_thresh : float
-            bands with energy difference smaller that the threshold will be considered as one 
-            band, and only one total weight will be given for them
+            Bands with energy difference smaller that the threshold will be 
+            considered as one band, and only one total weight will be given for 
+            them.
 
         Returns
         -------
-        np.array((:,:),dtype=float)
-            | Array containing 2 columns (5 for spinor case): E , W , Sx , Sy , Sz
-            | E - energy of the band (or average energy of the group of bands
-            | W - weight of the band(s) projecten onto the PBZ kpoint
-            | Sx, Sy, Sz - the three spin components projected onto the PBZ kpoint
-
+        array
+            Array containing 2 columns (5 for spinor case): E, W, Sx, Sy, Sz.
+            E - energy of the band or average energy of the group of bands.
+            W - weight of the band(s) projected onto the PBZ kpoint.
+            Sx, Sy, Sz - Spin components projected onto the PBZ kpoint.
         """
         if not is_round(kptPBZ.dot(supercell.T) - self.K, prec=1e-5):
             raise RuntimeError(
@@ -316,9 +317,16 @@ class Kpoint:
         return np.array(result)
 
     def get_rho_spin(self, degen_thresh=1e-4):
-        """ a getter, made to avoid the repeated evaluation of 
-            self.__eval_rho_spin for the same degen_thresh
+        """ 
+        A getter, made to avoid the repeated evaluation of 
+        self.__eval_rho_spin for the same degen_thresh.
 
+        Parameters
+        ----------
+        degen_thresh : float
+            Bands with energy difference smaller that the threshold will be 
+            considered as one band, and only one total weight will be given for 
+            them.
         """
         if not hasattr(self, "rho_spin"):
             self.rho_spin = {}
@@ -333,26 +341,26 @@ class Kpoint:
 
     def __eval_rho_spin(self, degen_thresh):
         """
-        For every degenerate (within `degen_thresh` group of bands i,j evamualtes a matrix <i|M|j>
-        where 
-        | M = sigma_0, sigma_x,sigma_y,sigma_z - for the spinor case 
-        | M = sigma_0 - for the spinor case 
+        Evaluates the matrix <i|M|j> in every group of degenerate 
+        bands labeled by i and j, where M is :math:`\sigma_0`, 
+        :math:`\sigma_x`, :math:`\sigma_y` or :math:`\sigma_z` for 
+        the spinor case, :math:`\sigma_0` for the spinor case.
 
         Parameters
         ----------
         degen_thresh : float
-            bands with energy difference smaller that the threshold will be considered as one group 
+            Bands with energy difference smaller that the threshold will 
+            be considered as one group.
 
         Returns
         -------
         list of tuples
-            | each tuple contains  b1 ,b2, E, (M , Sx , Sy , Sz)
-            | b1 - index of first band in the group
-            | b2 - index of the last band inthe group +1
-            | E - average energy of the group 
-            | M -  <i|j>
-            | Sx, Sy, Sz - <i|sigma|j> 
-
+            Each tuple contains  b1 ,b2, E, (M , Sx , Sy , Sz), where
+            b1 - index of first band in the group
+            b2 - index of the last band inthe group +1
+            E - average energy of the group 
+            M -  <i|j>
+            Sx, Sy, Sz - <i|sigma|j> 
         """
         borders = np.hstack(
             [
