@@ -76,9 +76,9 @@ class BandStructure:
         `True` if wave functions are spinors, `False` if they are scalars. It 
         will be read from DFT files.
     efermi : float
-        Fermi-energy. If input `EF` was set in CLI, it will take its value. Else, the 
-        code will try to read it from DFT files (except if `code=vasp`) and 
-        set it to 0 if it could not.
+        Fermi-energy. If user set a number as `EF` in CLI, it will be used. If 
+        `EF` was set to `auto`, it will try to parse it and set to 0.0 if it 
+        could not.
     Ecut0 : float
         Plane-wave cutoff (in eV) used in DFT calulations. Always read from 
         DFT files. Insignificant if `code`='wannier90'.

@@ -176,7 +176,13 @@ do not hesitate to contact the author:
 @click.option("-EF", 
     type=str, 
     default='0.0',
-    help="Fermi energy to shift energy-levels. Default: read from DFT output.")
+    help=("Fermi energy to shift energy-levels. Default: 0.0. If it is"
+          " set to a number, this value will be used to shift the "
+          "energy-levels. If it is set to 'auto', the code will try "
+          "to parse it from DFT files and set it to 0.0 if it could "
+          "not do so."
+          )
+)
 @click.option("-degenThresh", 
     type=float, 
     default=1e-4, 
