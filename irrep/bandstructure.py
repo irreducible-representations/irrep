@@ -110,7 +110,7 @@ class BandStructure:
         kplist=None,
         spinor=None,
         code="vasp",
-        EF=None,
+        EF='0.0',
         onlysym=False,
         spin_channel=None
     ):
@@ -148,7 +148,7 @@ class BandStructure:
         IBend=None,
         kplist=None,
         spinor=None,
-        EF=None,
+        EF='0.0',
         onlysym=False,
     ):
         """
@@ -170,7 +170,7 @@ class BandStructure:
             List of indices of k-points to be considered.
         spinor : bool, default=None
             `True` if wave functions are spinors, `False` if they are scalars.
-        EF : float, default=None
+        EF : str, default='0.0'
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
@@ -183,8 +183,20 @@ class BandStructure:
         self.spinor = spinor
         if onlysym:
             return
-        self.efermi = 0.0 if EF is None else EF
-        print("Efermi = ", self.efermi, EF)
+
+        if EF.lower() == "auto":
+            self.efermi = 0.0
+            msg = " (Fermi-energy not found in WAVECAR)"
+        else:
+            try:
+                self.efermi = float(EF)
+                msg = ""
+            except:
+                raise RuntimeError(
+                        ("Invalid value for keyword EF. It must be "
+                         "a number or 'auto'")
+                        )
+        print("Efermi = {:.4f} eV".format(self.efermi) + msg); exit()
         WCF = WAVECARFILE(fWAV)
         # RECLENGTH=3 # the length of a record in WAVECAR. It is defined in the
         # first record, so let it be 3 fo far"

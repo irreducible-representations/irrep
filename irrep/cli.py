@@ -174,7 +174,8 @@ do not hesitate to contact the author:
     "In development...!"
 )
 @click.option("-EF", 
-    type=float, 
+    type=str, 
+    default='0.0',
     help="Fermi energy to shift energy-levels. Default: read from DFT output.")
 @click.option("-degenThresh", 
     type=float, 
