@@ -700,7 +700,7 @@ class BandStructure:
         IBstart=None,
         IBend=None,
         kplist=None,
-        EF=None,
+        EF='0.0',
         onlysym=False,
         spin_channel=None
     ):
@@ -720,7 +720,7 @@ class BandStructure:
             Last band to be considered.
         kplist : , default=None
             List of indices of k-points to be considered.
-        EF : float, default=None
+        EF : str, default='0.0'
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
@@ -816,11 +816,26 @@ class BandStructure:
             * np.pi
             / np.linalg.det(self.Lattice)
         )
-        try:
-            self.efermi = float(bandstr.find("fermi_energy").text) * Hartree_eV
-        except Exception as err:
-            print("WARNING : fermi_energy not found.Setting as zero : `{}`".format(err))
-            self.efermi = 0
+        
+        if EF.lower() == "auto":
+            try:
+                self.efermi = (
+                               float(bandstr.find("fermi_energy").text) 
+                               * Hartree_eV
+                               )
+            except:
+                print("WARNING : fermi-energy not found. Setting it as zero")
+                self.efermi = 0.0
+        else:
+            try:
+                self.efermi = float(EF)
+            except:
+                raise RuntimeError(
+                        ("Invalid value for keyword EF. It must be "
+                         "a number or 'auto'")
+                        )
+        print("Efermi: {:.4f} eV".format(self.efermi))
+
         kpall = bandstr.findall("ks_energies")
         NK = len(kpall)
         if kplist is None:
