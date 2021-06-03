@@ -196,7 +196,7 @@ class BandStructure:
                         ("Invalid value for keyword EF. It must be "
                          "a number or 'auto'")
                         )
-        print("Efermi = {:.4f} eV".format(self.efermi) + msg); exit()
+        print("Efermi = {:.4f} eV".format(self.efermi) + msg)
         WCF = WAVECARFILE(fWAV)
         # RECLENGTH=3 # the length of a record in WAVECAR. It is defined in the
         # first record, so let it be 3 fo far"
@@ -276,7 +276,7 @@ class BandStructure:
         IBstart=None,
         IBend=None,
         kplist=None,
-        EF=None,
+        EF='0.0',
         onlysym=False,
     ):
         """
@@ -294,7 +294,7 @@ class BandStructure:
             Last band to be considered.
         kplist : , default=None
             List of indices of k-points to be considered.
-        EF : float, default=None
+        EF : str, default='0.0'
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
@@ -308,7 +308,18 @@ class BandStructure:
         )
         if onlysym:
             return
-        self.efermi = header.efermi * Hartree_eV if EF is None else EF
+        if EF.lower() == "auto":
+            self.efermi = header.efermi * Hartree_eV
+        else:
+            try:
+                self.efermi = float(EF)
+            except:
+                raise RuntimeError(
+                        ("Invalid value for keyword EF. It must be "
+                         "a number or 'auto'")
+                        )
+        print("Efermi: {:.4f} eV".format(self.efermi))
+
         #        self.spacegroup.show()
 
         #        global fWFK
