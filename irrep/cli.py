@@ -202,6 +202,7 @@ do not hesitate to contact the author:
     type=str, 
     default='tognuplot',
     help="Suffix to name files containing data for band plotting. Default: tognuplot")
+@click.argument('input', type=click.File('r'), required=False)
 def cli(
     ecut,
     fwav,
@@ -227,15 +228,16 @@ def cli(
     groupkramers,
     symmetries,
     suffix,
+    input
 ):
     """
     Defines the "irrep" command-line tool interface.
     """
     # TODO: later, this can be split up into separate sub-commands (e.g. for zak, etc.)
 
-    # print("The code was called with the following command-line options:")
-    # for k, v in locals().items():
-    #     print("{}\t{}".format(k, v))
+    if input:
+        pass
+
 
     # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
     if refuc:
