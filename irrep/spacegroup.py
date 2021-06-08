@@ -782,55 +782,7 @@ class SpaceGroup():
         #        self.show()
         table = IrrepTable(self.number, self.spinor)
 #        if self.name!=table.name     : raise RuntimeError(  "names of the symmetry groups do not match : {0} and {1}".format(self.name,table.name) )
-        ind = []
-        dt = []
-        errtxt = ""
-        for j, sym in enumerate(self.symmetries):
-            R, t = sym.rotation_refUC(
-                self.refUC), sym.translation_refUC(self.refUC, self.shiftUC)
-            found = False
-            for i, sym2 in enumerate(table.symmetries):
-                t1 = np.dot(sym2.t - t, self.refUC) % 1
-                # t1=(sym2.t-t)%1
-                t1[1 - t1 < 1e-5] = 0
-                if np.allclose(R, sym2.R):
-                    if np.allclose(t1, [0, 0, 0], atol=1e-6):
-                        ind.append(i)
-                        dt.append(sym2.t - t)
-                        found = True
-                        break
-                    else:
-                        print(
-                            'table t=',
-                            sym2.t,
-                            '\nfound t=',
-                            t,
-                            "\nt(table)-t(spglib) (mod. lattice translation):",
-                            t1)
-                        raise RuntimeError(
-                            "Error matching translational part for symmetry " +
-                            "{}. A symmetry with identical rotational part \n"
-                            .format(j+1) +
-                            "R=\n{} \nhas been found in tables, but their "
-                            .format(R) +
-                            "translational parts do not match: \n" +
-                            "t(table) = {} \nt(found) = {} \n"
-                            .format(sym2.t, t) +
-                            "t(table)-t(spglib) (mod. lattice translation)= {}"
-                             .format(t1))
-            if not found:
-                raise RuntimeError(
-                    "Error matching rotational part for symmetry {0}. In the "
-                    .format(j+1) +
-                     "tables there is not any symmetry with identical " + 
-                     "rotational part. \nR(found) = \n{} \nt(found) = {}"
-                     .format(R, t))
-
-        if (len(set(ind)) != len(self.symmetries)):
-            raise RuntimeError(
-                "Error in matching symmetries detected by spglib with the \
-                 symmetries in the tables. Try to modify the refUC and shiftUC \
-                 parameters")
+        ind, dt = self.match_symmetries(self.symmetries, table.symmetries)
         if self.spinor:
             S1 = [sym.spinor_rotation for sym in self.symmetries]
             S2 = [table.symmetries[i].S for i in ind]
@@ -918,3 +870,63 @@ class SpaceGroup():
                   .format(shiftUC)
                   )
         return refUC, shiftUC
+
+    def match_symmetries(self, symmetries1, symmetries2, refUC=None, shiftUC=None):
+        """
+        Matches symmetry operations of two lists
+        """
+
+        if refUC is None:
+            refUC = self.refUC
+        if shiftUC is None:
+            shiftUC = self.shiftUC
+        ind = []
+        dt = []
+        errtxt = ""
+        for j, sym in enumerate(symmetries1):
+            R, t = sym.rotation_refUC(
+                refUC), sym.translation_refUC(refUC, shiftUC)
+            found = False
+            for i, sym2 in enumerate(symmetries2):
+                t1 = np.dot(sym2.t - t, refUC) % 1
+                # t1=(sym2.t-t)%1
+                t1[1 - t1 < 1e-5] = 0
+                if np.allclose(R, sym2.R):
+                    if np.allclose(t1, [0, 0, 0], atol=1e-6):
+                        ind.append(i)
+                        dt.append(sym2.t - t)
+                        found = True
+                        break
+                    else:
+                        print(
+                            'table t=',
+                            sym2.t,
+                            '\nfound t=',
+                            t,
+                            "\nt(table)-t(spglib) (mod. lattice translation):",
+                            t1)
+                        raise RuntimeError(
+                            "Error matching translational part for symmetry " +
+                            "{}. A symmetry with identical rotational part \n"
+                            .format(j+1) +
+                            "R=\n{} \nhas been found in tables, but their "
+                            .format(R) +
+                            "translational parts do not match: \n" +
+                            "t(table) = {} \nt(found) = {} \n"
+                            .format(sym2.t, t) +
+                            "t(table)-t(spglib) (mod. lattice translation)= {}"
+                             .format(t1))
+            if not found:
+                raise RuntimeError(
+                    "Error matching rotational part for symmetry {0}. In the "
+                    .format(j+1) +
+                     "tables there is not any symmetry with identical " + 
+                     "rotational part. \nR(found) = \n{} \nt(found) = {}"
+                     .format(R, t))
+
+        if (len(set(ind)) != len(self.symmetries)):
+            raise RuntimeError(
+                "Error in matching symmetries detected by spglib with the \
+                 symmetries in the tables. Try to modify the refUC and shiftUC \
+                 parameters")
+        return ind, dt
