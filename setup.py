@@ -19,6 +19,8 @@ setuptools.setup(
         "spglib>=1.14",
         "lazy_property",
         "Click",
+        "monty",
+        "ruamel.yaml",
         "irreptables",
     ],
     include_package_data=False,
