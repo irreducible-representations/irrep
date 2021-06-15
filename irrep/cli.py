@@ -248,8 +248,8 @@ def cli(
     if kpnames:
         kpnames = kpnames.split(",")
 
-    if onlysym:
-        spinor = False
+    #if onlysym:
+    #    spinor = False
 
     try:
         print(fwfk.split("/")[0].split("-"))
