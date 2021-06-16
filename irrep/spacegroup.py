@@ -384,6 +384,10 @@ class SpaceGroup():
     symmetries : list
         Each element is an instance of class `SymmetryOperation` corresponding 
         to a symmetry in the point group of the space-group.
+    symmetries_tables : list
+        Attribute `symmetries` of class `IrrepTable`. Each component is an 
+        instance of class `SymopTable` corresponding to a symmetry operation
+        in the "point-group" of the space-group.
     name : str 
         Symbol of the space-group in Hermann-Mauguin notation. 
     number : int 
@@ -539,6 +543,9 @@ class SpaceGroup():
                                                           3], self.Lattice[(i + 2) %
                                                                            3]) for i in range(3)]) * 2 * np.pi / np.linalg.det(self.Lattice)
         print("\n Reciprocal lattice:\n", self.RecLattice)
+
+        # Determine refUC and shiftUC according to entries in CLI
+        self.symmetries_tables = IrrepTable(self.number, self.spinor).symmetries
         self.refUC, self.shiftUC = self.determine_basis_transf(
                                             refUC1=refUC, 
                                             shiftUC1=shiftUC,
@@ -547,12 +554,7 @@ class SpaceGroup():
                                             )
 
         # Check matching of symmetries in refUC
-        table = IrrepTable(self.number, self.spinor)
         ind, dt, signs = self.match_symmetries(
-                                  self.symmetries, 
-                                  table.symmetries,
-                                  refUC=self.refUC, 
-                                  shiftUC=self.shiftUC,
                                   signs=self.spinor,  # True is SOC 
                                   show=False
                                   )
@@ -886,7 +888,6 @@ class SpaceGroup():
                     print(("The structure is centrosymmetric. "
                            "Placing the origin in an inversion "
                            "center"))
-                    table = IrrepTable(self.number, self.spinor)
                     for ic,center in enumerate(self.inversion_centers()):
                         shiftUC = - 0.5 * (self.symmetries[i].translation
                                            + center.dot(refUC)
@@ -896,8 +897,6 @@ class SpaceGroup():
                             #print('center = ', center) #test
                             #print('shiftUC= ', shiftUC) #test
                             ind, dt, signs = self.match_symmetries(
-                                        self.symmetries,
-                                        table.symmetries,
                                         refUC,
                                         shiftUC,
                                         )
@@ -915,9 +914,12 @@ class SpaceGroup():
                                         "symmetries found in tables."))
         return refUC, shiftUC
 
-    def match_symmetries(self, symmetries1, symmetries2, refUC=None, shiftUC=None, signs=False, show=False):
+    def match_symmetries(self, refUC=None, shiftUC=None, signs=False, show=False):
         """
         Matches symmetry operations of two lists. Remove arg show (testing).
+        Note: args symmetries1 and symmetries2 always take values of attributes
+        self.symmetry and self.symmetries_tables, so they can be removed, but this way
+        keeps the function more generic.
         """
 
         if refUC is None:
@@ -927,11 +929,11 @@ class SpaceGroup():
         ind = []
         dt = []
         errtxt = ""
-        for j, sym in enumerate(symmetries1):
+        for j, sym in enumerate(self.symmetries):
             R, t = sym.rotation_refUC(
                 refUC), sym.translation_refUC(refUC, shiftUC)
             found = False
-            for i, sym2 in enumerate(symmetries2):
+            for i, sym2 in enumerate(self.symmetries_tables):
                 t1 = np.dot(sym2.t - t, refUC) % 1
                 # t1=(sym2.t-t)%1
                 t1[1 - t1 < 1e-5] = 0
@@ -977,7 +979,7 @@ class SpaceGroup():
                  parameters")
         if signs:
             S1 = [sym.spinor_rotation for sym in self.symmetries]
-            S2 = [symmetries2[i].S for i in ind]
+            S2 = [self.symmetries_tables[i].S for i in ind]
             signs_array = self.__match_spinor_rotations(S1, S2)
 #            print ("signs = ",signs)  # test
         else:

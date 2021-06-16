@@ -255,7 +255,7 @@ class BandStructure:
                 Ecut,
                 Ecut0,
                 self.RecLattice,
-                SG=self.spacegroup,
+                symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 WCF=WCF,
             )
@@ -360,7 +360,7 @@ class BandStructure:
                 Ecut,
                 Ecut0,
                 self.RecLattice,
-                SG=self.spacegroup,
+                symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 code="abinit",
                 kpt=header.kpt[ik],
@@ -667,7 +667,7 @@ class BandStructure:
                 Ecut,
                 None,
                 self.RecLattice,
-                SG=self.spacegroup,
+                symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 code="wannier",
                 eigenval=eigenval[ik - 1],
@@ -827,7 +827,7 @@ class BandStructure:
                 Ecut,
                 Ecut0,
                 self.RecLattice,
-                SG=self.spacegroup,
+                symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 code="espresso",
                 kptxml=kpall[ik],
@@ -908,6 +908,9 @@ class BandStructure:
                     efermi=self.efermi,
                     plotFile=pFile,
                     kpl=kpline,
+                    symmetries_tables=self.spacegroup.symmetries_tables,
+                    refUC=self.spacegroup.refUC,
+                    shiftUC=self.spacegroup.shiftUC
                 )
                 NBANDINV += ninv
                 GAP = min(GAP, up - low)
@@ -982,12 +985,6 @@ class BandStructure:
         degen_thresh : float, default=1e-8
             Threshold energy used to decide whether wave-functions are
             degenerate in energy.
-        refUC : array, default=None
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array, default=np.zeros(3)
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
         kpnames : list, default=None
             Labels of maximal k-points at which irreps of bands must be computed. 
             If it is not specified, only traces will be printed, not irreps.
