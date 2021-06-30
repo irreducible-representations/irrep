@@ -1027,7 +1027,7 @@ class Kpoint:
             ]
         #            irreps=[ "None" ]*(len(borders)-1)
 
-        # Transfer traces calculated in primitive cell to refUC
+        # Transfer traces in calculational cell to refUC
         char_refUC = char.copy()
         if (not np.allclose(refUC, np.eye(3, dtype=float)) or
             not np.allclose(shiftUC, np.zeros(3, dtype=float))):
@@ -1036,40 +1036,59 @@ class Kpoint:
                 dt = (symmetries_tables[ind-1].t 
                       - sym[ind].translation_refUC(refUC, shiftUC))
                 k = np.round(refUC.dot(self.K), 5)
-                char_refUC [:,i] *= (sym[ind].sign 
+                char_refUC[:,i] *= (sym[ind].sign 
                                      * np.exp(-2j*np.pi*dt.dot(k)))
+        if np.allclose(char, char_refUC, rtol=0.0, atol=1e-4):
+            write_refUC = False  # Tr identical in both unit cells
+        else:
+            write_refUC = True   # Write traces in refUC
+            print(("For each irrep, traces of symmetries in the calculation "
+                   "unit cell will be printed first and traces of symmetries "
+                   "in tables will be printed in the line below")
+                 )
 
-        # Print traces
-        irreplen = max(len(irr) for irr in irreps) # len of largest line
+        irreplen = max(len(irr) for irr in irreps)  # len of largest line
         if irreplen % 2 == 1:
             irreplen += 1
         s2 = " " * int(irreplen / 2 - 3)
+
+        # Header of the block
         print(
             "\n\nk-point {0:3d} :{1} \n number of irreps = {2}".format(
                 self.ik0, self.K, Nirrep
             )
         )
-        if not np.allclose(char, char_refUC):
-            print((" The following traces correspond to symmetries in "
-                   "the convenctional cell"))
         print("   Energy  | multiplicity |{0} irreps {0}| sym. operations  ".format(s2))
+
+        # Symmetry operations
         print(
             "           |              |{0}        {0}| ".format(s2),
             " ".join(s1 + "{0:4d}    ".format(i) + s1 for i in sorted(sym)),
         )
-        print(
-            "\n".join(
-                (" {0:8.4f}  |    {1:5d}     | {2:" + str(irreplen) + "s} |").format(
-                    e - efermi, d, ir
-                )
-                + " ".join(
-                    "{0:8.4f}".format(c.real)
-                    + ("{0:+7.4f}j".format(c.imag) if writeimaginary else "")
-                    for c in ch
-                )
-                for e, d, ir, ch in zip(E, dim, irreps, char_refUC)
-            )
-        )
+
+        # Energy-levels, irrep's label and traces
+        for e, d, ir, ch, ch2 in zip(E, dim, irreps, char, char_refUC):
+            # Print characters in calculational unit cell
+            left_str = (" {0:8.4f}  |    {1:5d}     | {2:{3}s} |"
+                        .format(e - efermi, d, ir, irreplen)
+                       )
+            right_str = " ".join(
+                        "{0:8.4f}".format(c.real)
+                        + ("{0:+7.4f}j".format(c.imag) if writeimaginary else "")
+                        for c in ch
+                    )
+            print(left_str + " " + right_str)
+            # Print characters in reference unit cell
+            if write_refUC:
+                left_str = ("           |              | {0:{1}s} |"
+                            .format(len(ir)*" ", irreplen)
+                           )
+                right_str = " ".join(
+                            "{0:8.4f}".format(c.real)
+                            + ("{0:+7.4f}j".format(c.imag) if writeimaginary else "")
+                            for c in ch2
+                        )
+                print(left_str + " " + right_str)
 
         if plotFile is not None:
             plotFile.write(
@@ -1083,7 +1102,7 @@ class Kpoint:
                             + ("{0:+7.4f}j".format(c.imag) if writeimaginary else "")
                             for c in ch
                         )
-                        for e, d, ch in zip(E, dim, char_refUC)
+                        for e, d, ch in zip(E, dim, char)
                     )
                 )
                 + "\n\n"

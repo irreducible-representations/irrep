@@ -235,7 +235,9 @@ class SymmetryOperation():
             Translation taking the origin of the unit cell used in the DFT 
             calculation to that of the standard setting.
         """
+        # Print header
         print(" # ", self.ind)
+        # Print rotation part
         rotstr = [s +
                   " ".join("{0:3d}".format(x) for x in row) +
                   t for s, row, t in zip(["rotation : |", " " *
@@ -263,35 +265,52 @@ class SymmetryOperation():
             rotstr = [r + r1 for r, r1 in zip(rotstr, rotstr1)]
         print("\n".join(rotstr))
 
+        # Print spinor transformation matrix
         if self.spinor:
-            print("\n".join(s +
-                            " ".join("{0:6.3f}{1:+6.3f}j".format(x.real, x.imag) for x in row) +
-                            t for s, row, t in zip(["spinor   : |", " " *
-                                                    11 +
-                                                    "|", " " *
-                                                    11 +
-                                                    "|"], self.spinor_rotation*self.sign, [" |", " |", " |"])))
-        print(
-            " translation : [ " +
-            " ".join(
-                "{0:10.6f}".format(
-                    x %
-                    1) for x in self.translation.round(6)) +
-            " ] ")
+            spinstr = [s +
+                       " ".join("{0:6.3f}{1:+6.3f}j".format(x.real, x.imag) for x in row) +
+                       t 
+                       for s, row, t in zip(["spinor   : |", 
+                                             " " * 11 + "|", 
+                                             " " * 11 +"|"
+                                             ], 
+                                             self.spinor_rotation, 
+                                             [" |", " |", " |"]
+                                           )
+                      ]
+            spinstr1 = [s +
+                       " ".join("{0:6.3f}{1:+6.3f}j".format(x.real, x.imag) for x in row) +
+                       t 
+                       for s, row, t in zip(["spinor (refUC)   : |", 
+                                             " " * 19 + "|"
+                                             ], 
+                                             self.spinor_rotation*self.sign, 
+                                             [" |", " |"]
+                                           )
+                       ]
+
+            print("\n".join([row + "    " + row1 for row,row1 in zip(spinstr, spinstr1)]))
+
+        # Print translation part
+        trastr = ("translation : [ " 
+                  + " ".join("{0:8.4f}"
+                             .format(x%1) for x in self.translation.round(6)
+                             ) 
+                  + " ] "
+                  )
         if (not np.allclose(refUC, np.eye(3)) or 
             not np.allclose(shiftUC, np.zeros(3))):  
-            print("     in the reference unit cell :")
-            print(
-                "     translation : [ " +
-                " ".join(
-                    "{0:10.6f}".format(
-                        x %
-                        1) for x in self.translation_refUC(
-                        refUC,
-                        shiftUC).round(6)) +
-                " ] ")
+            trastr += ("    translation (refUC) : [ " 
+                       + " ".join(
+                          "{0:8.4f}".format(x % 1) 
+                          for x in self.translation_refUC(refUC,shiftUC).round(6)) 
+                       + " ] "
+                       )
+        print(trastr)
+
         print("axis: {0} ; angle = {1}, inversion : {2} ".format(
             self.axis.round(6), self.angle_str, self.inversion))
+        print('sign=',self.sign)  # test
 
     def str(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
@@ -835,7 +854,6 @@ class SpaceGroup():
                             sym1.sign * np.exp(2j * np.pi * dt.dot(irr.k))
                     except KeyError as err:
                         pass
-#        print (tab)
         if len(tab) == 0:
             raise RuntimeError(
                 "the k-point with name {0} is not found in the spacegroup {1}. found only :\n{2}".format(
@@ -889,13 +907,11 @@ class SpaceGroup():
                            "Placing the origin in an inversion "
                            "center"))
                     for ic,center in enumerate(self.inversion_centers()):
+                        print("\nCenter ({}): {}".format(ic,center)) #test
                         shiftUC = - 0.5 * (self.symmetries[i].translation
                                            + center.dot(refUC)
                                            )
                         try:
-                            #print('\nTying, ', ic) #test
-                            #print('center = ', center) #test
-                            #print('shiftUC= ', shiftUC) #test
                             ind, dt, signs = self.match_symmetries(
                                         refUC,
                                         shiftUC,
@@ -904,8 +920,14 @@ class SpaceGroup():
                             pass
                         else:
                             print(("Placing origin at inversion "
-                                   "center: {}".format(center))
-                                  )
+                                   "center: {} = {} + {}"
+                                   .format(
+                                    -shiftUC,
+                                    0.5*self.symmetries[i].translation, 
+                                    0.5*center
+                                    )
+                                   )
+                            )
                             return refUC, shiftUC
                     raise RuntimeError(("Could not find any shift "
                                         "placing the origin in an "
@@ -914,7 +936,7 @@ class SpaceGroup():
                                         "symmetries found in tables."))
         return refUC, shiftUC
 
-    def match_symmetries(self, refUC=None, shiftUC=None, signs=False, show=False):
+    def match_symmetries(self, refUC=None, shiftUC=None, signs=False, show=False, mod=True):
         """
         Matches symmetry operations of two lists. Remove arg show (testing).
         Note: args symmetries1 and symmetries2 always take values of attributes
@@ -934,7 +956,7 @@ class SpaceGroup():
                 refUC), sym.translation_refUC(refUC, shiftUC)
             found = False
             for i, sym2 in enumerate(self.symmetries_tables):
-                t1 = np.dot(sym2.t - t, refUC) % 1
+                t1 = np.dot(sym2.t - t, refUC) % 1 if mod else np.dot(sym2.t - t, refUC) 
                 # t1=(sym2.t-t)%1
                 t1[1 - t1 < 1e-5] = 0
                 if np.allclose(R, sym2.R):
@@ -946,13 +968,13 @@ class SpaceGroup():
                         found = True
                         break
                     else:
-                        print(
-                            'table t=',
-                            sym2.t,
-                            '\nfound t=',
-                            t,
-                            "\nt(table)-t(spglib) (mod. lattice translation):",
-                            t1)
+                        #print(
+                        #    'table t=',
+                        #    sym2.t,
+                        #    '\nfound t=',
+                        #    t,
+                        #    "\nt(table)-t(spglib) (mod. lattice translation):",
+                        #    t1)
                         raise RuntimeError(
                             "Error matching translational part for symmetry " +
                             "{}. A symmetry with identical rotational part \n"
@@ -981,7 +1003,6 @@ class SpaceGroup():
             S1 = [sym.spinor_rotation for sym in self.symmetries]
             S2 = [self.symmetries_tables[i].S for i in ind]
             signs_array = self.__match_spinor_rotations(S1, S2)
-#            print ("signs = ",signs)  # test
         else:
             signs_array = np.ones(len(ind), dtype=int)
         return ind, dt, signs_array
