@@ -238,6 +238,8 @@ class SymmetryOperation():
         if (not np.allclose(refUC, np.eye(3)) or
             not np.allclose(shiftUC, np.zeros(3))):
             write_ref = True  # To avoid writing this huge block again
+        else:
+            write_ref = False
 
         # Print header
         print("\n # ", self.ind)
