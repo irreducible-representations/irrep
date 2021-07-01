@@ -235,8 +235,12 @@ class SymmetryOperation():
             Translation taking the origin of the unit cell used in the DFT 
             calculation to that of the standard setting.
         """
+        if (not np.allclose(refUC, np.eye(3)) or
+            not np.allclose(shiftUC, np.zeros(3))):
+            write_ref = True  # To avoid writing this huge block again
+
         # Print header
-        print(" # ", self.ind)
+        print("\n # ", self.ind)
         # Print rotation part
         rotstr = [s +
                   " ".join("{0:3d}".format(x) for x in row) +
@@ -245,23 +249,19 @@ class SymmetryOperation():
                                           "|", " " *
                                           11 +
                                           "|"], self.rotation, [" |", " |", " |"])]
-   #     if (refUC is not None) or ((shiftUC is not None)
-   #                                and np.linalg.norm(shiftUC) > 1e-5):
-   #         if refUC is None:
-   #              refUC = np.eye(3)
-        if (not np.allclose(refUC, np.eye(3)) or 
-            not np.allclose(shiftUC, np.zeros(3))):  
+        if write_ref:
             fstr = ("{0:3d}")
             R = self.rotation_refUC(refUC)
             rotstr1 = [" " *
                        5 +
                        s +
                        " ".join(fstr.format(x) for x in row) +
-                       t for s, row, t in zip(["in refUC : |", " " *
-                                               11 +
-                                               "|", " " *
-                                               11 +
-                                               "|"], R, [" |", " |", " |"])]
+                       t for s, row, t in zip(["rotation : |",
+                                               " (refUC)   |",
+                                               " " * 11 + "|"
+                                               ],
+                                              R,
+                                              [" |", " |", " |"])]
             rotstr = [r + r1 for r, r1 in zip(rotstr, rotstr1)]
         print("\n".join(rotstr))
 
@@ -270,19 +270,18 @@ class SymmetryOperation():
             spinstr = [s +
                        " ".join("{0:6.3f}{1:+6.3f}j".format(x.real, x.imag) for x in row) +
                        t 
-                       for s, row, t in zip(["spinor   : |", 
-                                             " " * 11 + "|", 
-                                             " " * 11 +"|"
+                       for s, row, t in zip(["spinor rot.  : |",
+                                             " " * 15 + "|",
                                              ], 
                                              self.spinor_rotation, 
-                                             [" |", " |", " |"]
+                                             [" |", " |"]
                                            )
                       ]
             spinstr1 = [s +
                        " ".join("{0:6.3f}{1:+6.3f}j".format(x.real, x.imag) for x in row) +
                        t 
-                       for s, row, t in zip(["spinor (refUC)   : |", 
-                                             " " * 19 + "|"
+                       for s, row, t in zip(["spinor rot.  : |",
+                                             "  (refUC)      |"
                                              ], 
                                              self.spinor_rotation*self.sign, 
                                              [" |", " |"]
@@ -292,19 +291,19 @@ class SymmetryOperation():
             print("\n".join([row + "    " + row1 for row,row1 in zip(spinstr, spinstr1)]))
 
         # Print translation part
-        trastr = ("translation : [ " 
+        trastr = ("translation :  [ " 
                   + " ".join("{0:8.4f}"
                              .format(x%1) for x in self.translation.round(6)
                              ) 
                   + " ] "
                   )
-        if (not np.allclose(refUC, np.eye(3)) or 
-            not np.allclose(shiftUC, np.zeros(3))):  
-            trastr += ("    translation (refUC) : [ " 
+        if write_ref:
+            trastr += ("    translation : [ "
                        + " ".join(
                           "{0:8.4f}".format(x % 1) 
                           for x in self.translation_refUC(refUC,shiftUC).round(6)) 
-                       + " ] "
+                       + " ] \n"
+                       + " " * 52 + "(refUC)"  # Lower line
                        )
         print(trastr)
 
