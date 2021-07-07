@@ -23,6 +23,7 @@ import spglib
 from irreptables import IrrepTable
 from scipy.optimize import minimize
 from .aux import str_
+import functools
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -547,7 +548,7 @@ class SpaceGroup():
                 dataset['international'],
                 dataset['number'], 
                 cell[0], 
-                dataset['transformation_matrix'],
+                np.linalg.inv(dataset['transformation_matrix']),
                 dataset['origin_shift']
                 )
 
@@ -880,62 +881,77 @@ class SpaceGroup():
             refUC = np.array(refUC1.split(","), dtype=float).reshape((3, 3))
             shiftUC = np.array(shiftUC1.split(","), dtype=float).reshape(3)
             print('refUC and shiftUC read from CLI')
+            return refUC, shiftUC
         elif refUC1 and not shiftUC1:  # shiftUC not given in CLI.
             refUC = np.array(refUC1.split(","), dtype=float).reshape((3, 3))
             shiftUC = np.zeros(3, dtype=float)
             print(('refUC was specified in CLI, but shiftUC was not. Taking '
                    'shiftUC=(0,0,0).'))
+            return refUC, shiftUC
         elif not refUC1 and shiftUC1:  # refUC not given in CLI.
             refUC = np.eye(3, dtype=float)
             shiftUC = np.array(shiftUC1.split(","), dtype=float).reshape(3)
             print(('shitfUC was specified in CLI, but refUC was not. Taking '
                    '3x3 identity matrix as refUC.'))
+            return refUC, shiftUC
         else:  # Neither specifiend in CLI.
-            # Adapt spglib's convenction for basis transformation
-            # to IrRep's one.  Be careful with the sign convenction
-            # for the translational part!
-            refUC = np.linalg.inv(refUC2).T
-            shiftUC = shiftUC2
+            refUC = refUC2.T  # IrRep's treats vecs as column array
+            print(refUC, shiftUC2)
+            found = False
 
-            # If the crystal is centrosymmetric, the origin should
-            # be placed in an inversion center.  We have to find 
-            # which center is the one yielding the symmetry 
-            # operations of tables (translational part mod. primitive 
-            # lattice translation).
-            for i in range(len(self.symmetries)):
-                if (np.allclose(self.symmetries[i].rotation, -np.eye(3))):
-                    print(("The structure is centrosymmetric. "
-                           "Placing the origin in an inversion "
-                           "center"))
-                    for ic,center in enumerate(self.inversion_centers()):
-                        print("\nCenter ({}): {}".format(ic,center)) #test
-                        shiftUC = - 0.5 * (self.symmetries[i].translation
-                                           + center.dot(refUC)
-                                           )
-                        try:
-                            ind, dt, signs = self.match_symmetries(
-                                        refUC,
-                                        shiftUC,
-                                        )
-                        except RuntimeError:
-                            pass
-                        else:
-                            print(("Placing origin at inversion "
-                                   "center: {} = {} + {}"
-                                   .format(
-                                    -shiftUC,
-                                    0.5*self.symmetries[i].translation, 
-                                    0.5*center
-                                    )
-                                   )
-                            )
-                            return refUC, shiftUC
-                    raise RuntimeError(("Could not find any shift "
-                                        "placing the origin in an "
-                                        "inversion center that leads "
-                                        "to the expressions for "
-                                        "symmetries found in tables."))
-        return refUC, shiftUC
+            # Check if the group is centrosymmetric
+            inv = None
+            for sym in self.symmetries:
+                if (np.allclose(sym.rotation, -np.eye(3))):
+                    inv = sym
+
+            if inv is None:  # Not centrosymmetric
+                for r_cent in self.vecs_centering():
+                    shiftUC = shiftUC2 + r_cent
+                    print(shiftUC)
+                    try:
+                        ind, dt, signs = self.match_symmetries(
+                                            refUC,
+                                            shiftUC,
+                                            )
+                        found = True
+                        break
+                    except RuntimeError:
+                        pass
+
+            else:  # Centrosymmetric. Origin must sit in an inv. center
+                for center in self.vecs_inv_centers():
+                    shiftUC = - 0.5 * (inv.translation
+                                       + center.dot(refUC)
+                                       )
+                    try:
+                        ind, dt, signs = self.match_symmetries(
+                                            refUC,
+                                            shiftUC,
+                                            )
+                        found = True
+                        break
+                    except RuntimeError:
+                        pass
+
+            # Print info about center or error if it was not found
+            if found:
+                print("Placing origin at ", -shiftUC)
+                if inv is not None:
+                    print(("where {} = {} + {} x refUC".format(
+                                -shiftUC,
+                                0.5*inv.translation, 
+                                0.5*center)
+                          )
+                           )
+                return refUC, shiftUC
+            else:
+                raise RuntimeError(("Could not find any shift "
+                                    "placing the origin in an "
+                                    "inversion center that leads "
+                                    "to the expressions for "
+                                    "symmetries found in tables."))
+
 
     def match_symmetries(self, refUC=None, shiftUC=None, signs=False, show=False, mod=True):
         """
@@ -1008,39 +1024,45 @@ class SpaceGroup():
             signs_array = np.ones(len(ind), dtype=int)
         return ind, dt, signs_array
 
-    def inversion_centers(self):
-        """ Return inversion centers in convenctional cell """
-        vecs = np.array(
-                [
-                [0,0,0],
-                [1,0,0],
-                [0,1,0],
-                [0,0,1],
-                [1,1,0],
-                [1,0,1],
-                [0,1,1],
-                [1,1,1]
-                ]
-                )
+    def vecs_centering(self):
+        """ Return vectors of centering """
+        cent = np.array([[0,0,0]])
         if self.name[0] == 'P':
-            centers = vecs
+            pass  # Just to make it explicit
         elif self.name[0] == 'C':
-            centers = np.vstack((vecs,vecs+[1/2,1/2,0]))
+            cent = np.vstack((cent, cent + [1/2,1/2,0]))
         elif self.name[0] == 'I':
-            centers = np.vstack((vecs,vecs+[1/2,1/2,1/2]))
+            cent = np.vstack((cent, cent + [1/2,1/2,1/2]))
         elif self.name[0] == 'F':
-            centers = np.vstack((vecs,
-                                 vecs+[0,1/2,1/2],
-                                 vecs+[1/2,0,1/2],
-                                 vecs+[1/2,1/2,0],
-                                 )
-                                )
+            cent = np.vstack((cent,
+                              cent + [0,1/2,1/2],
+                              cent + [1/2,0,1/2],
+                              cent + [1/2,1/2,0],
+                              )
+                             )
         elif self.name[0] == 'A':  # test this
-            centers = np.vstack((vecs,vecs+[0,1/2,1/2]))
+            cent = np.vstack((cent, cent + [0,1/2,1/2]))
         else:  # R-centered
-            centers = np.vstack((vecs,
-                                 vecs+[2/3,1/3,1/3],
-                                 vecs+[1/3,2/3,2/3],
-                                 )
-                                )
-        return centers
+            cent = np.vstack((cent,
+                              cent + [2/3,1/3,1/3],
+                              cent + [1/3,2/3,2/3],
+                              )
+                             )
+        return cent
+
+    def vecs_inv_centers(self):
+        """ Return inversion centers """
+        vecs = np.array(
+                        [
+                        [0,0,0],
+                        [1,0,0],
+                        [0,1,0],
+                        [0,0,1],
+                        [1,1,0],
+                        [1,0,1],
+                        [0,1,1],
+                        [1,1,1]
+                        ]
+                        )
+        vecs = np.vstack([vecs + r for r in self.vecs_centering()])
+        return vecs
