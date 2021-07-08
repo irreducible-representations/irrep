@@ -51,8 +51,10 @@ class Kpoint:
     RecLattice : array, shape=(3,3)
         Each row contains the cartesian coordinates of a basis vector forming 
         the unit-cell in reciprocal space.
-    SG : class, default=None
-        Instance of `SpaceGroup`.
+    symmetries_SG : list, default=None
+        Each element is an instance of class `SymmetryOperation` corresponding 
+        to a symmetry in the point group of the space-group. The value 
+        passed is the attribute `symmetries` of class `SpaceGroup`.
     spinor : bool, default=None
         `True` if wave functions are spinors, `False` if they are scalars.
     code : str, default='vasp'
@@ -109,8 +111,6 @@ class Kpoint:
         to short plane-waves based on energy (ascending order). Fitfth 
         (sixth) row contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.
-    SG : class
-        Instance of `SpaceGroup`.
     K : array, shape=(3,)
         Direct coordinates of the k-point.
     Energy : array
@@ -119,7 +119,10 @@ class Kpoint:
         Energy of the first band above the set of bands whose traces should be 
         calculated. It will be set to `numpy.NaN` if the last band matches the 
         last band in the DFT calculation (default `IBend`).
-
+    symmetries_SG : list
+        Each element is an instance of class `SymmetryOperation` corresponding 
+        to a symmetry in the point group of the space-group. The value 
+        passed is the attribute `symmetries` of class `SpaceGroup`.
     """
     
     # creates attribute symmetries, if it was not created before
@@ -141,9 +144,9 @@ class Kpoint:
         For more about `lazy-property`, check the documentation `here <https://pypi.org/project/lazy-property/>`_ .
         """
         symmetries = {}
-        #        print ("calculating symmetry eigenvalues for E={0}, WF={1} SG={2}".format(self.Energy,self.WF.shape,self.SG) )
-        if not (self.SG is None):
-            for symop in self.SG.symmetries:
+        #        print ("calculating symmetry eigenvalues for E={0}, WF={1} SG={2}".format(self.Energy,self.WF.shape,symmetries_SG) )
+        if not (self.symmetries_SG is None):
+            for symop in self.symmetries_SG:
                 try:
                     symmetries[symop] = symm_eigenvalues(
                         self.K,
@@ -168,7 +171,7 @@ class Kpoint:
         Ecut,
         Ecut0,
         RecLattice,
-        SG=None,
+        symmetries_SG=None,
         spinor=None,
         code="vasp",
         kpt=None,
@@ -188,6 +191,7 @@ class Kpoint:
         self.Nband = IBend - IBstart
         #        self.n=np.arange(IBstart,IBend)+1
         self.RecLattice = RecLattice
+        self.symmetries_SG = symmetries_SG  # lazy_property needs it
 
         if code.lower() == "vasp":
             self.WF, self.ig = self.__init_vasp(
@@ -222,10 +226,6 @@ class Kpoint:
         self.WF /= (
             np.sqrt(np.abs(np.einsum("ij,ij->i", self.WF.conj(), self.WF)))
         ).reshape(self.Nband, 1)
-        self.SG = SG
-
-    #        self.__calc_sym_eigenvalues()
-    #        print("WF=\n",WF)
 
     def copy_sub(self, E, WF):
         """
@@ -944,6 +944,9 @@ class Kpoint:
         efermi=0.0,
         plotFile=None,
         kpl="",
+        symmetries_tables=None,
+        refUC=np.eye(3),
+        shiftUC=np.zeros(3)
     ):
         """
         Calculate traces and determine and print irreps in a k-point. Write them 
@@ -959,7 +962,7 @@ class Kpoint:
             Returned by method `get_irreps_from_table` of class `SpaceGroup`. 
             Each key is the label of an irrep, each value another `dict`. Keys 
             of every secondary `dict` are indices of symmetries (starting from 
-            1 and following order of operations as returned by `spglib`) and 
+            1 and following order of operations in tables of BCS) and 
             values are traces of symmetries.
         symmetries : list, default=None
             Index of symmetry operations whose traces will be printed. 
@@ -973,6 +976,16 @@ class Kpoint:
         kpl : float, default=''
             Length accumulated until the k-point. Can be used to locate irreps 
             in the x-axis of a band structure plot.
+        symmetries_tables : list, default=None
+            Each component is an instance of class `SymopTable` corresponding to a 
+            symmetry operation in the "point-group" of the space-group. Values 
+            passed are attributes `symmetries` of class `IrrepTable`.
+        refUC : array, default=np.eye(3)
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=np.zeros(3)
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
 
         Returns
         -------
@@ -989,7 +1002,9 @@ class Kpoint:
             sym = {s.ind: s for s in self.symmetries}
         else:
             sym = {s.ind: s for s in self.symmetries if s.ind in symmetries}
-
+        
+        # Generate array char, where each row corresponds to a sym. op
+        # and every column to a wave function
         char = np.vstack([self.symmetries[sym[i]] for i in sorted(sym)])
         borders = np.hstack(
             [
@@ -1004,7 +1019,7 @@ class Kpoint:
         Nirrep = int(round(Nirrep))
         char = np.array(
             [char[:, start:end].sum(axis=1) for start, end in zip(borders, borders[1:])]
-        )
+        )  # Every column in char corresponds to a sym. op.
 
         #        print(" char ",char.shape,"\n",char)
         writeimaginary = np.abs(char.imag).max() > 1e-4
@@ -1037,7 +1052,7 @@ class Kpoint:
                 print("irreptable:", irreptable)
                 print([sym.ind for sym in self.symmetries])
                 raise ke
-            # generate str describing irrep corresponding to sets of states
+            # Generate str describing irrep corresponding to sets of states
             irreps = [
                 ", ".join(
                     ir
@@ -1048,39 +1063,75 @@ class Kpoint:
                         else ""
                     )
                     + ")"
-                    for ir in irr # irreps of little-group
-                    if abs(irr[ir]) > 1e-3 # check multiplicity
+                    for ir in irr  # Irreps of little-group
+                    if abs(irr[ir]) > 1e-3  # Check multiplicity
                 )
-                for irr in irreps # group of degen. states
+                for irr in irreps  # Group of degen. states
             ]
         #            irreps=[ "None" ]*(len(borders)-1)
-        irreplen = max(len(irr) for irr in irreps) # len of largest line
+
+        # Transfer traces in calculational cell to refUC
+        char_refUC = char.copy()
+        if (not np.allclose(refUC, np.eye(3, dtype=float)) or
+            not np.allclose(shiftUC, np.zeros(3, dtype=float))):
+            # Calculational and reference cells are not identical
+            for i,ind in enumerate(sym):
+                dt = (symmetries_tables[ind-1].t 
+                      - sym[ind].translation_refUC(refUC, shiftUC))
+                k = np.round(refUC.dot(self.K), 5)
+                char_refUC[:,i] *= (sym[ind].sign 
+                                     * np.exp(-2j*np.pi*dt.dot(k)))
+        if np.allclose(char, char_refUC, rtol=0.0, atol=1e-4):
+            write_refUC = False  # Tr identical in both unit cells
+        else:
+            write_refUC = True   # Write traces in refUC
+            print(("For each irrep, traces of symmetries in the calculation "
+                   "unit cell will be printed first and traces of symmetries "
+                   "in tables will be printed in the line below")
+                 )
+
+        irreplen = max(len(irr) for irr in irreps)  # len of largest line
         if irreplen % 2 == 1:
             irreplen += 1
         s2 = " " * int(irreplen / 2 - 3)
+
+        # Header of the block
         print(
             "\n\nk-point {0:3d} :{1} \n number of irreps = {2}".format(
                 self.ik0, self.K, Nirrep
             )
         )
         print("   Energy  | multiplicity |{0} irreps {0}| sym. operations  ".format(s2))
+
+        # Symmetry operations
         print(
             "           |              |{0}        {0}| ".format(s2),
             " ".join(s1 + "{0:4d}    ".format(i) + s1 for i in sorted(sym)),
         )
-        print(
-            "\n".join(
-                (" {0:8.4f}  |    {1:5d}     | {2:" + str(irreplen) + "s} |").format(
-                    e - efermi, d, ir
-                )
-                + " ".join(
-                    "{0:8.4f}".format(c.real)
-                    + ("{0:+7.4f}j".format(c.imag) if writeimaginary else "")
-                    for c in ch
-                )
-                for e, d, ir, ch in zip(E, dim, irreps, char)
-            )
-        )
+
+        # Energy-levels, irrep's label and traces
+        for e, d, ir, ch, ch2 in zip(E, dim, irreps, char, char_refUC):
+            # Print characters in calculational unit cell
+            left_str = (" {0:8.4f}  |    {1:5d}     | {2:{3}s} |"
+                        .format(e - efermi, d, ir, irreplen)
+                       )
+            right_str = " ".join(
+                        "{0:8.4f}".format(c.real)
+                        + ("{0:+7.4f}j".format(c.imag) if writeimaginary else "")
+                        for c in ch
+                    )
+            print(left_str + " " + right_str)
+            # Print characters in reference unit cell
+            if write_refUC:
+                left_str = ("           |              | {0:{1}s} |"
+                            .format(len(ir)*" ", irreplen)
+                           )
+                right_str = " ".join(
+                            "{0:8.4f}".format(c.real)
+                            + ("{0:+7.4f}j".format(c.imag) if writeimaginary else "")
+                            for c in ch2
+                        )
+                print(left_str + " " + right_str)
 
         if plotFile is not None:
             plotFile.write(
@@ -1253,7 +1304,7 @@ class Kpoint:
                         if i in char
                         else (" " * 7 + "X" * 3 + " " * 8 + "X" * 3)
                     )
-                    for i in range(1, len(self.SG.symmetries) + 1)
+                    for i in range(1, len(symmetries_SG) + 1)
                 )
                 for e, d, ib, j in zip(E, dim, IB, np.arange(len(dim)))
             )
