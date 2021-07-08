@@ -232,12 +232,6 @@ def cli(
     # for k, v in locals().items():
     #     print("{}\t{}".format(k, v))
 
-    # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
-    #if refuc:
-    #    refuc = np.array(refuc.split(","), dtype=float).reshape((3, 3))
-    #if shiftuc:
-    #    shiftuc = np.array(shiftuc.split(","), dtype=float).reshape(3)
-
     # parse input arguments into lists if supplied
     if symmetries:
         symmetries = str2list(symmetries)
@@ -248,18 +242,12 @@ def cli(
     if kpnames:
         kpnames = kpnames.split(",")
 
-    #if onlysym:
-    #    spinor = False
-
     try:
         print(fwfk.split("/")[0].split("-"))
         preline = " ".join(s.split("_")[1] for s in fwfk.split("/")[0].split("-")[:3])
     except Exception as err:
         print(err)
         preline = ""
-
-#    if (refuc is not None) and (shiftuc is None):
-#        shiftuc = np.zeros(3)
 
     bandstr = BandStructure(
         fWAV=fwav,
@@ -281,11 +269,6 @@ def cli(
 
     if onlysym:
         exit()
-
-    #if refuc is None:
-    #    refuc = np.eye(3)
-    #if shiftuc is None:
-    #    shiftuc = np.zeros(3)
 
     with open("irreptable-template", "w") as f:
         f.write(

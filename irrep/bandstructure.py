@@ -67,6 +67,12 @@ class BandStructure:
     spin_channel : str, default=None
         Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down. 
         Only applied in the interface to Quantum Espresso.
+    refUC : array, default=None
+        3x3 array describing the transformation of vectors defining the 
+        unit cell to the standard setting.
+    shiftUC : array
+        Translation taking the origin of the unit cell used in the DFT 
+        calculation to that of the standard setting.
 
     Attributes
     ----------
@@ -141,7 +147,6 @@ class BandStructure:
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
 
-
     def __init_vasp(
         self,
         fWAV,
@@ -179,6 +184,12 @@ class BandStructure:
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=None
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
         """
         if spinor is None:
             raise RuntimeError(
@@ -293,6 +304,12 @@ class BandStructure:
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=None
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
         """
 
         header = AbinitHeader(WFKname)
@@ -404,6 +421,12 @@ class BandStructure:
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=None
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
         """
         if Ecut is None:
             raise RuntimeError("Ecut mandatory for Wannier90")
@@ -711,6 +734,12 @@ class BandStructure:
             Exit after printing info about space-group.
         spin_channel : str, default=None
             Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=None
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
         """
         import xml.etree.ElementTree as ET
 
@@ -1237,12 +1266,6 @@ class BandStructure:
         degen_thresh : float, default=1e-8
             Threshold energy used to decide whether wave-functions are
             degenerate in energy.
-        refUC : array, default=None
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array, default=np.zeros(3)
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
         symmetries : list, default=None
             Index of symmetry operations whose traces will be printed. 
         fname : str, default=trace_all.dat

@@ -111,8 +111,6 @@ class Kpoint:
         to short plane-waves based on energy (ascending order). Fitfth 
         (sixth) row contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.
-    SG : class
-        Instance of `SpaceGroup`.
     K : array, shape=(3,)
         Direct coordinates of the k-point.
     Energy : array
@@ -121,8 +119,10 @@ class Kpoint:
         Energy of the first band above the set of bands whose traces should be 
         calculated. It will be set to `numpy.NaN` if the last band matches the 
         last band in the DFT calculation (default `IBend`).
-    little_G : list
-
+    symmetries_SG : list
+        Each element is an instance of class `SymmetryOperation` corresponding 
+        to a symmetry in the point group of the space-group. The value 
+        passed is the attribute `symmetries` of class `SpaceGroup`.
     """
     
     # creates attribute symmetries, if it was not created before
@@ -172,7 +172,6 @@ class Kpoint:
         Ecut0,
         RecLattice,
         symmetries_SG=None,
-        symmetries_tables=None,
         spinor=None,
         code="vasp",
         kpt=None,

@@ -23,7 +23,6 @@ import spglib
 from irreptables import IrrepTable
 from scipy.optimize import minimize
 from .aux import str_
-import functools
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -229,7 +228,7 @@ class SymmetryOperation():
         
         Parameters
         ----------
-        refUC : array, default=None
+        refUC : array, default=np.eye(3)
             3x3 array describing the transformation of vectors defining the 
             unit cell to the standard setting.
         shiftUC : array, default=np.zeros(3)
@@ -320,7 +319,7 @@ class SymmetryOperation():
 
         Parameters
         ----------
-        refUC : array, default=None
+        refUC : array, default=np.eye(3)
             3x3 array describing the transformation of vectors defining the 
             unit cell to the standard setting.
         shiftUC : array, default=np.zeros(3)
@@ -340,7 +339,7 @@ class SymmetryOperation():
         return ("   ".join(" ".join(str(x) for x in r) for r in R) + "     " + " ".join(str_(x) for x in t) + ("      " + \
                 "    ".join("  ".join(str_(x) for x in X) for X in (np.abs(S.reshape(-1)), np.angle(S.reshape(-1)) / np.pi))))
 
-    def str2(self, refUC=None, shiftUC=np.zeros(3)):
+    def str2(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
         Print matrix of a symmetry operation in the format: 
         {{R|t}}-> R11,R12,...,R23,R33,t1,t2,t3 and, when SOC was included, the 
@@ -350,7 +349,7 @@ class SymmetryOperation():
         
         Parameters
         ----------
-        refUC : array, default=None
+        refUC : array, default=np.eye(3)
             3x3 array describing the transformation of vectors defining the 
             unit cell to the standard setting.
         shiftUC : array, default=np.zeros(3)
@@ -397,6 +396,12 @@ class SpaceGroup():
         `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
     spinor : bool, default=True
         `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+    refUC : array, default=None
+        3x3 array describing the transformation of vectors defining the 
+        unit cell to the standard setting.
+    shiftUC : array, default=None
+        Translation taking the origin of the unit cell used in the DFT 
+        calculation to that of the standard setting.
 
     Attributes
     ----------
@@ -519,6 +524,15 @@ class SpaceGroup():
         array
             3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
             and **c** are given in rows. 
+        array
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the convenctional setting.
+        array
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting of spglib. It may not be
+            the shift taking to the convenctional cell of tables; indeed, in 
+            centrosymmetric groups they adopt origin choice 1 of ITA, rather 
+            than choice 2 (BCS).
         """
         if cell is None:
             cell = self.__cell_vasp(inPOSCAR=inPOSCAR)
@@ -568,17 +582,14 @@ class SpaceGroup():
         # Determine refUC and shiftUC according to entries in CLI
         self.symmetries_tables = IrrepTable(self.number, self.spinor).symmetries
         self.refUC, self.shiftUC = self.determine_basis_transf(
-                                            refUC1=refUC, 
-                                            shiftUC1=shiftUC,
-                                            refUC2=refUC_tmp, 
-                                            shiftUC2=shiftUC_tmp
+                                            refUC_cli=refUC, 
+                                            shiftUC_cli=shiftUC,
+                                            refUC_lib=refUC_tmp, 
+                                            shiftUC_lib=shiftUC_tmp
                                             )
 
         # Check matching of symmetries in refUC
-        ind, dt, signs = self.match_symmetries(
-                                  signs=self.spinor,  # True is SOC 
-                                  show=False
-                                  )
+        ind, dt, signs = self.match_symmetries(signs=self.spinor)
         print(
               "refUC=\n{}"
               .format(self.refUC)
@@ -600,12 +611,6 @@ class SpaceGroup():
         
         Parameters
         ----------
-        refUC : array, default=None
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array, default=np.zeros(3)
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
         symmetries : int, default=None
             Index of symmetry operations whose description will be printed. 
             Run `IrRep` with flag `onlysym` to check the index corresponding 
@@ -641,15 +646,6 @@ class SpaceGroup():
         elements of the matrix describing the transformation of the spinor in 
         the format:
         Re(S11),Im(S11),Re(S12),...,Re(S22),Im(S22).
-        
-        Parameters
-        ----------
-        refUC : array, default=None
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array, default=np.zeros(3)
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
 
         Returns
         -------
@@ -666,15 +662,6 @@ class SpaceGroup():
     def str(self):
         """
         Print description of space-group and its symmetry operations.
-        
-        Parameters
-        ----------
-        refUC : array, default=np.eye(3)
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array, default=np.zeros(3)
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
 
         Returns
         -------
@@ -796,12 +783,6 @@ class SpaceGroup():
         
         Parameters
         ----------
-        refUC : array
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
         kpname : str
             Label of the maximal k-point.
         K : array, shape=(3,)
@@ -871,32 +852,67 @@ class SpaceGroup():
 # return( { irr.name: np.array([irr.characters[i]*signs[j] for j,i in
 # enumerate(ind)]) for irr in table.irreps if irr.kpname==kpname})
 
-    def determine_basis_transf(self, refUC1, shiftUC1, refUC2, shiftUC2):
+    def determine_basis_transf(self, refUC_cli, shiftUC_cli, refUC_lib, shiftUC_lib):
         """ 
-        Determine basis transformation according to input in CLI and spglib 
+        Determine basis transformation to convenctional cell. Priority 
+        is given to the transformation set by the user in CLI.
+
+        Parameters
+        ----------
+        refUC_cli : array
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting. Set in CLI.
+        shiftUC_cli : array
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting. Set in CLI.
+        refUC_lib : array
+            Obtained via spglib.
+        shiftUC_lib : array
+            Obtained via splib. It may not be the shift taking the 
+            origin to the position adopted in the tables (BCS). For 
+            example, origin choice 1 of ITA is adopted in spglib for 
+            centrosymmetric groups, while origin choice 2 in BCS.
+
+        Returns
+        -------
+        array 
+            Transformation of vectors defining the unit cell to the 
+            standard setting.
+        array
+            Shift taking the origin of the unit cell used in the DFT 
+            calculation to that of the convenctional setting used in 
+            BCS.
+
+        Raises
+        ------
+        RuntimeError
+            Could not find a pait (refUC,shiftUC) matching symmetries 
+            obtained from spglib to those in tables (mod. lattice 
+            translations of the primitive cell).
+
         """
         # Set the tranformation to convenctional cell.
         flag = False
-        if refUC1 and shiftUC1:  # Both specified in CLI.
-            refUC = np.array(refUC1.split(","), dtype=float).reshape((3, 3))
-            shiftUC = np.array(shiftUC1.split(","), dtype=float).reshape(3)
+        if refUC_cli and shiftUC_cli:  # Both specified in CLI.
+            refUC = np.array(refUC_cli.split(","), dtype=float).reshape((3, 3))
+            shiftUC = np.array(shiftUC_cli.split(","), dtype=float).reshape(3)
             print('refUC and shiftUC read from CLI')
             return refUC, shiftUC
-        elif refUC1 and not shiftUC1:  # shiftUC not given in CLI.
-            refUC = np.array(refUC1.split(","), dtype=float).reshape((3, 3))
+        elif refUC_cli and not shiftUC_cli:  # shiftUC not given in CLI.
+            refUC = np.array(refUC_cli.split(","), dtype=float).reshape((3, 3))
             shiftUC = np.zeros(3, dtype=float)
             print(('refUC was specified in CLI, but shiftUC was not. Taking '
                    'shiftUC=(0,0,0).'))
             return refUC, shiftUC
-        elif not refUC1 and shiftUC1:  # refUC not given in CLI.
+        elif not refUC_cli and shiftUC_cli:  # refUC not given in CLI.
             refUC = np.eye(3, dtype=float)
-            shiftUC = np.array(shiftUC1.split(","), dtype=float).reshape(3)
+            shiftUC = np.array(shiftUC_cli.split(","), dtype=float).reshape(3)
             print(('shitfUC was specified in CLI, but refUC was not. Taking '
                    '3x3 identity matrix as refUC.'))
             return refUC, shiftUC
         else:  # Neither specifiend in CLI.
-            refUC = refUC2.T  # IrRep's treats vecs as column array
-            print(refUC, shiftUC2)
+            refUC = refUC_lib.T  # IrRep's treats vecs as column array
+            print(refUC, shiftUC_lib)
             found = False
 
             # Check if the group is centrosymmetric
@@ -907,7 +923,7 @@ class SpaceGroup():
 
             if inv is None:  # Not centrosymmetric
                 for r_cent in self.vecs_centering():
-                    shiftUC = shiftUC2 + r_cent
+                    shiftUC = shiftUC_lib + r_cent
                     print(shiftUC)
                     try:
                         ind, dt, signs = self.match_symmetries(
@@ -953,12 +969,45 @@ class SpaceGroup():
                                     "symmetries found in tables."))
 
 
-    def match_symmetries(self, refUC=None, shiftUC=None, signs=False, show=False, mod=True):
+    def match_symmetries(self, refUC=None, shiftUC=None, signs=False):
         """
-        Matches symmetry operations of two lists. Remove arg show (testing).
-        Note: args symmetries1 and symmetries2 always take values of attributes
-        self.symmetry and self.symmetries_tables, so they can be removed, but this way
-        keeps the function more generic.
+        Matches symmetry operations of two lists. Translational parts 
+        are matched mod. lattice translations (important for centered 
+        structures).
+
+        Parameters
+        ----------
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=None
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+        signs : bool, default=False
+            If `True`, match also rotations of spinors corresponding to 
+            each symmetry.
+        
+        Returns
+        -------
+        list
+            The :math:`i^{th}` element corresponds to the :math:`i^{th}` 
+            symmetry found by `spglib` and it is the position that the 
+            same symmetry has in the tables.
+        list
+            The :math:`i^{th}` element corresponds to the :math:`i^{th}` 
+            symmetry found by `spglib` and it is the phase difference 
+            w.r.t. the same symmetry in the tables, which may arise if 
+            their translational parts differ by a lattice vector.
+        array
+            The :math:`i^{th}` element corresponds to the :math:`i^{th}` 
+            symmetry found by `spglib` and it is the sign needed to make
+            the matrix for spinor rotation identical to that in tables.
+
+        Note
+        ----
+        Arguments symmetries1 and symmetries2 always take values of 
+        attributes self.symmetry and self.symmetries_tables, so they can
+        be removed, but this way keeps the function more generic.
         """
 
         if refUC is None:
@@ -973,25 +1022,16 @@ class SpaceGroup():
                 refUC), sym.translation_refUC(refUC, shiftUC)
             found = False
             for i, sym2 in enumerate(self.symmetries_tables):
-                t1 = np.dot(sym2.t - t, refUC) % 1 if mod else np.dot(sym2.t - t, refUC) 
+                t1 = np.dot(sym2.t - t, refUC) % 1
                 # t1=(sym2.t-t)%1
                 t1[1 - t1 < 1e-5] = 0
                 if np.allclose(R, sym2.R):
                     if np.allclose(t1, [0, 0, 0], atol=1e-6):
                         ind.append(i)
                         dt.append(sym2.t - t)
-                        if show:
-                            print('isym=',j+1,'t=',t,'dt=',dt[-1])
                         found = True
                         break
                     else:
-                        #print(
-                        #    'table t=',
-                        #    sym2.t,
-                        #    '\nfound t=',
-                        #    t,
-                        #    "\nt(table)-t(spglib) (mod. lattice translation):",
-                        #    t1)
                         raise RuntimeError(
                             "Error matching translational part for symmetry " +
                             "{}. A symmetry with identical rotational part \n"
@@ -1025,7 +1065,14 @@ class SpaceGroup():
         return ind, dt, signs_array
 
     def vecs_centering(self):
-        """ Return vectors of centering """
+        """ 
+        Check the space group and generate vectors of centering.
+
+        Returns
+        -------
+        array
+            Each row is a lattice vector describing the centering.
+        """
         cent = np.array([[0,0,0]])
         if self.name[0] == 'P':
             pass  # Just to make it explicit
@@ -1051,7 +1098,21 @@ class SpaceGroup():
         return cent
 
     def vecs_inv_centers(self):
-        """ Return inversion centers """
+        """
+        Get the positions of all inversion centers in the unit cell.
+
+        Returns
+        -------
+        array
+            Each element is a vector pointing to a position center in 
+            the convenctional unit cell.
+
+        Notes
+        -----
+        If the space group is primitive, there are 8 inversion centers, 
+        but there are more if it is a group with a centering.
+
+        """
         vecs = np.array(
                         [
                         [0,0,0],
