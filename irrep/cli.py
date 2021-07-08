@@ -25,6 +25,7 @@ import datetime
 import math
 import click
 import json
+from monty.serialization import dumpfn
 
 from .spacegroup import SpaceGroup
 from .bandstructure import BandStructure
@@ -383,4 +384,5 @@ def cli(
                 f.write(sub.write_bands())
             sub.write_trace_all(degenthresh, fname=fname1)
 
-    open("irrep-output.json","w").write(json.dumps(json_data))
+#    open("irrep-output.json","w").write(
+    dumpfn(json_data,"irrep-output.json")
