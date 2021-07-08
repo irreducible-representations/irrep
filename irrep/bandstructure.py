@@ -67,6 +67,12 @@ class BandStructure:
     spin_channel : str, default=None
         Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down. 
         Only applied in the interface to Quantum Espresso.
+    refUC : array, default=None
+        3x3 array describing the transformation of vectors defining the 
+        unit cell to the standard setting.
+    shiftUC : array
+        Translation taking the origin of the unit cell used in the DFT 
+        calculation to that of the standard setting.
 
     Attributes
     ----------
@@ -112,7 +118,9 @@ class BandStructure:
         code="vasp",
         EF='0.0',
         onlysym=False,
-        spin_channel=None
+        spin_channel=None,
+        refUC = None,
+        shiftUC = None
     ):
         code = code.lower()
 
@@ -122,19 +130,19 @@ class BandStructure:
 
         if code == "vasp":
             self.__init_vasp(
-                fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym
+                fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC
             )
         elif code == "abinit":
             self.__init_abinit(
-                fWFK, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym
+                fWFK, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC
             )
         elif code == "espresso":
             self.__init_espresso(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, spin_channel=spin_channel
+                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, spin_channel=spin_channel, refUC=refUC, shiftUC=shiftUC
             )
         elif code == "wannier90":
             self.__init_wannier(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym
+                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC
             )
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
@@ -150,6 +158,8 @@ class BandStructure:
         spinor=None,
         EF='0.0',
         onlysym=False,
+        refUC=None,
+        shiftUC=None,
     ):
         """
         Initialization for vasp. Read data and save it in attributes.
@@ -174,12 +184,18 @@ class BandStructure:
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=None
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
         """
         if spinor is None:
             raise RuntimeError(
                 "spinor should be specified in the command line for VASP bandstructure"
             )
-        self.spacegroup = SpaceGroup(inPOSCAR=fPOS, spinor=spinor)
+        self.spacegroup = SpaceGroup(inPOSCAR=fPOS, spinor=spinor, refUC=refUC, shiftUC=shiftUC)
         self.spinor = spinor
         if onlysym:
             return
@@ -262,7 +278,7 @@ class BandStructure:
                 Ecut,
                 Ecut0,
                 self.RecLattice,
-                SG=self.spacegroup,
+                symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 WCF=WCF,
             )
@@ -278,6 +294,8 @@ class BandStructure:
         kplist=None,
         EF='0.0',
         onlysym=False,
+        refUC=None,
+        shiftUC=None,
     ):
         """
         Initialization for abinit. Read data and store it in attributes.
@@ -298,13 +316,19 @@ class BandStructure:
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=None
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
         """
 
         header = AbinitHeader(WFKname)
         usepaw = header.usepaw
         self.spinor = header.spinor
         self.spacegroup = SpaceGroup(
-            cell=(header.rprimd, header.xred, header.typat), spinor=self.spinor
+            cell=(header.rprimd, header.xred, header.typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC
         )
         if onlysym:
             return
@@ -376,7 +400,7 @@ class BandStructure:
                 Ecut,
                 Ecut0,
                 self.RecLattice,
-                SG=self.spacegroup,
+                symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 code="abinit",
                 kpt=header.kpt[ik],
@@ -397,6 +421,8 @@ class BandStructure:
         kplist=None,
         EF='0.0',
         onlysym=False,
+        refUC=None,
+        shiftUC=None,
     ):
         """
         Initialization for wannier90. Read data and store it in attibutes.
@@ -418,6 +444,12 @@ class BandStructure:
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=None
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
         """
         if Ecut is None:
             raise RuntimeError("Ecut mandatory for Wannier90")
@@ -642,7 +674,7 @@ class BandStructure:
         )
 
         self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, xred, typat), spinor=self.spinor
+            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC
         )
         if onlysym:
             return
@@ -684,7 +716,7 @@ class BandStructure:
                 Ecut,
                 None,
                 self.RecLattice,
-                SG=self.spacegroup,
+                symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 code="wannier",
                 eigenval=eigenval[ik - 1],
@@ -702,7 +734,9 @@ class BandStructure:
         kplist=None,
         EF='0.0',
         onlysym=False,
-        spin_channel=None
+        spin_channel=None,
+        refUC=None,
+        shiftUC=None,
     ):
         """
         Initialization for Quantum Espresso. Read data and store in attributes.
@@ -726,6 +760,12 @@ class BandStructure:
             Exit after printing info about space-group.
         spin_channel : str, default=None
             Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=None
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
         """
         import xml.etree.ElementTree as ET
 
@@ -760,7 +800,7 @@ class BandStructure:
         xred = (np.array(xcart, dtype=float) * BOHR).dot(np.linalg.inv(self.Lattice))
         #        print ("xred=",xred)
         self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, xred, typat), spinor=self.spinor
+            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC
         )
         if onlysym:
             return
@@ -857,7 +897,7 @@ class BandStructure:
                 Ecut,
                 Ecut0,
                 self.RecLattice,
-                SG=self.spacegroup,
+                symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 code="espresso",
                 kptxml=kpall[ik],
@@ -884,8 +924,6 @@ class BandStructure:
     def write_characters(
         self,
         degen_thresh=1e-8,
-        refUC=None,
-        shiftUC=np.zeros(3),
         kpnames=None,
         symmetries=None,
         preline="",
@@ -929,11 +967,9 @@ class BandStructure:
         GAP = np.Inf
         Low = -np.Inf
         Up = np.inf
-        if kpnames is not None and refUC is not None:
+        if kpnames is not None:
             for kpname, KP in zip(kpnames, self.kpoints):
-                irreps = self.spacegroup.get_irreps_from_table(
-                    refUC, shiftUC, kpname, KP.K
-                )
+                irreps = self.spacegroup.get_irreps_from_table(kpname, KP.K)
                 ninv, low, up = KP.write_characters(
                     degen_thresh,
                     irreptable=irreps,
@@ -942,6 +978,9 @@ class BandStructure:
                     efermi=self.efermi,
                     plotFile=pFile,
                     kpl=kpline,
+                    symmetries_tables=self.spacegroup.symmetries_tables,
+                    refUC=self.spacegroup.refUC,
+                    shiftUC=self.spacegroup.shiftUC
                 )
                 NBANDINV += ninv
                 GAP = min(GAP, up - low)
@@ -1004,8 +1043,6 @@ class BandStructure:
     def write_trace(
         self,
         degen_thresh=1e-8,
-        refUC=None,
-        shiftUC=np.zeros(3),
         kpnames=None,
         symmetries=None,
     ):
@@ -1018,12 +1055,6 @@ class BandStructure:
         degen_thresh : float, default=1e-8
             Threshold energy used to decide whether wave-functions are
             degenerate in energy.
-        refUC : array, default=None
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array, default=np.zeros(3)
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
         kpnames : list, default=None
             Labels of maximal k-points at which irreps of bands must be computed. 
             If it is not specified, only traces will be printed, not irreps.
@@ -1038,7 +1069,9 @@ class BandStructure:
             ).format(self.getNbands(), 1 if self.spinor else 0)
         )
 
-        f.write(self.spacegroup.write_trace(refUC=refUC, shiftUC=shiftUC))
+        f.write(
+                self.spacegroup.write_trace()
+                )
         # Number of maximal k-vectors in the space group. In the next files
         # introduce the components of the maximal k-vectors))
         f.write("  {0}  \n".format(len(self.kpoints)))
@@ -1046,7 +1079,7 @@ class BandStructure:
             f.write(
                 "   ".join(
                     "{0:10.6f}".format(x)
-                    for x in (refUC.dot(KP.K) if refUC is not None else KP.K)
+                    for x in self.spacegroup.refUC.dot(KP.K)
                 )
                 + "\n"
             )
@@ -1262,8 +1295,6 @@ class BandStructure:
     def write_trace_all(
         self,
         degen_thresh=1e-8,
-        refUC=None,
-        shiftUC=np.zeros(3),
         symmetries=None,
         fname="trace_all.dat",
     ):
@@ -1276,12 +1307,6 @@ class BandStructure:
         degen_thresh : float, default=1e-8
             Threshold energy used to decide whether wave-functions are
             degenerate in energy.
-        refUC : array, default=None
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array, default=np.zeros(3)
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
         symmetries : list, default=None
             Index of symmetry operations whose traces will be printed. 
         fname : str, default=trace_all.dat
@@ -1299,9 +1324,7 @@ class BandStructure:
         f.write(
             "\n".join(
                 ("#" + l)
-                for l in self.spacegroup.write_trace(
-                    refUC=refUC, shiftUC=shiftUC
-                ).split("\n")
+                for l in self.spacegroup.write_trace().split("\n")
             )
             + "\n\n"
         )
