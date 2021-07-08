@@ -893,20 +893,26 @@ class SpaceGroup():
         """
         # Set the tranformation to convenctional cell.
         flag = False
-        if refUC_cli and shiftUC_cli:  # Both specified in CLI.
-            refUC = np.array(refUC_cli.split(","), dtype=float).reshape((3, 3))
-            shiftUC = np.array(shiftUC_cli.split(","), dtype=float).reshape(3)
+        if type(refUC_cli) is str :
+            refUC_cli = np.array(refUC_cli.split(","), dtype=float).reshape((3, 3)) 
+        if type(shiftUC_cli) is str :
+            shiftUC_cli = np.array(shiftUC_cli.split(","), dtype=float).reshape(3)
+        refUC_cli_bool   = refUC_cli   is not None
+        shiftUC_cli_bool = shiftUC_cli is not None
+        if refUC_cli_bool and shiftUC_cli_bool:  # Both specified in CLI.
+            refUC = refUC_cli
+            shiftUC = shiftUC_cli
             print('refUC and shiftUC read from CLI')
             return refUC, shiftUC
-        elif refUC_cli and not shiftUC_cli:  # shiftUC not given in CLI.
-            refUC = np.array(refUC_cli.split(","), dtype=float).reshape((3, 3))
+        elif refUC_cli_bool and not shiftUC_cli_bool:  # shiftUC not given in CLI.
+            refUC = refUC_cli
             shiftUC = np.zeros(3, dtype=float)
             print(('refUC was specified in CLI, but shiftUC was not. Taking '
                    'shiftUC=(0,0,0).'))
             return refUC, shiftUC
-        elif not refUC_cli and shiftUC_cli:  # refUC not given in CLI.
+        elif not refUC_cli_bool and shiftUC_cli_bool:  # refUC not given in CLI.
             refUC = np.eye(3, dtype=float)
-            shiftUC = np.array(shiftUC_cli.split(","), dtype=float).reshape(3)
+            shiftUC =  shiftUC_cli
             print(('shitfUC was specified in CLI, but refUC was not. Taking '
                    '3x3 identity matrix as refUC.'))
             return refUC, shiftUC
