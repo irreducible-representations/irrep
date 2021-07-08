@@ -868,7 +868,7 @@ class SpaceGroup():
         refUC_lib : array
             Obtained via spglib.
         shiftUC_lib : array
-            Obtained via splib. It may not be the shift taking the 
+            Obtained via spglib. It may not be the shift taking the
             origin to the position adopted in the tables (BCS). For 
             example, origin choice 1 of ITA is adopted in spglib for 
             centrosymmetric groups, while origin choice 2 in BCS.
