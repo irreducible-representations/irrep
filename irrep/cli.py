@@ -24,6 +24,7 @@ import numpy as np
 import datetime
 import math
 import click
+import json
 
 from .spacegroup import SpaceGroup
 from .bandstructure import BandStructure
@@ -255,6 +256,8 @@ def cli(
     except Exception as err:
         print(err)
         preline = ""
+    json_data = {}
+    json_data ["hello"]= "world"
 
     bandstr = BandStructure(
         fWAV=fwav,
@@ -272,7 +275,8 @@ def cli(
         refUC = refuc,
         shiftUC = shiftuc
     )
-    bandstr.spacegroup.show(symmetries=symmetries)
+
+    json_data ["spacegroup"] = bandstr.spacegroup.show(symmetries=symmetries)
 
     if onlysym:
         exit()
@@ -378,3 +382,5 @@ def cli(
             with open(fname, "w") as f:
                 f.write(sub.write_bands())
             sub.write_trace_all(degenthresh, fname=fname1)
+
+    open("irrep-output.json","w").write(json.dumps(json_data))
