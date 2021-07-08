@@ -82,9 +82,9 @@ class BandStructure:
         `True` if wave functions are spinors, `False` if they are scalars. It 
         will be read from DFT files.
     efermi : float
-        Fermi-energy. If input `EF` was set in CLI, it will take its value. Else, the 
-        code will try to read it from DFT files (except if `code=vasp`) and 
-        set it to 0 if it could not.
+        Fermi-energy. If user set a number as `EF` in CLI, it will be used. If 
+        `EF` was set to `auto`, it will try to parse it and set to 0.0 if it 
+        could not.
     Ecut0 : float
         Plane-wave cutoff (in eV) used in DFT calulations. Always read from 
         DFT files. Insignificant if `code`='wannier90'.
@@ -116,7 +116,7 @@ class BandStructure:
         kplist=None,
         spinor=None,
         code="vasp",
-        EF=None,
+        EF='0.0',
         onlysym=False,
         spin_channel=None,
         refUC = None,
@@ -156,7 +156,7 @@ class BandStructure:
         IBend=None,
         kplist=None,
         spinor=None,
-        EF=None,
+        EF='0.0',
         onlysym=False,
         refUC=None,
         shiftUC=None,
@@ -180,7 +180,7 @@ class BandStructure:
             List of indices of k-points to be considered.
         spinor : bool, default=None
             `True` if wave functions are spinors, `False` if they are scalars.
-        EF : float, default=None
+        EF : str, default='0.0'
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
@@ -199,8 +199,20 @@ class BandStructure:
         self.spinor = spinor
         if onlysym:
             return
-        self.efermi = 0.0 if EF is None else EF
-        print("Efermi = ", self.efermi, EF)
+
+        if EF.lower() == "auto":
+            self.efermi = 0.0
+            msg = " (Fermi-energy not found in WAVECAR)"
+        else:
+            try:
+                self.efermi = float(EF)
+                msg = ""
+            except:
+                raise RuntimeError(
+                        ("Invalid value for keyword EF. It must be "
+                         "a number or 'auto'")
+                        )
+        print("Efermi = {:.4f} eV".format(self.efermi) + msg)
         WCF = WAVECARFILE(fWAV)
         # RECLENGTH=3 # the length of a record in WAVECAR. It is defined in the
         # first record, so let it be 3 fo far"
@@ -280,7 +292,7 @@ class BandStructure:
         IBstart=None,
         IBend=None,
         kplist=None,
-        EF=None,
+        EF='0.0',
         onlysym=False,
         refUC=None,
         shiftUC=None,
@@ -300,7 +312,7 @@ class BandStructure:
             Last band to be considered.
         kplist : , default=None
             List of indices of k-points to be considered.
-        EF : float, default=None
+        EF : str, default='0.0'
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
@@ -320,7 +332,18 @@ class BandStructure:
         )
         if onlysym:
             return
-        self.efermi = header.efermi * Hartree_eV if EF is None else EF
+        if EF.lower() == "auto":
+            self.efermi = header.efermi * Hartree_eV
+        else:
+            try:
+                self.efermi = float(EF)
+            except:
+                raise RuntimeError(
+                        ("Invalid value for keyword EF. It must be "
+                         "a number or 'auto'")
+                        )
+        print("Efermi: {:.4f} eV".format(self.efermi))
+
         #        self.spacegroup.show()
 
         #        global fWFK
@@ -396,7 +419,7 @@ class BandStructure:
         IBstart=None,
         IBend=None,
         kplist=None,
-        EF=None,
+        EF='0.0',
         onlysym=False,
         refUC=None,
         shiftUC=None,
@@ -417,7 +440,7 @@ class BandStructure:
             Last band to be considered.
         kplist : , default=None
             List of indices of k-points to be considered.
-        EF : float, default=None
+        EF : str, default='0.0'
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
@@ -519,20 +542,23 @@ class BandStructure:
         NBin = get_param("num_bands", int)
         #        print ("nbands=",NBin)
         self.spinor = str2bool(get_param("spinors", str))
-        if EF is None:
+
+        if EF.lower() == "auto":
             try:
                 self.efermi = (
-                    get_param("fermi_energy", float, 0.0) if EF is None else EF
-                )
-            except Exception as err:
-                print(
-                    "WARNING : fermi_energy not found.Setting as zero : `{}`".format(
-                        err
+                    get_param("fermi_energy", float, 0.0)
                     )
-                )
-                self.efermi = 0
+            except:
+                print("WARNING : fermi-energy not found. Setting it as zero")
         else:
-            self.efermi = EF
+            try:
+                self.efermi = float(EF)
+            except:
+                raise RuntimeError(
+                        ("Invalid value for keyword EF. It must be "
+                         "a number or 'auto'")
+                        )
+        print("Efermi = {:.4f} eV".format(self.efermi))
 
         NK = np.prod(np.array(get_param("mp_grid", str).split(), dtype=int))
 
@@ -706,7 +732,7 @@ class BandStructure:
         IBstart=None,
         IBend=None,
         kplist=None,
-        EF=None,
+        EF='0.0',
         onlysym=False,
         spin_channel=None,
         refUC=None,
@@ -728,7 +754,7 @@ class BandStructure:
             Last band to be considered.
         kplist : , default=None
             List of indices of k-points to be considered.
-        EF : float, default=None
+        EF : str, default='0.0'
             Fermi-energy.
         onlysym : bool, default=False
             Exit after printing info about space-group.
@@ -830,11 +856,26 @@ class BandStructure:
             * np.pi
             / np.linalg.det(self.Lattice)
         )
-        try:
-            self.efermi = float(bandstr.find("fermi_energy").text) * Hartree_eV
-        except Exception as err:
-            print("WARNING : fermi_energy not found.Setting as zero : `{}`".format(err))
-            self.efermi = 0
+        
+        if EF.lower() == "auto":
+            try:
+                self.efermi = (
+                               float(bandstr.find("fermi_energy").text) 
+                               * Hartree_eV
+                               )
+            except:
+                print("WARNING : fermi-energy not found. Setting it as zero")
+                self.efermi = 0.0
+        else:
+            try:
+                self.efermi = float(EF)
+            except:
+                raise RuntimeError(
+                        ("Invalid value for keyword EF. It must be "
+                         "a number or 'auto'")
+                        )
+        print("Efermi: {:.4f} eV".format(self.efermi))
+
         kpall = bandstr.findall("ks_energies")
         NK = len(kpall)
         if kplist is None:
