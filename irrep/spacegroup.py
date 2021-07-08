@@ -577,7 +577,7 @@ class SpaceGroup():
         self.RecLattice = np.array([np.cross(self.Lattice[(i + 1) %
                                                           3], self.Lattice[(i + 2) %
                                                                            3]) for i in range(3)]) * 2 * np.pi / np.linalg.det(self.Lattice)
-        print("\n Reciprocal lattice:\n", self.RecLattice)
+        print(" Reciprocal lattice:\n", self.RecLattice)
 
         # Determine refUC and shiftUC according to entries in CLI
         self.symmetries_tables = IrrepTable(self.number, self.spinor).symmetries
@@ -590,12 +590,19 @@ class SpaceGroup():
 
         # Check matching of symmetries in refUC
         ind, dt, signs = self.match_symmetries(signs=self.spinor)
-        print(
-              "refUC=\n{}"
-              .format(self.refUC)
-              +"\nshiftUC=\n {}"
-              .format(self.shiftUC)
+
+        # Print transformation and basis vectors in both settings
+        print("\nThe transformation to the convenctional cell is given "
+              + "by:\n"
+              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[0]]))
+              + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[1]]), self.shiftUC)
+              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[2]]))
               )
+        print("Lattice vectors of DFT (p) and convenctional (a) cells:")
+        for i in range(3):
+            l_str = "p({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice[i]))
+            r_str = "a({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice.dot(self.refUC.T)[i]))
+            print("    ".join((l_str,r_str)))
 
         # Sort symmetries like in tables
         args = np.argsort(ind)
@@ -912,7 +919,6 @@ class SpaceGroup():
             return refUC, shiftUC
         else:  # Neither specifiend in CLI.
             refUC = refUC_lib.T  # IrRep's treats vecs as column array
-            print(refUC, shiftUC_lib)
             found = False
 
             # Check if the group is centrosymmetric
@@ -924,7 +930,6 @@ class SpaceGroup():
             if inv is None:  # Not centrosymmetric
                 for r_cent in self.vecs_centering():
                     shiftUC = shiftUC_lib + r_cent
-                    print(shiftUC)
                     try:
                         ind, dt, signs = self.match_symmetries(
                                             refUC,

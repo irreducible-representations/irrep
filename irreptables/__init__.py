@@ -346,7 +346,7 @@ class IrrepTable:
             elif l[0].lower() == "spinor":
                 assert str2bool(l[1]) == self.spinor
             elif l[0].lower() == "symmetries":
-                print("reading symmetries from tables")
+                print("Reading symmetries from tables")
                 self.symmetries = []
                 while len(self.symmetries) < self.nsym:
                     l = lines.pop()
