@@ -23,7 +23,9 @@ import sys
 import numpy as np
 import datetime
 import math
+
 import click
+from monty.serialization import loadfn
 
 from .spacegroup import SpaceGroup
 from .bandstructure import BandStructure
@@ -31,8 +33,35 @@ from .aux import str2bool, str2list, short
 from . import __version__ as version
 
 
+class LoadContextFromConfig(click.Command):
+    """
+    Custom class to allow supplying command context from an
+    input file. Thanks to https://stackoverflow.com/a/46391887
+    for concept.
+    """
+
+    def invoke(self, ctx):
+
+        config_file = ctx.params["config"]
+
+        if config_file is not None:
+
+            # load from either a .yml or .json
+            config_data = loadfn(config_file)
+
+            # sanitize inputs to be all lower-case
+            config_data = {k.lower(): v for k, v in config_data.items()}
+
+            for param, value in ctx.params.items():
+                if param in config_data:
+                    ctx.params[param] = config_data[param]
+
+        return super(LoadContextFromConfig, self).invoke(ctx)
+
+
 @click.version_option(version)
 @click.command(
+    cls=LoadContextFromConfig,
     help="""
 
 \b
@@ -204,6 +233,8 @@ do not hesitate to contact the author:
     type=str, 
     default='tognuplot',
     help="Suffix to name files containing data for band plotting. Default: tognuplot")
+@click.option("-config", type=click.Path(),
+              help="Define irrep inputs from a configuration file in YAML or JSON format.")
 def cli(
     ecut,
     fwav,
@@ -229,15 +260,19 @@ def cli(
     groupkramers,
     symmetries,
     suffix,
+    config
 ):
     """
     Defines the "irrep" command-line tool interface.
     """
     # TODO: later, this can be split up into separate sub-commands (e.g. for zak, etc.)
 
-    # print("The code was called with the following command-line options:")
-    # for k, v in locals().items():
-    #     print("{}\t{}".format(k, v))
+    # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
+    if refuc:
+        refuc = np.array(refuc.split(","), dtype=float).reshape((3, 3))
+    if shiftuc:
+        shiftuc = np.array(shiftuc.split(","), dtype=float).reshape(3)
+
 
     # parse input arguments into lists if supplied
     if symmetries:

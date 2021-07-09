@@ -1,0 +1,9 @@
+{
+"spinor": true,
+"code": "vasp",
+"kpnames": "T,GM,F,L",
+"Ecut": 50,
+"EF": "5.2156",
+"IBstart": 5,
+"IBend": 10 
+}
