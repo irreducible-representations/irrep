@@ -1,0 +1,5 @@
+spinor: True
+Ecut: 50 
+code: "vasp"
+kpoints: "1"
+kpnames: "GM"
