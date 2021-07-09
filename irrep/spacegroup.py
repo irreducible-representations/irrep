@@ -891,12 +891,7 @@ class SpaceGroup():
             translations of the primitive cell).
 
         """
-        # Set the tranformation to conventional cell.
-        flag = False
-#        if isinstance(shiftUC_cli, str):
-#            refUC_cli = np.array(refUC_cli.split(","), dtype=float).reshape((3, 3)) 
-#        if isinstance(shiftUC_cli, str):
-#            shiftUC_cli = np.array(shiftUC_cli.split(","), dtype=float).reshape(3)
+        # Give preference to CLI input
         refUC_cli_bool = refUC_cli is not None
         shiftUC_cli_bool = shiftUC_cli is not None
         if refUC_cli_bool and shiftUC_cli_bool:  # Both specified in CLI.
