@@ -1054,7 +1054,7 @@ class Kpoint:
                     }
                     for ch in char
                 ]
-                json_data["irreps"] = irreps
+                json_data["irreps"] = [{ir:(val.real,val.imag) for ir,val in irr.items()} for irr in irreps]
             except KeyError as ke:
                 print(ke)
                 print("irreptable:", irreptable)
