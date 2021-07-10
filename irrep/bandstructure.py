@@ -13,7 +13,7 @@
 ##                                                               #
 ##  Written by Stepan Tsirkin, University of Zurich.             #
 ##  e-mail: stepan.tsirkin@physik.uzh.ch                         #
-##################################################################{0:8.4f}   {1:8.4f}  ".format(
+##################################################################
 
 
 import copy

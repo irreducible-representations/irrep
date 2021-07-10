@@ -601,7 +601,7 @@ class SpaceGroup():
         self.RecLattice = np.array([np.cross(self.Lattice[(i + 1) %
                                                           3], self.Lattice[(i + 2) %
                                                                            3]) for i in range(3)]) * 2 * np.pi / np.linalg.det(self.Lattice)
-        print("\n Reciprocal lattice:\n", self.RecLattice)
+        print(" Reciprocal lattice:\n", self.RecLattice)
 
         # Determine refUC and shiftUC according to entries in CLI
         self.symmetries_tables = IrrepTable(self.number, self.spinor).symmetries
@@ -614,12 +614,19 @@ class SpaceGroup():
 
         # Check matching of symmetries in refUC
         ind, dt, signs = self.match_symmetries(signs=self.spinor)
-        print(
-              "refUC=\n{}"
-              .format(self.refUC)
-              +"\nshiftUC=\n {}"
-              .format(self.shiftUC)
+
+        # Print transformation and basis vectors in both settings
+        print("\nThe transformation to the convenctional cell is given "
+              + "by:\n"
+              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[0]]))
+              + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[1]]), self.shiftUC)
+              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[2]]))
               )
+        print("Lattice vectors of DFT (p) and convenctional (a) cells:")
+        for i in range(3):
+            l_str = "p({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice[i]))
+            r_str = "a({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice.dot(self.refUC.T)[i]))
+            print("    ".join((l_str,r_str)))
 
         # Sort symmetries like in tables
         args = np.argsort(ind)
@@ -882,7 +889,7 @@ class SpaceGroup():
 
     def determine_basis_transf(self, refUC_cli, shiftUC_cli, refUC_lib, shiftUC_lib):
         """ 
-        Determine basis transformation to convenctional cell. Priority 
+        Determine basis transformation to conventional cell. Priority
         is given to the transformation set by the user in CLI.
 
         Parameters
@@ -896,7 +903,7 @@ class SpaceGroup():
         refUC_lib : array
             Obtained via spglib.
         shiftUC_lib : array
-            Obtained via splib. It may not be the shift taking the 
+            Obtained via spglib. It may not be the shift taking the
             origin to the position adopted in the tables (BCS). For 
             example, origin choice 1 of ITA is adopted in spglib for 
             centrosymmetric groups, while origin choice 2 in BCS.
@@ -919,40 +926,39 @@ class SpaceGroup():
             translations of the primitive cell).
 
         """
-        # Set the tranformation to convenctional cell.
-        flag = False
-        if refUC_cli and shiftUC_cli:  # Both specified in CLI.
-            refUC = np.array(refUC_cli.split(","), dtype=float).reshape((3, 3))
-            shiftUC = np.array(shiftUC_cli.split(","), dtype=float).reshape(3)
+        # Give preference to CLI input
+        refUC_cli_bool = refUC_cli is not None
+        shiftUC_cli_bool = shiftUC_cli is not None
+        if refUC_cli_bool and shiftUC_cli_bool:  # Both specified in CLI.
+            refUC = refUC_cli
+            shiftUC = shiftUC_cli
             print('refUC and shiftUC read from CLI')
             return refUC, shiftUC
-        elif refUC_cli and not shiftUC_cli:  # shiftUC not given in CLI.
-            refUC = np.array(refUC_cli.split(","), dtype=float).reshape((3, 3))
+        elif refUC_cli_bool and not shiftUC_cli_bool:  # shiftUC not given in CLI.
+            refUC = refUC_cli
             shiftUC = np.zeros(3, dtype=float)
             print(('refUC was specified in CLI, but shiftUC was not. Taking '
                    'shiftUC=(0,0,0).'))
             return refUC, shiftUC
-        elif not refUC_cli and shiftUC_cli:  # refUC not given in CLI.
+        elif not refUC_cli_bool and shiftUC_cli_bool:  # refUC not given in CLI.
             refUC = np.eye(3, dtype=float)
-            shiftUC = np.array(shiftUC_cli.split(","), dtype=float).reshape(3)
+            shiftUC = shiftUC_cli
             print(('shitfUC was specified in CLI, but refUC was not. Taking '
                    '3x3 identity matrix as refUC.'))
             return refUC, shiftUC
         else:  # Neither specifiend in CLI.
             refUC = refUC_lib.T  # IrRep's treats vecs as column array
-            print(refUC, shiftUC_lib)
             found = False
 
             # Check if the group is centrosymmetric
             inv = None
             for sym in self.symmetries:
-                if (np.allclose(sym.rotation, -np.eye(3))):
+                if np.allclose(sym.rotation, -np.eye(3)):
                     inv = sym
 
             if inv is None:  # Not centrosymmetric
                 for r_cent in self.vecs_centering():
                     shiftUC = shiftUC_lib + r_cent
-                    print(shiftUC)
                     try:
                         ind, dt, signs = self.match_symmetries(
                                             refUC,
