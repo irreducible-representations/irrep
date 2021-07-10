@@ -998,10 +998,13 @@ class Kpoint:
             band in the range of considered bands coincides with the last band 
             calculated by DFT, it will be set to `numpy.NaN`.
         """
+        json_data = {}
         if symmetries is None:
             sym = {s.ind: s for s in self.symmetries}
         else:
             sym = {s.ind: s for s in self.symmetries if s.ind in symmetries}
+        json_data ["symmetries"] = list(sym.keys())
+    
         
         # Generate array char, where each row corresponds to a sym. op
         # and every column to a wave function
@@ -1029,9 +1032,13 @@ class Kpoint:
         E = np.array(
             [self.Energy[start:end].mean() for start, end in zip(borders, borders[1:])]
         )
+        json_data["energries"] = E
+        json_data["caharacters"] = char
+
         dim = np.array([end - start for start, end in zip(borders, borders[1:])])
         if irreptable is None:
             irreps = ["None"] * (len(borders) - 1)
+            json_data["irreps"] = None 
         else:
             try:
                 # irreps is a list. Each element is a dict corresponding to a 
@@ -1047,6 +1054,7 @@ class Kpoint:
                     }
                     for ch in char
                 ]
+                json_data["irreps"] = irreps
             except KeyError as ke:
                 print(ke)
                 print("irreptable:", irreptable)
@@ -1081,14 +1089,19 @@ class Kpoint:
                 k = np.round(refUC.dot(self.K), 5)
                 char_refUC[:,i] *= (sym[ind].sign 
                                      * np.exp(-2j*np.pi*dt.dot(k)))
+
+        json_data["caharacters_refUC"] = char_refUC
         if np.allclose(char, char_refUC, rtol=0.0, atol=1e-4):
             write_refUC = False  # Tr identical in both unit cells
+            json_data["caharacters_refUC_is_the_same"] = True
         else:
             write_refUC = True   # Write traces in refUC
+            json_data["caharacters_refUC_is_the_same"] = False
             print(("For each irrep, traces of symmetries in the calculation "
                    "unit cell will be printed first and traces of symmetries "
                    "in tables will be printed in the line below")
                  )
+        json_data["dimensions"] = dim
 
         irreplen = max(len(irr) for irr in irreps)  # len of largest line
         if irreplen % 2 == 1:
@@ -1184,7 +1197,7 @@ class Kpoint:
                 except IndexError:
                     pass
 
-        return NBANDINV, self.Energy[-1], self.upper
+        return NBANDINV, self.Energy[-1], self.upper , json_data
 
     def write_trace(self, degen_thresh=1e-8, symmetries=None, efermi=0.0):
         """

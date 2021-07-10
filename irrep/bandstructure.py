@@ -959,6 +959,8 @@ class BandStructure:
         #        self.spacegroup.show(refUC=refUC,shiftUC=shiftUC)
         #        self.spacegroup.show2(refUC=refUC)
         kpline = self.KPOINTSline()
+        json_data = {}
+        json_data[ "kpoints_line"] = kpline
         try:
             pFile = open(plotFile, "w")
         except BaseException:
@@ -967,10 +969,11 @@ class BandStructure:
         GAP = np.Inf
         Low = -np.Inf
         Up = np.inf
+        json_data["k-points" ] = []
         if kpnames is not None:
             for kpname, KP in zip(kpnames, self.kpoints):
                 irreps = self.spacegroup.get_irreps_from_table(kpname, KP.K)
-                ninv, low, up = KP.write_characters(
+                ninv, low, up , kdata = KP.write_characters(
                     degen_thresh,
                     irreptable=irreps,
                     symmetries=symmetries,
@@ -982,13 +985,16 @@ class BandStructure:
                     refUC=self.spacegroup.refUC,
                     shiftUC=self.spacegroup.shiftUC
                 )
+                kdata["kpname"] = kpname
+                json_data["k-points" ].append(kdata)
+
                 NBANDINV += ninv
                 GAP = min(GAP, up - low)
                 Up = min(Up, up)
                 Low = max(Low, low)
         else:
             for KP, kpl in zip(self.kpoints, kpline):
-                ninv, low, up = KP.write_characters(
+                ninv, low, up , kdata = KP.write_characters(
                     degen_thresh,
                     symmetries=symmetries,
                     preline=preline,
@@ -996,6 +1002,8 @@ class BandStructure:
                     plotFile=pFile,
                     kpl=kpl,
                 )
+                kdata["kp in line"] = kpl
+                json_data["k-points" ].append(kdata)
                 NBANDINV += ninv
                 GAP = min(GAP, up - low)
                 Up = min(Up, up)
@@ -1008,12 +1016,19 @@ class BandStructure:
                 "  Z4= ",
                 int(NBANDINV / 2) % 4,
             )
+            json_data["number of inversions-odd Kramers pairs"]  = int(NBANDINV / 2)
+            json_data["Z4"] = int(NBANDINV / 2) % 4,
         else:
             print("number of inversions-odd states : ", NBANDINV)
+            json_data["number of inversions-odd states"]  = NBANDINV
 
         #        print ("Total number of inversion-odd Kramers pairs IN THE LISTED KPOINTS: ",NBANDINV,"  Z4= ",NBANDINV%4)
         print("Minimal direct gap:", GAP, " eV")
         print("indirect  gap:", Up - Low, " eV")
+        json_data["indirect gap (eV)"] =  Up-Low
+        json_data["Minimal direct gap (eV)"] =  GAP
+       
+        return json_data
 
     def getNbands(self):
         """
@@ -1314,6 +1329,11 @@ class BandStructure:
         """
         f = open(fname, "w")
         kpline = self.KPOINTSline()
+        json_data = {}
+        json_data [ "kpoints_line" ] = kpline
+        json_data [ "num_bands_occ" ] = self.getNbands()
+        json_data [ "spinor" ] = self.spinor()
+
         f.write(
             (
                 "# {0}  # Number of bands below the Fermi level\n"
@@ -1334,6 +1354,7 @@ class BandStructure:
                     degen_thresh, symmetries=symmetries, efermi=self.efermi, kpline=KPL
                 )
             )
+
 
     def KPOINTSline(self, kpred=None, breakTHRESH=0.1):
         """

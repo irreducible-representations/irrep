@@ -331,7 +331,8 @@ class SymmetryOperation():
             self.axis.round(6), self.angle_str, self.inversion))
         print('sign=',self.sign)  # test
         json_data["axis"]  = self.axis
-        json_data["angle"] = self.angle_str
+        json_data["angle_str"] = self.angle_str
+        json_data["angle_pi"] = self.angle/np.pi
         json_data["inversion"] = self.inversion
         json_data["sign"] = self.sign
         return json_data
@@ -647,7 +648,7 @@ class SpaceGroup():
             self.number, 
             len(self.symmetries))
             )
-        json_data = {"name" : self.name, "number" : self.number , "num_symmetries" : len(self.symmetries), "symmetries" : {}  }
+        json_data = {"name" : self.name, "number" : self.number , "spinor":self.spinor, "num_symmetries" : len(self.symmetries), "symmetries" : {}  }
 
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
