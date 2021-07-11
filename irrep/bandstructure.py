@@ -1329,10 +1329,6 @@ class BandStructure:
         """
         f = open(fname, "w")
         kpline = self.KPOINTSline()
-        json_data = {}
-        json_data [ "kpoints_line" ] = kpline
-        json_data [ "num_bands_occ" ] = self.getNbands()
-        json_data [ "spinor" ] = self.spinor()
 
         f.write(
             (

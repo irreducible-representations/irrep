@@ -1032,8 +1032,8 @@ class Kpoint:
         E = np.array(
             [self.Energy[start:end].mean() for start, end in zip(borders, borders[1:])]
         )
-        json_data["energries"] = E
-        json_data["caharacters"] = char
+        json_data["energies"] = E
+        json_data["characters"] = char
 
         dim = np.array([end - start for start, end in zip(borders, borders[1:])])
         if irreptable is None:
@@ -1090,13 +1090,13 @@ class Kpoint:
                 char_refUC[:,i] *= (sym[ind].sign 
                                      * np.exp(-2j*np.pi*dt.dot(k)))
 
-        json_data["caharacters_refUC"] = char_refUC
+        json_data["characters_refUC"] = char_refUC
         if np.allclose(char, char_refUC, rtol=0.0, atol=1e-4):
             write_refUC = False  # Tr identical in both unit cells
-            json_data["caharacters_refUC_is_the_same"] = True
+            json_data["characters_refUC_is_the_same"] = True
         else:
             write_refUC = True   # Write traces in refUC
-            json_data["caharacters_refUC_is_the_same"] = False
+            json_data["characters_refUC_is_the_same"] = False
             print(("For each irrep, traces of symmetries in the calculation "
                    "unit cell will be printed first and traces of symmetries "
                    "in tables will be printed in the line below")
