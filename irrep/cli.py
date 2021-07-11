@@ -25,7 +25,7 @@ import datetime
 import math
 
 import click
-from monty.serialization import loadfn
+from monty.serialization import dumpfn, loadfn
 
 from .spacegroup import SpaceGroup
 from .bandstructure import BandStructure
@@ -290,6 +290,7 @@ def cli(
     except Exception as err:
         print(err)
         preline = ""
+    json_data = {}
 
     bandstr = BandStructure(
         fWAV=fwav,
@@ -307,7 +308,8 @@ def cli(
         refUC = refuc,
         shiftUC = shiftuc
     )
-    bandstr.spacegroup.show(symmetries=symmetries)
+
+    json_data ["spacegroup"] = bandstr.spacegroup.show(symmetries=symmetries)
 
     if onlysym:
         exit()
@@ -320,6 +322,8 @@ def cli(
     subbands = {(): bandstr}
 
     if isymsep is not None:
+        json_data["separated by symmetry"]=True
+        json_data["separating symmetries"]=isymsep
         for isym in isymsep:
             print("Separating by symmetry operation # ", isym)
             subbands = {
@@ -329,6 +333,9 @@ def cli(
                     isym, degen_thresh=degenthresh, groupKramers=groupkramers
                 ).items()
             }
+    else :
+        json_data["separated by symmetry"]=False
+        
 
     if zak:
         for k in subbands:
@@ -362,6 +369,7 @@ def cli(
         degen_thresh=degenthresh,
         symmetries=symmetries,
     )
+    json_data["characters_and_irreps"]=[]
     for k, sub in subbands.items():
         if isymsep is not None:
             print(
@@ -371,15 +379,18 @@ def cli(
                 ),
             )
         plotfile=None # being implemented, not finished yet...
-        sub.write_characters(
+        characters = sub.write_characters(
             degen_thresh=degenthresh,
             symmetries=symmetries,
             kpnames=kpnames,
             preline=preline,
             plotFile=plotfile,
         )
+        json_data["characters_and_irreps"].append( {"symmetry_eigenvalues":k , "subspace": characters  }  )
+#        json_data["characters_and_irreps"].append( [k ,characters  ]  )
 
     if plotbands:
+        json_data["characters_and_irreps"] = {}
         print("plotbands = True --> writing bands")
         for k, sub in subbands.items():
             if isymsep is not None:
@@ -413,3 +424,5 @@ def cli(
             with open(fname, "w") as f:
                 f.write(sub.write_bands())
             sub.write_trace_all(degenthresh, fname=fname1)
+
+    dumpfn(json_data,"irrep-output.json",indent=4)

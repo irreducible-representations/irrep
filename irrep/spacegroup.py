@@ -234,16 +234,24 @@ class SymmetryOperation():
         shiftUC : array, default=np.zeros(3)
             Translation taking the origin of the unit cell used in the DFT 
             calculation to that of the standard setting.
+            
+        Returns
+        -------
+        json_data : `json` object
+            Object with output structured in `json` format.
         """
+
+        json_data = {} 
         if (not np.allclose(refUC, np.eye(3)) or
             not np.allclose(shiftUC, np.zeros(3))):
             write_ref = True  # To avoid writing this huge block again
         else:
             write_ref = False
-
+        json_data ["calculation cell coincides with reference cell"] =  not write_ref
         # Print header
         print("\n # ", self.ind)
         # Print rotation part
+        json_data ["rotation_matrix"]=self.rotation
         rotstr = [s +
                   " ".join("{0:3d}".format(x) for x in row) +
                   t for s, row, t in zip(["rotation : |", " " *
@@ -254,6 +262,7 @@ class SymmetryOperation():
         if write_ref:
             fstr = ("{0:3d}")
             R = self.rotation_refUC(refUC)
+            json_data ["rotation_matrix_refUC"]=R
             rotstr1 = [" " *
                        5 +
                        s +
@@ -265,6 +274,10 @@ class SymmetryOperation():
                                               R,
                                               [" |", " |", " |"])]
             rotstr = [r + r1 for r, r1 in zip(rotstr, rotstr1)]
+        else: 
+            json_data ["rotation_matrix_refUC"]=self.rotation
+
+
         print("\n".join(rotstr))
 
         # Print spinor transformation matrix
@@ -291,6 +304,9 @@ class SymmetryOperation():
                        ]
 
             print("\n".join([row + "    " + row1 for row,row1 in zip(spinstr, spinstr1)]))
+            json_data ["spinor_rotation_matrix"]=self.spinor_rotation
+            json_data ["spinor_rotation_matrix_refUC"]=self.spinor_rotation*self.sign
+
 
         # Print translation part
         trastr = ("translation :  [ " 
@@ -299,19 +315,32 @@ class SymmetryOperation():
                              ) 
                   + " ] "
                   )
+        json_data ["translation"]=self.translation
+
         if write_ref:
+            _t=self.translation_refUC(refUC,shiftUC)
             trastr += ("    translation : [ "
                        + " ".join(
                           "{0:8.4f}".format(x % 1) 
-                          for x in self.translation_refUC(refUC,shiftUC).round(6)) 
+                          for x in _t.round(6)) 
                        + " ] \n"
                        + " " * 52 + "(refUC)"  # Lower line
                        )
+            json_data ["translation_refUC"]=_t
+        else: 
+            json_data ["translation_refUC"]=self.translation
+
         print(trastr)
 
         print("axis: {0} ; angle = {1}, inversion : {2} ".format(
             self.axis.round(6), self.angle_str, self.inversion))
         print('sign=',self.sign)  # test
+        json_data["axis"]  = self.axis
+        json_data["angle_str"] = self.angle_str
+        json_data["angle_pi"] = self.angle/np.pi
+        json_data["inversion"] = self.inversion
+        json_data["sign"] = self.sign
+        return json_data
 
     def str(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
@@ -622,6 +651,11 @@ class SpaceGroup():
             Index of symmetry operations whose description will be printed. 
             Run `IrRep` with flag `onlysym` to check the index corresponding 
             to each symmetry operation.
+
+        Returns
+        -------
+        json_data : `json` object
+            Object with output structured in `json` format.
         """
         print('')
         print("\n ---------- INFORMATION ABOUT THE SPACE GROUP ---------- \n")
@@ -631,9 +665,13 @@ class SpaceGroup():
             self.number, 
             len(self.symmetries))
             )
+        json_data = {"name" : self.name, "number" : self.number , "spinor":self.spinor, "num_symmetries" : len(self.symmetries), "symmetries" : {}  }
+
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
-                symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
+                json_data["symmetries"][symop.ind]=symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
+
+        return json_data
 
 
 #  def show2(self,refUC=None,shiftUC=np.zeros(3)):
