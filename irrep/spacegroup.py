@@ -234,6 +234,11 @@ class SymmetryOperation():
         shiftUC : array, default=np.zeros(3)
             Translation taking the origin of the unit cell used in the DFT 
             calculation to that of the standard setting.
+            
+        Returns
+        -------
+        json_data : `json` object
+            Object with output structured in `json` format.
         """
 
         json_data = {} 
@@ -646,6 +651,11 @@ class SpaceGroup():
             Index of symmetry operations whose description will be printed. 
             Run `IrRep` with flag `onlysym` to check the index corresponding 
             to each symmetry operation.
+
+        Returns
+        -------
+        json_data : `json` object
+            Object with output structured in `json` format.
         """
         print('')
         print("\n ---------- INFORMATION ABOUT THE SPACE GROUP ---------- \n")

@@ -997,6 +997,8 @@ class Kpoint:
             First energy-level above the range of considered bands. If the last 
             band in the range of considered bands coincides with the last band 
             calculated by DFT, it will be set to `numpy.NaN`.
+        json_data : `json` object
+            Object with output structured in `json` format.
         """
         json_data = {}
         if symmetries is None:

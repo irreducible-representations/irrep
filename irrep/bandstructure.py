@@ -954,6 +954,11 @@ class BandStructure:
         plotFile : str, default=None
             Name of file in which energy-levels and corresponding irreps will be 
             written to later place irreps in a band structure plot.
+
+        Returns
+        -------
+        json_data : `json` object
+            Object with output structured in `json` format.
         """
         #        if refUC is not None:
         #        self.spacegroup.show(refUC=refUC,shiftUC=shiftUC)
