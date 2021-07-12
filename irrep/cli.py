@@ -159,6 +159,7 @@ do not hesitate to contact the author:
 @click.option(
     "-kpnames",
     type=str,
+    default=None,
     help="Comma-separated list of k-point names (as in the tables) with one entry per each "
     "value in the k-points list. Important! K-points is assumed to be an ordered list!",
 )
@@ -272,7 +273,14 @@ def cli(
         refuc = np.array(refuc.split(","), dtype=float).reshape((3, 3))
     if shiftuc:
         shiftuc = np.array(shiftuc.split(","), dtype=float).reshape(3)
-
+    
+    # Warning about kpnames
+    if kpnames is None:
+        print(("Warning: kpnames not specified. Only traces of "
+               "symmetry operations will be calculated. Remember that "
+               "kpnames must be specified to identify irreps"
+               )
+              )
 
     # parse input arguments into lists if supplied
     if symmetries:

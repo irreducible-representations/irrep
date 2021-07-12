@@ -627,10 +627,10 @@ class SpaceGroup():
               + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[1]]), self.shiftUC)
               + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[2]]))
               )
-        print("Lattice vectors of DFT (p) and convenctional (a) cells:")
+        print("Lattice vectors of DFT (a) and reference (c) cells:")
         for i in range(3):
-            l_str = "p({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice[i]))
-            r_str = "a({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice.dot(self.refUC.T)[i]))
+            l_str = "a({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice[i]))
+            r_str = "c({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice.dot(self.refUC.T)[i]))
             print("    ".join((l_str,r_str)))
 
         # Sort symmetries like in tables
