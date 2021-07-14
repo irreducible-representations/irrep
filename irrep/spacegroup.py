@@ -309,32 +309,30 @@ class SymmetryOperation():
 
 
         # Print translation part
-        trastr = ("translation :  [ " 
+        trastr = ("translation         :  [ " 
                   + " ".join("{0:8.4f}"
                              .format(x%1) for x in self.translation.round(6)
                              ) 
                   + " ] "
                   )
+        print(trastr)
         json_data ["translation"]=self.translation
 
         if write_ref:
             _t=self.translation_refUC(refUC,shiftUC)
-            trastr += ("    translation : [ "
-                       + " ".join(
-                          "{0:8.4f}".format(x % 1) 
-                          for x in _t.round(6)) 
-                       + " ] \n"
-                       + " " * 52 + "(refUC)"  # Lower line
-                       )
+            trastr = ("translation (refUC) :  [ " 
+                      + " ".join("{0:8.4f}"
+                                 .format(x%1) for x in _t.round(6)
+                                 )
+                  + " ] "
+                  )
+            print(trastr)
             json_data ["translation_refUC"]=_t
         else: 
             json_data ["translation_refUC"]=self.translation
 
-        print(trastr)
-
         print("axis: {0} ; angle = {1}, inversion : {2} ".format(
             self.axis.round(6), self.angle_str, self.inversion))
-        print('sign=',self.sign)  # test
         json_data["axis"]  = self.axis
         json_data["angle_str"] = self.angle_str
         json_data["angle_pi"] = self.angle/np.pi
