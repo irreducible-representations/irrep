@@ -248,8 +248,10 @@ class SymmetryOperation():
         else:
             write_ref = False
         json_data ["calculation cell coincides with reference cell"] =  not write_ref
+
         # Print header
-        print("\n # ", self.ind)
+        print("\n ### {} \n".format(self.ind))
+
         # Print rotation part
         json_data ["rotation_matrix"]=self.rotation
         rotstr = [s +
@@ -285,31 +287,31 @@ class SymmetryOperation():
             spinstr = [s +
                        " ".join("{0:6.3f}{1:+6.3f}j".format(x.real, x.imag) for x in row) +
                        t 
-                       for s, row, t in zip(["spinor rot.  : |",
-                                             " " * 15 + "|",
+                       for s, row, t in zip(["\nspinor rot.         : |",
+                                             " " * 22 + "|",
                                              ], 
                                              self.spinor_rotation, 
                                              [" |", " |"]
                                            )
-                      ]
-            spinstr1 = [s +
+                       ]
+            print("\n".join(spinstr))
+            spinstr = [s +
                        " ".join("{0:6.3f}{1:+6.3f}j".format(x.real, x.imag) for x in row) +
                        t 
-                       for s, row, t in zip(["spinor rot.  : |",
-                                             "  (refUC)      |"
+                       for s, row, t in zip(["spinor rot. (refUC) : |",
+                                             " " * 22 + "|",
                                              ], 
                                              self.spinor_rotation*self.sign, 
                                              [" |", " |"]
                                            )
                        ]
+            print("\n".join(spinstr))
 
-            print("\n".join([row + "    " + row1 for row,row1 in zip(spinstr, spinstr1)]))
             json_data ["spinor_rotation_matrix"]=self.spinor_rotation
             json_data ["spinor_rotation_matrix_refUC"]=self.spinor_rotation*self.sign
 
-
         # Print translation part
-        trastr = ("translation         :  [ " 
+        trastr = ("\ntranslation         :  [ " 
                   + " ".join("{0:8.4f}"
                              .format(x%1) for x in self.translation.round(6)
                              ) 
@@ -331,7 +333,7 @@ class SymmetryOperation():
         else: 
             json_data ["translation_refUC"]=self.translation
 
-        print("axis: {0} ; angle = {1}, inversion : {2} ".format(
+        print("\naxis: {0} ; angle = {1}, inversion : {2}\n".format(
             self.axis.round(6), self.angle_str, self.inversion))
         json_data["axis"]  = self.axis
         json_data["angle_str"] = self.angle_str

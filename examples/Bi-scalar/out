@@ -15,23 +15,22 @@ Primitive vectors :
  [0.237 0.237 0.237]] 
  Atom type indices: 
  [1 1]
-
  Reciprocal lattice:
  [[ 0.73107266  0.422085    0.28053649]
  [-0.73107266  0.422085    0.28053649]
  [ 0.         -0.84417     0.28053649]]
-reading symmetries from tables
-refUC (True) = [[ 0. -1.  1.]
- [ 1.  0. -1.]
- [-1. -1. -1.]]
-shiftUC (False) = None
+Reading symmetries from tables
 refUC was specified in CLI, but shiftUC was not. Taking shiftUC=(0,0,0).
-refUC=
-[[ 0. -1.  1.]
- [ 1.  0. -1.]
- [-1. -1. -1.]]
-shiftUC=
- [0. 0. 0.]
+
+The transformation to the convenctional cell is given by:
+        |   0.0000 -1.0000  1.0000 |
+refUC = |   1.0000  0.0000 -1.0000 |    shiftUC = [0. 0. 0.]
+        |  -1.0000 -1.0000 -1.0000 |
+
+Lattice vectors of DFT (a) and reference (c) cells:
+a(0)=[  4.2972  2.4810  7.4657 ]    c(0)=[  4.9847 -3.1684-14.2439 ]
+a(1)=[ -4.2972  2.4810  7.4657 ]    c(1)=[  4.9847-11.7629 -5.6495 ]
+a(2)=[  0.0000 -4.9620  7.4657 ]    c(2)=[ 12.4277 -7.4657 -2.5037 ]
 Efermi: 0.0000 eV
 lattice vectors:
  [[ 4.29723723  2.48101107  7.46567804]
@@ -50,114 +49,150 @@ Found cutoff:   500.000039 eV   Largest plane wave energy in K-point    1:   496
 
 Space group R-3m (# 166) has 12 symmetry operations  
 
- #  1
+ ### 1 
+
 rotation : |  1   0   0 |     rotation : |  1   0   0 |
            |  0   1   0 |      (refUC)   |  0   1   0 |
            |  0   0   1 |                |  0   0   1 |
-translation :  [   0.0000   0.0000   0.0000 ]     translation : [   0.0000   0.0000   0.0000 ] 
-                                                    (refUC)
-axis: [ 0.028867 -0.811382 -0.583803] ; angle =  0 , inversion : False 
-sign= 1
 
- #  2
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [ 0.028867 -0.811382 -0.583803] ; angle =  0 , inversion : False
+
+
+ ### 2 
+
 rotation : |  0   0   1 |     rotation : |  0  -1   0 |
            |  1   0   0 |      (refUC)   |  1  -1   0 |
            |  0   1   0 |                |  0   0   1 |
-translation :  [   0.0000   0.0000   0.0000 ]     translation : [   0.0000   0.0000   0.0000 ] 
-                                                    (refUC)
-axis: [0. 0. 1.] ; angle = 2/3 pi, inversion : False 
-sign= 1
 
- #  3
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [0. 0. 1.] ; angle = 2/3 pi, inversion : False
+
+
+ ### 3 
+
 rotation : |  0   1   0 |     rotation : | -1   1   0 |
            |  0   0   1 |      (refUC)   | -1   0   0 |
            |  1   0   0 |                |  0   0   1 |
-translation :  [   0.0000   0.0000   0.0000 ]     translation : [   0.0000   0.0000   0.0000 ] 
-                                                    (refUC)
-axis: [-0.  0.  1.] ; angle = -2/3 pi, inversion : False 
-sign= 1
 
- #  4
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.  0.  1.] ; angle = -2/3 pi, inversion : False
+
+
+ ### 4 
+
 rotation : |  0  -1   0 |     rotation : |  0   1   0 |
            | -1   0   0 |      (refUC)   |  1   0   0 |
            |  0   0  -1 |                |  0   0  -1 |
-translation :  [   0.0000   0.0000   0.0000 ]     translation : [   0.0000   0.0000   0.0000 ] 
-                                                    (refUC)
-axis: [1. 0. 0.] ; angle = 1 pi, inversion : False 
-sign= 1
 
- #  5
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [1. 0. 0.] ; angle = 1 pi, inversion : False
+
+
+ ### 5 
+
 rotation : | -1   0   0 |     rotation : |  1  -1   0 |
            |  0   0  -1 |      (refUC)   |  0  -1   0 |
            |  0  -1   0 |                |  0   0  -1 |
-translation :  [   0.0000   0.0000   0.0000 ]     translation : [   0.0000   0.0000   0.0000 ] 
-                                                    (refUC)
-axis: [-0.5       0.866025 -0.      ] ; angle = 1 pi, inversion : False 
-sign= 1
 
- #  6
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.5       0.866025 -0.      ] ; angle = 1 pi, inversion : False
+
+
+ ### 6 
+
 rotation : |  0   0  -1 |     rotation : | -1   0   0 |
            |  0  -1   0 |      (refUC)   | -1   1   0 |
            | -1   0   0 |                |  0   0  -1 |
-translation :  [   0.0000   0.0000   0.0000 ]     translation : [   0.0000   0.0000   0.0000 ] 
-                                                    (refUC)
-axis: [0.5      0.866025 0.      ] ; angle = 1 pi, inversion : False 
-sign= 1
 
- #  7
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [0.5      0.866025 0.      ] ; angle = 1 pi, inversion : False
+
+
+ ### 7 
+
 rotation : | -1   0   0 |     rotation : | -1   0   0 |
            |  0  -1   0 |      (refUC)   |  0  -1   0 |
            |  0   0  -1 |                |  0   0  -1 |
-translation :  [   0.0000   0.0000   0.0000 ]     translation : [   0.0000   0.0000   0.0000 ] 
-                                                    (refUC)
-axis: [ 0.028867 -0.811382 -0.583803] ; angle =  0 , inversion : True 
-sign= 1
 
- #  8
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [ 0.028867 -0.811382 -0.583803] ; angle =  0 , inversion : True
+
+
+ ### 8 
+
 rotation : |  0   0  -1 |     rotation : |  0   1   0 |
            | -1   0   0 |      (refUC)   | -1   1   0 |
            |  0  -1   0 |                |  0   0  -1 |
-translation :  [   0.0000   0.0000   0.0000 ]     translation : [   0.0000   0.0000   0.0000 ] 
-                                                    (refUC)
-axis: [0. 0. 1.] ; angle = 2/3 pi, inversion : True 
-sign= 1
 
- #  9
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [0. 0. 1.] ; angle = 2/3 pi, inversion : True
+
+
+ ### 9 
+
 rotation : |  0  -1   0 |     rotation : |  1  -1   0 |
            |  0   0  -1 |      (refUC)   |  1   0   0 |
            | -1   0   0 |                |  0   0  -1 |
-translation :  [   0.0000   0.0000   0.0000 ]     translation : [   0.0000   0.0000   0.0000 ] 
-                                                    (refUC)
-axis: [-0.  0.  1.] ; angle = -2/3 pi, inversion : True 
-sign= 1
 
- #  10
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.  0.  1.] ; angle = -2/3 pi, inversion : True
+
+
+ ### 10 
+
 rotation : |  0   1   0 |     rotation : |  0  -1   0 |
            |  1   0   0 |      (refUC)   | -1   0   0 |
            |  0   0   1 |                |  0   0   1 |
-translation :  [   0.0000   0.0000   0.0000 ]     translation : [   0.0000   0.0000   0.0000 ] 
-                                                    (refUC)
-axis: [1. 0. 0.] ; angle = 1 pi, inversion : True 
-sign= 1
 
- #  11
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [1. 0. 0.] ; angle = 1 pi, inversion : True
+
+
+ ### 11 
+
 rotation : |  1   0   0 |     rotation : | -1   1   0 |
            |  0   0   1 |      (refUC)   |  0   1   0 |
            |  0   1   0 |                |  0   0   1 |
-translation :  [   0.0000   0.0000   0.0000 ]     translation : [   0.0000   0.0000   0.0000 ] 
-                                                    (refUC)
-axis: [ 0.5      -0.866025  0.      ] ; angle = 1 pi, inversion : True 
-sign= 1
 
- #  12
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [ 0.5      -0.866025  0.      ] ; angle = 1 pi, inversion : True
+
+
+ ### 12 
+
 rotation : |  0   0   1 |     rotation : |  1   0   0 |
            |  0   1   0 |      (refUC)   |  1  -1   0 |
            |  1   0   0 |                |  0   0   1 |
-translation :  [   0.0000   0.0000   0.0000 ]     translation : [   0.0000   0.0000   0.0000 ] 
-                                                    (refUC)
-axis: [-0.5      -0.866025 -0.      ] ; angle = 1 pi, inversion : True 
-sign= 1
-reading symmetries from tables
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.5      -0.866025 -0.      ] ; angle = 1 pi, inversion : True
+
+Reading symmetries from tables
 
 
 k-point   1 :[0. 0. 0.] 
