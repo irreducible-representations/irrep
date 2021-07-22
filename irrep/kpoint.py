@@ -1116,18 +1116,18 @@ class Kpoint:
                 self.ik0, self.K, Nirrep
             )
         )
-        print("   Energy  | multiplicity |{0} irreps {0}| sym. operations  ".format(s2))
+        print("   Energy  |   degeneracy  |{0} irreps {0}| sym. operations  ".format(s2))
 
         # Symmetry operations
         print(
-            "           |              |{0}        {0}| ".format(s2),
+            "           |               |{0}        {0}| ".format(s2),
             " ".join(s1 + "{0:4d}    ".format(i) + s1 for i in sorted(sym)),
         )
 
         # Energy-levels, irrep's label and traces
         for e, d, ir, ch, ch2 in zip(E, dim, irreps, char, char_refUC):
             # Print characters in calculational unit cell
-            left_str = (" {0:8.4f}  |    {1:5d}     | {2:{3}s} |"
+            left_str = (" {0:8.4f}  |    {1:5d}      | {2:{3}s} |"
                         .format(e - efermi, d, ir, irreplen)
                        )
             right_str = " ".join(

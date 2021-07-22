@@ -152,10 +152,10 @@ def test_wannier_scalar_example():
 
     assert return_code == 0, output.stderr
 
-    assert "|        1     | GM1+(1.0)  |" in stdout, stdout
-    assert "|        1     | GM1+(1.0)  |" in stdout, stdout
-    assert "|        1     | M1+(1.0) |" in stdout, stdout
-    assert "|        1     | M4+(1.0) |" in stdout, stdout
+    assert "|        1      | GM1+(1.0)  |" in stdout, stdout
+    assert "|        1      | GM1+(1.0)  |" in stdout, stdout
+    assert "|        1      | M1+(1.0) |" in stdout, stdout
+    assert "|        1      | M4+(1.0) |" in stdout, stdout
 
 
     for test_output_file in (
@@ -187,12 +187,12 @@ def test_wannier_spin_example():
 
     assert return_code == 0, output.stderr
 
-    assert "|        2     | -GM7(1.0)  |" in stdout, stdout
-    assert "|        2     | -GM9(1.0)  |" in stdout, stdout
-    assert "|        2     | -GM9(1.0)  |" in stdout, stdout
-    assert "|        2     | -A9(1.0) |" in stdout, stdout
-    assert "|        2     | -A8(1.0) |" in stdout, stdout
-    assert "|        2     | -A6(1.0) |" in stdout, stdout
+    assert "|        2      | -GM7(1.0)  |" in stdout, stdout
+    assert "|        2      | -GM9(1.0)  |" in stdout, stdout
+    assert "|        2      | -GM9(1.0)  |" in stdout, stdout
+    assert "|        2      | -A9(1.0) |" in stdout, stdout
+    assert "|        2      | -A8(1.0) |" in stdout, stdout
+    assert "|        2      | -A6(1.0) |" in stdout, stdout
 
 
     for test_output_file in (
@@ -260,18 +260,18 @@ def test_bi_hoti():
         f.write(stdout)
 
     assert return_code == 0, output.stderr
-    assert "-2.7306  |        2     | -GM8(1.0)" in stdout, stdout
-    assert "-0.7762  |        2     | -GM8(1.0)" in stdout, stdout
-    assert "-0.4961  |        2     | -GM4(1.0), -GM5(1.0)" in stdout, stdout
-    assert "-4.8263  |        2     | -F3(1.0), -F4(1.0)" in stdout, stdout
-    assert "-3.6784  |        2     | -F5(1.0), -F6(1.0)" in stdout, stdout
-    assert "-2.4303  |        2     | -F5(1.0), -F6(1.0)" in stdout, stdout
-    assert "-1.7054  |        2     | -L5(1.0), -L6(1.0)" in stdout, stdout
-    assert "-1.6885  |        2     | -L3(1.0), -L4(1.0)" in stdout, stdout
-    assert "-0.1312  |        2     | -L5(1.0), -L6(1.0)" in stdout, stdout
-    assert "-1.5597  |        2     | -T9(1.0)" in stdout, stdout
-    assert "-1.2220  |        2     | -T8(1.0)" in stdout, stdout
-    assert "0.1460  |        2     | -T6(1.0), -T7(1.0)" in stdout, stdout
+    assert "-2.7306  |        2      | -GM8(1.0)" in stdout, stdout
+    assert "-0.7762  |        2      | -GM8(1.0)" in stdout, stdout
+    assert "-0.4961  |        2      | -GM4(1.0), -GM5(1.0)" in stdout, stdout
+    assert "-4.8263  |        2      | -F3(1.0), -F4(1.0)" in stdout, stdout
+    assert "-3.6784  |        2      | -F5(1.0), -F6(1.0)" in stdout, stdout
+    assert "-2.4303  |        2      | -F5(1.0), -F6(1.0)" in stdout, stdout
+    assert "-1.7054  |        2      | -L5(1.0), -L6(1.0)" in stdout, stdout
+    assert "-1.6885  |        2      | -L3(1.0), -L4(1.0)" in stdout, stdout
+    assert "-0.1312  |        2      | -L5(1.0), -L6(1.0)" in stdout, stdout
+    assert "-1.5597  |        2      | -T9(1.0)" in stdout, stdout
+    assert "-1.2220  |        2      | -T8(1.0)" in stdout, stdout
+    assert "0.1460  |        2      | -T6(1.0), -T7(1.0)" in stdout, stdout
 
     command = [
         "irrep",
@@ -292,18 +292,18 @@ def test_bi_hoti():
         f.write(stdout)
 
     assert return_code == 0, output.stderr
-    assert "-2.7306  |        2     | -GM8(1.0)" in stdout, stdout
-    assert "-0.7762  |        2     | -GM8(1.0)" in stdout, stdout
-    assert "-0.4961  |        2     | -GM4(1.0), -GM5(1.0)" in stdout, stdout
-    assert "-4.8263  |        2     | -F3(1.0), -F4(1.0)" in stdout, stdout
-    assert "-3.6784  |        2     | -F5(1.0), -F6(1.0)" in stdout, stdout
-    assert "-2.4303  |        2     | -F5(1.0), -F6(1.0)" in stdout, stdout
-    assert "-1.7054  |        2     | -L5(1.0), -L6(1.0)" in stdout, stdout
-    assert "-1.6885  |        2     | -L3(1.0), -L4(1.0)" in stdout, stdout
-    assert "-0.1312  |        2     | -L5(1.0), -L6(1.0)" in stdout, stdout
-    assert "-1.5597  |        2     | -T9(1.0)" in stdout, stdout
-    assert "-1.2220  |        2     | -T8(1.0)" in stdout, stdout
-    assert "0.1460  |        2     | -T6(1.0), -T7(1.0)" in stdout, stdout
+    assert "-2.7306  |        2      | -GM8(1.0)" in stdout, stdout
+    assert "-0.7762  |        2      | -GM8(1.0)" in stdout, stdout
+    assert "-0.4961  |        2      | -GM4(1.0), -GM5(1.0)" in stdout, stdout
+    assert "-4.8263  |        2      | -F3(1.0), -F4(1.0)" in stdout, stdout
+    assert "-3.6784  |        2      | -F5(1.0), -F6(1.0)" in stdout, stdout
+    assert "-2.4303  |        2      | -F5(1.0), -F6(1.0)" in stdout, stdout
+    assert "-1.7054  |        2      | -L5(1.0), -L6(1.0)" in stdout, stdout
+    assert "-1.6885  |        2      | -L3(1.0), -L4(1.0)" in stdout, stdout
+    assert "-0.1312  |        2      | -L5(1.0), -L6(1.0)" in stdout, stdout
+    assert "-1.5597  |        2      | -T9(1.0)" in stdout, stdout
+    assert "-1.2220  |        2      | -T8(1.0)" in stdout, stdout
+    assert "0.1460  |        2      | -T6(1.0), -T7(1.0)" in stdout, stdout
 
     for test_output_file in (
             "irreps.dat",
@@ -334,10 +334,10 @@ def test_C2B2Gd_vasp_scalar():
 
     assert return_code == 0, output.stderr
 
-    assert "-36.8423  |        1     | GM1+(1.0)" in stdout, stdout
-    assert "-36.8127  |        1     | GM3+(1.0)" in stdout, stdout
-    assert "-15.1605  |        2     | GM5-(1.0)" in stdout, stdout
-    assert "-14.8319  |        1     | GM3-(1.0)" in stdout, stdout
+    assert "-36.8423  |        1      | GM1+(1.0)" in stdout, stdout
+    assert "-36.8127  |        1      | GM3+(1.0)" in stdout, stdout
+    assert "-15.1605  |        2      | GM5-(1.0)" in stdout, stdout
+    assert "-14.8319  |        1      | GM3-(1.0)" in stdout, stdout
 
     for test_output_file in (
             "irreps.dat",
@@ -369,10 +369,10 @@ def test_C2B2Gd_vasp_spinor():
 
     assert return_code == 0, output.stderr
 
-    assert "-36.9423  |        2     | -GM7(1.0)" in stdout, stdout
-    assert "-36.9129  |        2     | -GM7(1.0)" in stdout, stdout
-    assert "-17.6854  |        2     | -GM9(1.0)" in stdout, stdout
-    assert "-17.5432  |        2     | -GM9(1.0)" in stdout, stdout
+    assert "-36.9423  |        2      | -GM7(1.0)" in stdout, stdout
+    assert "-36.9129  |        2      | -GM7(1.0)" in stdout, stdout
+    assert "-17.6854  |        2      | -GM9(1.0)" in stdout, stdout
+    assert "-17.5432  |        2      | -GM9(1.0)" in stdout, stdout
 
     for test_output_file in (
             "irreps.dat",
