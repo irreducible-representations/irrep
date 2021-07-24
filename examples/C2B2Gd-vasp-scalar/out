@@ -228,11 +228,11 @@ translation         :  [   0.5000   0.5000   0.0000 ]
 axis: [-0.707107  0.707107  0.      ] ; angle = 1 pi, inversion : True
 
 Reading symmetries from tables
-WARNING - non-integer number of irreps : 142.9506069758991
+WARNING - non-integer number of states : 142.9506069758991
 
 
 k-point   1 :[0. 0. 0.] 
- number of irreps = 143
+ number of states = 143
    Energy  |   degeneracy  |            irreps            | sym. operations  
            |               |                              |         1                2                3                4                5                6                7                8                9               10               11               12               13               14               15               16        
  -36.8423  |        1      | GM1+(1.0)                    |   1.0000+0.0000j   1.0000+0.0000j   1.0000+0.0000j   1.0000-0.0000j   1.0000-0.0000j   1.0000+0.0000j   1.0000-0.0000j   1.0000+0.0000j   1.0000+0.0000j   1.0000+0.0000j   1.0000+0.0000j   1.0000-0.0000j   1.0000-0.0000j   1.0000-0.0000j   1.0000+0.0000j   1.0000-0.0000j

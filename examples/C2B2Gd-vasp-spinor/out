@@ -311,7 +311,7 @@ Reading symmetries from tables
 
 
 k-point   1 :[0. 0. 0.] 
- number of irreps = 457
+ number of states = 457
    Energy  |   degeneracy  |   irreps   | sym. operations  
            |               |            |     1        2        3        4        5        6        7        8        9       10       11       12       13       14       15       16    
  -36.9423  |        2      | -GM7(1.0)  |   2.0000   0.0000   1.4142   1.4142  -0.0000   0.0000   0.0000   0.0000   2.0000   0.0000   1.4142   1.4142   0.0000  -0.0000   0.0000   0.0000

@@ -1020,7 +1020,7 @@ class Kpoint:
         )
         Nirrep = np.linalg.norm(char.sum(axis=1)) ** 2 / char.shape[0]
         if abs(Nirrep - round(Nirrep)) > 1e-2:
-            print("WARNING - non-integer number of irreps : {0}".format(Nirrep))
+            print("WARNING - non-integer number of states : {0}".format(Nirrep))
         Nirrep = int(round(Nirrep))
         char = np.array(
             [char[:, start:end].sum(axis=1) for start, end in zip(borders, borders[1:])]
@@ -1112,7 +1112,7 @@ class Kpoint:
 
         # Header of the block
         print(
-            "\n\nk-point {0:3d} :{1} \n number of irreps = {2}".format(
+            "\n\nk-point {0:3d} :{1} \n number of states = {2}".format(
                 self.ik0, self.K, Nirrep
             )
         )

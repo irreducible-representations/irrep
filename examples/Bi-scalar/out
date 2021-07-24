@@ -196,7 +196,7 @@ Reading symmetries from tables
 
 
 k-point   1 :[0. 0. 0.] 
- number of irreps = 6
+ number of states = 6
    Energy  |   degeneracy  |   irreps   | sym. operations  
            |               |            |     1        2        3        4        5        6        7        8        9       10       11       12    
   -6.7692  |        1      | GM1+(1.0)  |   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000

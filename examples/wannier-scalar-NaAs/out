@@ -13,7 +13,7 @@ Primitive vectors :
  [[0.  0.  0. ]
  [0.5 0.5 0.5]] 
  Atom type indices: 
- [1, 2]
+ [2, 1]
  Reciprocal lattice:
  [[1.4772495  0.         0.        ]
  [0.         1.4772495  0.        ]
@@ -225,7 +225,7 @@ Reading symmetries from tables
 
 
 k-point   1 :[0. 0. 0.] 
- number of irreps = 15
+ number of states = 15
    Energy  |   degeneracy  |   irreps   | sym. operations  
            |               |            |     1        2        3        4        5        6        7        8        9       10       11       12       13       14       15       16    
  -10.0658  |        1      | GM1+(1.0)  |   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
@@ -242,7 +242,7 @@ Reading symmetries from tables
 
 
 k-point   6 :[0.5 0.5 0. ] 
- number of irreps = 10
+ number of states = 10
    Energy  |   degeneracy  |  irreps  | sym. operations  
            |               |          |     1        2        3        4        5        6        7        8        9       10       11       12       13       14       15       16    
   -9.6038  |        1      | M4+(1.0) |   1.0000   1.0000  -1.0000  -1.0000  -1.0000  -1.0000   1.0000   1.0000   1.0000   1.0000  -1.0000  -1.0000  -1.0000  -1.0000   1.0000   1.0000
@@ -255,11 +255,11 @@ inversion is # 9
 number of inversions-odd states :  5
 Gap with upper bands :  1.4019133391739995
 Reading symmetries from tables
-WARNING - non-integer number of irreps : 10.500000000000288
+WARNING - non-integer number of states : 10.500000000000288
 
 
 k-point  13 :[0.  0.  0.5] 
- number of irreps = 11
+ number of states = 11
    Energy  |   degeneracy  |  irreps  | sym. operations  
            |               |          |         1                2                3                4                5                6                7                8                9               10               11               12               13               14               15               16        
   -9.9085  |        1      | Z3-(1.0) |   1.0000+0.0000j   1.0000+0.0000j   1.0000+0.0000j   1.0000-0.0000j  -1.0000+0.0000j  -1.0000+0.0000j  -1.0000+0.0000j  -1.0000+0.0000j  -1.0000+0.0000j  -1.0000+0.0000j  -1.0000+0.0000j  -1.0000-0.0000j   1.0000+0.0000j   1.0000+0.0000j   1.0000+0.0000j   1.0000+0.0000j
@@ -276,7 +276,7 @@ Reading symmetries from tables
 
 
 k-point  18 :[0.5 0.5 0.5] 
- number of irreps = 6
+ number of states = 6
    Energy  |   degeneracy  |  irreps  | sym. operations  
            |               |          |     1        2        3        4        5        6        7        8        9       10       11       12       13       14       15       16    
   -9.4879  |        1      | A2-(1.0) |   1.0000   1.0000  -1.0000  -1.0000   1.0000   1.0000  -1.0000  -1.0000  -1.0000  -1.0000   1.0000   1.0000  -1.0000  -1.0000   1.0000   1.0000

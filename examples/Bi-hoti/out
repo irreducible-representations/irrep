@@ -112,8 +112,8 @@ rotation : |  0   0  -1 |     rotation : |  0   1   0 |
 
 spinor rot.         : | 0.000+0.000j  0.866+0.500j |
                       |-0.866+0.500j -0.000-0.000j |
-spinor rot. (refUC) : |-0.000-0.000j -0.866-0.500j |
-                      | 0.866-0.500j  0.000+0.000j |
+spinor rot. (refUC) : | 0.000+0.000j  0.866+0.500j |
+                      |-0.866+0.500j -0.000-0.000j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -129,8 +129,8 @@ rotation : |  0  -1   0 |     rotation : |  1  -1   0 |
 
 spinor rot.         : | 0.000+0.000j  0.000-1.000j |
                       | 0.000-1.000j  0.000+0.000j |
-spinor rot. (refUC) : | 0.000+0.000j  0.000-1.000j |
-                      | 0.000-1.000j  0.000+0.000j |
+spinor rot. (refUC) : |-0.000+0.000j  0.000+1.000j |
+                      | 0.000+1.000j -0.000+0.000j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -146,8 +146,8 @@ rotation : | -1   0   0 |     rotation : | -1   0   0 |
 
 spinor rot.         : | 0.000-0.000j -0.866+0.500j |
                       | 0.866+0.500j -0.000+0.000j |
-spinor rot. (refUC) : |-0.000+0.000j  0.866-0.500j |
-                      |-0.866-0.500j  0.000-0.000j |
+spinor rot. (refUC) : | 0.000-0.000j -0.866+0.500j |
+                      | 0.866+0.500j -0.000+0.000j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -214,8 +214,8 @@ rotation : |  0   0   1 |     rotation : |  0  -1   0 |
 
 spinor rot.         : | 0.000+0.000j  0.866+0.500j |
                       |-0.866+0.500j -0.000-0.000j |
-spinor rot. (refUC) : |-0.000-0.000j -0.866-0.500j |
-                      | 0.866-0.500j  0.000+0.000j |
+spinor rot. (refUC) : | 0.000+0.000j  0.866+0.500j |
+                      |-0.866+0.500j -0.000-0.000j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -231,8 +231,8 @@ rotation : |  0   1   0 |     rotation : | -1   1   0 |
 
 spinor rot.         : | 0.000+0.000j  0.000-1.000j |
                       | 0.000-1.000j  0.000+0.000j |
-spinor rot. (refUC) : | 0.000+0.000j  0.000-1.000j |
-                      | 0.000-1.000j  0.000+0.000j |
+spinor rot. (refUC) : |-0.000+0.000j  0.000+1.000j |
+                      | 0.000+1.000j -0.000+0.000j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -248,8 +248,8 @@ rotation : |  1   0   0 |     rotation : |  1   0   0 |
 
 spinor rot.         : | 0.000-0.000j -0.866+0.500j |
                       | 0.866+0.500j -0.000+0.000j |
-spinor rot. (refUC) : |-0.000+0.000j  0.866-0.500j |
-                      |-0.866-0.500j  0.000-0.000j |
+spinor rot. (refUC) : | 0.000-0.000j -0.866+0.500j |
+                      | 0.866+0.500j -0.000+0.000j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -260,7 +260,7 @@ Reading symmetries from tables
 
 
 k-point   1 :[0.5 0.5 0.5] 
- number of irreps = 4
+ number of states = 4
    Energy  |   degeneracy  |       irreps       | sym. operations  
            |               |                    |     1        2        3        4        5        6        7        8        9       10       11       12    
   -1.5597  |        2      | -T9(1.0)           |   2.0000   1.0000   1.0000   0.0000   0.0000   0.0000  -2.0000  -1.0000  -1.0000   0.0000   0.0000   0.0000
@@ -273,7 +273,7 @@ Reading symmetries from tables
 
 
 k-point   2 :[0. 0. 0.] 
- number of irreps = 6
+ number of states = 6
    Energy  |   degeneracy  |        irreps        | sym. operations  
            |               |                      |     1        2        3        4        5        6        7        8        9       10       11       12    
   -2.7306  |        2      | -GM8(1.0)            |   2.0000   1.0000   1.0000   0.0000   0.0000   0.0000   2.0000   1.0000   1.0000   0.0000   0.0000   0.0000
@@ -286,7 +286,7 @@ Reading symmetries from tables
 
 
 k-point   3 :[0.5 0.5 0. ] 
- number of irreps = 10
+ number of states = 10
    Energy  |   degeneracy  |       irreps       | sym. operations  
            |               |                    |     1        5        7       11    
   -4.8263  |        2      | -F3(1.0), -F4(1.0) |   2.0000   0.0000   2.0000   0.0000
@@ -299,7 +299,7 @@ Reading symmetries from tables
 
 
 k-point   4 :[0.  0.5 0. ] 
- number of irreps = 10
+ number of states = 10
    Energy  |   degeneracy  |       irreps       | sym. operations  
            |               |                    |     1        4        7       10    
   -1.7054  |        2      | -L5(1.0), -L6(1.0) |   2.0000   0.0000  -2.0000   0.0000
