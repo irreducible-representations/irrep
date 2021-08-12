@@ -29,7 +29,7 @@ from monty.serialization import dumpfn, loadfn
 
 from .spacegroup import SpaceGroup
 from .bandstructure import BandStructure
-from .aux import str2bool, str2list, short
+from .utility import str2bool, str2list, short
 from . import __version__ as version
 
 

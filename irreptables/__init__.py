@@ -23,7 +23,7 @@ import logging
 
 import numpy as np
 
-from irrep.aux import str2bool, str2list_space, str_
+from irrep.utility import str2bool, str2list_space, str_
 
 # using a logger to print useful information during debugging,
 # set to logging.INFO to disable debug messages
