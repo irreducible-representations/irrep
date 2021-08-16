@@ -22,7 +22,7 @@ import copy
 from .gvectors import calc_gvectors, symm_eigenvalues, NotSymmetryError, symm_matrix, sortIG
 from .readfiles import Hartree_eV
 from .readfiles import record_abinit
-from .aux import compstr, is_round
+from .utility import compstr, is_round
 from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
 
