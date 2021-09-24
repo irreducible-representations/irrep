@@ -120,29 +120,30 @@ class BandStructure:
         onlysym=False,
         spin_channel=None,
         refUC = None,
-        shiftUC = None
+        shiftUC = None,
+        searchUC = False,
     ):
         code = code.lower()
 
         if spin_channel is not None:
             spin_channel=spin_channel.lower()
         if spin_channel=='down' : spin_channel='dw'
-
+        
         if code == "vasp":
             self.__init_vasp(
-                fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC
+                fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
             )
         elif code == "abinit":
             self.__init_abinit(
-                fWFK, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC
+                fWFK, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
             )
         elif code == "espresso":
             self.__init_espresso(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, spin_channel=spin_channel, refUC=refUC, shiftUC=shiftUC
+                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, spin_channel=spin_channel, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
             )
         elif code == "wannier90":
             self.__init_wannier(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC
+                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
             )
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
@@ -160,6 +161,7 @@ class BandStructure:
         onlysym=False,
         refUC=None,
         shiftUC=None,
+        searchUC=False,
     ):
         """
         Initialization for vasp. Read data and save it in attributes.
@@ -195,7 +197,7 @@ class BandStructure:
             raise RuntimeError(
                 "spinor should be specified in the command line for VASP bandstructure"
             )
-        self.spacegroup = SpaceGroup(inPOSCAR=fPOS, spinor=spinor, refUC=refUC, shiftUC=shiftUC)
+        self.spacegroup = SpaceGroup(inPOSCAR=fPOS, spinor=spinor, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC)
         self.spinor = spinor
         if onlysym:
             return
@@ -296,6 +298,7 @@ class BandStructure:
         onlysym=False,
         refUC=None,
         shiftUC=None,
+        searchUC=False,
     ):
         """
         Initialization for abinit. Read data and store it in attributes.
@@ -328,7 +331,7 @@ class BandStructure:
         usepaw = header.usepaw
         self.spinor = header.spinor
         self.spacegroup = SpaceGroup(
-            cell=(header.rprimd, header.xred, header.typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC
+            cell=(header.rprimd, header.xred, header.typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
         )
         if onlysym:
             return
@@ -423,6 +426,7 @@ class BandStructure:
         onlysym=False,
         refUC=None,
         shiftUC=None,
+        searchUC=False,
     ):
         """
         Initialization for wannier90. Read data and store it in attibutes.
@@ -674,7 +678,7 @@ class BandStructure:
         )
 
         self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC
+            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
         )
         if onlysym:
             return
@@ -737,6 +741,7 @@ class BandStructure:
         spin_channel=None,
         refUC=None,
         shiftUC=None,
+        searchUC=False,
     ):
         """
         Initialization for Quantum Espresso. Read data and store in attributes.
@@ -800,7 +805,7 @@ class BandStructure:
         xred = (np.array(xcart, dtype=float) * BOHR).dot(np.linalg.inv(self.Lattice))
         #        print ("xred=",xred)
         self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC
+            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
         )
         if onlysym:
             return

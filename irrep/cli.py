@@ -314,7 +314,8 @@ def cli(
         EF=ef,
         onlysym=onlysym,
         refUC = refuc,
-        shiftUC = shiftuc
+        shiftUC = shiftuc,
+        searchUC = True,
     )
 
     json_data ["spacegroup"] = bandstr.spacegroup.show(symmetries=symmetries)
