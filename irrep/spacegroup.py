@@ -595,7 +595,7 @@ class SpaceGroup():
                 dataset['origin_shift']
                 )
 
-    def __init__(self, inPOSCAR=None, cell=None, spinor=True, refUC=None, shiftUC=None):
+    def __init__(self, inPOSCAR=None, cell=None, spinor=True, refUC=None, shiftUC=None, searchUC=False):
         self.spinor = spinor
         (self.symmetries, 
          self.name, 
@@ -614,32 +614,34 @@ class SpaceGroup():
                                             refUC_cli=refUC, 
                                             shiftUC_cli=shiftUC,
                                             refUC_lib=refUC_tmp, 
-                                            shiftUC_lib=shiftUC_tmp
+                                            shiftUC_lib=shiftUC_tmp,
+                                            searchUC=searchUC
                                             )
 
         # Check matching of symmetries in refUC
-        ind, dt, signs = self.match_symmetries(signs=self.spinor)
+        if searchUC:
+            ind, dt, signs = self.match_symmetries(signs=self.spinor)
 
-        # Print transformation and basis vectors in both settings
-        print("\nThe transformation to the convenctional cell is given "
-              + "by:\n"
-              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[0]]))
-              + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[1]]), self.shiftUC)
-              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[2]]))
-              )
-        print("Lattice vectors of DFT (a) and reference (c) cells:")
-        for i in range(3):
-            l_str = "a({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice[i]))
-            r_str = "c({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice.dot(self.refUC.T)[i]))
-            print("    ".join((l_str,r_str)))
+            # Print transformation and basis vectors in both settings
+            print("\nThe transformation to the convenctional cell is given "
+                  + "by:\n"
+                  + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[0]]))
+                  + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[1]]), self.shiftUC)
+                  + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[2]]))
+                  )
+            print("Lattice vectors of DFT (a) and reference (c) cells:")
+            for i in range(3):
+                l_str = "a({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice[i]))
+                r_str = "c({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice.dot(self.refUC.T)[i]))
+                print("    ".join((l_str,r_str)))
 
-        # Sort symmetries like in tables
-        args = np.argsort(ind)
-        for i,i_ind in enumerate(args):
-            self.symmetries[i_ind].ind = i+1
-            self.symmetries[i_ind].sign = signs[i_ind]
-            self.symmetries.append(self.symmetries[i_ind])
-        self.symmetries = self.symmetries[i+1:]
+            # Sort symmetries like in tables
+            args = np.argsort(ind)
+            for i,i_ind in enumerate(args):
+                self.symmetries[i_ind].ind = i+1
+                self.symmetries[i_ind].sign = signs[i_ind]
+                self.symmetries.append(self.symmetries[i_ind])
+            self.symmetries = self.symmetries[i+1:]
 
     def show(self, symmetries=None):
         """
@@ -897,7 +899,7 @@ class SpaceGroup():
 # return( { irr.name: np.array([irr.characters[i]*signs[j] for j,i in
 # enumerate(ind)]) for irr in table.irreps if irr.kpname==kpname})
 
-    def determine_basis_transf(self, refUC_cli, shiftUC_cli, refUC_lib, shiftUC_lib):
+    def determine_basis_transf(self, refUC_cli, shiftUC_cli, refUC_lib, shiftUC_lib, searchUC):
         """ 
         Determine basis transformation to conventional cell. Priority
         is given to the transformation set by the user in CLI.
@@ -939,7 +941,9 @@ class SpaceGroup():
         # Give preference to CLI input
         refUC_cli_bool = refUC_cli is not None
         shiftUC_cli_bool = shiftUC_cli is not None
-        if refUC_cli_bool and shiftUC_cli_bool:  # Both specified in CLI.
+        if not searchUC:  # Transformation not needed
+            return None,None
+        elif refUC_cli_bool and shiftUC_cli_bool:  # Both specified in CLI.
             refUC = refUC_cli
             shiftUC = shiftUC_cli
             print('refUC and shiftUC read from CLI')
