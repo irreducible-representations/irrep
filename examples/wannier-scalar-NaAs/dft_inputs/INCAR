@@ -1,0 +1,28 @@
+SYS = W90-test
+LSORBIT  = .FALSE. 
+ALGO=Fast
+ISTART   = 0
+ICHARG   = 2 
+LWAVE    = .FALSE. ! Si converges el U=0, se peude empezar el U=1 con el WAVECAR del scf y converge mejor
+LCHARG = .TRUE.
+NBANDS = 20
+
+LWANNIER90 = .TRUE.
+LWRITE_UNK = .TRUE.
+LWRITE_MMN_AMN = .TRUE.
+
+ISMEAR   = 1 
+SIGMA    = 0.02 
+LASPH    = .TRUE.
+ENCUT    = 500
+EDIFF    = 1E-5 
+NELM     = 500
+SAXIS    = 0 0 1 
+MAGMOM = 300*0.0
+LREAL    = Auto 
+AMIX     = 0.2 
+BMIX     = 0.0001 ! Esto hay que tocar para converger mejor
+AMIX_MAG = 0.8 
+BMIX_MAG = 0.0001 ! Esto hay que tocar para converger mejor
+LORBIT   = 11
+!LMAXMIX  = 4

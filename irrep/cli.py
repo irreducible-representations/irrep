@@ -23,16 +23,45 @@ import sys
 import numpy as np
 import datetime
 import math
+
 import click
+from monty.serialization import dumpfn, loadfn
 
 from .spacegroup import SpaceGroup
 from .bandstructure import BandStructure
-from .__aux import str2bool, str2list
+from .utility import str2bool, str2list, short
 from . import __version__ as version
+
+
+class LoadContextFromConfig(click.Command):
+    """
+    Custom class to allow supplying command context from an
+    input file. Thanks to https://stackoverflow.com/a/46391887
+    for concept.
+    """
+
+    def invoke(self, ctx):
+
+        config_file = ctx.params["config"]
+
+        if config_file is not None:
+
+            # load from either a .yml or .json
+            config_data = loadfn(config_file)
+
+            # sanitize inputs to be all lower-case
+            config_data = {k.lower(): v for k, v in config_data.items()}
+
+            for param, value in ctx.params.items():
+                if param in config_data:
+                    ctx.params[param] = config_data[param]
+
+        return super(LoadContextFromConfig, self).invoke(ctx)
 
 
 @click.version_option(version)
 @click.command(
+    cls=LoadContextFromConfig,
     help="""
 
 \b
@@ -93,8 +122,7 @@ do not hesitate to contact the author:
 @click.option(
     "-prefix",
     type=str,
-    help="Prefix for QuantumEspresso calculations (data should be in prefix.save). "
-    'Only used if code is "espresso".',
+    help="Prefix used for Quantum Espresso calculations (data should be in prefix.save) or seedname of Wannier90 files. ",
 )
 @click.option(
     "-IBstart",
@@ -131,12 +159,14 @@ do not hesitate to contact the author:
 @click.option(
     "-kpnames",
     type=str,
+    default=None,
     help="Comma-separated list of k-point names (as in the tables) with one entry per each "
     "value in the k-points list. Important! K-points is assumed to be an ordered list!",
 )
 @click.option(
     "-refUC",
     type=str,
+    default=None,
     help="The lattice vectors of the reference unit cell (as given in the crystallographic tables) "
     "expressed in terms of the unit cell vectors used in the calculation. "
     "Nine comma-separated numbers.",
@@ -144,6 +174,7 @@ do not hesitate to contact the author:
 @click.option(
     "-shiftUC",
     type=str,
+    default=None,
     help="The vector to shift the calculated unit cell origin (in units of the calculated lattice), "
     "to get the unit cell as defined in crystallographic tables. Three comma-separated numbers.",
 )
@@ -175,8 +206,15 @@ do not hesitate to contact the author:
     "In development...!"
 )
 @click.option("-EF", 
-    type=float, 
-    help="Fermi energy to shift energy-levels. Default: read from DFT output.")
+    type=str, 
+    default='0.0',
+    help=("Fermi energy to shift energy-levels. Default: 0.0. If it is"
+          " set to a number, this value will be used to shift the "
+          "energy-levels. If it is set to 'auto', the code will try "
+          "to parse it from DFT files and set it to 0.0 if it could "
+          "not do so."
+          )
+)
 @click.option("-degenThresh", 
     type=float, 
     default=1e-4, 
@@ -196,6 +234,8 @@ do not hesitate to contact the author:
     type=str, 
     default='tognuplot',
     help="Suffix to name files containing data for band plotting. Default: tognuplot")
+@click.option("-config", type=click.Path(),
+              help="Define irrep inputs from a configuration file in YAML or JSON format.")
 def cli(
     ecut,
     fwav,
@@ -221,21 +261,26 @@ def cli(
     groupkramers,
     symmetries,
     suffix,
+    config
 ):
     """
     Defines the "irrep" command-line tool interface.
     """
     # TODO: later, this can be split up into separate sub-commands (e.g. for zak, etc.)
 
-    # print("The code was called with the following command-line options:")
-    # for k, v in locals().items():
-    #     print("{}\t{}".format(k, v))
-
     # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
     if refuc:
         refuc = np.array(refuc.split(","), dtype=float).reshape((3, 3))
     if shiftuc:
         shiftuc = np.array(shiftuc.split(","), dtype=float).reshape(3)
+    
+    # Warning about kpnames
+    if kpnames is None:
+        print(("Warning: kpnames not specified. Only traces of "
+               "symmetry operations will be calculated. Remember that "
+               "kpnames must be specified to identify irreps"
+               )
+              )
 
     # parse input arguments into lists if supplied
     if symmetries:
@@ -247,18 +292,13 @@ def cli(
     if kpnames:
         kpnames = kpnames.split(",")
 
-    if onlysym:
-        spinor = False
-
     try:
         print(fwfk.split("/")[0].split("-"))
         preline = " ".join(s.split("_")[1] for s in fwfk.split("/")[0].split("-")[:3])
     except Exception as err:
         print(err)
         preline = ""
-
-    if (refuc is not None) and (shiftuc is None):
-        shiftuc = np.zeros(3)
+    json_data = {}
 
     bandstr = BandStructure(
         fWAV=fwav,
@@ -273,23 +313,26 @@ def cli(
         code=code,
         EF=ef,
         onlysym=onlysym,
+        refUC = refuc,
+        shiftUC = shiftuc,
+        searchUC = True,
     )
-    bandstr.spacegroup.show(refUC=refuc, shiftUC=shiftuc, symmetries=symmetries)
+
+    json_data ["spacegroup"] = bandstr.spacegroup.show(symmetries=symmetries)
 
     if onlysym:
         exit()
 
-    if refuc is None:
-        refuc = np.eye(3)
-    if shiftuc is None:
-        shiftuc = np.zeros(3)
-
     with open("irreptable-template", "w") as f:
-        f.write(bandstr.spacegroup.str(refUC=refuc, shiftUC=shiftuc))
+        f.write(
+                bandstr.spacegroup.str()
+                )
 
     subbands = {(): bandstr}
 
     if isymsep is not None:
+        json_data["separated by symmetry"]=True
+        json_data["separating symmetries"]=isymsep
         for isym in isymsep:
             print("Separating by symmetry operation # ", isym)
             subbands = {
@@ -299,14 +342,17 @@ def cli(
                     isym, degen_thresh=degenthresh, groupKramers=groupkramers
                 ).items()
             }
+    else :
+        json_data["separated by symmetry"]=False
+        
 
     if zak:
         for k in subbands:
-            print("eigenvalue {0}".format(k))
+            print("symmetry eigenvalue : {0} \n Traces are : ".format(k))
             subbands[k].write_characters(
-                degen_thresh=0.001, refUC=refuc, symmetries=symmetries
+                degen_thresh=0.001, symmetries=symmetries
             )
-            print("eigenvalue : #{0} \n Zak phases are : ".format(k))
+            print("symmetry eigenvalue : {0} \n Zak phases are : ".format(k))
             zak = subbands[k].zakphase()
             for n, (z, gw, gc, lgw) in enumerate(zip(*zak)):
                 print(
@@ -314,32 +360,25 @@ def cli(
                         n=n + 1, z=z / np.pi, gap=gw, cent=gc, lg=lgw
                     )
                 )
+            exit()
 
     if wcc:
         for k in subbands:
-            print("eigenvalue {0}".format(k))
+            print("symmetry eigenvalue {0}".format(k))
             # subbands[k].write_characters(degen_thresh=0.001,refUC=refUC,symmetries=symmetries)
             wcc = subbands[k].wcc()
             print(
-                "eigenvalue : #{0} \n  WCC are : {1} \n sumWCC={2}".format(
+                "symmetry eigenvalue : {0} \n  WCC are : {1} \n sumWCC={2}".format(
                     k, wcc, np.sum(wcc) % 1
                 )
             )
-
-    def short(x, nd=3):
-        fmt = "{{0:+.{0}f}}".format(nd)
-        if abs(x.imag) < 10 ** (-nd):
-            return fmt.format(x.real)
-        if abs(x.real) < 10 ** (-nd):
-            return fmt.format(x.imag) + "j"
-        return short(x.real, nd) + short(1j * x.imag)
+        exit()
 
     bandstr.write_trace(
         degen_thresh=degenthresh,
-        refUC=refuc,
-        shiftUC=shiftuc,
         symmetries=symmetries,
     )
+    json_data["characters_and_irreps"]=[]
     for k, sub in subbands.items():
         if isymsep is not None:
             print(
@@ -349,17 +388,19 @@ def cli(
                 ),
             )
         plotfile=None # being implemented, not finished yet...
-        sub.write_characters(
+        characters = sub.write_characters(
             degen_thresh=degenthresh,
-            refUC=refuc,
-            shiftUC=shiftuc,
             symmetries=symmetries,
             kpnames=kpnames,
             preline=preline,
             plotFile=plotfile,
         )
+        json_data["characters_and_irreps"].append( {"symmetry_eigenvalues":k , "subspace": characters  }  )
+#        json_data["characters_and_irreps"].append( [k ,characters  ]  )
 
     if plotbands:
+        json_data["characters_and_irreps"] = {}
+        print("plotbands = True --> writing bands")
         for k, sub in subbands.items():
             if isymsep is not None:
                 print(
@@ -392,3 +433,5 @@ def cli(
             with open(fname, "w") as f:
                 f.write(sub.write_bands())
             sub.write_trace_all(degenthresh, fname=fname1)
+
+    dumpfn(json_data,"irrep-output.json",indent=4)

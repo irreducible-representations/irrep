@@ -1,6 +1,3 @@
-The code was called with the following command-line options
- /home/mikel/dipc_loc/cubi2o4_stepan/abinit_wsoc/genWFK_wsoc/RES_genWKF/irrep/__main__.py   code=abinit   kpnames=GM,X,M,Z,R,A   Ecut=100   spinor=F   fWFK=O_DS3_WFK   IBstart=145   IBend=148
-['O_DS3_WFK']
 WARNING, the version 8.4.4  of abinit is not 8.6.3 
 ecut=500.0000393217782 eV
 

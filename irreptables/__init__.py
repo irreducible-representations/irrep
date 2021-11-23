@@ -23,7 +23,7 @@ import logging
 
 import numpy as np
 
-from irrep.__aux import str2bool, str2list_space, str_
+from irrep.utility import str2bool, str2list_space, str_
 
 # using a logger to print useful information during debugging,
 # set to logging.INFO to disable debug messages
@@ -32,35 +32,27 @@ logger.setLevel(logging.DEBUG)
 
 
 class SymopTable:
-    """
-    Docstring to go here,
-    """
+    '''
+    Parses a `str` that  describes a symmetry operation of the space-group and 
+    stores info about it in attributes.
 
-    def __init__(self, line, from_user=False):
-        """
-        Docstring to go here.
+    Parameters
+    ----------
+    line : str
+        Line to be parsed, which describes a symmetry operation.
 
-        :param line: explanation + type of kwarg to go here.
-        :param from_user: explanation + type of kwarg to go here.
-        """
-        if from_user:
-            self.__init__from_user(line)
-            return
-        numbers = line.split()
-        self.R = np.array(numbers[:9], dtype=int).reshape(3, 3)
-        self.t = np.array(numbers[9:12], dtype=float)
-        self.S = (
-            np.array(numbers[12::2], dtype=float)
-            * np.exp(1j * np.pi * np.array(numbers[13::2], dtype=float))
-        ).reshape(2, 2)
+    Attributes
+    ----------
+    R : array, shape=(3,3)
+        Rotational part, describing the transformation of basis vectors (not 
+        cartesian coordinates!).
+    t : array, shape=(3,)
+        Direct coordinates of the translation vector.
+    S : array, shape=(2,2)
+        SU(2) matrix describing the transformation of spinor components.
+    '''
 
-    def __init__from_user(self, line):
-        """
-        Docstring to go here.
-
-        :param line: explanation + type of kwarg to go here.
-        :return:
-        """
+    def __init__(self, line):
         numbers = line.split()
         self.R = np.array(numbers[:9], dtype=int).reshape(3, 3)
         self.t = np.array(numbers[9:12], dtype=float)
@@ -74,10 +66,18 @@ class SymopTable:
 
     def str(self, spinor=True):
         """
-        Docstring to go here.
+        Create a `str` describing the symmetry operation as implemented in the 
+        files included in `IrRep`.
 
-        :param spinor:
-        :return:
+        Parameters
+        ----------
+        spinor : bool, default=True
+            `True` if the matrix describing the transformation of spinor 
+            components should be written.
+
+        Returns
+        -------
+        str
         """
         return (
             "   ".join(" ".join(str(x) for x in r) for r in self.R)
@@ -100,46 +100,39 @@ class SymopTable:
         )
 
 
-class CharFunction:
-    """
-
-    """
-
-    def __init__(self, abcde):
-        """
-
-        :param abcde:
-        """
-        self.abcde = copy.deepcopy(abcde)
-
-    def __call__(self, u=0, v=0, w=0):
-        """
-
-        :param u:
-        :param v:
-        :param w:
-        :return:
-        """
-        return sum(
-            aaa[0]
-            * np.exp(1j * np.pi * (sum(a * u for a, u in zip(aaa[1:], (1, u, v, w)))))
-            for aaa in self.abcde
-        )
-
-
 class KPoint:
     """
-
+    Organizes the info about a maximal k-point and contains routines to print 
+    it. This info is obtained by parsing the parameter `line` or passed 
+    directly as `name`, `k` and `isym`.
+    
+    Parameters
+    ----------
+    name : str, default=None
+        Label of the k-point.
+    k : array, default=None
+        Direct coordinates of the k-point.
+    isym : array, default=None
+        Indices of symmetry operations in the little co-group. Indices make 
+        reference to the symmetry operations stored in the header of the file 
+        and stored in `IrrepTable.symmetries`. 
+    line : str, default=None
+        Line to be parsed. 
+    
+    Attributes
+    ----------
+    name : str
+        Label of the k-point. 
+    k : array, shape=(3,) 
+        Direct coordinates of the k-point.
+    isym : array
+        Indices of symmetry operations in the little co-group. Indices make 
+        reference to the symmetry operations stored in the header of the file 
+        and stored in `IrrepTable.symmetries`. 
     """
 
     def __init__(self, name=None, k=None, isym=None, line=None):
-        """
 
-        :param name:
-        :param k:
-        :param isym:
-        :param line:
-        """
         if line is not None:
             line_ = line.split(":")
             if line_[0].split()[0] != "kpoint":
@@ -156,9 +149,18 @@ class KPoint:
 
     def __eq__(self, other):
         """
+        Compares the attributes of this class with those of class instance 
+        `other`.
 
-        :param other:
-        :return:
+        Parameters
+        ----------
+        other : class
+            Instance of class `KPoint`.
+
+        Returns
+        -------
+        bool
+            `True` if all attributes have identical value, `False` otherwise.
         """
         if self.name != other.name:
             return False
@@ -170,12 +172,25 @@ class KPoint:
 
     def show(self):
         """
+        Create a `str` containing the values of all attributes.
 
-        :return:
+        Returns
+        -------
+        str
+            Line showing the values of all attributes.
         """
         return "{0} : {1}  symmetries : {2}".format(self.name, self.k, self.isym)
 
     def str(self):
+        '''
+        Create a `str` containing the values of all attributes.
+
+        Returns
+        -------
+        str
+            Line that, when parsed, would lead to an instance of class `KPoint` 
+            with identical values of attributes.
+        '''
         return "{0} : {1}  : {2}".format(
             self.name,
             " ".join(str(x) for x in self.k),
@@ -185,74 +200,43 @@ class KPoint:
 
 class Irrep:
     """
+    Parses the line containing the description of the irrep and stores the info 
+    in its attributes. Contains methods print descriptions of the irrep. 
 
+    Parameters
+    ----------
+    f : file object, default=None 
+        It corresponds to the file containing the info about the space-group 
+        and its irreps.
+    nsym_group : int, default=None
+        Number of symmetry operations in the "point-group" of the space-group.
+    line : str, default=None
+        Line with the description of an irrep, read from the file containing 
+        info about the space-group and irreps.
+    k_point : class instance, default=None
+        Instance of class `KPoint`.
+
+    Attributes
+    ----------
+    k : array, shape=(3,) 
+        Direct coordinates of a k-point.
+    kpname : str
+        It is the label of a k-point.
+    name : str
+        Label of the irrep.
+    dim : int
+        Dimension of the irrep.
+    nsym : int
+        Number of symmetry operations in the little co-group of the k-point.
+    reality : bool
+        `True` if traces of all symmetry operations are real, `False` 
+        otherwise.
+    characters : dict
+        Each key is the index of a symmetry operation in the little co-group 
+        and the corresponding value is the trace of that symmetry in the irrep.
     """
 
-    def __init__(self, f=None, nsym_group=None, line=None, k_point=None):
-        """
-
-        :param f:
-        :param nsym_group:
-        :param line:
-        :param k_point:
-        """
-        if k_point is not None:
-            self.__init__user(line, k_point)
-            return
-        s = f.readline().split()
-        logger.debug(s)
-        self.k = np.array(s[:3], dtype=float)
-        self.has_rkmk = True if s[3] == "1" else "0" if s[3] == 0 else None
-        self.name = s[4]
-        self.kpname = s[7]
-        self.dim = int(s[5])
-        self.nsym = int(int(s[6]) / 2)
-        self.reality = int(s[8])
-        self.characters = {}
-        self.hasuvw = False
-        for isym in range(1, nsym_group + 1):
-            ism, issym = [int(x) for x in f.readline().split()]
-            assert ism == isym
-            logger.debug("ism,issym", ism, issym)
-            if issym == 0:
-                continue
-            elif issym != 1:
-                raise RuntimeError("issym should be 0 or 1, <{0}> found".format(issym))
-            abcde = []
-            hasuvw = []
-            for i in range(self.dim):
-                for j in range(self.dim):
-                    l1, l2 = [f.readline() for k in range(2)]
-                    if i != j:
-                        continue  # we need only diagonal elements
-                    l1 = l1.strip()
-                    if l1 == "1":
-                        hasuvw.append(False)
-                    elif l1 == "2":
-                        hasuvw.append(True)
-                    else:
-                        raise RuntimeError(
-                            "hasuvw should be 1 or 2. <{0}> found".format(l1)
-                        )
-                    abcde.append(np.array(l2.split(), dtype=float))
-            if any(hasuvw):
-                self.hasuvw = True
-            if isym <= nsym_group / 2:
-                self.characters[isym] = CharFunction(abcde)
-        if not self.hasuvw:
-            self.characters = {
-                isym: self.characters[isym]() for isym in self.characters
-            }
-        logger.debug("characters are:", self.characters)
-        assert len(self.characters) == self.nsym
-
-    def __init__user(self, line, k_point):
-        """
-
-        :param line:
-        :param k_point:
-        :return:
-        """
+    def __init__(self, line, k_point):
         logger.debug("reading irrep line <{0}> for KP=<{1}> ".format(line, k_point.str()))
         self.k = k_point.k
         self.kpname = k_point.name
@@ -269,20 +253,25 @@ class Irrep:
                 * np.array(line[2 + self.nsym : 2 + 2 * self.nsym], dtype=float)
             )
         self.characters = {k_point.isym[i]: ch[i] for i in range(self.nsym)}
-
         logger.debug("the irrep {0}  ch= {1}".format(self.name, self.characters))
+        assert len(self.characters) == self.nsym
 
     def show(self):
         """
-
-        :return:
+        Print label of the k-point and info about the irrep.
         """
         print(self.kpname, self.name, self.dim, self.reality)
 
     def str(self):
         """
+        Generate a line describing the irrep and its character.
 
-        :return:
+        Returns
+        -------
+        str
+            Line describing the irrep, as it is written in the table of the
+            space-group included in `IrRep`. This line contains the label, 
+            dimension and character of the irrep.
         """
         logger.debug(self.characters)
         ch = np.array([self.characters[isym] for isym in sorted(self.characters)])
@@ -296,121 +285,43 @@ class Irrep:
 
 class IrrepTable:
     """
+    Parse file corresponding to a space-group, storing the info in attributes. 
+    Also contains methods to print and write this info in a file.
 
+    Parameters
+    ----------
+    SGnumber : int
+        Number of the space-group.
+    spinor : bool
+        `True` if the matrix describing the transformation of spinor components 
+        should be read.
+    name : str, default=None
+        Name of the file from which info about the space-group and irreps 
+        should be read. If `None`, the code will try to open a file already 
+        included in it.
+
+    Attributes
+    ----------
+    number : int
+        Number of the space-group.
+    name : str
+        Symbol of the space-group in Hermann-Mauguin notation. 
+    spinor : bool
+        `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+    nsym : int
+       Number of symmetry operations in the "point-group" of the space-group. 
+    symmetries : list
+        Each component is an instance of class `SymopTable` corresponding to a 
+        symmetry operation in the "point-group" of the space-group.
+    NK : int
+        Number of maximal k-points in the Brillouin zone.
+    irreps : list
+        Each component is an instance of class `IrRep` corresponding to an 
+        irrep of the little group of a maximal k-point.
     """
 
-    def __init__(self, SGnumber, spinor, fromUser=True, name=None):
-        """
-
-        :param SGnumber:
-        :param spinor:
-        :param fromUser:
-        :param name:
-        """
-        if fromUser:
-            self.__init__user(SGnumber, spinor, name)
-            return
+    def __init__(self, SGnumber, spinor, name=None):
         self.number = SGnumber
-
-
-        with open(
-            os.path.dirname(os.path.realpath(__file__))
-            + "/TablesIrrepsLittleGroup/TabIrrepLittle_{0}.txt".format(self.number),
-            "r",
-        ) as f:
-            self.nsym, self.name = f.readline().split()
-            self.spinor = spinor
-            self.nsym = int(self.nsym)
-            self.symmetries = [SymopTable(f.readline()) for i in range(self.nsym)]
-            assert f.readline().strip() == "#"
-            self.NK = int(f.readline())
-            self.irreps = []
-            try:
-                while True:
-                    self.irreps.append(Irrep(f=f, nsym_group=self.nsym))
-                    logger.debug("irrep appended:")
-                    logger.debug(self.irreps[-1].show())
-                    f.readline()
-            except EOFError:
-                pass
-            except IndexError as err:
-                logger.debug(err)
-                pass
-
-        if self.spinor:
-            self.irreps = [s for s in self.irreps if s.name.startswith("-")]
-        else:
-            self.irreps = [s for s in self.irreps if not s.name.startswith("-")]
-
-        self.nsym = int(self.nsym / 2)
-        self.symmetries = self.symmetries[0 : self.nsym]
-
-    def show(self):
-        """
-
-        :return:
-        """
-        for i, s in enumerate(self.symmetries):
-            print(i + 1, "\n", s.R, "\n", s.t, "\n", s.S, "\n\n")
-        for irr in self.irreps:
-            irr.show()
-
-    def save4user(self, name=None):
-        """
-
-        :param name:
-        :return:
-        """
-        if name is None:
-            name = "tables/irreps-SG={SG}-{spinor}.dat".format(
-                SG=self.number, spinor="spin" if self.spinor else "scal"
-            )
-        fout = open(name, "w")
-        fout.write(
-            "SG={SG}\n name={name} \n nsym= {nsym}\n spinor={spinor}\n".format(
-                SG=self.number, name=self.name, nsym=self.nsym, spinor=self.spinor
-            )
-        )
-        fout.write(
-            "symmetries=\n"
-            + "\n".join(s.str(self.spinor) for s in self.symmetries)
-            + "\n\n"
-        )
-
-        kpoints = {}
-
-        for irr in self.irreps:
-            if not irr.hasuvw:
-                kp = KPoint(irr.kpname, irr.k, set(irr.characters.keys()))
-                if (
-                    len(
-                        set(
-                            [0.123, 0.313, 1.123, 0.877, 0.427, 0.246, 0.687]
-                        ).intersection(list(kp.k))
-                    )
-                    == 0
-                ):
-                    try:
-                        assert kpoints[kp.name] == kp
-                    except KeyError:
-                        kpoints[kp.name] = kp
-
-        for kp in kpoints.values():
-            fout.write("\n kpoint  " + kp.str() + "\n")
-            for irr in self.irreps:
-                if irr.kpname == kp.name:
-                    fout.write(irr.str() + "\n")
-        fout.close()
-
-    def __init__user(self, SG, spinor, name):
-        """
-
-        :param SG:
-        :param spinor:
-        :param name:
-        :return:
-        """
-        self.number = SG
         self.spinor = spinor
         if name is None:
             name = "{root}/tables/irreps-SG={SG}-{spinor}.dat".format(
@@ -427,7 +338,7 @@ class IrrepTable:
             l = lines.pop().strip().split("=")
             # logger.debug(l,l[0].lower())
             if l[0].lower() == "SG":
-                assert int(l[1]) == SG
+                assert int(l[1]) == self.number
             elif l[0].lower() == "name":
                 self.name = l[1]
             elif l[0].lower() == "nsym":
@@ -435,13 +346,13 @@ class IrrepTable:
             elif l[0].lower() == "spinor":
                 assert str2bool(l[1]) == self.spinor
             elif l[0].lower() == "symmetries":
-                print("reading symmetries")
+                print("Reading symmetries from tables")
                 self.symmetries = []
                 while len(self.symmetries) < self.nsym:
                     l = lines.pop()
                     # logger.debug(l)
                     try:
-                        self.symmetries.append(SymopTable(l, from_user=True))
+                        self.symmetries.append(SymopTable(l))
                     except Exception as err:
                         logger.debug(err)
                         pass
@@ -462,3 +373,13 @@ class IrrepTable:
                 except Exception as err:
                     logger.debug("error while reading irrep <{0}>".format(l), err)
                     pass
+
+    def show(self):
+        '''
+        Print info about symmetry operations and irreps.  
+        '''
+        for i, s in enumerate(self.symmetries):
+            print(i + 1, "\n", s.R, "\n", s.t, "\n", s.S, "\n\n")
+        for irr in self.irreps:
+            irr.show()
+
