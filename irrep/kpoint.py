@@ -944,9 +944,8 @@ class Kpoint:
 
             return sortIG(self.ik0, kg, self.K, CG, B, Ecut0, Ecut, self.spinor)
         
-        elif hdf5_flag==1:
+        elif hdf5_flag==1: #Modification for hdf5 support - experimental
             
-            #This is kind of jank
             attrnames = ['gamma_only', 'igwx', 'ik', 'ispin', 'nbnd', 'ngw', 'npol', 'scale_factor', 'xk']
             attributes =  []
             for atr in attrnames:
