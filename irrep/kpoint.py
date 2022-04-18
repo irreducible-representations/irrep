@@ -337,7 +337,7 @@ class Kpoint:
     @property
     def NG(self):
         """Getter for the number of plane-waves in current k-point"""
-        return self.ig.shape[0]
+        return self.ig.shape[1]
 
     def __eval_rho_spin(self, degen_thresh):
         """
