@@ -634,7 +634,7 @@ class Kpoint:
             self.K, self.RecLattice, Ecut0, npw, Ecut, spinor=self.spinor
         )
         selectG = np.hstack((ig[3], ig[3] + int(npw / 2))) if self.spinor else ig[3]
-        WFgetter = partial(WFgetter_vasp, ik=ik,NBin=NBin,npw=npw,selectG = selectG.copy(),IBstart=IBstart,IBend=IBend)
+        WFgetter = partial(WFgetter_vasp, WFCname = WFCname, ik=ik,NBin=NBin,npw=npw,selectG = selectG.copy(),IBstart=IBstart,IBend=IBend)
         return None,WFgetter, ig
 
     def __init_abinit(
@@ -1441,9 +1441,9 @@ def WFgetter_espresso(fWFCname,IBstart,IBend,npwtot,selectIG):
     return CG[:,selectIG]
 
 
-def WFgetter_vasp(ik,NBin,npw,selectG,IBstart,IBend):
-            _WCF = WAVECARFILE(WFCname)
-            return  np.array(
+def WFgetter_vasp(ik,WFCname,NBin,npw,selectG,IBstart,IBend):
+    WCF = WAVECARFILE(WFCname)
+    return  np.array(
                 [
                 WCF.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)[selectG]
                 for ib in range(IBstart, IBend)
