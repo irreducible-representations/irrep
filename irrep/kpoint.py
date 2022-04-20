@@ -283,7 +283,7 @@ class Kpoint:
         #        print ("self overlap:\n",self.overlap(self))
         return other
 
-    def unfold(self, supercell, kptPBZ, degen_thresh=1e-4):
+    def unfold(self, supercell, kptPBZ, degen_thresh=1e-4,saveWF=False):
         """
         Unfolds a kpoint of a supercell onto the point of the primitive cell 
         `kptPBZ`.
@@ -329,7 +329,7 @@ class Kpoint:
         #        print ("unfolding {} to {}, selecting {} of {} g-vectors \n".format(self.K,kptPBZ,len(selectG),self.ig.shape[1],selectG,self.ig.T))
         if self.spinor:
             selectG = np.hstack((selectG, selectG + self.NG))
-        WF = self.getWF()[:, selectG]
+        WF = self.getWF(keep=saveWF)[:, selectG]
         result = []
         for b1, b2, E, matrices in self.get_rho_spin(degen_thresh):
             proj = np.array(
@@ -634,15 +634,7 @@ class Kpoint:
             self.K, self.RecLattice, Ecut0, npw, Ecut, spinor=self.spinor
         )
         selectG = np.hstack((ig[3], ig[3] + int(npw / 2))) if self.spinor else ig[3]
-        def getter(ik,NBin,npw,selectG,IBstart,IBend):
-            _WCF = WAVECARFILE(WFCname)
-            return  np.array(
-                [
-                WCF.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)[selectG]
-                for ib in range(IBstart, IBend)
-                ]
-                )
-        WFgetter = partial(getter, ik=ik,NBin=NBin,npw=npw,selectG = selectG.copy(),IBstart=IBstart,IBend=IBend)
+        WFgetter = partial(WFgetter_vasp, ik=ik,NBin=NBin,npw=npw,selectG = selectG.copy(),IBstart=IBstart,IBend=IBend)
         return None,WFgetter, ig
 
     def __init_abinit(
@@ -930,12 +922,13 @@ class Kpoint:
         npw = int(kptxml.find("npw").text)
         #        kg= np.random.randint(100,size=(npw,3))-50
         npwtot = npw * (2 if self.spinor else 1)
-        CG = np.zeros((IBend - IBstart, npwtot), dtype=complex)
         wfcname="wfc{}{}".format({None:"","dw":"dw","up":"up"}[spin_channel],ik+1)
         try:
-            fWFC=FF("{}.save/{}.dat".format(prefix,wfcname.lower()),"r")
+            fWFCname = "{}.save/{}.dat".format(prefix,wfcname.lower())
+            fWFC=FF(fWFCname, "r")
         except FileNotFoundError:
-            fWFC=FF("{}.save/{}.dat".format(prefix,wfcname.upper()),"r")
+            fWFCname = "{}.save/{}.dat".format(prefix,wfcname.upper())
+            fWFC=FF(fWFCname, "r")
 
         rec = record_abinit(fWFC, "i4,3f8,i4,i4,f8")[0]
         ik, xk, ispin, gamma_only, scalef = rec
@@ -959,13 +952,12 @@ class Kpoint:
         #        print ("k-point {0}: {1}/{2}={3}".format(ik, self.K,xk,self.K/xk))
         #        print ("k-point {0}: {1}".format(ik,self.K ))
 
-        for ib in range(IBend):
-            cg_tmp = record_abinit(fWFC, "{}f8".format(npwtot * 2))
-            if ib >= IBstart:
-                CG[ib - IBstart] = cg_tmp[0::2] + 1.0j * cg_tmp[1::2]
+        self.selectIG,ig =  sortIG(self.ik0, kg, self.K, None, B, Ecut0, Ecut, self.spinor)
 
-        WF,ig =  sortIG(self.ik0, kg, self.K, CG, B, Ecut0, Ecut, self.spinor)
-        return self.normalise(WF),None,ig
+
+        WFgetter = partial(WFgetter_espresso, fWFCname = copy.copy(fWFCname),IBstart = IBstart, IBend = IBend, npwtot = npwtot, selectIG = np.copy(self.selectIG))
+
+        return None,WFgetter,ig
 
     def write_characters(
         self,
@@ -1430,3 +1422,30 @@ class Kpoint:
 
     def getloc(self, locs):
         return np.array([self.getloc1(loc) for loc in locs])
+
+
+def WFgetter_espresso(fWFCname,IBstart,IBend,npwtot,selectIG):
+    print (f"getting WFs from {fWFCname}")
+    fWFC=FF(fWFCname, "r")
+    # skip first records - we know them already
+    record_abinit(fWFC, "i4,3f8,i4,i4,f8")[0]
+    _,igwx,_,_ = record_abinit(fWFC, "4i4")
+    record_abinit(fWFC, "(3,3)f8")
+    record_abinit(fWFC, "({},3)i4".format(igwx))
+    # now read the wavefubctioins
+    CG = np.zeros((IBend - IBstart, npwtot), dtype=complex)
+    for ib in range(IBend):
+        cg_tmp = record_abinit(fWFC, "{}f8".format(npwtot * 2))
+        if ib >= IBstart:
+            CG[ib - IBstart] = cg_tmp[0::2] + 1.0j * cg_tmp[1::2]
+    return CG[:,selectIG]
+
+
+def WFgetter_vasp(ik,NBin,npw,selectG,IBstart,IBend):
+            _WCF = WAVECARFILE(WFCname)
+            return  np.array(
+                [
+                WCF.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)[selectG]
+                for ib in range(IBstart, IBend)
+                ]
+                )
