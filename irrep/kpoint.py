@@ -155,7 +155,7 @@ class Kpoint:
                     symmetries[symop] = symm_eigenvalues(
                         self.K,
                         self.RecLattice,
-                        self.WF,
+                        self.getWF(),
                         self.ig,
                         symop.rotation,
                         symop.spinor_rotation,
@@ -274,7 +274,7 @@ class Kpoint:
         other = copy.copy(self) # copy of whose class
         sortE = np.argsort(E)
         other.Energy = E[sortE]
-        other.WF = WF[sortE]
+        other._WF = WF[sortE]
         other.Nband = len(E)
         # other.__calc_sym_eigenvalues()
         #        print ( self.Energy,other.Energy)
@@ -329,7 +329,7 @@ class Kpoint:
         #        print ("unfolding {} to {}, selecting {} of {} g-vectors \n".format(self.K,kptPBZ,len(selectG),self.ig.shape[1],selectG,self.ig.T))
         if self.spinor:
             selectG = np.hstack((selectG, selectG + self.NG))
-        WF = self.WF[:, selectG]
+        WF = self.getWF()[:, selectG]
         result = []
         for b1, b2, E, matrices in self.get_rho_spin(degen_thresh):
             proj = np.array(
@@ -395,11 +395,12 @@ class Kpoint:
             ]
         )
         result = []
+        WF = self.getWF()
         for b1, b2 in zip(borders, borders[1:]):
             E = self.Energy[b1:b2].mean()
             W = np.array(
                 [
-                    [self.WF[i].conj().dot(self.WF[j]) for j in range(b1, b2)]
+                    [WF[i].conj().dot(WF[j]) for j in range(b1, b2)]
                     for i in range(b1, b2)
                 ]
             )
@@ -410,9 +411,9 @@ class Kpoint:
                         np.array(
                             [
                                 [
-                                    self.WF[i, ng * s : ng * (s + 1)]
+                                    WF[i, ng * s : ng * (s + 1)]
                                     .conj()
-                                    .dot(self.WF[j, ng * t : ng * (t + 1)])
+                                    .dot(WF[j, ng * t : ng * (t + 1)])
                                     for j in range(b1, b2)
                                 ]
                                 for i in range(b1, b2)
@@ -461,7 +462,7 @@ class Kpoint:
         S = symm_matrix(
             self.K,
             self.RecLattice,
-            self.WF,
+            self.getWF(),
             self.ig,
             symop.rotation,
             symop.spinor_rotation,
@@ -469,7 +470,8 @@ class Kpoint:
             self.spinor,
         )
         # check orthogonality
-        S1 = self.WF.conj().dot(self.WF.T)
+        WF = self.getWF()
+        S1 = WF.conj().dot(WF.T)
         check = np.max(abs(S1 - np.eye(S1.shape[0])))
         if check > 1e-5:
             print(
@@ -549,11 +551,11 @@ class Kpoint:
                 for b1, b2 in zip(borders, borders[1:]):
                     v1 = v[:, b1:b2]
                     subspaces[w[b1:b2].mean()] = self.copy_sub(
-                        E=Eloc[b1:b2], WF=v1.T.dot(self.WF)
+                        E=Eloc[b1:b2], WF=v1.T.dot(WF)
                     )
             else:
                 v1 = v
-                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF))
+                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(WF))
         else:
             
             w1 = np.argsort(np.angle(w))
@@ -565,11 +567,11 @@ class Kpoint:
                 for b1, b2 in zip(borders, np.roll(borders, -1)):
                     v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % nb]
                     subspaces[np.roll(w, -b1)[: (b2 - b1) % nb].mean()] = self.copy_sub(
-                        E=np.roll(Eloc, -b1)[: (b2 - b1) % nb], WF=v1.T.dot(self.WF)
+                        E=np.roll(Eloc, -b1)[: (b2 - b1) % nb], WF=v1.T.dot(WF)
                     )
             else:
                 v1 = v
-                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF))
+                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(WF))
 
         return subspaces
 
@@ -1381,17 +1383,19 @@ class Kpoint:
         res = np.zeros((self.Nband, other.Nband), dtype=complex)
         
         # short again coefficients of expansions
+        WF=self.getWF()
+        WFother = other.getWF()
         for s in [0, 1] if self.spinor else [0]:
             WF1 = np.zeros((self.Nband, igsize[0], igsize[1], igsize[2]), dtype=complex)
             WF2 = np.zeros(
                 (other.Nband, igsize[0], igsize[1], igsize[2]), dtype=complex
             )
             for i, ig in enumerate(self.ig.T):
-                WF1[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = self.WF[
+                WF1[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = WF[
                     :, i + s * self.ig.shape[1]
                 ]
             for i, ig in enumerate(other.ig[:3].T - g[None, :]):
-                WF2[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = other.WF[
+                WF2[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = WFother[
                     :, i + s * other.ig.shape[1]
                 ]
             res += np.einsum("mabc,nabc->mn", WF1.conj(), WF2)
@@ -1409,10 +1413,11 @@ class Kpoint:
         print("loc=", loc, "loc_grid=\n", loc_grid)
         #        FFTgrid=np.zeros( (self.Nband,*(2*gmax+1)),dtype=complex )
         res = np.zeros(self.Nband)
+        WF = self.getWF()
         for s in [0, 1] if self.spinor else [0]:
             WF1 = np.zeros((self.Nband, *(2 * gmax + 1)), dtype=complex)
             for i, ig in enumerate(self.ig.T):
-                WF1[:, ig[0], ig[1], ig[2]] = self.WF[:, i + s * self.ig.shape[1]]
+                WF1[:, ig[0], ig[1], ig[2]] = WF[:, i + s * self.ig.shape[1]]
             #            print ("wfsum",WF1.sum()," shape ",WF1.shape,loc_grid.shape)
             res += np.array(
                 [
