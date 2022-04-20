@@ -228,15 +228,18 @@ class Kpoint:
         else:
             raise RuntimeError("unknown code : {}".format(code))
 
-    def getWF(self,keep = False):
-        if self._WF is None:
-            WF = self.WFgetter()
-            WF /= (
+    def normalise(self,WF):
+        return WF/(
                 np.sqrt(np.abs(np.einsum("ij,ij->i", WF.conj(), WF)))
                     ).reshape(self.Nband, 1)
+        
+
+    def getWF(self,keep = False):
+        if self._WF is None:
+            WF = self.normalise(self.WFgetter())
             if keep : 
                 self._WF = WF
-                return WF
+            return WF
         else:
             return self._WF
 
@@ -743,7 +746,7 @@ class Kpoint:
             self.upper = np.NaN
 
         _WF,ig = sortIG(self.ik0, kg, kpt, CG, self.RecLattice, Ecut0, Ecut, self.spinor)
-        return _WF,None,ig
+        return self.normalise(_WF),None,ig
 
     def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval):
         """
@@ -857,7 +860,7 @@ class Kpoint:
         for ib in range(IBstart):
             _readWF(skip=True)
         WF = np.array([_readWF(skip=False) for ib in range(IBend - IBstart)])
-        return WF,None, ig
+        return self.normalise(WF),None, ig
 
     def __init_espresso(
         self, prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml,
@@ -960,7 +963,7 @@ class Kpoint:
                 CG[ib - IBstart] = cg_tmp[0::2] + 1.0j * cg_tmp[1::2]
 
         WF,ig =  sortIG(self.ik0, kg, self.K, CG, B, Ecut0, Ecut, self.spinor)
-        return WF,None,ig
+        return self.normalise(WF),None,ig
 
     def write_characters(
         self,
