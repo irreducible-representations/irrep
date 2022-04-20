@@ -283,6 +283,7 @@ class BandStructure:
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 WCF=WCF,
+                WFCname = fWAV
             )
             for ik in kplist
         ]

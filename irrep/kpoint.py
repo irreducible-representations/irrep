@@ -25,6 +25,8 @@ from .readfiles import record_abinit
 from .utility import compstr, is_round
 from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
+from .readfiles import WAVECARFILE
+from functools import partial
 
 class Kpoint:
     """
@@ -68,6 +70,8 @@ class Kpoint:
         `FortranFile`.
     WCF : class, default=None
         Instance of `class WAVECARFILE`.
+    WCFname : string, default = `WAVECAR`
+        Instance path to WAVECAR
     prefix : str, default=None
         Prefix used for Quantum Espresso calculations or seedname of Wannier90 
         files.
@@ -184,7 +188,8 @@ class Kpoint:
         usepaw=0,
         eigenval=None,
         spin_channel=None,
-        IBstartE=0
+        IBstartE=0,
+        WFCname = "WAVECAR"
     ):
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
@@ -194,11 +199,11 @@ class Kpoint:
         self.symmetries_SG = symmetries_SG  # lazy_property needs it
 
         if code.lower() == "vasp":
-            self.WF, self.ig = self.__init_vasp(
-                WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0
+            self._WF, self.WFgetter, self.ig = self.__init_vasp(
+                WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0, WFCname = WFCname
             )
         elif code.lower() == "abinit":
-            self.WF, self.ig = self.__init_abinit(
+            self._WF, self.WFgetter,self.ig = self.__init_abinit(
                 fWFK,
                 ik,
                 NBin,
@@ -212,20 +217,37 @@ class Kpoint:
                 usepaw=usepaw,
             )
         elif code.lower() == "espresso":
-            self.WF, self.ig = self.__init_espresso(
+            self._WF,self.WFgetter, self.ig = self.__init_espresso(
                 prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml=kptxml,
                 spin_channel=spin_channel,IBstartE=IBstartE
             )
         elif code.lower() == "wannier":
-            self.WF, self.ig = self.__init_wannier(
+            self._WF,self.WFgetter, self.ig = self.__init_wannier(
                 NBin, IBstart, IBend, Ecut, kpt=kpt, eigenval=eigenval
             )
         else:
             raise RuntimeError("unknown code : {}".format(code))
 
-        self.WF /= (
-            np.sqrt(np.abs(np.einsum("ij,ij->i", self.WF.conj(), self.WF)))
-        ).reshape(self.Nband, 1)
+    def getWF(self,keep = False):
+        if self._WF is None:
+            WF = self.WFgetter()
+            WF /= (
+                np.sqrt(np.abs(np.einsum("ij,ij->i", WF.conj(), WF)))
+                    ).reshape(self.Nband, 1)
+            if keep : 
+                self._WF = WF
+                return WF
+        else:
+            return self._WF
+
+    def delWF(self):
+        self._WF = None
+
+     
+    #to maintain the old behaviour, where not implemented the optimization"
+    @property
+    def WF(self):
+        return self.getWF(keep=True)
 
     def copy_sub(self, E, WF):
         """
@@ -548,7 +570,7 @@ class Kpoint:
 
         return subspaces
 
-    def __init_vasp(self, WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0):
+    def __init_vasp(self, WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0,WFCname):
         """
         Initialization for vasp. Read data and save it in attributes.
 
@@ -607,13 +629,16 @@ class Kpoint:
             self.K, self.RecLattice, Ecut0, npw, Ecut, spinor=self.spinor
         )
         selectG = np.hstack((ig[3], ig[3] + int(npw / 2))) if self.spinor else ig[3]
-        WF = np.array(
-            [
+        def getter(ik,NBin,npw,selectG,IBstart,IBend):
+            _WCF = WAVECARFILE(WFCname)
+            return  np.array(
+                [
                 WCF.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)[selectG]
                 for ib in range(IBstart, IBend)
-            ]
-        )
-        return WF, ig
+                ]
+                )
+        WFgetter = partial(getter, ik=ik,NBin=NBin,npw=npw,selectG = selectG.copy(),IBstart=IBstart,IBend=IBend)
+        return None,WFgetter, ig
 
     def __init_abinit(
         self,
@@ -717,7 +742,8 @@ class Kpoint:
         except BaseException:
             self.upper = np.NaN
 
-        return sortIG(self.ik0, kg, kpt, CG, self.RecLattice, Ecut0, Ecut, self.spinor)
+        _WF,ig = sortIG(self.ik0, kg, kpt, CG, self.RecLattice, Ecut0, Ecut, self.spinor)
+        return _WF,None,ig
 
     def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval):
         """
@@ -831,7 +857,7 @@ class Kpoint:
         for ib in range(IBstart):
             _readWF(skip=True)
         WF = np.array([_readWF(skip=False) for ib in range(IBend - IBstart)])
-        return WF, ig
+        return WF,None, ig
 
     def __init_espresso(
         self, prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml,
@@ -933,7 +959,8 @@ class Kpoint:
             if ib >= IBstart:
                 CG[ib - IBstart] = cg_tmp[0::2] + 1.0j * cg_tmp[1::2]
 
-        return sortIG(self.ik0, kg, self.K, CG, B, Ecut0, Ecut, self.spinor)
+        WF,ig =  sortIG(self.ik0, kg, self.K, CG, B, Ecut0, Ecut, self.spinor)
+        return WF,None,ig
 
     def write_characters(
         self,
