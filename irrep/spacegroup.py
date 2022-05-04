@@ -397,8 +397,8 @@ class SymmetryOperation():
 # this method for Bilbao server
 #       refUC - row-vectors, expressing the reference unit cell vectors in terms of the lattice used in calculation
 #        print ( "symmetry # ",self.ind )
-        R = self.rotation_refUC(refUC)
-        t = self.translation_refUC(refUC, shiftUC)
+        R = self.rotation
+        t = self.translation
 #        np.savetxt(stdout,np.hstack( (R,t[:,None])),fmt="%8.5f" )
         S = self.spinor_rotation
         return ("   ".join(" ".join("{0:2d}".format(x) for x in r) for r in R) + "     " + " ".join("{0:10.6f}".format(x) for x in t) + (

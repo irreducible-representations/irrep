@@ -1104,7 +1104,7 @@ class BandStructure:
             f.write(
                 "   ".join(
                     "{0:10.6f}".format(x)
-                    for x in self.spacegroup.refUC.dot(KP.K)
+                    for x in KP.K
                 )
                 + "\n"
             )
