@@ -1319,7 +1319,7 @@ class Kpoint:
                         if i in char
                         else (" " * 7 + "X" * 3 + " " * 8 + "X" * 3)
                     )
-                    for i in range(1, len(symmetries_SG) + 1)
+                    for i in range(1, len(self.symmetries_SG) + 1)
                 )
                 for e, d, ib, j in zip(E, dim, IB, np.arange(len(dim)))
             )
