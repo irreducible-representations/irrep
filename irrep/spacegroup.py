@@ -191,7 +191,7 @@ class SymmetryOperation():
         RuntimeError
             If the matrix contains non-integer elements after the transformation.
         """
-        R = np.linalg.inv(refUC).T.dot(self.rotation).dot(refUC.T)
+        R = np.linalg.inv(refUC).dot(self.rotation).dot(refUC)
         R1 = np.array(R.round(), dtype=int)
         if (abs(R - R1).max() > 1e-6):
             raise RuntimeError(
@@ -216,11 +216,16 @@ class SymmetryOperation():
         array
             Translation in reference choice of unit cell.
         """
-        return (
-            self.translation +
-            shiftUC -
-            self.rotation.dot(shiftUC)).dot(
-            np.linalg.inv(refUC))
+        return refUC.dot(
+                   self.translation 
+                   - shiftUC 
+                   + self.rotation.dot(shiftUC)
+                   )
+        #return (
+        #    self.translation +
+        #    shiftUC -
+        #    self.rotation.dot(shiftUC)).dot(
+        #    np.linalg.inv(refUC))
 
     def show(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
@@ -576,6 +581,7 @@ class SpaceGroup():
             '\n Atom type indices: \n',
             cell[2])
         dataset = spglib.get_symmetry_dataset(cell)
+        print('transf_matrix:\n', dataset['transformation_matrix'])
         symmetries = [
             SymmetryOperation(
                 rot,
@@ -961,8 +967,11 @@ class SpaceGroup():
                    '3x3 identity matrix as refUC.'))
             return refUC, shiftUC
         else:  # Neither specifiend in CLI.
-            refUC = refUC_lib.T  # IrRep's treats vecs as column array
+            #refUC = refUC_lib.T  # IrRep's treats vecs as column array
+            refUC = refUC_lib  # IrRep's treats vecs as column array
+            print('refUC in determine_basis_transf:\n', refUC)  # REMOVE AFTER TESTING !
             found = False
+            return refUC, shiftUC_lib  # REMOVE AFTER TESTING ! test 4 crystals with shift=0,0,0.
 
             # Check if the group is centrosymmetric
             inv = None

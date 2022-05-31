@@ -1112,10 +1112,11 @@ class Kpoint:
 
         # Header of the block
         print(
-            "\n\nk-point {0:3d} :{1} \n number of states = {2}".format(
+            "\n\nk-point {0:3d} :{1} (in DFT cell) \n number of states = {2}".format(
                 self.ik0, self.K, Nirrep
             )
         )
+        print('k-point     :{} (in convenctional cell)'.format(np.dot(refUC, self.K)))
         print("   Energy  |   degeneracy  |{0} irreps {0}| sym. operations  ".format(s2))
 
         # Symmetry operations
