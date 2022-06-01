@@ -597,7 +597,7 @@ class SpaceGroup():
                 dataset['international'],
                 dataset['number'], 
                 cell[0], 
-                np.linalg.inv(dataset['transformation_matrix']),
+                dataset['transformation_matrix'],
                 dataset['origin_shift']
                 )
 
@@ -968,10 +968,11 @@ class SpaceGroup():
             return refUC, shiftUC
         else:  # Neither specifiend in CLI.
             #refUC = refUC_lib.T  # IrRep's treats vecs as column array
-            refUC = refUC_lib  # IrRep's treats vecs as column array
+            print('dataset[transf_matrix] =\n', refUC_lib)
+            refUC = np.linalg.inv(refUC_lib)  # from DFT to convenctional cell
             print('refUC in determine_basis_transf:\n', refUC)  # REMOVE AFTER TESTING !
             found = False
-            return refUC, shiftUC_lib  # REMOVE AFTER TESTING ! test 4 crystals with shift=0,0,0.
+            #return refUC, shiftUC_lib  # REMOVE AFTER TESTING ! test 4 crystals with shift=0,0,0.
 
             # Check if the group is centrosymmetric
             inv = None
