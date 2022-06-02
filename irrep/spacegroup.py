@@ -974,6 +974,17 @@ class SpaceGroup():
             found = False
             #return refUC, shiftUC_lib  # REMOVE AFTER TESTING ! test 4 crystals with shift=0,0,0.
 
+            # Check if the shift given by spglib works
+            shiftUC = -refUC.dot(shiftUC_lib)
+            try:
+                ind, dt, signs = self.match_symmetries(
+                                    refUC,
+                                    shiftUC,
+                                    )
+                return refUC, shiftUC
+            except RuntimeError:
+                pass
+
             # Check if the group is centrosymmetric
             inv = None
             for sym in self.symmetries:
@@ -981,50 +992,45 @@ class SpaceGroup():
                     inv = sym
 
             if inv is None:  # Not centrosymmetric
-                for r_cent in self.vecs_centering():
-                    shiftUC = shiftUC_lib + r_cent
+                for r_center in self.vecs_centering():
+                    shiftUC = shiftUC_lib + refUC.dot(r_center)
                     try:
                         ind, dt, signs = self.match_symmetries(
                                             refUC,
                                             shiftUC,
                                             )
-                        found = True
-                        break
+                        print(('ShiftUC achieved with the centering: '
+                               '{}'.format(r_center))
+                              )
+                        return refUC, shiftUC
                     except RuntimeError:
                         pass
+                raise RuntimeError(("Could not find any shift that leads to "
+                                    "the expressions for the symmetries found "
+                                    "in the tables."))
 
             else:  # Centrosymmetric. Origin must sit in an inv. center
-                for center in self.vecs_inv_centers():
-                    shiftUC = - 0.5 * (inv.translation
-                                       + center.dot(refUC)
-                                       )
+                for r_center in self.vecs_inv_centers():
+                    shiftUC = 0.5 * inv.translation + refUC.dot(r_center)
                     try:
                         ind, dt, signs = self.match_symmetries(
                                             refUC,
                                             shiftUC,
                                             )
-                        found = True
-                        break
+                        print(('ShiftUC achieved in 2 steps:\n'
+                               '(1) Place origin of primitive cell on '
+                               'inversion center: \n'
+                               '(2) Move origin of convenctional cell to the '
+                               'inversion-center: ')
+                              )  # TODO: add vectors to print
+                        return refUC, shiftUC
                     except RuntimeError:
                         pass
+                raise RuntimeError(("Could not find any shift that places the "
+                                    "origin on an inversion center which leads "
+                                    "to the expressions for the symmetries "
+                                    "found in the tables."))
 
-            # Print info about center or error if it was not found
-            if found:
-                print("Placing origin at ", -shiftUC)
-                if inv is not None:
-                    print(("where {} = {} + {} x refUC".format(
-                                -shiftUC,
-                                0.5*inv.translation, 
-                                0.5*center)
-                          )
-                           )
-                return refUC, shiftUC
-            else:
-                raise RuntimeError(("Could not find any shift "
-                                    "placing the origin in an "
-                                    "inversion center that leads "
-                                    "to the expressions for "
-                                    "symmetries found in tables."))
 
 
     def match_symmetries(self, refUC=None, shiftUC=None, signs=False):
