@@ -1116,7 +1116,7 @@ class Kpoint:
                 self.ik0, self.K, Nirrep
             )
         )
-        print('k-point     :{} (in convenctional cell)'.format(np.dot(refUC, self.K)))
+        print('k-point     :{} (in convenctional cell)'.format(np.dot(refUC.T, self.K)))
         print("   Energy  |   degeneracy  |{0} irreps {0}| sym. operations  ".format(s2))
 
         # Symmetry operations
