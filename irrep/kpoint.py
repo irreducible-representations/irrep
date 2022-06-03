@@ -1139,7 +1139,7 @@ class Kpoint:
             print(left_str + " " + right_str)
             # Print characters in reference unit cell
             if write_refUC:
-                left_str = ("           |              | {0:{1}s} |"
+                left_str = ("           |               | {0:{1}s} |"
                             .format(len(ir)*" ", irreplen)
                            )
                 right_str = " ".join(
