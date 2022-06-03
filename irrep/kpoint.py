@@ -1111,12 +1111,12 @@ class Kpoint:
         s2 = " " * int(irreplen / 2 - 3)
 
         # Header of the block
-        print(
-            "\n\nk-point {0:3d} :{1} (in DFT cell) \n number of states = {2}".format(
-                self.ik0, self.K, Nirrep
-            )
-        )
-        print('k-point     :{} (in convenctional cell)'.format(np.dot(refUC.T, self.K)))
+        print(("\n\n k-point {0:3d} : {1} (in DFT cell)\n"
+               "             : {2} (in convenctional cell)\n\n"
+               " number of states : {3}\n"
+               .format(self.ik0, self.K, np.dot(refUC.T, self.K), Nirrep)
+              ))
+
         print("   Energy  |   degeneracy  |{0} irreps {0}| sym. operations  ".format(s2))
 
         # Symmetry operations
