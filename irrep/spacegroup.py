@@ -219,16 +219,6 @@ class SymmetryOperation():
         t_ref =  - shiftUC + self.translation + self.rotation.dot(shiftUC)
         t_ref = np.linalg.inv(refUC).dot(t_ref)
         return t_ref
-        #return refUC.dot(
-        #           self.translation 
-        #           - shiftUC 
-        #           + self.rotation.dot(shiftUC)
-        #           )
-        #return (
-        #    self.translation +
-        #    shiftUC -
-        #    self.rotation.dot(shiftUC)).dot(
-        #    np.linalg.inv(refUC))
 
     def show(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
@@ -1117,17 +1107,6 @@ class SpaceGroup():
                                 t1
                                 ))
                             )
-                        #raise RuntimeError(
-                        #    "Error matching translational part for symmetry " +
-                        #    "{}. A symmetry with identical rotational part \n"
-                        #    .format(j+1) +
-                        #    "R=\n{} \nhas been found in tables, but their "
-                        #    .format(R) +
-                        #    "translational parts do not match: \n" +
-                        #    "t(table) = {} \nt(found) = {} \n"
-                        #    .format(sym2.t, t) +
-                        #    "t(table)-t(spglib) (mod. lattice translation)= {}"
-                        #     .format(t1))
             if not found:
                 raise RuntimeError(
                     "Error matching rotational part for symmetry {0}. In the "
