@@ -1014,7 +1014,7 @@ class SpaceGroup():
 
             else:  # Centrosymmetric. Origin must sit in an inv. center
                 for r_center in self.vecs_inv_centers():
-                    shiftUC = 0.5 * inv.translation + refUC.dot(r_center)
+                    shiftUC = 0.5 * inv.translation + refUC.dot(0.5 * r_center)
                     try:
                         ind, dt, signs = self.match_symmetries(
                                             refUC,
