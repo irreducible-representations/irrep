@@ -1112,9 +1112,9 @@ class Kpoint:
 
         # Header of the block
         print(("\n\n k-point {0:3d} : {1} (in DFT cell)\n"
-               "             : {2} (in convenctional cell)\n\n"
+               "               {2} (in convenctional cell)\n\n"
                " number of states : {3}\n"
-               .format(self.ik0, self.K, np.dot(refUC.T, self.K), Nirrep)
+               .format(self.ik0, self.K, np.dot(refUC.T, self.K), self.Nband)
               ))
 
         print("   Energy  |   degeneracy  |{0} irreps {0}| sym. operations  ".format(s2))
