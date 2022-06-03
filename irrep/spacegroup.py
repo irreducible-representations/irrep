@@ -584,7 +584,6 @@ class SpaceGroup():
             '\n Atom type indices: \n',
             cell[2])
         dataset = spglib.get_symmetry_dataset(cell)
-        print('transf_matrix:\n', dataset['transformation_matrix'])  # REMOVE AFTER TESTING
         symmetries = [
             SymmetryOperation(
                 rot,
@@ -970,12 +969,8 @@ class SpaceGroup():
                    '3x3 identity matrix as refUC.'))
             return refUC, shiftUC
         else:  # Neither specifiend in CLI.
-            #refUC = refUC_lib.T  # IrRep's treats vecs as column array
-            print('dataset[transf_matrix] =\n', refUC_lib)  # REMOVE AFTER TESTING
             refUC = np.linalg.inv(refUC_lib)  # from DFT to convenctional cell
-            print('refUC in determine_basis_transf:\n', refUC)  # REMOVE AFTER TESTING !
             found = False
-            #return refUC, shiftUC_lib  # REMOVE AFTER TESTING ! test 4 crystals with shift=0,0,0.
 
             # Check if the shift given by spglib works
             shiftUC = -refUC.dot(shiftUC_lib)
