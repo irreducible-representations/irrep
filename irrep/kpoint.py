@@ -1114,7 +1114,11 @@ class Kpoint:
         print(("\n\n k-point {0:3d} : {1} (in DFT cell)\n"
                "               {2} (in convenctional cell)\n\n"
                " number of states : {3}\n"
-               .format(self.ik0, self.K, np.dot(refUC.T, self.K), self.Nband)
+               .format(self.ik0,
+                       np.round(self.K, 5),
+                       np.round(np.dot(refUC.T, self.K),5),
+                       self.Nband
+                       )
               ))
 
         print("   Energy  |   degeneracy  |{0} irreps {0}| sym. operations  ".format(s2))

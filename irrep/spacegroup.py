@@ -624,7 +624,7 @@ class SpaceGroup():
             print("\nThe transformation to the convenctional cell is given "
                   + "by:\n"
                   + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[0]]))
-                  + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[1]]), self.shiftUC)
+                  + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[1]]), np.round(self.shiftUC, 5))
                   + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[2]]))
                   )
             print("Lattice vectors of DFT (a) and reference (c) cells:")
