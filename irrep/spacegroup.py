@@ -953,12 +953,12 @@ class SpaceGroup():
         if not searchUC:  # Transformation not needed
             return None,None
         elif refUC_cli_bool and shiftUC_cli_bool:  # Both specified in CLI.
-            refUC = refUC_cli
+            refUC = refUC_cli.T  # User sets refUC as if it was acting on column
             shiftUC = shiftUC_cli
             print('refUC and shiftUC read from CLI')
             return refUC, shiftUC
         elif refUC_cli_bool and not shiftUC_cli_bool:  # shiftUC not given in CLI.
-            refUC = refUC_cli
+            refUC = refUC_cli.T  # User sets refUC as if it was acting on column
             shiftUC = np.zeros(3, dtype=float)
             print(('refUC was specified in CLI, but shiftUC was not. Taking '
                    'shiftUC=(0,0,0).'))
