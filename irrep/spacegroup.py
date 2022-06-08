@@ -191,7 +191,7 @@ class SymmetryOperation():
         RuntimeError
             If the matrix contains non-integer elements after the transformation.
         """
-        R = np.linalg.inv(refUC).T.dot(self.rotation).dot(refUC.T)
+        R = np.linalg.inv(refUC).dot(self.rotation).dot(refUC)
         R1 = np.array(R.round(), dtype=int)
         if (abs(R - R1).max() > 1e-6):
             raise RuntimeError(
@@ -216,11 +216,9 @@ class SymmetryOperation():
         array
             Translation in reference choice of unit cell.
         """
-        return (
-            self.translation +
-            shiftUC -
-            self.rotation.dot(shiftUC)).dot(
-            np.linalg.inv(refUC))
+        t_ref =  - shiftUC + self.translation + self.rotation.dot(shiftUC)
+        t_ref = np.linalg.inv(refUC).dot(t_ref)
+        return t_ref
 
     def show(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
@@ -591,7 +589,7 @@ class SpaceGroup():
                 dataset['international'],
                 dataset['number'], 
                 cell[0], 
-                np.linalg.inv(dataset['transformation_matrix']),
+                dataset['transformation_matrix'],
                 dataset['origin_shift']
                 )
 
@@ -626,7 +624,7 @@ class SpaceGroup():
             print("\nThe transformation to the convenctional cell is given "
                   + "by:\n"
                   + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[0]]))
-                  + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[1]]), self.shiftUC)
+                  + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[1]]), np.round(self.shiftUC, 5))
                   + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[2]]))
                   )
             print("Lattice vectors of DFT (a) and reference (c) cells:")
@@ -864,7 +862,7 @@ class SpaceGroup():
         tab = {}
         for irr in table.irreps:
             if irr.kpname == kpname:
-                k1 = np.round(np.linalg.inv(self.refUC).dot(irr.k), 5) % 1
+                k1 = np.round(np.linalg.inv(self.refUC.T).dot(irr.k), 5) % 1
                 k2 = np.round(K, 5) % 1
                 if not all(np.isclose(k1, k2)):
                     raise RuntimeError(
@@ -944,12 +942,12 @@ class SpaceGroup():
         if not searchUC:  # Transformation not needed
             return None,None
         elif refUC_cli_bool and shiftUC_cli_bool:  # Both specified in CLI.
-            refUC = refUC_cli
+            refUC = refUC_cli.T  # User sets refUC as if it was acting on column
             shiftUC = shiftUC_cli
             print('refUC and shiftUC read from CLI')
             return refUC, shiftUC
         elif refUC_cli_bool and not shiftUC_cli_bool:  # shiftUC not given in CLI.
-            refUC = refUC_cli
+            refUC = refUC_cli.T  # User sets refUC as if it was acting on column
             shiftUC = np.zeros(3, dtype=float)
             print(('refUC was specified in CLI, but shiftUC was not. Taking '
                    'shiftUC=(0,0,0).'))
@@ -961,8 +959,19 @@ class SpaceGroup():
                    '3x3 identity matrix as refUC.'))
             return refUC, shiftUC
         else:  # Neither specifiend in CLI.
-            refUC = refUC_lib.T  # IrRep's treats vecs as column array
+            refUC = np.linalg.inv(refUC_lib)  # from DFT to convenctional cell
             found = False
+
+            # Check if the shift given by spglib works
+            shiftUC = -refUC.dot(shiftUC_lib)
+            try:
+                ind, dt, signs = self.match_symmetries(
+                                    refUC,
+                                    shiftUC,
+                                    )
+                return refUC, shiftUC
+            except RuntimeError:
+                pass
 
             # Check if the group is centrosymmetric
             inv = None
@@ -971,50 +980,48 @@ class SpaceGroup():
                     inv = sym
 
             if inv is None:  # Not centrosymmetric
-                for r_cent in self.vecs_centering():
-                    shiftUC = shiftUC_lib + r_cent
+                for r_center in self.vecs_centering():
+                    shiftUC = shiftUC_lib + refUC.dot(r_center)
                     try:
                         ind, dt, signs = self.match_symmetries(
                                             refUC,
                                             shiftUC,
                                             )
-                        found = True
-                        break
+                        print(('ShiftUC achieved with the centering: {}'
+                                   .format(r_center))
+                              )
+                        return refUC, shiftUC
                     except RuntimeError:
                         pass
+                raise RuntimeError(("Could not find any shift that leads to "
+                                    "the expressions for the symmetries found "
+                                    "in the tables."))
 
             else:  # Centrosymmetric. Origin must sit in an inv. center
-                for center in self.vecs_inv_centers():
-                    shiftUC = - 0.5 * (inv.translation
-                                       + center.dot(refUC)
-                                       )
+                for r_center in self.vecs_inv_centers():
+                    shiftUC = 0.5 * inv.translation + refUC.dot(0.5 * r_center)
                     try:
                         ind, dt, signs = self.match_symmetries(
                                             refUC,
                                             shiftUC,
                                             )
-                        found = True
-                        break
+                        print(('ShiftUC achieved in 2 steps:\n'
+                               '  (1) Place origin of primitive cell on '
+                               'inversion center: {}\n'
+                               '  (2) Move origin of convenctional cell to the '
+                               'inversion-center: {}'
+                               .format(0.5 * inv.translation, r_center)
+                               )
+                              )
+                        return refUC, shiftUC
                     except RuntimeError:
                         pass
+                raise RuntimeError(("Could not find any shift that places the "
+                                    "origin on an inversion center which leads "
+                                    "to the expressions for the symmetries "
+                                    "found in the tables. Enter refUC and "
+                                    "shiftUC in command line"))
 
-            # Print info about center or error if it was not found
-            if found:
-                print("Placing origin at ", -shiftUC)
-                if inv is not None:
-                    print(("where {} = {} + {} x refUC".format(
-                                -shiftUC,
-                                0.5*inv.translation, 
-                                0.5*center)
-                          )
-                           )
-                return refUC, shiftUC
-            else:
-                raise RuntimeError(("Could not find any shift "
-                                    "placing the origin in an "
-                                    "inversion center that leads "
-                                    "to the expressions for "
-                                    "symmetries found in tables."))
 
 
     def match_symmetries(self, refUC=None, shiftUC=None, signs=False):
@@ -1066,12 +1073,12 @@ class SpaceGroup():
         dt = []
         errtxt = ""
         for j, sym in enumerate(self.symmetries):
-            R, t = sym.rotation_refUC(
-                refUC), sym.translation_refUC(refUC, shiftUC)
+            R = sym.rotation_refUC(refUC)
+            t = sym.translation_refUC(refUC, shiftUC)
             found = False
             for i, sym2 in enumerate(self.symmetries_tables):
-                t1 = np.dot(sym2.t - t, refUC) % 1
-                # t1=(sym2.t-t)%1
+                t1 = refUC.dot(sym2.t - t) % 1
+                #t1 = np.dot(sym2.t - t, refUC) % 1
                 t1[1 - t1 < 1e-5] = 0
                 if np.allclose(R, sym2.R):
                     if np.allclose(t1, [0, 0, 0], atol=1e-6):
@@ -1080,17 +1087,26 @@ class SpaceGroup():
                         found = True
                         break
                     else:
-                        raise RuntimeError(
-                            "Error matching translational part for symmetry " +
-                            "{}. A symmetry with identical rotational part \n"
-                            .format(j+1) +
-                            "R=\n{} \nhas been found in tables, but their "
-                            .format(R) +
-                            "translational parts do not match: \n" +
-                            "t(table) = {} \nt(found) = {} \n"
-                            .format(sym2.t, t) +
-                            "t(table)-t(spglib) (mod. lattice translation)= {}"
-                             .format(t1))
+                        raise RuntimeError((
+                            "Error matching translational part for symmetry {}."
+                            " A symmetry with identical rotational part has "
+                            " been fond in tables, but their translational "
+                            "parts do not match:\n"
+                            "R (found, in conv. cell)= \n{} \n"
+                            "t(found) = {} \n"
+                            "t(table) = {} \n"
+                            "t(found, in conv. cell) = {}\n"
+                            "t(table)-t(found) "
+                            "(in conv. cell, mod. lattice translation)= {}"
+                            .format(
+                                j+1, 
+                                R, 
+                                sym.translation, 
+                                sym2.t, 
+                                t,
+                                t1
+                                ))
+                            )
             if not found:
                 raise RuntimeError(
                     "Error matching rotational part for symmetry {0}. In the "
