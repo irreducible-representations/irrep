@@ -18,9 +18,35 @@
 
 import numpy as np
 from scipy import constants
+import fortio
 
 BOHR = constants.physical_constants['Bohr radius'][0] / constants.angstrom
 
+
+class FortranFileR(fortio.FortranFile): # TODO: add docstring
+
+    def __init__(self, filename):
+
+        print("Using fortio to read")
+
+        try:  # assuming there are not subrecords
+            super().__init__(filename,
+			     mode='r',
+			     header_dtype='uint32',
+			     auto_endian=True,
+			     check_file=True
+			     )
+            print("Long records not found in ", filename)
+        except ValueError:  # there are subrecords, allow negative markers
+            print(("File '{}' contains subrecords - using header_dtype='int32'"
+		   .format(filename)
+		  ))
+            super().__init__(filename,
+			     mode='r',
+			     header_dtype='int32',
+			     auto_endian=True,
+			     check_file=True
+			     )
 
 def str2list(string):
     """

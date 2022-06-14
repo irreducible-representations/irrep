@@ -20,6 +20,7 @@ import numpy as np
 import scipy
 from scipy.io import FortranFile as FF
 from sys import stdout
+from .utility import FortranFileR
 
 
 class WAVECARFILE:
@@ -115,8 +116,9 @@ class AbinitHeader():
 
     def __init__(self, fname):
 
-        self.fWFK = FF(fname, "r")
-        fWFK = self.fWFK
+        #self.fWFK = FF(fname, "r")
+        fWFK = FortranFileR(fname)  # TODO: check first w/o fortio, as it's faster
+        self.fWFK = fWFK
         record = fWFK.read_record('a6,2i4')
 #    print (record)
         stdout.flush()
