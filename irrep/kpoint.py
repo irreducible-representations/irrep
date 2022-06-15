@@ -684,7 +684,7 @@ class Kpoint:
         print("reading k-point", ik)
         # we need to skip lines in fWFK until we reach the lines of ik
         while flag < ik:
-            record = record_abinit(fWFK, "3i4")  # [0]
+            record = record_abinit(fWFK, "i4")  # [0]
             npw, nspinor_loc, nband_loc = record
             kg = record_abinit(fWFK, "({npw},3)i4".format(npw=npw))  # [0]
             eigen, occ = fWFK.read_record(
