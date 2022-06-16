@@ -119,12 +119,12 @@ class AbinitHeader():
         #fWFK = FF(fname, "r")
         fWFK = FFR(fname)  # TODO: check first w/o fortio, as it's faster
         self.fWFK = fWFK
-        record = fWFK.read_record('a6,2i4')
-#    print (record)
+        # write(unit=header) codvsn,headform,fform
+        record = record_abinit(fWFK, 'a6,2i4')
         stdout.flush()
         codsvn = record[0][0].decode('ascii')
         headform, fform = record[0][1]
-        defversion = '8.6.3 '
+        defversion = '8.6.3 '  # TODO: add list of tested versions
         if not (codsvn == defversion):
             print(
                 "WARNING, the version {0} of abinit is not {1}".format(
@@ -133,8 +133,7 @@ class AbinitHeader():
             raise ValueError(
                 "Head form {0}<80 is not supported".format(headform))
 
-        record = fWFK.read_record('18i4,19f8,4i4')[0]
-        # write(unit=header) codvsn,headform,fform
+        record = record_abinit(fWFK, '18i4,19f8,4i4')[0]
         # write(unit=header) bantot,date,intxc,ixc,natom,ngfft(1:3),&
         # & nkpt,nspden,nspinor,nsppol,nsym,npsp,ntypat,occopt,pertcase,usepaw,&
         # & ecut,ecutdg,ecutsm,ecut_eff,qptn(1:3),rprimd(1:3,1:3),stmbias,tphysel,tsmear,usewvl,
@@ -161,8 +160,9 @@ class AbinitHeader():
         nshiftk_orig = record[2][1]
         nshiftk = record[2][2]
         #print (bandtot,natom,nkpt,nsym,npsp,nsppol,ntypat)
-        record = fWFK.read_record(
-            '{nkpt}i4,{n2}i4,{nkpt}i4,{npsp}i4,{nsym}i4,({nsym},3,3)i4,{natom}i4,({nkpt},3)f8,{bandtot}f8,({nsym},3)f8,{ntypat}f8,{nkpt}f8'.format(
+        record = record_abinit(
+                    fWFK,
+                    '{nkpt}i4,{n2}i4,{nkpt}i4,{npsp}i4,{nsym}i4,({nsym},3,3)i4,{natom}i4,({nkpt},3)f8,{bandtot}f8,({nsym},3)f8,{ntypat}f8,{nkpt}f8'.format(
                 nkpt=self.nkpt,
                 n2=self.nkpt *
                 nsppol,
@@ -189,16 +189,18 @@ class AbinitHeader():
         assert(np.sum(self.nband) == bandtot)
         #print (kpt,nband)
 
-        record = fWFK.read_record(
-            'f8,({natom},3)f8,f8,f8,{ntypat}f8'.format(
+        record = record_abinit(
+                    fWFK,
+                    'f8,({natom},3)f8,f8,f8,{ntypat}f8'.format(
                 natom=self.natom, ntypat=ntypat))[0]
         self.xred = record[1]
         self.efermi = record[3]
         # write(unit,err=10, iomsg=errmsg) hdr%residm, hdr%xred(:,:), hdr%etot, hdr%fermie, hdr%amu(:)
         #print (record)
 
-        record = fWFK.read_record(
-            "i4,i4,f8,f8,i4,(3,3)i4,(3,3)i4,({nshiftkorig},3)f8,({nshiftk},3)f8".format(
+        record = record_abinit(
+                    fWFK,
+                    "i4,i4,f8,f8,i4,(3,3)i4,(3,3)i4,({nshiftkorig},3)f8,({nshiftk},3)f8".format(
                 nshiftkorig=nshiftk_orig, nshiftk=nshiftk))[0]
         #record=fWFK.read_record("i4,i4,f8,f8,i4,i4,(3,3)f8,5f8,i4".format(nshiftkorig=nshiftk_orig,nshiftk=nshiftk) )[0]
         ##record=fWFK.read_record("i4,i4,f8,f8,i4,9i4,9i4,6f8".format(nshiftkorig=nshiftk_orig,nshiftk=nshiftk) )[0]
@@ -208,7 +210,7 @@ class AbinitHeader():
         #print (record)
 
         for ipsp in range(npsp):
-            record = fWFK.read_record("a132,f8,f8,5i4,a32")[0]
+            record = record_abinit(fWFK, "a132,f8,f8,5i4,a32")[0]
         #   read(unit, err=10, iomsg=errmsg) &
         # &   hdr%title(ipsp), hdr%znuclpsp(ipsp), hdr%zionpsp(ipsp), hdr%pspso(ipsp), hdr%pspdat(ipsp), &
         # &   hdr%pspcod(ipsp), hdr%pspxc(ipsp), hdr%lmn_size(ipsp), hdr%md5_pseudos(ipsp)
