@@ -681,21 +681,20 @@ class Kpoint:
         """
         assert not (kpt is None)
         self.K = kpt
+        nspinor = 2 if self.spinor else 1
         print("reading k-point", ik)
         # we need to skip lines in fWFK until we reach the lines of ik
         while flag < ik:
             record = record_abinit(fWFK, "i4")  # [0]
             npw, nspinor_loc, nband_loc = record
-            kg = record_abinit(fWFK, "({npw},3)i4".format(npw=npw))  # [0]
-            eigen, occ = fWFK.read_record(
-                "{nband}f8,{nband}f8".format(nband=nband_loc)
-            )[0]
-            nspinor = 2 if self.spinor else 1
+            kg = record_abinit(fWFK, "i4").reshape(npw, 3)
+            record = record_abinit(fWFK, "f8")
+            eigen, occ = record[:nband_loc], record[nband_loc:]
             CG = np.zeros((IBend - IBstart, npw * nspinor), dtype=complex)
             for iband in range(nband_loc):
-                cg_tmp = record_abinit(fWFK, "{0}f8".format(2 * npw * nspinor))  # [0]
+                record = record_abinit(fWFK, "f8")
                 if iband >= IBstart and iband < IBend:
-                    CG[iband - IBstart] = cg_tmp[0::2] + 1.0j * cg_tmp[1::2]
+                    CG[iband - IBstart] = record[0::2] + 1.0j * record[1::2]
             flag += 1
 
         # now, we have kept in npw,nspinor_loc,naband_loc,eigen,occ,cg_tmp the
