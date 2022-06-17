@@ -682,14 +682,23 @@ class Kpoint:
         assert not (kpt is None)
         self.K = kpt
         nspinor = 2 if self.spinor else 1
-        print("reading k-point", ik)
-        # we need to skip lines in fWFK until we reach the lines of ik
+        print("Reading k-point", ik)
+
+        # We need to skip lines in fWFK until we reach the lines of ik
         while flag < ik:
+
+            # 1st record: npw, nspinor, nband
             record = record_abinit(fWFK, "i4")  # [0]
             npw, nspinor_loc, nband_loc = record
+
+            # 2nd record: reciprocal lattice vectors in the expansion
             kg = record_abinit(fWFK, "i4").reshape(npw, 3)
+
+            # 3rd record: energies and occupations
             record = record_abinit(fWFK, "f8")
             eigen, occ = record[:nband_loc], record[nband_loc:]
+
+            # 4th record: coefficients of expansions in plane waves
             CG = np.zeros((IBend - IBstart, npw * nspinor), dtype=complex)
             for iband in range(nband_loc):
                 record = record_abinit(fWFK, "f8")
@@ -697,19 +706,29 @@ class Kpoint:
                     CG[iband - IBstart] = record[0::2] + 1.0j * record[1::2]
             flag += 1
 
-        # now, we have kept in npw,nspinor_loc,naband_loc,eigen,occ,cg_tmp the
-        # info of the k-point labeled by ik
-        assert npw == npw_
-        assert nband_loc == NBin
-        assert (nspinor_loc == 2 and self.spinor) or (
-            nspinor_loc == 1 and not self.spinor
-        )
+        # Check consistency of WFK file
+        assert npw == npw_, ("Different number of plane waves in header and "
+                             "k-point's block. Probably a bug in Abinit..."
+                             )
+        assert nband_loc == NBin, ("Different number of bands in header and "
+                                   "k-point's block. Probably a bug in "
+                                   "Abinit..."
+                                   )
 
+        assert (
+            (nspinor_loc == 2 and self.spinor)
+            or (nspinor_loc == 1 and not self.spinor)
+        ), ("Different values of nspinor in header and "
+            "k-point's block. Probably a bug in Abinit..."
+            )
+
+        # Check orthonormality for norm-conserving pseudos
         if usepaw == 0:
-            assert (
-                np.max(np.abs(CG.conj().dot(CG.T) - np.eye(IBend - IBstart))) < 1e-10
-            )  # check orthonormality
+            largest_value = np.max(np.abs(CG.conj().dot(CG.T)
+                                          - np.eye(IBend - IBstart)))
+            assert largest_value < 1e-10, "Wave functions are not orthonormal"
 
+        # Convert energies to eV and pick upper value
         self.Energy = eigen[IBstart:IBend] * Hartree_eV
         try:
             self.upper = eigen[IBend] * Hartree_eV
