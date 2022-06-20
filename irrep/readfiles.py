@@ -128,7 +128,11 @@ class AbinitHeader():
 
         # 1st record
             # write(unit=header) codvsn,headform,fform
-        record = record_abinit(fWFK, 'a6,2i4')
+        try:  # version < 9.0.0
+            record = record_abinit(fWFK, 'a6,2i4')
+        except:  # version > 9.0.0
+            fWFK.goto_record(0)
+            record = record_abinit(fWFK, 'a8,2i4')
         stdout.flush()
         codsvn = record[0][0].decode('ascii')
         headform, fform = record[0][1]
@@ -157,7 +161,8 @@ class AbinitHeader():
          nsppol,
          ntypat,
          self.usepaw,
-         nspinor) = np.array(record[0])[[0, 4, 8, 12, 13, 11, 14, 17, 10]]
+         nspinor,
+         occopt) = np.array(record[0])[[0, 4, 8, 12, 13, 11, 14, 17, 10, 15]]
         self.rprimd = record[1][7:16].reshape((3, 3))
         self.ecut = record[1][0] * Hartree_eV
         nshiftk_orig = record[2][1]
@@ -168,6 +173,8 @@ class AbinitHeader():
             raise RuntimeError(
                 "Only nsppol=1 is supported. found {0}".format(nsppol)
                 )
+        if occopt == 9:  # extra records since Abinit v9
+            raise RuntimeError("occopt=9 is not supported.")
         if nspinor == 2:
             self.spinor = True
         elif nspinor == 1:
