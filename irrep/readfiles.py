@@ -136,9 +136,10 @@ class AbinitHeader():
         stdout.flush()
         codsvn = record[0][0].decode('ascii')
         headform, fform = record[0][1]
-        defversion = '8.6.3 '  # TODO: add list of tested versions
-        if not (codsvn == defversion):
-            print(("WARNING, the version {0} of abinit is not {1}"
+        defversion = ['8.6.3', '9.6.2', '8.4.4', '8.10.3']
+        if codsvn not in defversion:
+            print(("WARNING, the version {0} of abinit is not in {1} "
+                   "and may not be fully tested"
                    .format(codsvn, defversion))
                   )
         if headform < 80:
