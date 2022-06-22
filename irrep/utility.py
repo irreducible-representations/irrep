@@ -23,7 +23,16 @@ import fortio
 BOHR = constants.physical_constants['Bohr radius'][0] / constants.angstrom
 
 
-class FortranFileR(fortio.FortranFile): # TODO: add docstring
+class FortranFileR(fortio.FortranFile):
+    '''
+    Class that implements `syrte/fortio` package to parse long records
+    in Abinit WFK file.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the WFK file.
+    '''
 
     def __init__(self, filename):
 
