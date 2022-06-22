@@ -465,6 +465,9 @@ class SpaceGroup():
     shiftUC : array, default=None
         Translation taking the origin of the unit cell used in the DFT 
         calculation to that of the standard setting.
+    identify_irreps : bool, default=False
+        Whether irreps should be identify after calculating traces. 
+        It is `True` if kpnames was specified in CLI.
 
     Attributes
     ----------
@@ -629,7 +632,7 @@ class SpaceGroup():
                 dataset['origin_shift']
                 )
 
-    def __init__(self, inPOSCAR=None, cell=None, spinor=True, refUC=None, shiftUC=None, searchUC=False):
+    def __init__(self, inPOSCAR=None, cell=None, spinor=True, refUC=None, shiftUC=None, identify_irreps=False):
         self.spinor = spinor
         (self.symmetries, 
          self.name, 
@@ -649,26 +652,14 @@ class SpaceGroup():
                                             shiftUC_cli=shiftUC,
                                             refUC_lib=refUC_tmp, 
                                             shiftUC_lib=shiftUC_tmp,
-                                            searchUC=searchUC
                                             )
 
-        # Check matching of symmetries in refUC
-        if searchUC:
+        # Check matching of symmetries in refUC. If user set transf.
+        # in the CLI and symmetries don't match, raise a warning.
+        # Otherwise, transf. was calculated automatically and 
+        # matching of symmetries was checked in determine_basis_transf
+        try:
             ind, dt, signs = self.match_symmetries(signs=self.spinor)
-
-            # Print transformation and basis vectors in both settings
-            print("\nThe transformation to the convenctional cell is given "
-                  + "by:\n"
-                  + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[0]]))
-                  + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[1]]), np.round(self.shiftUC, 5))
-                  + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[2]]))
-                  )
-            print("Lattice vectors of DFT (a) and reference (c) cells:")
-            for i in range(3):
-                l_str = "a({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice[i]))
-                r_str = "c({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice.dot(self.refUC.T)[i]))
-                print("    ".join((l_str,r_str)))
-
             # Sort symmetries like in tables
             args = np.argsort(ind)
             for i,i_ind in enumerate(args):
@@ -676,6 +667,35 @@ class SpaceGroup():
                 self.symmetries[i_ind].sign = signs[i_ind]
                 self.symmetries.append(self.symmetries[i_ind])
             self.symmetries = self.symmetries[i+1:]
+        except RuntimeError:
+            if identify_irreps:  # symmetries must match to identify irreps
+                raise RuntimeError((
+                    "refUC and shiftUC don't transform the cellto one where "
+                    "symmetries are identical to those read from tables. "
+                    "Try without specifying refUC and shiftUC."
+                    ))
+            elif refUC is not None or shiftUC is not None:
+                # User specified refUC or shiftUC in CLI. He/She may
+                # want the traces in a cell that is not neither the
+                # one in tables nor the DFT one
+                print(("WARNING: refUC and shiftUC don't transform the cell to "
+                       "one where symmetries are identical to those read from "
+                       "tables. If you want to achieve the same cell as in "
+                       "tables, try not specifying refUC and shiftUC."))
+                pass
+
+        # Print transformation and basis vectors in both settings
+        print("\nThe transformation to the convenctional cell is given "
+              + "by:\n"
+              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[0]]))
+              + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[1]]), np.round(self.shiftUC, 5))
+              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[2]]))
+              )
+        print("Lattice vectors of DFT (a) and reference (c) cells:")
+        for i in range(3):
+            l_str = "a({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice[i]))
+            r_str = "c({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice.dot(self.refUC.T)[i]))
+            print("    ".join((l_str,r_str)))
 
     def show(self, symmetries=None):
         """
@@ -933,7 +953,7 @@ class SpaceGroup():
 # return( { irr.name: np.array([irr.characters[i]*signs[j] for j,i in
 # enumerate(ind)]) for irr in table.irreps if irr.kpname==kpname})
 
-    def determine_basis_transf(self, refUC_cli, shiftUC_cli, refUC_lib, shiftUC_lib, searchUC):
+    def determine_basis_transf(self, refUC_cli, shiftUC_cli, refUC_lib, shiftUC_lib):
         """ 
         Determine basis transformation to conventional cell. Priority
         is given to the transformation set by the user in CLI.
@@ -975,9 +995,7 @@ class SpaceGroup():
         # Give preference to CLI input
         refUC_cli_bool = refUC_cli is not None
         shiftUC_cli_bool = shiftUC_cli is not None
-        if not searchUC:  # Transformation not needed
-            return None,None
-        elif refUC_cli_bool and shiftUC_cli_bool:  # Both specified in CLI.
+        if refUC_cli_bool and shiftUC_cli_bool:  # Both specified in CLI.
             refUC = refUC_cli.T  # User sets refUC as if it was acting on column
             shiftUC = shiftUC_cli
             print('refUC and shiftUC read from CLI')

@@ -276,11 +276,14 @@ def cli(
     
     # Warning about kpnames
     if kpnames is None:
+        identify_irreps = False
         print(("Warning: kpnames not specified. Only traces of "
                "symmetry operations will be calculated. Remember that "
                "kpnames must be specified to identify irreps"
                )
               )
+    else:
+        identify_irreps = True
 
     # parse input arguments into lists if supplied
     if symmetries:
@@ -315,7 +318,7 @@ def cli(
         onlysym=onlysym,
         refUC = refuc,
         shiftUC = shiftuc,
-        searchUC = True,
+        identify_irreps = identify_irreps,
     )
 
     json_data ["spacegroup"] = bandstr.spacegroup.show(symmetries=symmetries)

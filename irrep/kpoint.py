@@ -1100,15 +1100,15 @@ class Kpoint:
 
         # Transfer traces in calculational cell to refUC
         char_refUC = char.copy()
+        k_refUC = np.dot(refUC.T, self.K)
         if (not np.allclose(refUC, np.eye(3, dtype=float)) or
             not np.allclose(shiftUC, np.zeros(3, dtype=float))):
             # Calculational and reference cells are not identical
             for i,ind in enumerate(sym):
                 dt = (symmetries_tables[ind-1].t 
                       - sym[ind].translation_refUC(refUC, shiftUC))
-                k = np.round(refUC.dot(self.K), 5)
                 char_refUC[:,i] *= (sym[ind].sign 
-                                     * np.exp(-2j*np.pi*dt.dot(k)))
+                                     * np.exp(-2j*np.pi*dt.dot(k_refUC)))
 
         json_data["characters_refUC"] = char_refUC
         if np.allclose(char, char_refUC, rtol=0.0, atol=1e-4):
@@ -1130,11 +1130,11 @@ class Kpoint:
 
         # Header of the block
         print(("\n\n k-point {0:3d} : {1} (in DFT cell)\n"
-               "               {2} (in convenctional cell)\n\n"
+               "               {2} (after cell trasformation)\n\n"
                " number of states : {3}\n"
                .format(self.ik0,
                        np.round(self.K, 5),
-                       np.round(np.dot(refUC.T, self.K),5),
+                       np.round(k_refUC,5),
                        self.Nband
                        )
               ))

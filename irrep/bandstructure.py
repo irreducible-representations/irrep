@@ -70,9 +70,12 @@ class BandStructure:
     refUC : array, default=None
         3x3 array describing the transformation of vectors defining the 
         unit cell to the standard setting.
-    shiftUC : array
+    shiftUC : array, default=None
         Translation taking the origin of the unit cell used in the DFT 
         calculation to that of the standard setting.
+    identify_irreps : bool, default=False
+        Whether irreps should be identify after calculating traces. 
+        It is `True` if kpnames was specified in CLI.
 
     Attributes
     ----------
@@ -121,7 +124,7 @@ class BandStructure:
         spin_channel=None,
         refUC = None,
         shiftUC = None,
-        searchUC = False,
+        identify_irreps = False
     ):
         code = code.lower()
 
@@ -131,19 +134,19 @@ class BandStructure:
         
         if code == "vasp":
             self.__init_vasp(
-                fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
+                fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, identify_irreps=identify_irreps
             )
         elif code == "abinit":
             self.__init_abinit(
-                fWFK, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
+                fWFK, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, identify_irreps=identify_irreps
             )
         elif code == "espresso":
             self.__init_espresso(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, spin_channel=spin_channel, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
+                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, spin_channel=spin_channel, refUC=refUC, shiftUC=shiftUC, identify_irreps=identify_irreps
             )
         elif code == "wannier90":
             self.__init_wannier(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
+                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, identify_irreps=identify_irreps
             )
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
@@ -161,7 +164,7 @@ class BandStructure:
         onlysym=False,
         refUC=None,
         shiftUC=None,
-        searchUC=False,
+        identify_irreps=False,
     ):
         """
         Initialization for vasp. Read data and save it in attributes.
@@ -192,12 +195,15 @@ class BandStructure:
         shiftUC : array, default=None
             Translation taking the origin of the unit cell used in the DFT 
             calculation to that of the standard setting.
+        identify_irreps : bool, default=False
+            Whether irreps should be identify after calculating traces. 
+            It is `True` if kpnames was specified in CLI.
         """
         if spinor is None:
             raise RuntimeError(
                 "spinor should be specified in the command line for VASP bandstructure"
             )
-        self.spacegroup = SpaceGroup(inPOSCAR=fPOS, spinor=spinor, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC)
+        self.spacegroup = SpaceGroup(inPOSCAR=fPOS, spinor=spinor, refUC=refUC, shiftUC=shiftUC, identify_irreps=identify_irreps)
         self.spinor = spinor
         if onlysym:
             return
@@ -298,7 +304,7 @@ class BandStructure:
         onlysym=False,
         refUC=None,
         shiftUC=None,
-        searchUC=False,
+        identify_irreps = False
     ):
         """
         Initialization for abinit. Read data and store it in attributes.
@@ -325,13 +331,16 @@ class BandStructure:
         shiftUC : array, default=None
             Translation taking the origin of the unit cell used in the DFT 
             calculation to that of the standard setting.
+        identify_irreps : bool, default=False
+            Whether irreps should be identify after calculating traces. 
+            It is `True` if kpnames was specified in CLI.
         """
 
         header = AbinitHeader(WFKname)
         usepaw = header.usepaw
         self.spinor = header.spinor
         self.spacegroup = SpaceGroup(
-            cell=(header.rprimd, header.xred, header.typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
+            cell=(header.rprimd, header.xred, header.typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC, identify_irreps=identify_irreps
         )
         if onlysym:
             return
@@ -426,7 +435,7 @@ class BandStructure:
         onlysym=False,
         refUC=None,
         shiftUC=None,
-        searchUC=False,
+        identify_irreps = False
     ):
         """
         Initialization for wannier90. Read data and store it in attibutes.
@@ -454,6 +463,9 @@ class BandStructure:
         shiftUC : array, default=None
             Translation taking the origin of the unit cell used in the DFT 
             calculation to that of the standard setting.
+        identify_irreps : bool, default=False
+            Whether irreps should be identify after calculating traces. 
+            It is `True` if kpnames was specified in CLI.
         """
         if Ecut is None:
             raise RuntimeError("Ecut mandatory for Wannier90")
@@ -678,7 +690,7 @@ class BandStructure:
         )
 
         self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
+            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC, identify_irreps=identify_irreps
         )
         if onlysym:
             return
@@ -741,7 +753,7 @@ class BandStructure:
         spin_channel=None,
         refUC=None,
         shiftUC=None,
-        searchUC=False,
+        identify_irreps = False
     ):
         """
         Initialization for Quantum Espresso. Read data and store in attributes.
@@ -771,6 +783,9 @@ class BandStructure:
         shiftUC : array, default=None
             Translation taking the origin of the unit cell used in the DFT 
             calculation to that of the standard setting.
+        identify_irreps : bool, default=False
+            Whether irreps should be identify after calculating traces. 
+            It is `True` if kpnames was specified in CLI.
         """
         import xml.etree.ElementTree as ET
 
@@ -805,7 +820,7 @@ class BandStructure:
         xred = (np.array(xcart, dtype=float) * BOHR).dot(np.linalg.inv(self.Lattice))
         #        print ("xred=",xred)
         self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC, searchUC=searchUC
+            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC, identify_irreps=identify_irreps
         )
         if onlysym:
             return
@@ -1011,6 +1026,9 @@ class BandStructure:
                     efermi=self.efermi,
                     plotFile=pFile,
                     kpl=kpl,
+                    symmetries_tables=self.spacegroup.symmetries_tables,
+                    refUC=self.spacegroup.refUC,
+                    shiftUC=self.spacegroup.shiftUC
                 )
                 kdata["kp in line"] = kpl
                 json_data["k-points" ].append(kdata)
