@@ -246,13 +246,13 @@ class SymmetryOperation():
         else:
             write_ref = False
 
-        if show_k_trans:
+        """if show_k_trans:
             non_orthogonal = False
             theta1 = self.Lattice[0,:].dot(self.Lattice[1,:])
             theta2 = self.Lattice[0,:].dot(self.Lattice[2,:])
             theta3 = self.Lattice[1,:].dot(self.Lattice[2,:])
-            if not np.close(theta1,0) or not np.close(theta2,0) or not np.close(theta3,0):
-                non_orthogonal = True
+            if (not np.isclose(theta1,0)) or (not np.isclose(theta2,0)) or (not np.isclose(theta3,0)):
+                non_orthogonal = True"""
         json_data ["calculation cell coincides with reference cell"] =  not write_ref
 
         # Print header
@@ -286,18 +286,19 @@ class SymmetryOperation():
             json_data ["rotation_matrix_refUC"]=self.rotation
 
         if show_k_trans:
+            """ fstr = ("{0:6.2f}")
             Rk = np.transpose(np.linalg.inv(self.rotation))
             rotstr2 = [" " *
                        5 +
                        s +
                        " ".join(fstr.format(x) for x in row) +
                        t for s, row, t in zip(["rotation : |",
-                                               " (k-space)   |",
+                                               "(k-space)  |",
                                                " " * 11 + "|"
                                                ],
                                               Rk,
                                               [" |", " |", " |"])]
-            rotstr = [r + r1 + r2 for r, r2, r2 in zip(rotstr,rotstr1,rotstr2)]
+            rotstr = [r + r1 + r2 for r, r1, r2 in zip(rotstr,rotstr1,rotstr2)]"""
         else:
             rotstr = [r + r1 for r, r1 in zip(rotstr, rotstr1)]
 
@@ -694,7 +695,7 @@ class SpaceGroup():
 
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
-                json_data["symmetries"][symop.ind]=symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
+                json_data["symmetries"][symop.ind]=symop.show(refUC=self.refUC, shiftUC=self.shiftUC,show_k_trans=True)
 
         return json_data
 
