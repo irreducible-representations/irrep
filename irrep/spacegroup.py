@@ -16,6 +16,7 @@
 ##################################################################
 
 
+from distutils.fancy_getopt import wrap_text
 import numpy as np
 from math import pi
 from scipy.linalg import expm
@@ -220,6 +221,7 @@ class SymmetryOperation():
         t_ref = np.linalg.inv(refUC).dot(t_ref)
         return t_ref
 
+
     def show(self, refUC=np.eye(3), shiftUC=np.zeros(3),show_k_trans=False):
         """
         Print description of symmetry operation.
@@ -238,6 +240,28 @@ class SymmetryOperation():
         json_data : `json` object
             Object with output structured in `json` format.
         """
+        def parse_row_transform(mrow):
+            s = ""
+            coord = ["kx","ky","kz"]
+            for i in range(len(mrow)):
+                b = int(mrow[i]) if np.isclose(mrow[i],int(mrow[i])) else mrow[i]
+                is_first = True
+                if b == 0:
+                    continue
+                if b == 1:
+                    if is_first:
+                        s += coord[i]
+                    else:
+                        s += "+" + coord[i]
+                elif b == -1:
+                    s += "-" + coord[i]
+                else:
+                    if b > 0:
+                        s += "+" + str(b) + coord[i]
+                    else:
+                        s += str(b) + coord[i]
+                is_first = False
+            return s
 
         json_data = {} 
         if (not np.allclose(refUC, np.eye(3)) or
@@ -246,13 +270,6 @@ class SymmetryOperation():
         else:
             write_ref = False
 
-        """if show_k_trans:
-            non_orthogonal = False
-            theta1 = self.Lattice[0,:].dot(self.Lattice[1,:])
-            theta2 = self.Lattice[0,:].dot(self.Lattice[2,:])
-            theta3 = self.Lattice[1,:].dot(self.Lattice[2,:])
-            if (not np.isclose(theta1,0)) or (not np.isclose(theta2,0)) or (not np.isclose(theta3,0)):
-                non_orthogonal = True"""
         json_data ["calculation cell coincides with reference cell"] =  not write_ref
 
         # Print header
@@ -281,30 +298,23 @@ class SymmetryOperation():
                                                ],
                                               R,
                                               [" |", " |", " |"])]
-            #rotstr = [r + r1 for r, r1 in zip(rotstr, rotstr1)]
+            rotstr = [r + r1 for r, r1 in zip(rotstr, rotstr1)]
         else: 
             json_data ["rotation_matrix_refUC"]=self.rotation
 
         if show_k_trans:
-            """ fstr = ("{0:6.2f}")
-            Rk = np.transpose(np.linalg.inv(self.rotation))
-            rotstr2 = [" " *
-                       5 +
-                       s +
-                       " ".join(fstr.format(x) for x in row) +
-                       t for s, row, t in zip(["rotation : |",
-                                               "(k-space)  |",
-                                               " " * 11 + "|"
-                                               ],
-                                              Rk,
-                                              [" |", " |", " |"])]
-            rotstr = [r + r1 + r2 for r, r1, r2 in zip(rotstr,rotstr1,rotstr2)]"""
-        else:
-            rotstr = [r + r1 for r, r1 in zip(rotstr, rotstr1)]
+            kstring = "gk = ["+", ".join([parse_row_transform(r) for r in 
+                np.transpose(np.linalg.inv(self.rotation))])+"]"
+
+            if write_ref:
+                kstring += "  |   refUC:  gk = ["+", ".join([parse_row_transform(r) for r in 
+                    np.transpose(np.linalg.inv(R))])+"]"
+                
 
 
 
         print("\n".join(rotstr))
+        print("\n\n",kstring)
 
         # Print spinor transformation matrix
         if self.spinor:
