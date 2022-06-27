@@ -220,7 +220,7 @@ class SymmetryOperation():
         t_ref = np.linalg.inv(refUC).dot(t_ref)
         return t_ref
 
-    def show(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
+    def show(self, refUC=np.eye(3), shiftUC=np.zeros(3),show_k_trans=False):
         """
         Print description of symmetry operation.
         
@@ -245,6 +245,14 @@ class SymmetryOperation():
             write_ref = True  # To avoid writing this huge block again
         else:
             write_ref = False
+
+        if show_k_trans:
+            non_orthogonal = False
+            theta1 = self.Lattice[0,:].dot(self.Lattice[1,:])
+            theta2 = self.Lattice[0,:].dot(self.Lattice[2,:])
+            theta3 = self.Lattice[1,:].dot(self.Lattice[2,:])
+            if not np.close(theta1,0) or not np.close(theta2,0) or not np.close(theta3,0):
+                non_orthogonal = True
         json_data ["calculation cell coincides with reference cell"] =  not write_ref
 
         # Print header
@@ -273,9 +281,26 @@ class SymmetryOperation():
                                                ],
                                               R,
                                               [" |", " |", " |"])]
-            rotstr = [r + r1 for r, r1 in zip(rotstr, rotstr1)]
+            #rotstr = [r + r1 for r, r1 in zip(rotstr, rotstr1)]
         else: 
             json_data ["rotation_matrix_refUC"]=self.rotation
+
+        if show_k_trans:
+            Rk = np.transpose(np.linalg.inv(self.rotation))
+            rotstr2 = [" " *
+                       5 +
+                       s +
+                       " ".join(fstr.format(x) for x in row) +
+                       t for s, row, t in zip(["rotation : |",
+                                               " (k-space)   |",
+                                               " " * 11 + "|"
+                                               ],
+                                              Rk,
+                                              [" |", " |", " |"])]
+            rotstr = [r + r1 + r2 for r, r2, r2 in zip(rotstr,rotstr1,rotstr2)]
+        else:
+            rotstr = [r + r1 for r, r1 in zip(rotstr, rotstr1)]
+
 
 
         print("\n".join(rotstr))
