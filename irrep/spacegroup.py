@@ -16,7 +16,6 @@
 ##################################################################
 
 
-from distutils.fancy_getopt import wrap_text
 import numpy as np
 from math import pi
 from scipy.linalg import expm
@@ -222,7 +221,7 @@ class SymmetryOperation():
         return t_ref
 
 
-    def show(self, refUC=np.eye(3), shiftUC=np.zeros(3),show_k_trans=False):
+    def show(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
         Print description of symmetry operation.
         
@@ -302,13 +301,14 @@ class SymmetryOperation():
         else: 
             json_data ["rotation_matrix_refUC"]=self.rotation
 
-        if show_k_trans:
-            kstring = "gk = ["+", ".join([parse_row_transform(r) for r in 
-                np.transpose(np.linalg.inv(self.rotation))])+"]"
+        kstring = "gk = [" + ", ".join(
+                    [parse_row_transform(r) for r in np.transpose(np.linalg.inv(self.rotation))]
+                    ) + "]"
 
-            if write_ref:
-                kstring += "  |   refUC:  gk = ["+", ".join([parse_row_transform(r) for r in 
-                    np.transpose(np.linalg.inv(R))])+"]"
+        if write_ref:
+            kstring += "  |   refUC:  gk = ["+", ".join(
+                    [parse_row_transform(r) for r in np.transpose(np.linalg.inv(R))]
+                    )+ "]"
                 
 
 
@@ -705,7 +705,7 @@ class SpaceGroup():
 
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
-                json_data["symmetries"][symop.ind]=symop.show(refUC=self.refUC, shiftUC=self.shiftUC,show_k_trans=True)
+                json_data["symmetries"][symop.ind]=symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
 
         return json_data
 
