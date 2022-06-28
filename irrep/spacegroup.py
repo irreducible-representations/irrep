@@ -220,6 +220,7 @@ class SymmetryOperation():
         t_ref = np.linalg.inv(refUC).dot(t_ref)
         return t_ref
 
+
     def show(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
         Print description of symmetry operation.
@@ -238,6 +239,28 @@ class SymmetryOperation():
         json_data : `json` object
             Object with output structured in `json` format.
         """
+        def parse_row_transform(mrow):
+            s = ""
+            coord = ["kx","ky","kz"]
+            for i in range(len(mrow)):
+                b = int(mrow[i]) if np.isclose(mrow[i],int(mrow[i])) else mrow[i]
+                is_first = True
+                if b == 0:
+                    continue
+                if b == 1:
+                    if is_first:
+                        s += coord[i]
+                    else:
+                        s += "+" + coord[i]
+                elif b == -1:
+                    s += "-" + coord[i]
+                else:
+                    if b > 0:
+                        s += "+" + str(b) + coord[i]
+                    else:
+                        s += str(b) + coord[i]
+                is_first = False
+            return s
 
         json_data = {} 
         if (not np.allclose(refUC, np.eye(3)) or
@@ -245,6 +268,7 @@ class SymmetryOperation():
             write_ref = True  # To avoid writing this huge block again
         else:
             write_ref = False
+
         json_data ["calculation cell coincides with reference cell"] =  not write_ref
 
         # Print header
@@ -277,8 +301,20 @@ class SymmetryOperation():
         else: 
             json_data ["rotation_matrix_refUC"]=self.rotation
 
+        kstring = "gk = [" + ", ".join(
+                    [parse_row_transform(r) for r in np.transpose(np.linalg.inv(self.rotation))]
+                    ) + "]"
+
+        if write_ref:
+            kstring += "  |   refUC:  gk = ["+", ".join(
+                    [parse_row_transform(r) for r in np.transpose(np.linalg.inv(R))]
+                    )+ "]"
+                
+
+
 
         print("\n".join(rotstr))
+        print("\n\n",kstring)
 
         # Print spinor transformation matrix
         if self.spinor:
