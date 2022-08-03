@@ -242,9 +242,9 @@ class SymmetryOperation():
         def parse_row_transform(mrow):
             s = ""
             coord = ["kx","ky","kz"]
+            is_first = True
             for i in range(len(mrow)):
                 b = int(mrow[i]) if np.isclose(mrow[i],int(mrow[i])) else mrow[i]
-                is_first = True
                 if b == 0:
                     continue
                 if b == 1:
