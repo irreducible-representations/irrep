@@ -388,7 +388,7 @@ def symm_eigenvalues(
 
 
 def symm_matrix(
-    K, RecLattice, WF, igall, A, S, T, spinor
+    K, RecLattice, WF, igall, A, S, T, spinor, bands=slice(None)
 ):
     """
     Computes the matrix S_mn = <Psi_m|{A|T}|Psi_n>
@@ -422,6 +422,9 @@ def symm_matrix(
         vectors of the unit cell.
     spinor : bool
         `True` if wave functions are spinors, `False` if they are scalars.
+    bands : slice, list or or 1D array
+        Calculates the matrix elements between bands listed here.
+        Default: all bands.
 
     Returns
     -------
@@ -432,6 +435,7 @@ def symm_matrix(
     npw1 = igall.shape[1]
     multZ = np.exp(-1.0j * (2 * np.pi * A.dot(T).dot(igall[:3, :] + K[:, None])))
     igrot = transformed_g(K, igall, RecLattice, A)
+    WF = WF[bands] # local copy if sliced, original (copy by reference) if not sliced
     if spinor:
         WF1 = np.stack([WF[:, igrot], WF[:, igrot + npw1]], axis=2).conj()
         WF2 = np.stack([WF[:, :npw1], WF[:, npw1:]], axis=2)
