@@ -242,9 +242,9 @@ class SymmetryOperation():
         def parse_row_transform(mrow):
             s = ""
             coord = ["kx","ky","kz"]
+            is_first = True
             for i in range(len(mrow)):
                 b = int(mrow[i]) if np.isclose(mrow[i],int(mrow[i])) else mrow[i]
-                is_first = True
                 if b == 0:
                     continue
                 if b == 1:
@@ -685,16 +685,18 @@ class SpaceGroup():
                 pass
 
         # Print transformation and basis vectors in both settings
+        refUC_print = self.refUC.T  # print following convention in paper
         print("\nThe transformation to the convenctional cell is given "
               + "by:\n"
-              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[0]]))
-              + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[1]]), np.round(self.shiftUC, 5))
-              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in self.refUC[2]]))
+              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[0]]))
+              + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[1]]), np.round(self.shiftUC, 5))
+              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[2]]))
               )
         print("Lattice vectors of DFT (a) and reference (c) cells:")
+        Lattice_conv = self.refUC.T.dot(self.Lattice)
         for i in range(3):
             l_str = "a({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice[i]))
-            r_str = "c({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in self.Lattice.dot(self.refUC.T)[i]))
+            r_str = "c({:1d})=[{} ]".format(i, "".join("{:8.4f}".format(x) for x in Lattice_conv[i]))
             print("    ".join((l_str,r_str)))
 
     def show(self, symmetries=None):
