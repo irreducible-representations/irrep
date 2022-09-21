@@ -465,8 +465,8 @@ class SpaceGroup():
     shiftUC : array, default=None
         Translation taking the origin of the unit cell used in the DFT 
         calculation to that of the standard setting.
-    identify_irreps : bool, default=False
-        Whether irreps should be identify after calculating traces. 
+    search_cell : bool, default=False
+        Whether the transformation to the conventional cell should be computed.
         It is `True` if kpnames was specified in CLI.
 
     Attributes
@@ -632,7 +632,7 @@ class SpaceGroup():
                 dataset['origin_shift']
                 )
 
-    def __init__(self, inPOSCAR=None, cell=None, spinor=True, refUC=None, shiftUC=None, identify_irreps=False):
+    def __init__(self, inPOSCAR=None, cell=None, spinor=True, refUC=None, shiftUC=None, search_cell=False):
         self.spinor = spinor
         (self.symmetries, 
          self.name, 
@@ -652,6 +652,7 @@ class SpaceGroup():
                                             shiftUC_cli=shiftUC,
                                             refUC_lib=refUC_tmp, 
                                             shiftUC_lib=shiftUC_tmp,
+                                            search_cell=search_cell
                                             )
 
         # Check matching of symmetries in refUC. If user set transf.
@@ -668,7 +669,7 @@ class SpaceGroup():
                 self.symmetries.append(self.symmetries[i_ind])
             self.symmetries = self.symmetries[i+1:]
         except RuntimeError:
-            if identify_irreps:  # symmetries must match to identify irreps
+            if search_cell:  # symmetries must match to identify irreps
                 raise RuntimeError((
                     "refUC and shiftUC don't transform the cellto one where "
                     "symmetries are identical to those read from tables. "
@@ -686,8 +687,7 @@ class SpaceGroup():
 
         # Print transformation and basis vectors in both settings
         refUC_print = self.refUC.T  # print following convention in paper
-        print("\nThe transformation to the convenctional cell is given "
-              + "by:\n"
+        print("\nThe cell transformation is given by: \n"
               + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[0]]))
               + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[1]]), np.round(self.shiftUC, 5))
               + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[2]]))
@@ -955,7 +955,7 @@ class SpaceGroup():
 # return( { irr.name: np.array([irr.characters[i]*signs[j] for j,i in
 # enumerate(ind)]) for irr in table.irreps if irr.kpname==kpname})
 
-    def determine_basis_transf(self, refUC_cli, shiftUC_cli, refUC_lib, shiftUC_lib):
+    def determine_basis_transf(self, refUC_cli, shiftUC_cli, refUC_lib, shiftUC_lib, search_cell):
         """ 
         Determine basis transformation to conventional cell. Priority
         is given to the transformation set by the user in CLI.
@@ -975,6 +975,9 @@ class SpaceGroup():
             origin to the position adopted in the tables (BCS). For 
             example, origin choice 1 of ITA is adopted in spglib for 
             centrosymmetric groups, while origin choice 2 in BCS.
+        search_cell : bool, default=False
+            Whether the transformation to the conventional cell should be computed.
+            It is `True` if kpnames was specified in CLI.
 
         Returns
         -------
@@ -1013,6 +1016,16 @@ class SpaceGroup():
             shiftUC = shiftUC_cli
             print(('shitfUC was specified in CLI, but refUC was not. Taking '
                    '3x3 identity matrix as refUC.'))
+            return refUC, shiftUC
+        elif not search_cell:
+            refUC = np.eye(3, dtype=float)
+            shiftUC = np.zeros(3, dtype=float)
+            print(('Neither refUC nor shiftUC were specified in CLI '
+                   'and searchcell was False. Taking 3x3 identity '
+                   'matrix as refUC and shiftUC=(0,0,0). If you want '
+                   'to calculate the transformation to conventional '
+                   'cell, run IrRep with -searchcell'
+                   ))
             return refUC, shiftUC
         else:  # Neither specifiend in CLI.
             refUC = np.linalg.inv(refUC_lib)  # from DFT to convenctional cell

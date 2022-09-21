@@ -236,6 +236,18 @@ do not hesitate to contact the author:
     help="Suffix to name files containing data for band plotting. Default: tognuplot")
 @click.option("-config", type=click.Path(),
               help="Define irrep inputs from a configuration file in YAML or JSON format.")
+@click.option(
+    "-searchcell", 
+    flag_value=True, 
+    default=False, 
+    help=("Find transformation to conventional unit cell. If it is "
+          "not specified, the transformation to the conventional "
+          "unit cell will not be calculated and, if refUC or shiftUC "
+          "were given, it will not be checked if they correctly lead "
+          "to the conventional cell."
+          "Default: False, unless -knames was specified in CLI"
+          )
+)
 def cli(
     ecut,
     fwav,
@@ -261,7 +273,8 @@ def cli(
     groupkramers,
     symmetries,
     suffix,
-    config
+    config,
+    searchcell
 ):
     """
     Defines the "irrep" command-line tool interface.
@@ -275,15 +288,29 @@ def cli(
         shiftuc = np.array(shiftuc.split(","), dtype=float).reshape(3)
     
     # Warning about kpnames
-    if kpnames is None:
-        identify_irreps = False
-        print(("Warning: kpnames not specified. Only traces of "
+    if kpnames is not None:
+        searchcell = True
+    elif not searchcell:
+        print(("Warning: transformation to the convenctional unit "
+               "cell will not be calculated, nor its validity checked "
+               "(if given). See the description of flag -searchcell "
+               "on:\n"
+               "irrep --help"
+               ))
+        print(("Warning: -kpnames not specified. Only traces of "
                "symmetry operations will be calculated. Remember that "
-               "kpnames must be specified to identify irreps"
-               )
-              )
-    else:
-        identify_irreps = True
+               "-kpnames must be specified to identify irreps"
+               ))
+
+    #if kpnames is None:
+    #    identify_irreps = False
+    #    print(("Warning: kpnames not specified. Only traces of "
+    #           "symmetry operations will be calculated. Remember that "
+    #           "kpnames must be specified to identify irreps"
+    #           )
+    #          )
+    #else:
+    #    identify_irreps = True
 
     # parse input arguments into lists if supplied
     if symmetries:
@@ -318,7 +345,7 @@ def cli(
         onlysym=onlysym,
         refUC = refuc,
         shiftUC = shiftuc,
-        identify_irreps = identify_irreps,
+        search_cell = searchcell,
     )
 
     json_data ["spacegroup"] = bandstr.spacegroup.show(symmetries=symmetries)
