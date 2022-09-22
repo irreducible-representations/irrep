@@ -39,7 +39,7 @@ Currently the code is interfaced VASP, ABINIT and QuantumEspresso, but if interf
 ## Unit cell transformation
 
 To be able to identify irreducible representations (irreps) from traces of symmetry operations requires saving somewhere the relation between irrep labels and traces. Since traces depend on the choice of the unit cell, defining a conventional or standard unit cell is needed.
-At the same time, DFT calculations are usually run in a primitive cell for convenience. Then, `IrRep` needs the transformation from the DFT cell to the conventional cell. The user can give pass the transformation to `IrRep` by specifying the CLI arguments `-refUC` and `shiftUC`, or let `IrRep` calculate automatically the transformation by setting `-searchcell`. The possible cases are:
+At the same time, DFT calculations are usually run in a primitive cell for convenience. Then, `IrRep` needs the transformation from the DFT cell to the conventional cell. The user can give the transformation to `IrRep` by specifying the CLI arguments `-refUC` and `-shiftUC`, or let `IrRep` calculate automatically the transformation by setting `-searchcell`. The possible cases are:
 
 1. Let `IrRep` calculate automatically the transformation to the conventional cell:
 ```
