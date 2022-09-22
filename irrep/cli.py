@@ -245,7 +245,7 @@ do not hesitate to contact the author:
           "unit cell will not be calculated and, if refUC or shiftUC "
           "were given, it will not be checked if they correctly lead "
           "to the conventional cell."
-          "Default: False, unless -knames was specified in CLI"
+          "Default: False, unless -kpnames was specified in CLI"
           )
 )
 def cli(
