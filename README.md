@@ -36,10 +36,41 @@ pip install irrep
 
 Currently the code is interfaced VASP, ABINIT and QuantumEspresso, but if interface with other code is needed, please contact te author.
 
+## Unit cell transformation
+
+To be able to identify irreducible representations (irreps) from traces of symmetry operations requires saving somewhere the relation between irrep labels and traces. Since traces depend on the choice of the unit cell, defining a conventional or standard unit cell is needed.
+At the same time, DFT calculations are usually run in a primitive cell for convenience. Then, `IrRep` needs the transformation from the DFT cell to the conventional cell. The user can give the transformation to `IrRep` by specifying the CLI arguments `-refUC` and `-shiftUC`, or let `IrRep` calculate automatically the transformation by setting `-searchcell`. The possible cases are:
+
+1. Let `IrRep` calculate automatically the transformation to the conventional cell:
+```
+irrep -searchcell
+```
+
+2. Give `IrRep` the tranformation and check that it is the correct transformation to the conventional cell:
+```
+irrep -refUC=... -shiftUC=... -searchcell
+```
+
+3. Provide `IrRep` with a transformation but don't check if it leads to the conventional cell:
+```
+irrep -refUC=... -shiftUC=...
+```
+This case is useful to get the traces in a cell that is not neither the DFT nor the conventional cell.
+
+4. Calculate the traces only for the DFT cell and forget about transforming to a different unit cell:
+```
+irrep
+```
+:clipboard: **Note**: specifying `-kpnames` in the CLI activates automatically `-searchcell`, as the transformation to the convetional cell is needed to identify irreps.
+:clipboard: **Note** Until v.1.7.1, the default behaviour was to calculate or check the transformation to the conventional cell, so the case 4 above would indicate `IrRep` to calculate the transformation to the conventional cell.
+
+## How to cite
+
 The code relies on [spglib](https://github.com/atztogo/spglib) library to determine the symmetry of the crystal
 and the tables of the characters of irreducible representations, obtained from the [Bilbao Crystallographic Server (BCS)](http://www.cryst.ehu.es/)
-If you use this code to determine irreps for a scientific publication, please acknowledge BCS and
-cite:
+If you use this code to determine irreps for a scientific publication, please cite the following articles:
+
+> M. Iraola, J. L. Mañes, B. Bradlyn, M. K. Horton, T. Neupert, M. G. Vergniory and S. S. Tsirkin "IrRep: Symmetry eigenvalues and irreducible representations of *ab initio* band structures", Computer Physics Communications 272, 108226 (2022). [https://doi.org/10.1016/j.cpc.2021.108226](https://doi.org/10.1016/j.cpc.2021.108226)
 
 > L. Elcoro, B. Bradlyn, Z. Wang, M. G. Vergniory, J. Cano, C. Felser, B. A. Bernevig, D. Orobengoa, G. de la Flor and M. I. Aroyo
 "Double crystallographic groups and their representations on the Bilbao Crystallographic Server"
