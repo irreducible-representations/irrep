@@ -76,6 +76,9 @@ class BandStructure:
     search_cell : bool, default=False
         Whether the transformation to the conventional cell should be computed.
         It is `True` if kpnames was specified in CLI.
+    _correct_Ecut0 : float
+        In case of VASP, if you get an error like ' computed ncnt=*** != input nplane=*** ', 
+        try to set this parameter to a small positive or negative value (usually of order  +- 1e-7)
 
     Attributes
     ----------
@@ -105,6 +108,9 @@ class BandStructure:
         Each element is an instance of `class Kpoint` corresponding to a 
         k-point specified in input parameter `kpoints`. If this input was not 
         set, all k-points found in DFT files will be considered.
+    _correct_Ecut0 : float
+        if you get an error like ' computed ncnt=*** != input nplane=*** ', 
+        try to set this parameter to a small positive or negative value (usually of order  +- 1e-7)
     """
 
     def __init__(
@@ -124,7 +130,8 @@ class BandStructure:
         spin_channel=None,
         refUC = None,
         shiftUC = None,
-        search_cell = False
+        search_cell = False,
+        _correct_Ecut0 = 0.,
     ):
         code = code.lower()
 
@@ -134,7 +141,8 @@ class BandStructure:
         
         if code == "vasp":
             self.__init_vasp(
-                fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell
+                fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell,
+                _correct_Ecut0=_correct_Ecut0,
             )
         elif code == "abinit":
             self.__init_abinit(
@@ -165,6 +173,7 @@ class BandStructure:
         refUC=None,
         shiftUC=None,
         search_cell=False,
+        _correct_Ecut0=0.,
     ):
         """
         Initialization for vasp. Read data and save it in attributes.
@@ -198,6 +207,9 @@ class BandStructure:
         search_cell : bool, default=False
             Whether the transformation to the conventional cell should be computed.
             It is `True` if kpnames was specified in CLI.
+        _correct_Ecut0 : float
+            if you get an error like ' computed ncnt=*** != input nplane=*** ', 
+            try to set this parameter to a small positive or negative value (usually of order +- 1e-7)
         """
         if spinor is None:
             raise RuntimeError(
@@ -284,7 +296,7 @@ class BandStructure:
                 IBstart,
                 IBend,
                 Ecut,
-                Ecut0,
+                Ecut0*(1.+_correct_Ecut0),
                 self.RecLattice,
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
