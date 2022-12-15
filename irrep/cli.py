@@ -100,6 +100,13 @@ do not hesitate to contact the author:
     "the cut-off used in the DFT calculation.",
 )
 @click.option(
+    "-correct_Ecut0",
+    type=float,
+    default=0.,
+    help="In case of VASP, if you get an error like ' computed ncnt=*** != input nplane=*** ', "
+        "try to set this parameter to a small positive or negative value (usually of order  +- 1e-7)"
+)
+@click.option(
     "-fWAV",
     type=str,
     default="WAVECAR",
@@ -274,7 +281,8 @@ def cli(
     symmetries,
     suffix,
     config,
-    searchcell
+    searchcell,
+    correct_ecut0
 ):
     """
     Defines the "irrep" command-line tool interface.
@@ -346,6 +354,7 @@ def cli(
         refUC = refuc,
         shiftUC = shiftuc,
         search_cell = searchcell,
+        _correct_Ecut0=correct_ecut0
     )
 
     json_data ["spacegroup"] = bandstr.spacegroup.show(symmetries=symmetries)

@@ -34,9 +34,6 @@ class NotSymmetryError(RuntimeError):
 #!!   checks for discrepancy of any results between this and VASP values)
 twomhbar2 = 0.262465831
 
-correction = 0
-twomhbar2 *= 1 + correction
-
 
 # This function is a python translation of a part of WaveTrans Code
 def calc_gvectors(
