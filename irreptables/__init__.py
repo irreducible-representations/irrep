@@ -361,10 +361,12 @@ class IrrepTable:
         logger.debug("symmetries are:\n" + "\n".join(s.str() for s in self.symmetries))
 
         self.irreps = []
+        self.kset   = []
         while len(lines) > 0:
             l = lines.pop().strip()
             try:
                 kp = KPoint(line=l)
+                self.kset.append(kp)
                 logger.debug("kpoint successfully read:", kp.str())
             except Exception as err:
                 logger.debug("error while reading k-point <{0}>".format(l), err)
