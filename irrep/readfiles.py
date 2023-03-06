@@ -134,7 +134,7 @@ class AbinitHeader():
             fWFK.goto_record(0)
             record = record_abinit(fWFK, 'a8,2i4')
         stdout.flush()
-        codsvn = record[0][0].decode('ascii')
+        codsvn = record[0][0].decode('ascii').strip()
         headform, fform = record[0][1]
         defversion = ['8.6.3', '9.6.2', '8.4.4', '8.10.3']
         if codsvn not in defversion:
@@ -252,8 +252,8 @@ class AbinitHeader():
 
         # 7th record: additional records if usepaw=1
         if self.usepaw == 1:
-            record = fWFK.read_record('i4')
-            record = fWFK.read_record('f8')
+            record_abinit(fWFK,"i4")
+            record_abinit(fWFK,"i4")
 
     def __fix_arrays(self):
         '''when nkpt=1, some integers must be converted to iterables, to avoid problems with indices'''
