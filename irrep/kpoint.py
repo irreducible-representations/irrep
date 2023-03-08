@@ -703,36 +703,54 @@ class Kpoint:
         """
         assert not (kpt is None)
         self.K = kpt
-        print("reading k-point", ik)
-        # we need to skip lines in fWFK until we reach the lines of ik
+        nspinor = 2 if self.spinor else 1
+        print("Reading k-point", ik)
+
+        # We need to skip lines in fWFK until we reach the lines of ik
         while flag < ik:
-            record = record_abinit(fWFK, "3i4")  # [0]
+
+            # 1st record: npw, nspinor, nband
+            record = record_abinit(fWFK, "i4")  # [0]
             npw, nspinor_loc, nband_loc = record
-            kg = record_abinit(fWFK, "({npw},3)i4".format(npw=npw))  # [0]
-            eigen, occ = fWFK.read_record(
-                "{nband}f8,{nband}f8".format(nband=nband_loc)
-            )[0]
-            nspinor = 2 if self.spinor else 1
+
+            # 2nd record: reciprocal lattice vectors in the expansion
+            kg = record_abinit(fWFK, "i4").reshape(npw, 3)
+
+            # 3rd record: energies and occupations
+            record = record_abinit(fWFK, "f8")
+            eigen, occ = record[:nband_loc], record[nband_loc:]
+
+            # 4th record: coefficients of expansions in plane waves
             CG = np.zeros((IBend - IBstart, npw * nspinor), dtype=complex)
             for iband in range(nband_loc):
-                cg_tmp = record_abinit(fWFK, "{0}f8".format(2 * npw * nspinor))  # [0]
+                record = record_abinit(fWFK, "f8")
                 if iband >= IBstart and iband < IBend:
-                    CG[iband - IBstart] = cg_tmp[0::2] + 1.0j * cg_tmp[1::2]
+                    CG[iband - IBstart] = record[0::2] + 1.0j * record[1::2]
             flag += 1
 
-        # now, we have kept in npw,nspinor_loc,naband_loc,eigen,occ,cg_tmp the
-        # info of the k-point labeled by ik
-        assert npw == npw_
-        assert nband_loc == NBin
-        assert (nspinor_loc == 2 and self.spinor) or (
-            nspinor_loc == 1 and not self.spinor
-        )
+        # Check consistency of WFK file
+        assert npw == npw_, ("Different number of plane waves in header and "
+                             "k-point's block. Probably a bug in Abinit..."
+                             )
+        assert nband_loc == NBin, ("Different number of bands in header and "
+                                   "k-point's block. Probably a bug in "
+                                   "Abinit..."
+                                   )
 
+        assert (
+            (nspinor_loc == 2 and self.spinor)
+            or (nspinor_loc == 1 and not self.spinor)
+        ), ("Different values of nspinor in header and "
+            "k-point's block. Probably a bug in Abinit..."
+            )
+
+        # Check orthonormality for norm-conserving pseudos
         if usepaw == 0:
-            assert (
-                np.max(np.abs(CG.conj().dot(CG.T) - np.eye(IBend - IBstart))) < 1e-10
-            )  # check orthonormality
+            largest_value = np.max(np.abs(CG.conj().dot(CG.T)
+                                          - np.eye(IBend - IBstart)))
+            assert largest_value < 1e-10, "Wave functions are not orthonormal"
 
+        # Convert energies to eV and pick upper value
         self.Energy = eigen[IBstart:IBend] * Hartree_eV
         try:
             self.upper = eigen[IBend] * Hartree_eV
@@ -1106,15 +1124,15 @@ class Kpoint:
 
         # Transfer traces in calculational cell to refUC
         char_refUC = char.copy()
+        k_refUC = np.dot(refUC.T, self.K)
         if (not np.allclose(refUC, np.eye(3, dtype=float)) or
             not np.allclose(shiftUC, np.zeros(3, dtype=float))):
             # Calculational and reference cells are not identical
             for i,ind in enumerate(sym):
                 dt = (symmetries_tables[ind-1].t 
                       - sym[ind].translation_refUC(refUC, shiftUC))
-                k = np.round(refUC.dot(self.K), 5)
                 char_refUC[:,i] *= (sym[ind].sign 
-                                     * np.exp(-2j*np.pi*dt.dot(k)))
+                                     * np.exp(-2j*np.pi*dt.dot(k_refUC)))
 
         json_data["characters_refUC"] = char_refUC
         if np.allclose(char, char_refUC, rtol=0.0, atol=1e-4):
@@ -1135,11 +1153,16 @@ class Kpoint:
         s2 = " " * int(irreplen / 2 - 3)
 
         # Header of the block
-        print(
-            "\n\nk-point {0:3d} :{1} \n number of states = {2}".format(
-                self.ik0, self.K, Nirrep
-            )
-        )
+        print(("\n\n k-point {0:3d} : {1} (in DFT cell)\n"
+               "               {2} (after cell trasformation)\n\n"
+               " number of states : {3}\n"
+               .format(self.ik0,
+                       np.round(self.K, 5),
+                       np.round(k_refUC,5),
+                       self.Nband
+                       )
+              ))
+
         print("   Energy  |   degeneracy  |{0} irreps {0}| sym. operations  ".format(s2))
 
         # Symmetry operations
@@ -1162,7 +1185,7 @@ class Kpoint:
             print(left_str + " " + right_str)
             # Print characters in reference unit cell
             if write_refUC:
-                left_str = ("           |              | {0:{1}s} |"
+                left_str = ("           |               | {0:{1}s} |"
                             .format(len(ir)*" ", irreplen)
                            )
                 right_str = " ".join(
@@ -1343,7 +1366,7 @@ class Kpoint:
                         if i in char
                         else (" " * 7 + "X" * 3 + " " * 8 + "X" * 3)
                     )
-                    for i in range(1, len(symmetries_SG) + 1)
+                    for i in range(1, len(self.symmetries_SG) + 1)
                 )
                 for e, d, ib, j in zip(E, dim, IB, np.arange(len(dim)))
             )
