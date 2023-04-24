@@ -1150,7 +1150,7 @@ class SpaceGroup():
                 #t1 = np.dot(sym2.t - t, refUC) % 1
                 t1[1 - t1 < 1e-5] = 0
                 if np.allclose(R, sym2.R):
-                    if np.allclose(t1, [0, 0, 0], atol=1e-6):
+                    if np.allclose(t1, [0, 0, 0], atol=1e-5):
                         ind.append(i)
                         dt.append(sym2.t - t)
                         found = True
