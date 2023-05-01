@@ -1190,6 +1190,9 @@ class SpaceGroup():
                         dt.append(sym2.t - t)
                         found = True
                         break
+                        # Tolerance for rotational part comparison
+                        # is much more restrictive than for transl.
+                        # Make them consistent?
                     else:
                         raise RuntimeError((
                             "Error matching translational part for symmetry {}."
