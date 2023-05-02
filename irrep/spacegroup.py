@@ -468,6 +468,8 @@ class SpaceGroup():
     search_cell : bool, default=False
         Whether the transformation to the conventional cell should be computed.
         It is `True` if kpnames was specified in CLI.
+    trans_thresh : float, default=1e-5
+        Threshold used to compare translational parts of symmetries.
 
     Attributes
     ----------
@@ -632,7 +634,16 @@ class SpaceGroup():
                 dataset['origin_shift']
                 )
 
-    def __init__(self, inPOSCAR=None, cell=None, spinor=True, refUC=None, shiftUC=None, search_cell=False):
+    def __init__(
+            self,
+            inPOSCAR=None,
+            cell=None,
+            spinor=True,
+            refUC=None,
+            shiftUC=None,
+            search_cell=False,
+            trans_thresh=1e-5
+            ):
         self.spinor = spinor
         (self.symmetries, 
          self.name, 
@@ -652,7 +663,8 @@ class SpaceGroup():
                                             shiftUC_cli=shiftUC,
                                             refUC_lib=refUC_tmp, 
                                             shiftUC_lib=shiftUC_tmp,
-                                            search_cell=search_cell
+                                            search_cell=search_cell,
+                                            trans_thresh=trans_thresh
                                             )
 
         # Check matching of symmetries in refUC. If user set transf.
@@ -660,7 +672,9 @@ class SpaceGroup():
         # Otherwise, transf. was calculated automatically and 
         # matching of symmetries was checked in determine_basis_transf
         try:
-            ind, dt, signs = self.match_symmetries(signs=self.spinor)
+            ind, dt, signs = self.match_symmetries(signs=self.spinor,
+                                                   trans_thresh=trans_thresh
+                                                   )
             # Sort symmetries like in tables
             args = np.argsort(ind)
             for i,i_ind in enumerate(args):
@@ -955,7 +969,15 @@ class SpaceGroup():
 # return( { irr.name: np.array([irr.characters[i]*signs[j] for j,i in
 # enumerate(ind)]) for irr in table.irreps if irr.kpname==kpname})
 
-    def determine_basis_transf(self, refUC_cli, shiftUC_cli, refUC_lib, shiftUC_lib, search_cell):
+    def determine_basis_transf(
+            self,
+            refUC_cli,
+            shiftUC_cli,
+            refUC_lib,
+            shiftUC_lib,
+            search_cell,
+            trans_thresh
+            ):
         """ 
         Determine basis transformation to conventional cell. Priority
         is given to the transformation set by the user in CLI.
@@ -978,6 +1000,8 @@ class SpaceGroup():
         search_cell : bool, default=False
             Whether the transformation to the conventional cell should be computed.
             It is `True` if kpnames was specified in CLI.
+        trans_thresh : float, default=1e-5
+            Threshold to compare translational parts of symmetries.
 
         Returns
         -------
@@ -1037,6 +1061,7 @@ class SpaceGroup():
                 ind, dt, signs = self.match_symmetries(
                                     refUC,
                                     shiftUC,
+                                    trans_thresh=trans_thresh
                                     )
                 return refUC, shiftUC
             except RuntimeError:
@@ -1055,6 +1080,7 @@ class SpaceGroup():
                         ind, dt, signs = self.match_symmetries(
                                             refUC,
                                             shiftUC,
+                                            trans_thresh=trans_thresh
                                             )
                         print(('ShiftUC achieved with the centering: {}'
                                    .format(r_center))
@@ -1073,6 +1099,7 @@ class SpaceGroup():
                         ind, dt, signs = self.match_symmetries(
                                             refUC,
                                             shiftUC,
+                                            trans_thresh=trans_thresh
                                             )
                         print(('ShiftUC achieved in 2 steps:\n'
                                '  (1) Place origin of primitive cell on '
@@ -1093,7 +1120,13 @@ class SpaceGroup():
 
 
 
-    def match_symmetries(self, refUC=None, shiftUC=None, signs=False):
+    def match_symmetries(
+            self,
+            refUC=None,
+            shiftUC=None,
+            signs=False,
+            trans_thresh=1e-5
+            ):
         """
         Matches symmetry operations of two lists. Translational parts 
         are matched mod. lattice translations (important for centered 
@@ -1110,6 +1143,8 @@ class SpaceGroup():
         signs : bool, default=False
             If `True`, match also rotations of spinors corresponding to 
             each symmetry.
+        trans_thresh : float, default=1e-5
+            Threshold used to compare translational parts of symmetries.
         
         Returns
         -------
@@ -1148,13 +1183,16 @@ class SpaceGroup():
             for i, sym2 in enumerate(self.symmetries_tables):
                 t1 = refUC.dot(sym2.t - t) % 1
                 #t1 = np.dot(sym2.t - t, refUC) % 1
-                t1[1 - t1 < 1e-5] = 0
+                t1[1 - t1 < trans_thresh] = 0
                 if np.allclose(R, sym2.R):
-                    if np.allclose(t1, [0, 0, 0], atol=1e-6):
+                    if np.allclose(t1, [0, 0, 0], atol=trans_thresh):
                         ind.append(i)
                         dt.append(sym2.t - t)
                         found = True
                         break
+                        # Tolerance for rotational part comparison
+                        # is much more restrictive than for transl.
+                        # Make them consistent?
                     else:
                         raise RuntimeError((
                             "Error matching translational part for symmetry {}."

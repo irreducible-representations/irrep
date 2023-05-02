@@ -254,6 +254,13 @@ do not hesitate to contact the author:
           "to the conventional cell."
           "Default: False, unless -kpnames was specified in CLI"
           )
+    )
+@click.option("-trans_thresh",
+    type=float,
+    default=1e-5,
+    help=("Threshold to compare translational parts of symmetries."
+          "Default: 1e-5"
+          )
 )
 def cli(
     ecut,
@@ -282,7 +289,8 @@ def cli(
     suffix,
     config,
     searchcell,
-    correct_ecut0
+    correct_ecut0,
+    trans_thresh
 ):
     """
     Defines the "irrep" command-line tool interface.

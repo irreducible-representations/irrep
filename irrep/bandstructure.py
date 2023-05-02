@@ -79,6 +79,8 @@ class BandStructure:
     _correct_Ecut0 : float
         In case of VASP, if you get an error like ' computed ncnt=*** != input nplane=*** ', 
         try to set this parameter to a small positive or negative value (usually of order  +- 1e-7)
+    trans_thresh : float, default=1e-5
+        Threshold to compare translational parts of symmetries.
 
     Attributes
     ----------
@@ -131,6 +133,7 @@ class BandStructure:
         refUC = None,
         shiftUC = None,
         search_cell = False,
+        trans_thresh=1e-5,
         _correct_Ecut0 = 0.,
     ):
         code = code.lower()
@@ -142,19 +145,19 @@ class BandStructure:
         if code == "vasp":
             self.__init_vasp(
                 fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell,
-                _correct_Ecut0=_correct_Ecut0,
+                _correct_Ecut0=_correct_Ecut0, trans_thresh=trans_thresh
             )
         elif code == "abinit":
             self.__init_abinit(
-                fWFK, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell
+                fWFK, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell, trans_thresh=trans_thresh
             )
         elif code == "espresso":
             self.__init_espresso(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, spin_channel=spin_channel, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell
+                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, spin_channel=spin_channel, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell, trans_thresh=trans_thresh
             )
         elif code == "wannier90":
             self.__init_wannier(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell
+                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell, trans_thresh=trans_thresh
             )
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
@@ -173,6 +176,7 @@ class BandStructure:
         refUC=None,
         shiftUC=None,
         search_cell=False,
+        trans_thresh=1e-5,
         _correct_Ecut0=0.,
     ):
         """
@@ -207,6 +211,8 @@ class BandStructure:
         search_cell : bool, default=False
             Whether the transformation to the conventional cell should be computed.
             It is `True` if kpnames was specified in CLI.
+        trans_thresh : float, default=1e-5
+            Threshold to compare translational parts of symmetries.
         _correct_Ecut0 : float
             if you get an error like ' computed ncnt=*** != input nplane=*** ', 
             try to set this parameter to a small positive or negative value (usually of order +- 1e-7)
@@ -215,7 +221,14 @@ class BandStructure:
             raise RuntimeError(
                 "spinor should be specified in the command line for VASP bandstructure"
             )
-        self.spacegroup = SpaceGroup(inPOSCAR=fPOS, spinor=spinor, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell)
+        self.spacegroup = SpaceGroup(
+                inPOSCAR=fPOS,
+                spinor=spinor,
+                refUC=refUC,
+                shiftUC=shiftUC,
+                search_cell=search_cell,
+                trans_thresh=trans_thresh
+                )
         self.spinor = spinor
         if onlysym:
             return
@@ -316,7 +329,8 @@ class BandStructure:
         onlysym=False,
         refUC=None,
         shiftUC=None,
-        search_cell = False
+        search_cell = False,
+        trans_thresh=1e-5
     ):
         """
         Initialization for abinit. Read data and store it in attributes.
@@ -346,13 +360,20 @@ class BandStructure:
         search_cell : bool, default=False
             Whether the transformation to the conventional cell should be computed.
             It is `True` if kpnames was specified in CLI.
+        trans_thresh : float, default=1e-5
+            Threshold to compare translational parts of symmetries.
         """
 
         header = AbinitHeader(WFKname)
         usepaw = header.usepaw
         self.spinor = header.spinor
         self.spacegroup = SpaceGroup(
-            cell=(header.rprimd, header.xred, header.typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell
+            cell=(header.rprimd, header.xred, header.typat),
+            spinor=self.spinor,
+            refUC=refUC,
+            shiftUC=shiftUC,
+            search_cell=search_cell,
+            trans_thresh=trans_thresh
         )
         if onlysym:
             return
@@ -447,7 +468,8 @@ class BandStructure:
         onlysym=False,
         refUC=None,
         shiftUC=None,
-        search_cell = False
+        search_cell = False,
+        trans_thresh=1e-5,
     ):
         """
         Initialization for wannier90. Read data and store it in attibutes.
@@ -478,6 +500,8 @@ class BandStructure:
         search_cell : bool, default=False
             Whether the transformation to the conventional cell should be computed.
             It is `True` if kpnames was specified in CLI.
+        trans_thresh : float, default=1e-5
+            Threshold to compare translational parts of symmetries.
         """
         if Ecut is None:
             raise RuntimeError("Ecut mandatory for Wannier90")
@@ -702,7 +726,12 @@ class BandStructure:
         )
 
         self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell
+            cell=(self.Lattice, xred, typat),
+            spinor=self.spinor,
+            refUC=refUC,
+            shiftUC=shiftUC,
+            search_cell=search_cell,
+            trans_thresh=trans_thresh
         )
         if onlysym:
             return
@@ -765,7 +794,8 @@ class BandStructure:
         spin_channel=None,
         refUC=None,
         shiftUC=None,
-        search_cell = False
+        search_cell = False,
+        trans_thresh=1e-5
     ):
         """
         Initialization for Quantum Espresso. Read data and store in attributes.
@@ -798,6 +828,8 @@ class BandStructure:
         search_cell : bool, default=False
             Whether the transformation to the conventional cell should be computed.
             It is `True` if kpnames was specified in CLI.
+        trans_thresh : float, default=1e-5
+            Threshold to compare translational parts of symmetries.
         """
         import xml.etree.ElementTree as ET
 
@@ -832,7 +864,12 @@ class BandStructure:
         xred = (np.array(xcart, dtype=float) * BOHR).dot(np.linalg.inv(self.Lattice))
         #        print ("xred=",xred)
         self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, xred, typat), spinor=self.spinor, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell
+            cell=(self.Lattice, xred, typat),
+            spinor=self.spinor,
+            refUC=refUC,
+            shiftUC=shiftUC,
+            search_cell=search_cell,
+            trans_thresh=trans_thresh
         )
         if onlysym:
             return
