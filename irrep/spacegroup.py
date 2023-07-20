@@ -937,14 +937,45 @@ class SpaceGroup():
                 k1 = np.round(np.linalg.inv(self.refUC.T).dot(irr.k), 5) % 1
                 k2 = np.round(K, 5) % 1
                 if not all(np.isclose(k1, k2)):
-                    raise RuntimeError(
-                        "the kpoint {0} does not correspond to the point {1} ({2} in refUC / {3} in primUC) in the table".format(
-                            K,
-                            kpname,
-                            np.round(
-                                irr.k,
-                                3),
-                            k1))
+                    # -----------------------------------------------------
+                    # search refUC/shiftUC 
+                    # from symmetries that transforms k1 into k2
+                    suggestU = [] # list of refUC suggestions
+                    suggestT = [] # list of shiftUC suggestions
+                    for isym in range(len(self.symmetries)):
+                        # add to list if k1==k2
+                        if all(np.isclose(k1, k2)):
+                            suggestU += [U]
+                            suggestT += [T]
+                        # else... check next symmetry
+                        U = self.symmetries[isym].rotation @ self.refUC
+                        T = self.symmetries[isym].translation + self.shiftUC
+                        k1 = np.round(np.linalg.inv(U.T).dot(irr.k), 5) % 1
+                    # prints Error and Report
+                    error = "the kpoint {0} does not correspond to the point {1} ({2} in refUC / {3} in primUC) in the table".format(
+                        K,
+                        kpname,
+                        np.round(
+                            irr.k,
+                            3),
+                        k1)
+                    report = '''
+                    
+The kpoint in the tables might be related to the given one by a symmetry operation.
+
+Try running again with one of these refUC / shiftUC parameters:
+
+'''
+                    iut = 0
+                    for U,T in zip(suggestU, suggestT):
+                        iut += 1
+                        report += "{0}) shiftUC = {1}\n    refUC = {2}\n\n".format(
+                            iut,
+                            list(np.round(T, 6)),
+                            list(np.round(U.T, 6).reshape(-1,9)[0])
+                        )
+                    raise RuntimeError(error + report)
+                    # -----------------------------------------------------
 #            print (irr.characters)
                 tab[irr.name] = {}
                 for i,(sym1,sym2) in enumerate(zip(self.symmetries,table.symmetries)):
