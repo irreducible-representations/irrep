@@ -949,7 +949,8 @@ class SpaceGroup():
                             suggestT += [T]
                         # else... check next symmetry
                         U = self.symmetries[isym].rotation @ self.refUC
-                        T = self.symmetries[isym].translation + self.shiftUC
+                        T = self.symmetries[isym].translation 
+                        T += np.linalg.inv(self.symmetries[isym].rotation).dot(self.shiftUC)
                         k1 = np.round(np.linalg.inv(U.T).dot(irr.k), 5) % 1
                     # prints Error and Report
                     error = "the kpoint {0} does not correspond to the point {1} ({2} in refUC / {3} in primUC) in the table".format(
@@ -959,13 +960,12 @@ class SpaceGroup():
                             irr.k,
                             3),
                         k1)
-                    report = '''
-                    
-The kpoint in the tables might be related to the given one by a symmetry operation.
+                    report  = "\n\n"
+                    report += "The kpoint in the tables might be related to the given one by a symmetry operation."
+                    report += "\n\n"
+                    report += "Try running again with one of these refUC / shiftUC parameters:"
+                    report += "\n\n"
 
-Try running again with one of these refUC / shiftUC parameters:
-
-'''
                     iut = 0
                     for U,T in zip(suggestU, suggestT):
                         iut += 1
