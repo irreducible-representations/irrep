@@ -1,1 +1,2 @@
 include irreptables/tables/*.dat
+prune examples

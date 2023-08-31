@@ -7,7 +7,6 @@ import irrep
 
 setuptools.setup(
     name="irrep",
-    version=irrep.__version__,
     author="Stepan S. Tsirkin",
     author_email="stepan.tsirkin@uzh.ch",
     description="A tool to get symmetry proberties of ab-initio wavefunctions, irreduible representations and more.",
