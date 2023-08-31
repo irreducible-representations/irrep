@@ -1,7 +1,9 @@
 rm dist/*
 rm */irrep.egg-info  */irreptables.egg-info  build
-python3 setup.py bdist_wheel
-#python3 setup_tables.py bdist_wheel
-#rm */irrep.egg-info  */irreptables.egg-info  build
+python3 -m build
+python3 -m twine upload  -u __token__ dist/*
 
-python3 -m twine upload  -u stepan-tsirkin dist/*
+# Add git tag
+version="v$(python3 setup.py --version)"
+git tag -a $version -m "release of $version"
+git push origin $version
