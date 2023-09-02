@@ -1,2 +1,2 @@
-include irreptables/tables/*.dat
 prune examples
+prune irreptables
