@@ -14,7 +14,7 @@
 ##  e-mail: stepan.tsirkin@physik.uzh.ch                         #
 ##################################################################
 
-from ._version import __version__
+__version__="1.0.2"
 
 import copy
 import os
