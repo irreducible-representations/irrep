@@ -1,0 +1,2622 @@
+{
+    "spacegroup": {
+        "name": "R-3m",
+        "number": 166,
+        "spinor": true,
+        "num_symmetries": 12,
+        "cells_match": false,
+        "symmetries": {
+            "1": {
+                "rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int32",
+                    "data": [
+                        [
+                            1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            1,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            1
+                        ]
+                    ]
+                },
+                "rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int64",
+                    "data": [
+                        [
+                            1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            1,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            1
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                1.0,
+                                0.0
+                            ],
+                            [
+                                -0.0,
+                                1.0
+                            ]
+                        ],
+                        [
+                            [
+                                0.0,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                0.0
+                            ]
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                1.0,
+                                0.0
+                            ],
+                            [
+                                -0.0,
+                                1.0
+                            ]
+                        ],
+                        [
+                            [
+                                0.0,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                0.0
+                            ]
+                        ]
+                    ]
+                },
+                "translation": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "translation_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "axis": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        -0.7596932536737364,
+                        -0.6502455852836013,
+                        0.006843912755054115
+                    ]
+                },
+                "angle_str": " 0 ",
+                "angle_pi": 0.0,
+                "inversion": false,
+                "sign": 1
+            },
+            "2": {
+                "rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int32",
+                    "data": [
+                        [
+                            0,
+                            0,
+                            1
+                        ],
+                        [
+                            1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            1,
+                            0
+                        ]
+                    ]
+                },
+                "rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int64",
+                    "data": [
+                        [
+                            0,
+                            -1,
+                            0
+                        ],
+                        [
+                            1,
+                            -1,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            1
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                0.5000000000000001,
+                                -2.0958517241202006e-18
+                            ],
+                            [
+                                2.0958517241202006e-18,
+                                0.5000000000000001
+                            ]
+                        ],
+                        [
+                            [
+                                -0.8660254037844386,
+                                -1.2385189503901866e-18
+                            ],
+                            [
+                                -1.2385189503901866e-18,
+                                0.8660254037844386
+                            ]
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                0.5000000000000001,
+                                -2.0958517241202006e-18
+                            ],
+                            [
+                                2.0958517241202006e-18,
+                                0.5000000000000001
+                            ]
+                        ],
+                        [
+                            [
+                                -0.8660254037844386,
+                                -1.2385189503901866e-18
+                            ],
+                            [
+                                -1.2385189503901866e-18,
+                                0.8660254037844386
+                            ]
+                        ]
+                    ]
+                },
+                "translation": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "translation_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "axis": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        1.4301184988084541e-18,
+                        2.4200811142046782e-18,
+                        1.0
+                    ]
+                },
+                "angle_str": "2/3 pi",
+                "angle_pi": 0.6666666666666666,
+                "inversion": false,
+                "sign": 1
+            },
+            "3": {
+                "rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int32",
+                    "data": [
+                        [
+                            0,
+                            1,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            1
+                        ],
+                        [
+                            1,
+                            0,
+                            0
+                        ]
+                    ]
+                },
+                "rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int64",
+                    "data": [
+                        [
+                            -1,
+                            1,
+                            0
+                        ],
+                        [
+                            -1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            1
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                0.5000000000000001,
+                                2.095851724120158e-18
+                            ],
+                            [
+                                -2.095851724120158e-18,
+                                0.5000000000000001
+                            ]
+                        ],
+                        [
+                            [
+                                0.8660254037844386,
+                                -1.2385189503901654e-18
+                            ],
+                            [
+                                -1.2385189503901654e-18,
+                                -0.8660254037844386
+                            ]
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                0.5000000000000001,
+                                2.095851724120158e-18
+                            ],
+                            [
+                                -2.095851724120158e-18,
+                                0.5000000000000001
+                            ]
+                        ],
+                        [
+                            [
+                                0.8660254037844386,
+                                -1.2385189503901654e-18
+                            ],
+                            [
+                                -1.2385189503901654e-18,
+                                -0.8660254037844386
+                            ]
+                        ]
+                    ]
+                },
+                "translation": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "translation_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "axis": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        -1.4301184988084295e-18,
+                        2.420081114204629e-18,
+                        1.0
+                    ]
+                },
+                "angle_str": "-2/3 pi",
+                "angle_pi": -0.6666666666666666,
+                "inversion": false,
+                "sign": 1
+            },
+            "4": {
+                "rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int32",
+                    "data": [
+                        [
+                            0,
+                            0,
+                            -1
+                        ],
+                        [
+                            0,
+                            -1,
+                            0
+                        ],
+                        [
+                            -1,
+                            0,
+                            0
+                        ]
+                    ]
+                },
+                "rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int64",
+                    "data": [
+                        [
+                            0,
+                            1,
+                            0
+                        ],
+                        [
+                            1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            -1
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                -1.6081226496766364e-16,
+                                0.8660254037844386
+                            ],
+                            [
+                                -0.8660254037844386,
+                                -1.6081226496766364e-16
+                            ]
+                        ],
+                        [
+                            [
+                                2.446436660341518e-16,
+                                0.5000000000000001
+                            ],
+                            [
+                                0.5000000000000001,
+                                -1.993843120789518e-16
+                            ]
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                1.6081226496766364e-16,
+                                -0.8660254037844386
+                            ],
+                            [
+                                0.8660254037844386,
+                                1.6081226496766364e-16
+                            ]
+                        ],
+                        [
+                            [
+                                -2.446436660341518e-16,
+                                -0.5000000000000001
+                            ],
+                            [
+                                -0.5000000000000001,
+                                1.993843120789518e-16
+                            ]
+                        ]
+                    ]
+                },
+                "translation": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "translation_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "axis": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        -0.5000000000000001,
+                        -0.8660254037844387,
+                        -2.2201398905655182e-16
+                    ]
+                },
+                "angle_str": "1 pi",
+                "angle_pi": 1.0,
+                "inversion": false,
+                "sign": -1
+            },
+            "5": {
+                "rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int32",
+                    "data": [
+                        [
+                            0,
+                            -1,
+                            0
+                        ],
+                        [
+                            -1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            -1
+                        ]
+                    ]
+                },
+                "rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int64",
+                    "data": [
+                        [
+                            1,
+                            -1,
+                            0
+                        ],
+                        [
+                            0,
+                            -1,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            -1
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                6.123233995736766e-17,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                6.123233995736766e-17
+                            ]
+                        ],
+                        [
+                            [
+                                0.0,
+                                -1.0
+                            ],
+                            [
+                                -1.0,
+                                0.0
+                            ]
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                6.123233995736766e-17,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                6.123233995736766e-17
+                            ]
+                        ],
+                        [
+                            [
+                                0.0,
+                                -1.0
+                            ],
+                            [
+                                -1.0,
+                                0.0
+                            ]
+                        ]
+                    ]
+                },
+                "translation": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "translation_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "axis": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        1.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "angle_str": "1 pi",
+                "angle_pi": 1.0,
+                "inversion": false,
+                "sign": 1
+            },
+            "6": {
+                "rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int32",
+                    "data": [
+                        [
+                            -1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            -1
+                        ],
+                        [
+                            0,
+                            -1,
+                            0
+                        ]
+                    ]
+                },
+                "rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int64",
+                    "data": [
+                        [
+                            -1,
+                            0,
+                            0
+                        ],
+                        [
+                            -1,
+                            1,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            -1
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                -1.6081226496766364e-16,
+                                -0.8660254037844386
+                            ],
+                            [
+                                0.8660254037844386,
+                                -1.6081226496766364e-16
+                            ]
+                        ],
+                        [
+                            [
+                                -2.6420865064343544e-16,
+                                0.5000000000000001
+                            ],
+                            [
+                                0.5000000000000001,
+                                2.189492966882354e-16
+                            ]
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                1.6081226496766364e-16,
+                                0.8660254037844386
+                            ],
+                            [
+                                -0.8660254037844386,
+                                1.6081226496766364e-16
+                            ]
+                        ],
+                        [
+                            [
+                                2.6420865064343544e-16,
+                                -0.5000000000000001
+                            ],
+                            [
+                                -0.5000000000000001,
+                                -2.189492966882354e-16
+                            ]
+                        ]
+                    ]
+                },
+                "translation": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "translation_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "axis": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        -0.5000000000000001,
+                        0.8660254037844387,
+                        2.4157897366583545e-16
+                    ]
+                },
+                "angle_str": "1 pi",
+                "angle_pi": 1.0,
+                "inversion": false,
+                "sign": -1
+            },
+            "7": {
+                "rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int32",
+                    "data": [
+                        [
+                            -1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            -1,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            -1
+                        ]
+                    ]
+                },
+                "rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int64",
+                    "data": [
+                        [
+                            -1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            -1,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            -1
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                1.0,
+                                0.0
+                            ],
+                            [
+                                -0.0,
+                                1.0
+                            ]
+                        ],
+                        [
+                            [
+                                0.0,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                0.0
+                            ]
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                1.0,
+                                0.0
+                            ],
+                            [
+                                -0.0,
+                                1.0
+                            ]
+                        ],
+                        [
+                            [
+                                0.0,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                0.0
+                            ]
+                        ]
+                    ]
+                },
+                "translation": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "translation_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "axis": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        -0.7596932536737364,
+                        -0.6502455852836013,
+                        0.006843912755054115
+                    ]
+                },
+                "angle_str": " 0 ",
+                "angle_pi": 0.0,
+                "inversion": true,
+                "sign": 1
+            },
+            "8": {
+                "rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int32",
+                    "data": [
+                        [
+                            0,
+                            0,
+                            -1
+                        ],
+                        [
+                            -1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            -1,
+                            0
+                        ]
+                    ]
+                },
+                "rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int64",
+                    "data": [
+                        [
+                            0,
+                            1,
+                            0
+                        ],
+                        [
+                            -1,
+                            1,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            -1
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                0.5000000000000001,
+                                -2.095851724120158e-18
+                            ],
+                            [
+                                2.095851724120158e-18,
+                                0.5000000000000001
+                            ]
+                        ],
+                        [
+                            [
+                                -0.8660254037844386,
+                                -1.238518950390208e-18
+                            ],
+                            [
+                                -1.238518950390208e-18,
+                                0.8660254037844386
+                            ]
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                0.5000000000000001,
+                                -2.095851724120158e-18
+                            ],
+                            [
+                                2.095851724120158e-18,
+                                0.5000000000000001
+                            ]
+                        ],
+                        [
+                            [
+                                -0.8660254037844386,
+                                -1.238518950390208e-18
+                            ],
+                            [
+                                -1.238518950390208e-18,
+                                0.8660254037844386
+                            ]
+                        ]
+                    ]
+                },
+                "translation": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "translation_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "axis": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        1.4301184988084788e-18,
+                        2.420081114204629e-18,
+                        1.0
+                    ]
+                },
+                "angle_str": "2/3 pi",
+                "angle_pi": 0.6666666666666666,
+                "inversion": true,
+                "sign": 1
+            },
+            "9": {
+                "rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int32",
+                    "data": [
+                        [
+                            0,
+                            -1,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            -1
+                        ],
+                        [
+                            -1,
+                            0,
+                            0
+                        ]
+                    ]
+                },
+                "rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int64",
+                    "data": [
+                        [
+                            1,
+                            -1,
+                            0
+                        ],
+                        [
+                            1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            -1
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                0.5000000000000001,
+                                2.0958517241202006e-18
+                            ],
+                            [
+                                -2.0958517241202006e-18,
+                                0.5000000000000001
+                            ]
+                        ],
+                        [
+                            [
+                                0.8660254037844386,
+                                -1.2385189503901654e-18
+                            ],
+                            [
+                                -1.2385189503901654e-18,
+                                -0.8660254037844386
+                            ]
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                0.5000000000000001,
+                                2.0958517241202006e-18
+                            ],
+                            [
+                                -2.0958517241202006e-18,
+                                0.5000000000000001
+                            ]
+                        ],
+                        [
+                            [
+                                0.8660254037844386,
+                                -1.2385189503901654e-18
+                            ],
+                            [
+                                -1.2385189503901654e-18,
+                                -0.8660254037844386
+                            ]
+                        ]
+                    ]
+                },
+                "translation": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "translation_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "axis": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        -1.4301184988084295e-18,
+                        2.4200811142046782e-18,
+                        1.0
+                    ]
+                },
+                "angle_str": "-2/3 pi",
+                "angle_pi": -0.6666666666666666,
+                "inversion": true,
+                "sign": 1
+            },
+            "10": {
+                "rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int32",
+                    "data": [
+                        [
+                            0,
+                            0,
+                            1
+                        ],
+                        [
+                            0,
+                            1,
+                            0
+                        ],
+                        [
+                            1,
+                            0,
+                            0
+                        ]
+                    ]
+                },
+                "rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int64",
+                    "data": [
+                        [
+                            0,
+                            -1,
+                            0
+                        ],
+                        [
+                            -1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            1
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                -1.6081226496766364e-16,
+                                0.8660254037844386
+                            ],
+                            [
+                                -0.8660254037844386,
+                                -1.6081226496766364e-16
+                            ]
+                        ],
+                        [
+                            [
+                                2.446436660341518e-16,
+                                0.5000000000000001
+                            ],
+                            [
+                                0.5000000000000001,
+                                -1.993843120789518e-16
+                            ]
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                1.6081226496766364e-16,
+                                -0.8660254037844386
+                            ],
+                            [
+                                0.8660254037844386,
+                                1.6081226496766364e-16
+                            ]
+                        ],
+                        [
+                            [
+                                -2.446436660341518e-16,
+                                -0.5000000000000001
+                            ],
+                            [
+                                -0.5000000000000001,
+                                1.993843120789518e-16
+                            ]
+                        ]
+                    ]
+                },
+                "translation": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "translation_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "axis": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        -0.5000000000000001,
+                        -0.8660254037844387,
+                        -2.2201398905655182e-16
+                    ]
+                },
+                "angle_str": "1 pi",
+                "angle_pi": 1.0,
+                "inversion": true,
+                "sign": -1
+            },
+            "11": {
+                "rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int32",
+                    "data": [
+                        [
+                            0,
+                            1,
+                            0
+                        ],
+                        [
+                            1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            1
+                        ]
+                    ]
+                },
+                "rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int64",
+                    "data": [
+                        [
+                            -1,
+                            1,
+                            0
+                        ],
+                        [
+                            0,
+                            1,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            1
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                6.123233995736766e-17,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                6.123233995736766e-17
+                            ]
+                        ],
+                        [
+                            [
+                                0.0,
+                                -1.0
+                            ],
+                            [
+                                -1.0,
+                                0.0
+                            ]
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                6.123233995736766e-17,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                6.123233995736766e-17
+                            ]
+                        ],
+                        [
+                            [
+                                0.0,
+                                -1.0
+                            ],
+                            [
+                                -1.0,
+                                0.0
+                            ]
+                        ]
+                    ]
+                },
+                "translation": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "translation_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "axis": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        1.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "angle_str": "1 pi",
+                "angle_pi": 1.0,
+                "inversion": true,
+                "sign": 1
+            },
+            "12": {
+                "rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int32",
+                    "data": [
+                        [
+                            1,
+                            0,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            1
+                        ],
+                        [
+                            0,
+                            1,
+                            0
+                        ]
+                    ]
+                },
+                "rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "int64",
+                    "data": [
+                        [
+                            1,
+                            0,
+                            0
+                        ],
+                        [
+                            1,
+                            -1,
+                            0
+                        ],
+                        [
+                            0,
+                            0,
+                            1
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                -1.6081226496766364e-16,
+                                -0.8660254037844386
+                            ],
+                            [
+                                0.8660254037844386,
+                                -1.6081226496766364e-16
+                            ]
+                        ],
+                        [
+                            [
+                                -2.6420865064343544e-16,
+                                0.5000000000000001
+                            ],
+                            [
+                                0.5000000000000001,
+                                2.189492966882354e-16
+                            ]
+                        ]
+                    ]
+                },
+                "spinor_rotation_matrix_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "complex128",
+                    "data": [
+                        [
+                            [
+                                1.6081226496766364e-16,
+                                0.8660254037844386
+                            ],
+                            [
+                                -0.8660254037844386,
+                                1.6081226496766364e-16
+                            ]
+                        ],
+                        [
+                            [
+                                2.6420865064343544e-16,
+                                -0.5000000000000001
+                            ],
+                            [
+                                -0.5000000000000001,
+                                -2.189492966882354e-16
+                            ]
+                        ]
+                    ]
+                },
+                "translation": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "translation_refUC": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "axis": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        -0.5000000000000001,
+                        0.8660254037844387,
+                        2.4157897366583545e-16
+                    ]
+                },
+                "angle_str": "1 pi",
+                "angle_pi": 1.0,
+                "inversion": true,
+                "sign": -1
+            }
+        }
+    },
+    "separated by symmetry": false,
+    "characters_and_irreps": [
+        {
+            "symmetry_eigenvalues": [],
+            "subspace": {
+                "kpoints_line": {
+                    "@module": "numpy",
+                    "@class": "array",
+                    "dtype": "float64",
+                    "data": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "k-points": [
+                    {
+                        "symmetries": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            7,
+                            8,
+                            9,
+                            10,
+                            11,
+                            12
+                        ],
+                        "energies": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "float64",
+                            "data": [
+                                3.655936298577217,
+                                3.993626545901366,
+                                5.361615340659606
+                            ]
+                        },
+                        "characters": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "complex128",
+                            "data": [
+                                [
+                                    [
+                                        1.9999996001497493,
+                                        0.9999997954018909,
+                                        0.9999998065777618,
+                                        -2.3883330868557096e-09,
+                                        -3.492004907457158e-09,
+                                        -1.065018295776099e-09,
+                                        -1.9999995961916284,
+                                        -0.9999997865597834,
+                                        -0.9999997528593667,
+                                        4.4365151066437935e-09,
+                                        2.5697772999971935e-09,
+                                        -7.803464750813733e-10
+                                    ],
+                                    [
+                                        1.9999998465063982,
+                                        0.9999999405117705,
+                                        0.9999999383871909,
+                                        4.729372449219227e-10,
+                                        -3.4269760362803936e-09,
+                                        1.862645149230957e-09,
+                                        1.9999998707789928,
+                                        0.9999999434803613,
+                                        0.9999999370775186,
+                                        6.097252436431416e-09,
+                                        -6.3591869463831496e-09,
+                                        -3.230525227109288e-09
+                                    ],
+                                    [
+                                        1.9999999024361461,
+                                        -1.9999998683518205,
+                                        -1.9999999124132009,
+                                        -7.321432262535899e-11,
+                                        6.053596734458509e-09,
+                                        2.472461347637067e-09,
+                                        -1.9999999025863007,
+                                        1.9999998394357568,
+                                        1.9999998670843957,
+                                        -5.136371378721212e-09,
+                                        -4.467437964170887e-09,
+                                        5.137280792908056e-09
+                                    ]
+                                ],
+                                [
+                                    [
+                                        -5.801728314027652e-10,
+                                        -6.887239578645676e-08,
+                                        9.15115379029885e-08,
+                                        -8.875413186615333e-07,
+                                        4.259563866071403e-07,
+                                        4.485264071263373e-07,
+                                        -1.8456222661278332e-09,
+                                        7.638118404429406e-08,
+                                        -7.352900865953416e-08,
+                                        8.904253263608553e-07,
+                                        -4.017310857307166e-07,
+                                        -4.686626198235899e-07
+                                    ],
+                                    [
+                                        4.3387575029605295e-09,
+                                        1.687556505203247e-06,
+                                        -1.6884878277778625e-06,
+                                        9.359209798276424e-07,
+                                        1.7113052308559418e-07,
+                                        -1.0747608030214906e-06,
+                                        3.278248006388651e-09,
+                                        1.691245415713638e-06,
+                                        -1.6941194189712405e-06,
+                                        8.982024155557156e-07,
+                                        1.569860614836216e-07,
+                                        -1.0543953976593912e-06
+                                    ],
+                                    [
+                                        1.4630354979792285e-09,
+                                        2.445076051528364e-08,
+                                        -1.6048621086629886e-08,
+                                        4.03514351821066e-07,
+                                        4.164117133331757e-07,
+                                        4.1328872391055427e-07,
+                                        4.4802184325735267e-10,
+                                        1.3716156114650276e-08,
+                                        -5.785134938370712e-09,
+                                        -4.0422960845276634e-07,
+                                        -3.709717826261283e-07,
+                                        -4.15398114239629e-07
+                                    ]
+                                ]
+                            ]
+                        },
+                        "irreps": [
+                            {
+                                "-T4": [
+                                    -4.3024404779619845e-09,
+                                    2.266475186691073e-09
+                                ],
+                                "-T5": [
+                                    -5.464623124377491e-09,
+                                    2.3863769131126317e-09
+                                ],
+                                "-T6": [
+                                    1.8210357666248456e-09,
+                                    4.4585125628318096e-10
+                                ],
+                                "-T7": [
+                                    7.336060055725587e-09,
+                                    2.641068293224611e-09
+                                ],
+                                "-T8": [
+                                    5.873062036698684e-09,
+                                    -1.719977275519203e-09
+                                ],
+                                "-T9": [
+                                    0.9999997945067964,
+                                    -1.8598221334351635e-09
+                                ]
+                            },
+                            {
+                                "-T4": [
+                                    -7.573059216762582e-10,
+                                    -1.3338486859080813e-09
+                                ],
+                                "-T5": [
+                                    -6.271269133624931e-09,
+                                    -5.698731227099921e-10
+                                ],
+                                "-T6": [
+                                    7.403286872431636e-10,
+                                    2.7360314760060623e-10
+                                ],
+                                "-T7": [
+                                    -4.509274731390178e-09,
+                                    -1.2657453488831174e-10
+                                ],
+                                "-T8": [
+                                    0.9999999328356353,
+                                    -9.523904322067023e-10
+                                ],
+                                "-T9": [
+                                    -4.18367562815547e-09,
+                                    -3.3864163967756096e-10
+                                ]
+                            },
+                            {
+                                "-T4": [
+                                    9.725833175859103e-09,
+                                    1.5340348727652411e-09
+                                ],
+                                "-T5": [
+                                    2.6232858848137157e-09,
+                                    8.696490045175456e-10
+                                ],
+                                "-T6": [
+                                    1.0000001430101595,
+                                    1.031289681026544e-09
+                                ],
+                                "-T7": [
+                                    0.9999997390411105,
+                                    -1.1219390372158325e-09
+                                ],
+                                "-T8": [
+                                    -6.212098169200431e-09,
+                                    -1.67960627395054e-09
+                                ],
+                                "-T9": [
+                                    1.0229976643572058e-08,
+                                    -2.0842879681816184e-10
+                                ]
+                            }
+                        ],
+                        "characters_refUC": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "complex128",
+                            "data": [
+                                [
+                                    [
+                                        1.9999996001497493,
+                                        0.9999997954018909,
+                                        0.9999998065777618,
+                                        2.3883330868557096e-09,
+                                        -3.492004907457158e-09,
+                                        1.065018295776099e-09,
+                                        -1.9999995961916284,
+                                        -0.9999997865597834,
+                                        -0.9999997528593667,
+                                        -4.4365151066437935e-09,
+                                        2.5697772999971935e-09,
+                                        7.803464750813733e-10
+                                    ],
+                                    [
+                                        1.9999998465063982,
+                                        0.9999999405117705,
+                                        0.9999999383871909,
+                                        -4.729372449219227e-10,
+                                        -3.4269760362803936e-09,
+                                        -1.862645149230957e-09,
+                                        1.9999998707789928,
+                                        0.9999999434803613,
+                                        0.9999999370775186,
+                                        -6.097252436431416e-09,
+                                        -6.3591869463831496e-09,
+                                        3.230525227109288e-09
+                                    ],
+                                    [
+                                        1.9999999024361461,
+                                        -1.9999998683518205,
+                                        -1.9999999124132009,
+                                        7.321432262535899e-11,
+                                        6.053596734458509e-09,
+                                        -2.472461347637067e-09,
+                                        -1.9999999025863007,
+                                        1.9999998394357568,
+                                        1.9999998670843957,
+                                        5.136371378721212e-09,
+                                        -4.467437964170887e-09,
+                                        -5.137280792908056e-09
+                                    ]
+                                ],
+                                [
+                                    [
+                                        -5.801728314027652e-10,
+                                        -6.887239578645676e-08,
+                                        9.15115379029885e-08,
+                                        8.875413186615333e-07,
+                                        4.259563866071403e-07,
+                                        -4.485264071263373e-07,
+                                        -1.8456222661278332e-09,
+                                        7.638118404429406e-08,
+                                        -7.352900865953416e-08,
+                                        -8.904253263608553e-07,
+                                        -4.017310857307166e-07,
+                                        4.686626198235899e-07
+                                    ],
+                                    [
+                                        4.3387575029605295e-09,
+                                        1.687556505203247e-06,
+                                        -1.6884878277778625e-06,
+                                        -9.359209798276424e-07,
+                                        1.7113052308559418e-07,
+                                        1.0747608030214906e-06,
+                                        3.278248006388651e-09,
+                                        1.691245415713638e-06,
+                                        -1.6941194189712405e-06,
+                                        -8.982024155557156e-07,
+                                        1.569860614836216e-07,
+                                        1.0543953976593912e-06
+                                    ],
+                                    [
+                                        1.4630354979792285e-09,
+                                        2.445076051528364e-08,
+                                        -1.6048621086629886e-08,
+                                        -4.03514351821066e-07,
+                                        4.164117133331757e-07,
+                                        -4.1328872391055427e-07,
+                                        4.4802184325735267e-10,
+                                        1.3716156114650276e-08,
+                                        -5.785134938370712e-09,
+                                        4.0422960845276634e-07,
+                                        -3.709717826261283e-07,
+                                        4.15398114239629e-07
+                                    ]
+                                ]
+                            ]
+                        },
+                        "characters_refUC_is_the_same": true,
+                        "dimensions": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "int64",
+                            "data": [
+                                2,
+                                2,
+                                2
+                            ]
+                        },
+                        "kpname": "T"
+                    },
+                    {
+                        "symmetries": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            7,
+                            8,
+                            9,
+                            10,
+                            11,
+                            12
+                        ],
+                        "energies": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "float64",
+                            "data": [
+                                2.485031294469139,
+                                4.4394225638224105,
+                                4.719476860620239
+                            ]
+                        },
+                        "characters": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "complex128",
+                            "data": [
+                                [
+                                    [
+                                        2.000000166520067,
+                                        1.0000000638061692,
+                                        1.0000000704492322,
+                                        -6.518874329815651e-09,
+                                        2.6221869122716846e-09,
+                                        1.1642242666952204e-10,
+                                        2.0000001742996574,
+                                        1.0000000447756747,
+                                        1.0000000334866854,
+                                        8.684244924639838e-11,
+                                        -7.385949487891755e-10,
+                                        -3.78159378833492e-09
+                                    ],
+                                    [
+                                        1.999999550777602,
+                                        0.999999766707333,
+                                        0.9999997665303226,
+                                        7.310063576863207e-11,
+                                        -6.866400781287069e-10,
+                                        1.4676459158796432e-08,
+                                        1.9999995803309503,
+                                        0.9999997601277073,
+                                        0.9999997784675543,
+                                        -3.595801090783589e-09,
+                                        -1.064847746461743e-09,
+                                        -3.273897711969084e-10
+                                    ],
+                                    [
+                                        1.999999909803157,
+                                        -1.9999999062849736,
+                                        -1.9999998902314826,
+                                        -3.837840267863912e-09,
+                                        2.9006628213742005e-09,
+                                        1.1011252354254781e-08,
+                                        1.9999999367549177,
+                                        -1.9999998785400308,
+                                        -1.999999878602786,
+                                        -1.877651841119668e-09,
+                                        -7.145217749216373e-11,
+                                        -7.420339935984711e-09
+                                    ]
+                                ],
+                                [
+                                    [
+                                        6.604959814192589e-09,
+                                        1.0107032721862197e-07,
+                                        -9.297934866481228e-08,
+                                        4.3648668679452385e-08,
+                                        -2.1637538338836748e-07,
+                                        1.6061221685959026e-07,
+                                        5.435493741733077e-09,
+                                        9.355699148727581e-08,
+                                        -9.349878382636234e-08,
+                                        4.842775069846539e-08,
+                                        -2.169572326238267e-07,
+                                        1.454057496630412e-07
+                                    ],
+                                    [
+                                        -2.2236690261690276e-09,
+                                        -6.946538633201271e-08,
+                                        7.487790298910113e-08,
+                                        -1.784106871127733e-07,
+                                        3.697973625094164e-07,
+                                        -1.5424870980496053e-07,
+                                        -2.0393881514091383e-09,
+                                        -7.843004823371302e-08,
+                                        9.144207524514059e-08,
+                                        -1.7835509424912743e-07,
+                                        3.3213518690899946e-07,
+                                        -1.689222699496895e-07
+                                    ],
+                                    [
+                                        -1.0965614816031415e-09,
+                                        -8.269909423604983e-10,
+                                        8.27900435923859e-10,
+                                        9.086300839511452e-07,
+                                        9.060746106737128e-07,
+                                        8.641864833736079e-07,
+                                        -4.775304706974493e-09,
+                                        1.3461309960542244e-08,
+                                        -6.212911346416966e-10,
+                                        9.526606599141729e-07,
+                                        8.928159098697819e-07,
+                                        8.332354379803064e-07
+                                    ]
+                                ]
+                            ]
+                        },
+                        "irreps": [
+                            {
+                                "-GM4": [
+                                    7.755311060009262e-09,
+                                    -1.0087398441746553e-09
+                                ],
+                                "-GM5": [
+                                    1.3628349411950087e-08,
+                                    3.601953689507015e-10
+                                ],
+                                "-GM6": [
+                                    -4.3969497672454354e-09,
+                                    6.263655506082313e-10
+                                ],
+                                "-GM7": [
+                                    -6.231822169411316e-09,
+                                    5.175186677743557e-10
+                                ],
+                                "-GM8": [
+                                    1.0000000745131008,
+                                    -2.685841110547874e-09
+                                ],
+                                "-GM9": [
+                                    3.3694883920058296e-09,
+                                    -8.643085864846038e-10
+                                ]
+                            },
+                            {
+                                "-GM4": [
+                                    6.772618614074114e-09,
+                                    2.6468735369955642e-09
+                                ],
+                                "-GM5": [
+                                    3.1066538970965967e-09,
+                                    1.1343933523298784e-09
+                                ],
+                                "-GM6": [
+                                    2.340366715240331e-09,
+                                    9.696441112631547e-10
+                                ],
+                                "-GM7": [
+                                    -6.372990431676347e-09,
+                                    -2.2055156095499444e-09
+                                ],
+                                "-GM8": [
+                                    0.9999997778375018,
+                                    -8.248691094466373e-10
+                                ],
+                                "-GM9": [
+                                    -5.372025195053235e-09,
+                                    6.640060086549103e-10
+                                ]
+                            },
+                            {
+                                "-GM4": [
+                                    1.0000003964850444,
+                                    1.618118706791066e-09
+                                ],
+                                "-GM5": [
+                                    0.9999995035511802,
+                                    1.5006802145963113e-09
+                                ],
+                                "-GM6": [
+                                    1.050087387414559e-09,
+                                    2.4380550497698654e-10
+                                ],
+                                "-GM7": [
+                                    1.0202256817137823e-09,
+                                    -2.9967809720832817e-09
+                                ],
+                                "-GM8": [
+                                    1.1621406318755115e-08,
+                                    -9.143299519238652e-11
+                                ],
+                                "-GM9": [
+                                    -7.773096758848888e-09,
+                                    4.5680190679954023e-10
+                                ]
+                            }
+                        ],
+                        "characters_refUC": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "complex128",
+                            "data": [
+                                [
+                                    [
+                                        2.000000166520067,
+                                        1.0000000638061692,
+                                        1.0000000704492322,
+                                        6.518874329815651e-09,
+                                        2.6221869122716846e-09,
+                                        -1.1642242666952204e-10,
+                                        2.0000001742996574,
+                                        1.0000000447756747,
+                                        1.0000000334866854,
+                                        -8.684244924639838e-11,
+                                        -7.385949487891755e-10,
+                                        3.78159378833492e-09
+                                    ],
+                                    [
+                                        1.999999550777602,
+                                        0.999999766707333,
+                                        0.9999997665303226,
+                                        -7.310063576863207e-11,
+                                        -6.866400781287069e-10,
+                                        -1.4676459158796432e-08,
+                                        1.9999995803309503,
+                                        0.9999997601277073,
+                                        0.9999997784675543,
+                                        3.595801090783589e-09,
+                                        -1.064847746461743e-09,
+                                        3.273897711969084e-10
+                                    ],
+                                    [
+                                        1.999999909803157,
+                                        -1.9999999062849736,
+                                        -1.9999998902314826,
+                                        3.837840267863912e-09,
+                                        2.9006628213742005e-09,
+                                        -1.1011252354254781e-08,
+                                        1.9999999367549177,
+                                        -1.9999998785400308,
+                                        -1.999999878602786,
+                                        1.877651841119668e-09,
+                                        -7.145217749216373e-11,
+                                        7.420339935984711e-09
+                                    ]
+                                ],
+                                [
+                                    [
+                                        6.604959814192589e-09,
+                                        1.0107032721862197e-07,
+                                        -9.297934866481228e-08,
+                                        -4.3648668679452385e-08,
+                                        -2.1637538338836748e-07,
+                                        -1.6061221685959026e-07,
+                                        5.435493741733077e-09,
+                                        9.355699148727581e-08,
+                                        -9.349878382636234e-08,
+                                        -4.842775069846539e-08,
+                                        -2.169572326238267e-07,
+                                        -1.454057496630412e-07
+                                    ],
+                                    [
+                                        -2.2236690261690276e-09,
+                                        -6.946538633201271e-08,
+                                        7.487790298910113e-08,
+                                        1.784106871127733e-07,
+                                        3.697973625094164e-07,
+                                        1.5424870980496053e-07,
+                                        -2.0393881514091383e-09,
+                                        -7.843004823371302e-08,
+                                        9.144207524514059e-08,
+                                        1.7835509424912743e-07,
+                                        3.3213518690899946e-07,
+                                        1.689222699496895e-07
+                                    ],
+                                    [
+                                        -1.0965614816031415e-09,
+                                        -8.269909423604983e-10,
+                                        8.27900435923859e-10,
+                                        -9.086300839511452e-07,
+                                        9.060746106737128e-07,
+                                        -8.641864833736079e-07,
+                                        -4.775304706974493e-09,
+                                        1.3461309960542244e-08,
+                                        -6.212911346416966e-10,
+                                        -9.526606599141729e-07,
+                                        8.928159098697819e-07,
+                                        -8.332354379803064e-07
+                                    ]
+                                ]
+                            ]
+                        },
+                        "characters_refUC_is_the_same": true,
+                        "dimensions": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "int64",
+                            "data": [
+                                2,
+                                2,
+                                2
+                            ]
+                        },
+                        "kpname": "GM"
+                    },
+                    {
+                        "symmetries": [
+                            1,
+                            5,
+                            7,
+                            11
+                        ],
+                        "energies": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "float64",
+                            "data": [
+                                0.38931625551665316,
+                                1.5372074346947526,
+                                2.7853029029049523
+                            ]
+                        },
+                        "characters": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "complex128",
+                            "data": [
+                                [
+                                    [
+                                        1.9999998639941623,
+                                        6.151793741082656e-09,
+                                        1.999999927218596,
+                                        -6.266134257841333e-10
+                                    ],
+                                    [
+                                        1.9999995890321998,
+                                        2.0883903551795202e-09,
+                                        -1.9999995554826455,
+                                        -2.1211521427995294e-09
+                                    ],
+                                    [
+                                        1.9999999321187403,
+                                        -3.8156731663185894e-09,
+                                        -1.9999999583069155,
+                                        -1.33330095575257e-09
+                                    ]
+                                ],
+                                [
+                                    [
+                                        -3.794365013864726e-09,
+                                        2.6600901037454605e-08,
+                                        3.369837242583884e-09,
+                                        5.530455382540822e-08
+                                    ],
+                                    [
+                                        -9.125096919901526e-10,
+                                        3.9831343201512937e-07,
+                                        -1.1073998038013677e-09,
+                                        -4.557718966680113e-07
+                                    ],
+                                    [
+                                        1.5407646315521243e-09,
+                                        3.29405139609662e-07,
+                                        1.939907345871461e-09,
+                                        -3.7391163232314284e-07
+                                    ]
+                                ]
+                            ]
+                        },
+                        "irreps": [
+                            {
+                                "-F3": [
+                                    0.9999999273268259,
+                                    -1.2751631360044214e-09
+                                ],
+                                "-F4": [
+                                    0.9999999682795533,
+                                    1.48742702164484e-09
+                                ],
+                                "-F5": [
+                                    -8.630195225123316e-09,
+                                    9.644883362779163e-11
+                                ],
+                                "-F6": [
+                                    -2.2982021619100124e-08,
+                                    3.4856524170611864e-09
+                                ]
+                            },
+                            {
+                                "-F3": [
+                                    2.2752004724679864e-08,
+                                    5.131678208528832e-10
+                                ],
+                                "-F4": [
+                                    -5.977227601761115e-09,
+                                    4.967869270428786e-10
+                                ],
+                                "-F5": [
+                                    0.9999995726073792,
+                                    -1.1011082136798919e-09
+                                ],
+                                "-F6": [
+                                    0.9999999996500435,
+                                    1.003663035309633e-09
+                                ]
+                            },
+                            {
+                                "-F3": [
+                                    4.579579382379961e-09,
+                                    4.170755361618941e-10
+                                ],
+                                "-F4": [
+                                    -1.7673666974360458e-08,
+                                    -2.1574115248736854e-09
+                                ],
+                                "-F5": [
+                                    0.999999796777221,
+                                    7.20378669989001e-10
+                                ],
+                                "-F6": [
+                                    1.000000148435607,
+                                    -5.208074352940088e-10
+                                ]
+                            }
+                        ],
+                        "characters_refUC": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "complex128",
+                            "data": [
+                                [
+                                    [
+                                        1.9999998639941623,
+                                        6.151793741082656e-09,
+                                        1.999999927218596,
+                                        -6.266134257841333e-10
+                                    ],
+                                    [
+                                        1.9999995890321998,
+                                        2.0883903551795202e-09,
+                                        -1.9999995554826455,
+                                        -2.1211521427995294e-09
+                                    ],
+                                    [
+                                        1.9999999321187403,
+                                        -3.8156731663185894e-09,
+                                        -1.9999999583069155,
+                                        -1.33330095575257e-09
+                                    ]
+                                ],
+                                [
+                                    [
+                                        -3.794365013864726e-09,
+                                        2.6600901037454605e-08,
+                                        3.369837242583884e-09,
+                                        5.530455382540822e-08
+                                    ],
+                                    [
+                                        -9.125096919901526e-10,
+                                        3.9831343201512937e-07,
+                                        -1.1073998038013677e-09,
+                                        -4.557718966680113e-07
+                                    ],
+                                    [
+                                        1.5407646315521243e-09,
+                                        3.29405139609662e-07,
+                                        1.939907345871461e-09,
+                                        -3.7391163232314284e-07
+                                    ]
+                                ]
+                            ]
+                        },
+                        "characters_refUC_is_the_same": true,
+                        "dimensions": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "int64",
+                            "data": [
+                                2,
+                                2,
+                                2
+                            ]
+                        },
+                        "kpname": "F"
+                    },
+                    {
+                        "symmetries": [
+                            1,
+                            4,
+                            7,
+                            10
+                        ],
+                        "energies": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "float64",
+                            "data": [
+                                3.510216811161934,
+                                3.5270509548840554,
+                                5.084436073476549
+                            ]
+                        },
+                        "characters": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "complex128",
+                            "data": [
+                                [
+                                    [
+                                        2.000000368701876,
+                                        -2.890374162234366e-09,
+                                        -2.0000003682798706,
+                                        -1.6480044802732171e-09
+                                    ],
+                                    [
+                                        2.000000280817403,
+                                        2.875822247005999e-09,
+                                        2.0000002834713086,
+                                        2.564774791209662e-10
+                                    ],
+                                    [
+                                        1.9999993838573573,
+                                        2.6479938242118806e-09,
+                                        -1.999999347346602,
+                                        1.382431332911484e-10
+                                    ]
+                                ],
+                                [
+                                    [
+                                        -4.40926800030373e-09,
+                                        -2.3448956198990345e-07,
+                                        4.331156544523651e-10,
+                                        2.3756001610308886e-07
+                                    ],
+                                    [
+                                        -2.3186582781407243e-09,
+                                        4.804678610526025e-08,
+                                        -2.5154260896442793e-09,
+                                        -1.9417711882852018e-08
+                                    ],
+                                    [
+                                        -6.025556802943593e-09,
+                                        3.0478258850052953e-07,
+                                        3.883606547461227e-09,
+                                        -2.9960210667923093e-07
+                                    ]
+                                ]
+                            ]
+                        },
+                        "irreps": [
+                            {
+                                "-L3": [
+                                    8.731149137020111e-10,
+                                    -1.405565741640543e-10
+                                ],
+                                "-L4": [
+                                    -6.621121428906918e-10,
+                                    2.128632747089737e-09
+                                ],
+                                "-L5": [
+                                    1.0000000662330422,
+                                    9.000034319663856e-10
+                                ],
+                                "-L6": [
+                                    1.0000003022578312,
+                                    1.5211882729469601e-09
+                                ]
+                            },
+                            {
+                                "-L3": [
+                                    1.0000001482294465,
+                                    1.991596023477993e-09
+                                ],
+                                "-L4": [
+                                    1.0000001339149094,
+                                    4.254461604145102e-10
+                                ],
+                                "-L5": [
+                                    1.6202648112084717e-08,
+                                    6.056443003277185e-10
+                                ],
+                                "-L6": [
+                                    -1.752960088197142e-08,
+                                    -7.040280836147979e-10
+                                ]
+                            },
+                            {
+                                "-L3": [
+                                    1.0422809282317758e-08,
+                                    1.232046803246349e-09
+                                ],
+                                "-L4": [
+                                    7.832568371668458e-09,
+                                    -1.6107167550516547e-10
+                                ],
+                                "-L5": [
+                                    0.9999998338971636,
+                                    3.1047284490990686e-09
+                                ],
+                                "-L6": [
+                                    0.999999531704816,
+                                    1.8498531036387025e-09
+                                ]
+                            }
+                        ],
+                        "characters_refUC": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "complex128",
+                            "data": [
+                                [
+                                    [
+                                        2.000000368701876,
+                                        2.890374162234366e-09,
+                                        -2.0000003682798706,
+                                        1.6480044802732171e-09
+                                    ],
+                                    [
+                                        2.000000280817403,
+                                        -2.875822247005999e-09,
+                                        2.0000002834713086,
+                                        -2.564774791209662e-10
+                                    ],
+                                    [
+                                        1.9999993838573573,
+                                        -2.6479938242118806e-09,
+                                        -1.999999347346602,
+                                        -1.382431332911484e-10
+                                    ]
+                                ],
+                                [
+                                    [
+                                        -4.40926800030373e-09,
+                                        2.3448956198990345e-07,
+                                        4.331156544523651e-10,
+                                        -2.3756001610308886e-07
+                                    ],
+                                    [
+                                        -2.3186582781407243e-09,
+                                        -4.804678610526025e-08,
+                                        -2.5154260896442793e-09,
+                                        1.9417711882852018e-08
+                                    ],
+                                    [
+                                        -6.025556802943593e-09,
+                                        -3.0478258850052953e-07,
+                                        3.883606547461227e-09,
+                                        2.9960210667923093e-07
+                                    ]
+                                ]
+                            ]
+                        },
+                        "characters_refUC_is_the_same": true,
+                        "dimensions": {
+                            "@module": "numpy",
+                            "@class": "array",
+                            "dtype": "int64",
+                            "data": [
+                                2,
+                                2,
+                                2
+                            ]
+                        },
+                        "kpname": "L"
+                    }
+                ],
+                "number of inversions-odd Kramers pairs": 6,
+                "Z4": [
+                    2
+                ],
+                "indirect gap (eV)": -0.1886089499035215,
+                "Minimal direct gap (eV)": 0.08857033154551353
+            }
+        }
+    ]
+}
