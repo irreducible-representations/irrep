@@ -1064,16 +1064,16 @@ class Kpoint:
                 # irreps is a list. Each element is a dict corresponding to a 
                 # group of degen. states. Every key is an irrep and its value 
                 # the multiplicity of the irrep in the rep. of degen. states
-                irreps = [
-                    {
-                        ir: np.array(
-                            [irreptable[ir][sym.ind] for sym in self.symmetries]
-                        ).dot(ch.conj())
-                        / len(ch)
-                        for ir in irreptable
-                    }
-                    for ch in char
-                ]
+                irreps = []
+                for ch in char:
+                    multiplicities = {}
+                    for ir in irreptable:
+                        multipl = np.dot(np.array([irreptable[ir][sym.ind] for sym in self.symmetries]),
+                                         ch.conj()
+                                         ) / len(ch)
+                        if abs(multipl) > 1e-4:
+                            multiplicities[ir] = multipl
+                    irreps.append(multiplicities)
                 json_data["irreps"] = [{ir:(val.real,val.imag) for ir,val in irr.items()} for irr in irreps]
             except KeyError as ke:
                 print(ke)
