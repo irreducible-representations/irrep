@@ -1071,7 +1071,7 @@ class Kpoint:
                         multipl = np.dot(np.array([irreptable[ir][sym.ind] for sym in self.symmetries]),
                                          ch.conj()
                                          ) / len(ch)
-                        if abs(multipl) > 1e-4:
+                        if abs(multipl) > 1e-3:
                             multiplicities[ir] = multipl
                     irreps.append(multiplicities)
                 json_data["irreps"] = [{ir:(val.real,val.imag) for ir,val in irr.items()} for irr in irreps]
@@ -1092,7 +1092,6 @@ class Kpoint:
                     )
                     + ")"
                     for ir in irr  # Irreps of little-group
-                    if abs(irr[ir]) > 1e-3  # Check multiplicity
                 )
                 for irr in irreps  # Group of degen. states
             ]
