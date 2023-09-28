@@ -20,17 +20,16 @@ Primitive vectors :
  [-0.73107266  0.422085    0.28053649]
  [ 0.         -0.84417     0.28053649]]
 Reading symmetries from tables
-refUC was specified in CLI, but shiftUC was not. Taking shiftUC=(0,0,0).
 
 The cell transformation is given by: 
-        |   0.0000 -1.0000  1.0000 |
-refUC = |   1.0000  0.0000 -1.0000 |    shiftUC = [0. 0. 0.]
-        |  -1.0000 -1.0000 -1.0000 |
+        |   1.0000 -1.0000 -0.0000 |
+refUC = |  -0.0000  1.0000 -1.0000 |    shiftUC = [ 0. -0. -0.]
+        |   1.0000  1.0000  1.0000 |
 
 Lattice vectors of DFT (a) and reference (c) cells:
-a(0)=[  4.2972  2.4810  7.4657 ]    c(0)=[  4.2972 -7.4430  0.0000 ]
-a(1)=[ -4.2972  2.4810  7.4657 ]    c(1)=[  4.2972  7.4430  0.0000 ]
-a(2)=[  0.0000 -4.9620  7.4657 ]    c(2)=[  0.0000  0.0000-22.3970 ]
+a(0)=[  4.2972  2.4810  7.4657 ]    c(0)=[  8.5945  0.0000 -0.0000 ]
+a(1)=[ -4.2972  2.4810  7.4657 ]    c(1)=[ -4.2972  7.4430 -0.0000 ]
+a(2)=[  0.0000 -4.9620  7.4657 ]    c(2)=[ -0.0000 -0.0000 22.3970 ]
 Efermi: 0.0000 eV
 lattice vectors:
  [[ 4.29723723  2.48101107  7.46567804]
@@ -96,12 +95,27 @@ axis: [-0.  0.  1.] ; angle = -2/3 pi, inversion : False
 
  ### 4 
 
-rotation : |  0  -1   0 |     rotation : |  0   1   0 |
-           | -1   0   0 |      (refUC)   |  1   0   0 |
+rotation : |  0   0  -1 |     rotation : |  0   1   0 |
+           |  0  -1   0 |      (refUC)   |  1   0   0 |
+           | -1   0   0 |                |  0   0  -1 |
+
+
+ gk = [-kz, -ky, -kx]  |   refUC:  gk = [ky, kx, -kz]
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [ 0.5       0.866025 -0.      ] ; angle = 1 pi, inversion : False
+
+
+ ### 5 
+
+rotation : |  0  -1   0 |     rotation : |  1  -1   0 |
+           | -1   0   0 |      (refUC)   |  0  -1   0 |
            |  0   0  -1 |                |  0   0  -1 |
 
 
- gk = [-ky, -kx, -kz]  |   refUC:  gk = [ky, kx, -kz]
+ gk = [-ky, -kx, -kz]  |   refUC:  gk = [kx, -kx-ky, -kz]
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -109,34 +123,19 @@ translation (refUC) :  [   0.0000   0.0000   0.0000 ]
 axis: [1. 0. 0.] ; angle = 1 pi, inversion : False
 
 
- ### 5 
+ ### 6 
 
-rotation : | -1   0   0 |     rotation : |  1  -1   0 |
-           |  0   0  -1 |      (refUC)   |  0  -1   0 |
+rotation : | -1   0   0 |     rotation : | -1   0   0 |
+           |  0   0  -1 |      (refUC)   | -1   1   0 |
            |  0  -1   0 |                |  0   0  -1 |
 
 
- gk = [-kx, -kz, -ky]  |   refUC:  gk = [kx, -kx-ky, -kz]
+ gk = [-kx, -kz, -ky]  |   refUC:  gk = [-kx-ky, ky, -kz]
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
 
 axis: [-0.5       0.866025  0.      ] ; angle = 1 pi, inversion : False
-
-
- ### 6 
-
-rotation : |  0   0  -1 |     rotation : | -1   0   0 |
-           |  0  -1   0 |      (refUC)   | -1   1   0 |
-           | -1   0   0 |                |  0   0  -1 |
-
-
- gk = [-kz, -ky, -kx]  |   refUC:  gk = [-kx-ky, ky, -kz]
-
-translation         :  [   0.0000   0.0000   0.0000 ] 
-translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
-
-axis: [ 0.5       0.866025 -0.      ] ; angle = 1 pi, inversion : False
 
 
  ### 7 
@@ -186,12 +185,27 @@ axis: [-0.  0.  1.] ; angle = -2/3 pi, inversion : True
 
  ### 10 
 
-rotation : |  0   1   0 |     rotation : |  0  -1   0 |
-           |  1   0   0 |      (refUC)   | -1   0   0 |
+rotation : |  0   0   1 |     rotation : |  0  -1   0 |
+           |  0   1   0 |      (refUC)   | -1   0   0 |
+           |  1   0   0 |                |  0   0   1 |
+
+
+ gk = [kz, ky, kx]  |   refUC:  gk = [-ky, -kx, kz]
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.5      -0.866025  0.      ] ; angle = 1 pi, inversion : True
+
+
+ ### 11 
+
+rotation : |  0   1   0 |     rotation : | -1   1   0 |
+           |  1   0   0 |      (refUC)   |  0   1   0 |
            |  0   0   1 |                |  0   0   1 |
 
 
- gk = [ky, kx, kz]  |   refUC:  gk = [-ky, -kx, kz]
+ gk = [ky, kx, kz]  |   refUC:  gk = [-kx, kx+ky, kz]
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -199,34 +213,19 @@ translation (refUC) :  [   0.0000   0.0000   0.0000 ]
 axis: [1. 0. 0.] ; angle = 1 pi, inversion : True
 
 
- ### 11 
+ ### 12 
 
-rotation : |  1   0   0 |     rotation : | -1   1   0 |
-           |  0   0   1 |      (refUC)   |  0   1   0 |
+rotation : |  1   0   0 |     rotation : |  1   0   0 |
+           |  0   0   1 |      (refUC)   |  1  -1   0 |
            |  0   1   0 |                |  0   0   1 |
 
 
- gk = [kx, kz, ky]  |   refUC:  gk = [-kx, kx+ky, kz]
+ gk = [kx, kz, ky]  |   refUC:  gk = [kx+ky, -ky, kz]
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
 
 axis: [ 0.5      -0.866025 -0.      ] ; angle = 1 pi, inversion : True
-
-
- ### 12 
-
-rotation : |  0   0   1 |     rotation : |  1   0   0 |
-           |  0   1   0 |      (refUC)   |  1  -1   0 |
-           |  1   0   0 |                |  0   0   1 |
-
-
- gk = [kz, ky, kx]  |   refUC:  gk = [kx+ky, -ky, kz]
-
-translation         :  [   0.0000   0.0000   0.0000 ] 
-translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
-
-axis: [-0.5      -0.866025  0.      ] ; angle = 1 pi, inversion : True
 
 Reading symmetries from tables
 
@@ -241,7 +240,7 @@ Reading symmetries from tables
   -6.7692  |        1      | GM1+(1.0)  |   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
   -1.2874  |        1      | GM2-(1.0)  |   1.0000   1.0000   1.0000  -1.0000  -1.0000  -1.0000  -1.0000  -1.0000  -1.0000   1.0000   1.0000   1.0000
    4.6884  |        1      | GM1+(1.0)  |   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
-   5.0787  |        2      | GM3+(1.0)  |   2.0000  -1.0000  -1.0000   0.0001  -0.0001  -0.0000   2.0000  -1.0000  -1.0000   0.0001  -0.0001  -0.0000
+   5.0787  |        2      | GM3+(1.0)  |   2.0000  -1.0000  -1.0000  -0.0000   0.0001  -0.0001   2.0000  -1.0000  -1.0000  -0.0000   0.0001  -0.0001
 inversion is # 7
 number of inversions-odd states :  1
 Gap with upper bands :  3.872263695927045
