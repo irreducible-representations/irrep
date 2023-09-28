@@ -13,7 +13,7 @@ Primitive vectors :
  [[0.  0.  0. ]
  [0.5 0.5 0.5]] 
  Atom type indices: 
- [2, 1]
+ [1, 2]
  Reciprocal lattice:
  [[1.4772495  0.         0.        ]
  [0.         1.4772495  0.        ]
@@ -346,6 +346,6 @@ Reading symmetries from tables
 inversion is # 9
 number of inversions-odd states :  4
 Gap with upper bands :  5.051186895321
-number of inversions-odd states :  17
+number of inversion-odd states :  17
 Minimal direct gap: 1.2399947735275418e-10  eV
 indirect  gap: -1.4473412519160007  eV

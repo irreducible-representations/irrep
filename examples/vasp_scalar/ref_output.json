@@ -3927,7 +3927,7 @@
                         "kpname": "GM"
                     }
                 ],
-                "number of inversions-odd states": 28,
+                "number of inversion-odd states": 28,
                 "indirect gap (eV)": Infinity,
                 "Minimal direct gap (eV)": Infinity
             }

@@ -319,6 +319,6 @@ WARNING - non-integer number of states : 142.95060349858826
 inversion is # 9
 number of inversions-odd states :  28
 Gap with upper bands :  nan
-number of inversions-odd states :  28
+number of inversion-odd states :  28
 Minimal direct gap: inf  eV
 indirect  gap: inf  eV

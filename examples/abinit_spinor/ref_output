@@ -314,6 +314,6 @@ For each irrep, traces of symmetries in the calculation unit cell will be printe
 inversion is # 7
 number of inversions-odd Kramers pairs :  2
 Gap with upper bands :  2.393987488930864
-number of inversions-odd Kramers pairs IN THE LISTED KPOINTS:  2   Z4=  2
+number of inversion-odd Kramers pairs IN THE LISTED KPOINTS:  2   Z4=  2
 Minimal direct gap: 2.393987488930864  eV
 indirect  gap: 2.393987488930864  eV

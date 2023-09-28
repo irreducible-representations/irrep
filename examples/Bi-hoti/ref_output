@@ -124,8 +124,8 @@ rotation : |  0   0  -1 |     rotation : |  0   1   0 |
 
 spinor rot.         : |-0.000+0.000j  0.866+0.500j |
                       |-0.866+0.500j -0.000-0.000j |
-spinor rot. (refUC) : | 0.000-0.000j -0.866-0.500j |
-                      | 0.866-0.500j  0.000+0.000j |
+spinor rot. (refUC) : |-0.000+0.000j  0.866+0.500j |
+                      |-0.866+0.500j -0.000-0.000j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -144,8 +144,8 @@ rotation : |  0  -1   0 |     rotation : |  1  -1   0 |
 
 spinor rot.         : | 0.000+0.000j  0.000-1.000j |
                       | 0.000-1.000j  0.000+0.000j |
-spinor rot. (refUC) : | 0.000+0.000j  0.000-1.000j |
-                      | 0.000-1.000j  0.000+0.000j |
+spinor rot. (refUC) : |-0.000+0.000j  0.000+1.000j |
+                      | 0.000+1.000j -0.000+0.000j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -164,8 +164,8 @@ rotation : | -1   0   0 |     rotation : | -1   0   0 |
 
 spinor rot.         : |-0.000-0.000j -0.866+0.500j |
                       | 0.866+0.500j -0.000+0.000j |
-spinor rot. (refUC) : | 0.000+0.000j  0.866-0.500j |
-                      |-0.866-0.500j  0.000-0.000j |
+spinor rot. (refUC) : |-0.000-0.000j -0.866+0.500j |
+                      | 0.866+0.500j -0.000+0.000j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -244,8 +244,8 @@ rotation : |  0   0   1 |     rotation : |  0  -1   0 |
 
 spinor rot.         : |-0.000+0.000j  0.866+0.500j |
                       |-0.866+0.500j -0.000-0.000j |
-spinor rot. (refUC) : | 0.000-0.000j -0.866-0.500j |
-                      | 0.866-0.500j  0.000+0.000j |
+spinor rot. (refUC) : |-0.000+0.000j  0.866+0.500j |
+                      |-0.866+0.500j -0.000-0.000j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -264,8 +264,8 @@ rotation : |  0   1   0 |     rotation : | -1   1   0 |
 
 spinor rot.         : | 0.000+0.000j  0.000-1.000j |
                       | 0.000-1.000j  0.000+0.000j |
-spinor rot. (refUC) : | 0.000+0.000j  0.000-1.000j |
-                      | 0.000-1.000j  0.000+0.000j |
+spinor rot. (refUC) : |-0.000+0.000j  0.000+1.000j |
+                      | 0.000+1.000j -0.000+0.000j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -284,8 +284,8 @@ rotation : |  1   0   0 |     rotation : |  1   0   0 |
 
 spinor rot.         : |-0.000-0.000j -0.866+0.500j |
                       | 0.866+0.500j -0.000+0.000j |
-spinor rot. (refUC) : | 0.000+0.000j  0.866-0.500j |
-                      |-0.866-0.500j  0.000-0.000j |
+spinor rot. (refUC) : |-0.000-0.000j -0.866+0.500j |
+                      | 0.866+0.500j -0.000+0.000j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
 translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
@@ -356,6 +356,6 @@ Reading symmetries from tables
 inversion is # 7
 number of inversions-odd Kramers pairs :  2
 Gap with upper bands :  0.08857033154551353
-number of inversions-odd Kramers pairs IN THE LISTED KPOINTS:  6   Z4=  2
+number of inversion-odd Kramers pairs IN THE LISTED KPOINTS:  6   Z4=  2
 Minimal direct gap: 0.08857033154551353  eV
 indirect  gap: -0.1886089499035215  eV

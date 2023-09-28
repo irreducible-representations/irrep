@@ -3626,7 +3626,7 @@
                         "kpname": "A"
                     }
                 ],
-                "number of inversions-odd states": 17,
+                "number of inversion-odd states": 17,
                 "indirect gap (eV)": -1.4473412519160007,
                 "Minimal direct gap (eV)": 1.2399947735275418e-10
             }

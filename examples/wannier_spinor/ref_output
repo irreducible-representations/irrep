@@ -13,7 +13,7 @@ Primitive vectors :
  [[0.  0.  0. ]
  [0.5 0.5 0.5]] 
  Atom type indices: 
- [1, 2]
+ [2, 1]
  Reciprocal lattice:
  [[1.4772495  0.         0.        ]
  [0.         1.4772495  0.        ]
@@ -393,6 +393,6 @@ Reading symmetries from tables
 inversion is # 9
 number of inversions-odd Kramers pairs :  7
 Gap with upper bands :  nan
-number of inversions-odd Kramers pairs IN THE LISTED KPOINTS:  13   Z4=  1
+number of inversion-odd Kramers pairs IN THE LISTED KPOINTS:  13   Z4=  1
 Minimal direct gap: inf  eV
 indirect  gap: inf  eV

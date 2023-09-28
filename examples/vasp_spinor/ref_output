@@ -405,6 +405,6 @@ Reading symmetries from tables
 inversion is # 9
 number of inversions-odd Kramers pairs :  28
 Gap with upper bands :  nan
-number of inversions-odd Kramers pairs IN THE LISTED KPOINTS:  28   Z4=  0
+number of inversion-odd Kramers pairs IN THE LISTED KPOINTS:  28   Z4=  0
 Minimal direct gap: inf  eV
 indirect  gap: inf  eV
