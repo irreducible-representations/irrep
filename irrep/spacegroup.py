@@ -269,8 +269,6 @@ class SymmetryOperation():
         else:
             write_ref = False
 
-        json_data ["calculation cell coincides with reference cell"] =  not write_ref
-
         # Print header
         print("\n ### {} \n".format(self.ind))
 
@@ -737,7 +735,20 @@ class SpaceGroup():
             self.number, 
             len(self.symmetries))
             )
-        json_data = {"name" : self.name, "number" : self.number , "spinor":self.spinor, "num_symmetries" : len(self.symmetries), "symmetries" : {}  }
+
+        if (not np.allclose(self.refUC, np.eye(3)) or
+            not np.allclose(self.shiftUC, np.zeros(3))):
+            write_ref = True  # To avoid writing this huge block again
+        else:
+            write_ref = False
+
+        json_data = {"name": self.name,
+                     "number": self.number,
+                     "spinor": self.spinor,
+                     "num_symmetries": len(self.symmetries),
+                     "cells_match": not write_ref,
+                     "symmetries": {}
+                     }
 
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:

@@ -1088,16 +1088,16 @@ class BandStructure:
 
         if self.spinor:
             print(
-                "number of inversions-odd Kramers pairs IN THE LISTED KPOINTS: ",
+                "number of inversion-odd Kramers pairs IN THE LISTED KPOINTS: ",
                 int(NBANDINV / 2),
                 "  Z4= ",
                 int(NBANDINV / 2) % 4,
             )
-            json_data["number of inversions-odd Kramers pairs"]  = int(NBANDINV / 2)
+            json_data["number of inversion-odd Kramers pairs"]  = int(NBANDINV / 2)
             json_data["Z4"] = int(NBANDINV / 2) % 4,
         else:
-            print("number of inversions-odd states : ", NBANDINV)
-            json_data["number of inversions-odd states"]  = NBANDINV
+            print("number of inversion-odd states : ", NBANDINV)
+            json_data["number of inversion-odd states"]  = NBANDINV
 
         #        print ("Total number of inversion-odd Kramers pairs IN THE LISTED KPOINTS: ",NBANDINV,"  Z4= ",NBANDINV%4)
         print("Minimal direct gap:", GAP, " eV")
