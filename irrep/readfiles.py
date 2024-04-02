@@ -78,13 +78,13 @@ Rydberg_eV = 13.605693  # eV
 Hartree_eV = 2 * Rydberg_eV
 
 
-class AbinitHeader():
+class ParserAbinit():
     """
     Parse header of the WFK file of Abinit.
 
     Paramters
     ---------
-    fname : str
+    filename : str
         Name of the WFK file of Abinit.
 
     Attributes
@@ -120,10 +120,10 @@ class AbinitHeader():
     `src/56_io_mpi/m_hdr.f90`.
     """
 
-    def __init__(self, fname):
+    def __init__(self, filename):
 
         #fWFK = FF(fname, "r")
-        fWFK = FFR(fname)
+        fWFK = FFR(filename)
         self.fWFK = fWFK
 
         # 1st record
@@ -155,17 +155,17 @@ class AbinitHeader():
         record = record_abinit(fWFK, '18i4,19f8,4i4')[0]
         stdout.flush()
         (bandtot,
-         self.natom,
-         self.nkpt,
+         natom,
+         nkpt,
          nsym,
          npsp,
          nsppol,
          ntypat,
-         self.usepaw,
+         usepaw,
          nspinor,
          occopt) = np.array(record[0])[[0, 4, 8, 12, 13, 11, 14, 17, 10, 15]]
-        self.rprimd = record[1][7:16].reshape((3, 3))
-        self.ecut = record[1][0] * Hartree_eV
+        rprimd = record[1][7:16].reshape((3, 3))
+        ecut = record[1][0] * Hartree_eV
         nshiftk_orig = record[2][1]
         nshiftk = record[2][2]
 
@@ -177,9 +177,9 @@ class AbinitHeader():
         if occopt == 9:  # extra records since Abinit v9
             raise RuntimeError("occopt=9 is not supported.")
         if nspinor == 2:
-            self.spinor = True
+            spinor = True
         elif nspinor == 1:
-            self.spinor = False
+            spinor = False
         else:
             raise RuntimeError(
                 "Unexpected value nspinor = {0}".format(nspinor)
@@ -195,40 +195,40 @@ class AbinitHeader():
                '{natom}i4,({nkpt},3)f8,{bandtot}f8,({nsym},3)f8,{ntypat}f8,'
                '{nkpt}f8'
                .format(
-                    nkpt=self.nkpt,
-                    n2=self.nkpt *
-                    nsppol,
+                    nkpt=nkpt,
+                    n2=nkpt * nsppol,
                     npsp=npsp,
                     nsym=nsym,
-                    natom=self.natom,
+                    natom=natom,
                     bandtot=bandtot,
                     ntypat=ntypat)
                )
         record = record_abinit(fWFK, fmt)[0]
-        self.typat = record[6]
-        self.kpt = record[7]
-        self.nband = record[1]
-        self.npwarr, self.istwfk = record[2], record[0]
-        self.__fix_arrays() # fix istwfk, npwarr and nband when nkpt==1
+        typat = record[6]
+        kpt = record[7]
+        nband = record[1]
+        istwfk = record[0]
+        npwarr = record[2]
+        istwfk, npwarr, nband = self.__fix_arrays(istwfk, npwarr, nband, nkpt) # fix istwfk, npwarr and nband when nkpt==1
 
         # Check that istwfk was 1 and consistency of number of bands
-        if self.istwfk != {1}:
+        if istwfk != {1}:
             raise ValueError(("istwfk should be 1 for all kpoints. Found {0}"
-                              .format(self.istwfk))
+                              .format(istwfk))
                              )
-        assert np.sum(self.nband) == bandtot, "Probably a bug in Abinit"
+        assert np.sum(nband) == bandtot, "Probably a bug in Abinit"
 
         # 4th record
             # write(unit,err=10, iomsg=errmsg) hdr%residm, hdr%xred(:,:), &
             # & hdr%etot, hdr%fermie, hdr%amu(:)
         record = record_abinit(
                     fWFK,
-                    'f8,({natom},3)f8,f8,f8,{ntypat}f8'.format(natom=self.natom,
+                    'f8,({natom},3)f8,f8,f8,{ntypat}f8'.format(natom=natom,
                                                                ntypat=ntypat
                                                                )
                     )[0]
-        self.xred = record[1]
-        self.efermi = record[3]
+        xred = record[1]
+        efermi = record[3]
 
         # 5th record: skip it
             # write(unit,err=10, iomsg=errmsg) &
@@ -251,16 +251,30 @@ class AbinitHeader():
             record = record_abinit(fWFK, "a132,f8,f8,5i4,a32")[0]
 
         # 7th record: additional records if usepaw=1
-        if self.usepaw == 1:
+        if usepaw == 1:
             record_abinit(fWFK,"i4")
             record_abinit(fWFK,"i4")
 
-    def __fix_arrays(self):
+        # Set as attributes quantities that need to be retrieved from outside the class
+        self.nband = nband
+        self.nkpt = nkpt
+        self.rprimd = rprimd
+        self.ecut = ecut
+        self.spinor = spinor
+        self.typat = typat
+        self.xred = xred
+        self.kpt = kpt
+        self.efermi = efermi
+        self.npwarr = npwarr
+        self.usepaw = usepaw
+
+    def __fix_arrays(self, istwfk, npwarr, nband, nkpt):
         '''when nkpt=1, some integers must be converted to iterables, to avoid problems with indices'''
-        if self.nkpt == 1:
+        if nkpt == 1:
             # istwfk and npwarr are int, should be set, array and array
-            self.istwfk = set([self.istwfk])
-            self.npwarr = np.array([self.npwarr]) 
-            self.nband  = np.array([self.nband])
+            istwfk = set([istwfk])
+            npwarr = np.array([npwarr])
+            nband  = np.array([nband])
         else:
-            self.istwfk = set(self.istwfk)
+            istwfk = set(self.istwfk)
+        return istwfk, npwarr, nband

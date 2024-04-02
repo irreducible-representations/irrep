@@ -23,7 +23,7 @@ import numpy as np
 import numpy.linalg as la
 
 from .utility import str2bool, BOHR
-from .readfiles import AbinitHeader, Hartree_eV
+from .readfiles import ParserAbinit, Hartree_eV
 from .readfiles import WAVECARFILE
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
@@ -364,7 +364,7 @@ class BandStructure:
             Threshold to compare translational parts of symmetries.
         """
 
-        header = AbinitHeader(WFKname)
+        header = ParserAbinit(WFKname)
         usepaw = header.usepaw
         self.spinor = header.spinor
         self.spacegroup = SpaceGroup(
