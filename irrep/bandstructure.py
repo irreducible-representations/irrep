@@ -364,11 +364,11 @@ class BandStructure:
             Threshold to compare translational parts of symmetries.
         """
 
-        header = ParserAbinit(WFKname)
-        usepaw = header.usepaw
-        self.spinor = header.spinor
+        parser = ParserAbinit(WFKname)
+        usepaw = parser.usepaw
+        self.spinor = parser.spinor
         self.spacegroup = SpaceGroup(
-            cell=(header.rprimd, header.xred, header.typat),
+            cell=(parser.rprimd, parser.xred, parser.typat),
             spinor=self.spinor,
             refUC=refUC,
             shiftUC=shiftUC,
@@ -378,7 +378,7 @@ class BandStructure:
         if onlysym:
             return
         if EF.lower() == "auto":
-            self.efermi = header.efermi * Hartree_eV
+            self.efermi = parser.efermi
         else:
             try:
                 self.efermi = float(EF)
@@ -392,10 +392,10 @@ class BandStructure:
         #        self.spacegroup.show()
 
         #        global fWFK
-        fWFK = header.fWFK
-        Ecut0 = header.ecut
-        NBin = header.nband.min()
-        NK = header.nkpt
+        fWFK = parser.fWFK
+        Ecut0 = parser.ecut
+        NBin = parser.nband.min()
+        NK = parser.nkpt
         IBstart = 0 if (IBstart is None or IBstart <= 0) else IBstart - 1
         if IBend is None or IBend <= 0 or IBend > NBin:
             IBend = NBin
@@ -407,7 +407,7 @@ class BandStructure:
         self.Ecut = Ecut
         self.Ecut0 = Ecut0
 
-        self.Lattice = header.rprimd
+        self.Lattice = parser.rprimd
         print("lattice vectors:\n", self.Lattice)
         self.RecLattice = (
             np.array(
@@ -439,7 +439,7 @@ class BandStructure:
         for ik in kplist:
             kp = Kpoint(
                 ik,
-                header.nband[ik],
+                parser.nband[ik],
                 IBstart,
                 IBend,
                 Ecut,
@@ -448,8 +448,8 @@ class BandStructure:
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 code="abinit",
-                kpt=header.kpt[ik],
-                npw_=header.npwarr[ik],
+                kpt=parser.kpt[ik],
+                npw_=parser.npwarr[ik],
                 fWFK=fWFK,
                 flag=flag,
                 usepaw=usepaw,

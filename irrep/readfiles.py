@@ -228,7 +228,7 @@ class ParserAbinit():
                                                                )
                     )[0]
         xred = record[1]
-        efermi = record[3]
+        efermi = record[3] * Hartree_eV
 
         # 5th record: skip it
             # write(unit,err=10, iomsg=errmsg) &
