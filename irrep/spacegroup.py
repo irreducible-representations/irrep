@@ -501,66 +501,7 @@ class SpaceGroup():
     ..math:: G=T+ g_1 T + g_2 T +...+ g_N T 
     """
 
-    def __cell_vasp(self, inPOSCAR):
-        """
-        Parses POSCAR.
-
-        Parameters
-        ----------
-        inPOSCAR : str, default=None 
-            POSCAR file from which lattice vectors, atomic species and positions of
-            ions will be read.
-        
-        Returns
-        ------
-        lattice : array
-            3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
-            and **c** are given in rows. 
-        positions : array
-            Each row contains the direct coordinates of an ion's position. 
-        numbers : list
-            Each element is a number identifying the atomic species of an ion.
-        """
-        fpos = (l.strip() for l in open(inPOSCAR))
-        title = next(fpos)
-        lattice = float(
-            next(fpos)) * np.array([next(fpos).split() for i in range(3)], dtype=float)
-        try:
-            nat = np.array(next(fpos).split(), dtype=int)
-        except BaseException:
-            nat = np.array(next(fpos).split(), dtype=int)
-
-        numbers = [i + 1 for i in range(len(nat)) for j in range(nat[i])]
-
-        l = next(fpos)
-        if l[0] in ['s', 'S']:
-            l = next(fpos)
-        cartesian=False
-        if l[0].lower()=='c':
-            cartesian=True
-        elif l[0].lower()!='d':
-            raise RuntimeError(
-                'only "direct" or "cartesian"atomic coordinates are supproted')
-        positions = np.zeros((np.sum(nat), 3))
-        i = 0
-        for l in fpos:
-            if i >= sum(nat):
-                break
-            try:
-                positions[i] = np.array(l.split()[:3])
-                i += 1
-            except Exception as err:
-                print(err)
-                pass
-        if sum(nat) != i:
-            raise RuntimeError(
-                "not all atomic positions were read : {0} of {1}".format(
-                    i, sum(nat)))
-        if cartesian: 
-            positions = positions.dot(np.linalg.inv(lattice))
-        return lattice, positions, numbers
-
-    def _findsym(self, inPOSCAR, cell):
+    def _findsym(self, cell):
         """
         Finds the space-group and constructs a list of symmetry operations
         
@@ -600,8 +541,6 @@ class SpaceGroup():
             centrosymmetric groups they adopt origin choice 1 of ITA, rather 
             than choice 2 (BCS).
         """
-        if cell is None:
-            cell = self.__cell_vasp(inPOSCAR=inPOSCAR)
         print('')
         print('\n ----------INFORMATION ABOUT THE UNIT CELL----------- \n')
         print('')
@@ -634,8 +573,7 @@ class SpaceGroup():
 
     def __init__(
             self,
-            inPOSCAR=None,
-            cell=None,
+            cell,
             spinor=True,
             refUC=None,
             shiftUC=None,
@@ -648,7 +586,7 @@ class SpaceGroup():
          self.number, 
          self.Lattice, 
          refUC_tmp, 
-         shiftUC_tmp) = self._findsym(inPOSCAR, cell)
+         shiftUC_tmp) = self._findsym(cell)
         self.RecLattice = np.array([np.cross(self.Lattice[(i + 1) %
                                                           3], self.Lattice[(i + 2) %
                                                                            3]) for i in range(3)]) * 2 * np.pi / np.linalg.det(self.Lattice)

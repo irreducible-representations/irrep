@@ -333,3 +333,63 @@ class ParserAbinit():
         #    largest_value = np.max(np.abs(CG.conj().dot(CG.T)
         #                                  - np.eye(IBend - IBstart)))
         #    assert largest_value < 1e-10, "Wave functions are not orthonormal"
+
+class ParserVasp:
+
+    def __init__(self, fPOS, fWAV):
+        self.fPOS = fPOS
+        pass
+
+    def parse_poscar(self):
+        """
+        Parses POSCAR.
+
+        Returns
+        ------
+        lattice : array
+            3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
+            and **c** are given in rows. 
+        positions : array
+            Each row contains the direct coordinates of an ion's position. 
+        numbers : list
+            Each element is a number identifying the atomic species of an ion.
+        """
+
+        fpos = (l.strip() for l in open(self.fPOS))
+        title = next(fpos)
+        lattice = float(
+            next(fpos)) * np.array([next(fpos).split() for i in range(3)], dtype=float)
+        try:
+            nat = np.array(next(fpos).split(), dtype=int)
+        except BaseException:
+            nat = np.array(next(fpos).split(), dtype=int)
+
+        numbers = [i + 1 for i in range(len(nat)) for j in range(nat[i])]
+
+        l = next(fpos)
+        if l[0] in ['s', 'S']:
+            l = next(fpos)
+        cartesian=False
+        if l[0].lower()=='c':
+            cartesian=True
+        elif l[0].lower()!='d':
+            raise RuntimeError(
+                'only "direct" or "cartesian"atomic coordinates are supproted')
+        positions = np.zeros((np.sum(nat), 3))
+        i = 0
+        for l in fpos:
+            if i >= sum(nat):
+                break
+            try:
+                positions[i] = np.array(l.split()[:3])
+                i += 1
+            except Exception as err:
+                print(err)
+                pass
+        if sum(nat) != i:
+            raise RuntimeError(
+                "not all atomic positions were read : {0} of {1}".format(
+                    i, sum(nat)))
+        if cartesian:
+            positions = positions.dot(np.linalg.inv(lattice))
+        return lattice, positions, numbers

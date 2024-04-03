@@ -23,7 +23,7 @@ import numpy as np
 import numpy.linalg as la
 
 from .utility import str2bool, BOHR
-from .readfiles import ParserAbinit, Hartree_eV
+from .readfiles import ParserAbinit, ParserVasp, Hartree_eV
 from .readfiles import WAVECARFILE
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
@@ -222,15 +222,17 @@ class BandStructure:
             raise RuntimeError(
                 "spinor should be specified in the command line for VASP bandstructure"
             )
-        self.spacegroup = SpaceGroup(
-                inPOSCAR=fPOS,
-                spinor=spinor,
-                refUC=refUC,
-                shiftUC=shiftUC,
-                search_cell=search_cell,
-                trans_thresh=trans_thresh
-                )
         self.spinor = spinor
+
+        parser = ParserVasp(fPOS, fWAV)
+        lattice, positions, typat = parser.parse_poscar()
+        self.spacegroup = SpaceGroup(
+                              cell=(lattice, positions, typat),
+                              spinor=self.spinor,
+                              refUC=refUC,
+                              shiftUC=shiftUC,
+                              search_cell=search_cell,
+                              trans_thresh=trans_thresh)
         if onlysym:
             return
 
