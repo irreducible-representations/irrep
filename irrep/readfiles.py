@@ -121,19 +121,32 @@ class ParserAbinit():
     """
 
     def __init__(self, filename):
-
         #fWFK = FF(fname, "r")
-        fWFK = FFR(filename)
-        self.fWFK = fWFK
+        self.fWFK = FFR(filename)  # temporary
+        (self.nband,
+         self.nkpt,
+         self.rprimd,
+         self.ecut,
+         self.spinor,
+         self.typat,
+         self.xred,
+         self.kpt,
+         self.efermi,
+         self.npwarr,
+         self.usepaw) = self.parse_header(filename)
+
+    def parse_header(self, filename):
 
         # 1st record
             # write(unit=header) codvsn,headform,fform
         try:  # version < 9.0.0
-            record = record_abinit(fWFK, 'a6,2i4')
+            record = record_abinit(self.fWFK, 'a6,2i4')
         except:  # version > 9.0.0
-            fWFK.goto_record(0)
-            record = record_abinit(fWFK, 'a8,2i4')
+            self.fWFK.goto_record(0)
+            record = record_abinit(self.fWFK, 'a8,2i4')
         stdout.flush()
+
+        # Check version number of Abinit
         codsvn = record[0][0].decode('ascii').strip()
         headform, fform = record[0][1]
         defversion = ['8.6.3', '9.6.2', '8.4.4', '8.10.3']
@@ -152,7 +165,7 @@ class ParserAbinit():
             # & nspden,nspinor,nsppol,nsym,npsp,ntypat,occopt,pertcase,usepaw,&
             # & ecut,ecutdg,ecutsm,ecut_eff,qptn(1:3),rprimd(1:3,1:3),stmbias,&
             # & tphysel,tsmear,usewvl, hdr%nshiftk_orig, hdr%nshiftk, hdr%mband
-        record = record_abinit(fWFK, '18i4,19f8,4i4')[0]
+        record = record_abinit(self.fWFK, '18i4,19f8,4i4')[0]
         stdout.flush()
         (bandtot,
          natom,
@@ -203,7 +216,7 @@ class ParserAbinit():
                     bandtot=bandtot,
                     ntypat=ntypat)
                )
-        record = record_abinit(fWFK, fmt)[0]
+        record = record_abinit(self.fWFK, fmt)[0]
         typat = record[6]
         kpt = record[7]
         nband = record[1]
@@ -222,7 +235,7 @@ class ParserAbinit():
             # write(unit,err=10, iomsg=errmsg) hdr%residm, hdr%xred(:,:), &
             # & hdr%etot, hdr%fermie, hdr%amu(:)
         record = record_abinit(
-                    fWFK,
+                    self.fWFK,
                     'f8,({natom},3)f8,f8,f8,{ntypat}f8'.format(natom=natom,
                                                                ntypat=ntypat
                                                                )
@@ -240,7 +253,7 @@ class ParserAbinit():
                '({nshiftk},3)f8'
                .format(nshiftkorig=nshiftk_orig, nshiftk=nshiftk)
                )
-        record = record_abinit(fWFK,fmt)[0]
+        record = record_abinit(self.fWFK,fmt)[0]
 
         # 6th record: skip it
             # read(unit, err=10, iomsg=errmsg) hdr%title(ipsp), &
@@ -248,25 +261,19 @@ class ParserAbinit():
             # & hdr%pspdat(ipsp), hdr%pspcod(ipsp), hdr%pspxc(ipsp), &
             # & hdr%lmn_size(ipsp), hdr%md5_pseudos(ipsp)
         for ipsp in range(npsp):
-            record = record_abinit(fWFK, "a132,f8,f8,5i4,a32")[0]
+            record = record_abinit(self.fWFK, "a132,f8,f8,5i4,a32")[0]
 
         # 7th record: additional records if usepaw=1
         if usepaw == 1:
-            record_abinit(fWFK,"i4")
-            record_abinit(fWFK,"i4")
+            record_abinit(self.fWFK,"i4")
+            record_abinit(self.fWFK,"i4")
 
         # Set as attributes quantities that need to be retrieved from outside the class
-        self.nband = nband
-        self.nkpt = nkpt
-        self.rprimd = rprimd
-        self.ecut = ecut
-        self.spinor = spinor
-        self.typat = typat
-        self.xred = xred
-        self.kpt = kpt
-        self.efermi = efermi
-        self.npwarr = npwarr
-        self.usepaw = usepaw
+        return (nband, nkpt, rprimd, ecut, spinor, typat, xred, kpt, 
+                efermi, npwarr, usepaw)
+
+        # TODO: write parser of single WF
+
 
     def __fix_arrays(self, istwfk, npwarr, nband, nkpt):
         '''when nkpt=1, some integers must be converted to iterables, to avoid problems with indices'''
