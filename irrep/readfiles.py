@@ -222,7 +222,14 @@ class ParserAbinit():
         nband = record[1]
         istwfk = record[0]
         npwarr = record[2]
-        istwfk, npwarr, nband = self.__fix_arrays(istwfk, npwarr, nband, nkpt) # fix istwfk, npwarr and nband when nkpt==1
+
+        # istwfk and npwarr are int, should be set, array and array
+        if nkpt == 1:
+            istwfk = set([istwfk])
+            npwarr = np.array([npwarr])
+            nband  = np.array([nband])
+        else:
+            istwfk = set(self.istwfk)
 
         # Check that istwfk was 1 and consistency of number of bands
         if istwfk != {1}:
@@ -273,15 +280,3 @@ class ParserAbinit():
                 efermi, npwarr, usepaw)
 
         # TODO: write parser of single WF
-
-
-    def __fix_arrays(self, istwfk, npwarr, nband, nkpt):
-        '''when nkpt=1, some integers must be converted to iterables, to avoid problems with indices'''
-        if nkpt == 1:
-            # istwfk and npwarr are int, should be set, array and array
-            istwfk = set([istwfk])
-            npwarr = np.array([npwarr])
-            nband  = np.array([nband])
-        else:
-            istwfk = set(self.istwfk)
-        return istwfk, npwarr, nband
