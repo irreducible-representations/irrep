@@ -377,6 +377,8 @@ class BandStructure:
         )
         if onlysym:
             return
+
+        # Set Fermi energy
         if EF.lower() == "auto":
             self.efermi = parser.efermi
         else:
@@ -389,11 +391,9 @@ class BandStructure:
                         )
         print("Efermi: {:.4f} eV".format(self.efermi))
 
-        #        self.spacegroup.show()
-
-        #        global fWFK
         fWFK = parser.fWFK
-        Ecut0 = parser.ecut
+
+        # Set indices and number of bands
         NBin = parser.nband.min()
         NK = parser.nkpt
         IBstart = 0 if (IBstart is None or IBstart <= 0) else IBstart - 1
@@ -402,13 +402,23 @@ class BandStructure:
         NBout = IBend - IBstart
         if NBout <= 0:
             raise RuntimeError("No bands to calculate")
-        if Ecut is None or Ecut > Ecut0 or Ecut <= 0:
-            Ecut = Ecut0
-        self.Ecut = Ecut
-        self.Ecut0 = Ecut0
+        print(
+            "WFK contains {0} k-points and {1} bands.\n Saving {2} bands starting from {3} in the output".format(
+                NK, NBin, NBout, IBstart + 1
+            )
+        )
 
+        # Set cutoff to be used to save wave functions
+        self.Ecut0 = parser.ecut
+        if Ecut is None or Ecut > self.Ecut0 or Ecut <= 0:
+            self.Ecut = self.Ecut0
+        else:
+            self.Ecut = Ecut
+        print("Energy cutoff in WFK file : ", self.Ecut0)
+        print("Energy cutoff reduced to : ", self.Ecut)
+
+        # Set real and primitive lattice vectors
         self.Lattice = parser.rprimd
-        print("lattice vectors:\n", self.Lattice)
         self.RecLattice = (
             np.array(
                 [
@@ -420,14 +430,8 @@ class BandStructure:
             * np.pi
             / np.linalg.det(self.Lattice)
         )
+        print("lattice vectors:\n", self.Lattice)
 
-        print(
-            "WFK contains {0} k-points and {1} bands.\n Saving {2} bands starting from {3} in the output".format(
-                NK, NBin, NBout, IBstart + 1
-            )
-        )
-        print("Energy cutoff in WFK file : ", Ecut0)
-        print("Energy cutoff reduced to : ", Ecut)
         if kplist is None:
             kplist = range(NK)
         else:
@@ -442,8 +446,8 @@ class BandStructure:
                 parser.nband[ik],
                 IBstart,
                 IBend,
-                Ecut,
-                Ecut0,
+                self.Ecut,
+                self.Ecut0,
                 self.RecLattice,
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
