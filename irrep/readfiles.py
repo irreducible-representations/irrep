@@ -42,9 +42,19 @@ class WAVECARFILE:
         Equal to parameter `RL`.
     """
 
-    def __init__(self, fname=None, RL=3):
-        self.f = open(fname, "rb")
+    def __init__(self, filename, RL=3):
+        self.f = open(filename, "rb")
         self.rl = 3
+        # RECLENGTH=3 # the length of a record in WAVECAR. It is defined in the
+        # first record, so let it be 3 fo far"
+        self.rl, ispin, iprec = [int(x) for x in self.record(0)]
+        if iprec != 45200:
+            raise RuntimeError("double precision WAVECAR is not supported")
+        if ispin != 1:
+            raise RuntimeError(
+                "WAVECAR contains spin-polarized non-spinor wavefunctions. "
+                + "ISPIN={0}  this is not supported yet".format(ispin)
+            )
 
     def record(self, irec, cnt=np.Inf, dtype=float):
         """An auxilary function to get records from WAVECAR"""
@@ -334,11 +344,12 @@ class ParserAbinit():
         #                                  - np.eye(IBend - IBstart)))
         #    assert largest_value < 1e-10, "Wave functions are not orthonormal"
 
+
 class ParserVasp:
 
     def __init__(self, fPOS, fWAV):
         self.fPOS = fPOS
-        pass
+        self.fWAV = WAVECARFILE(fWAV)
 
     def parse_poscar(self):
         """
@@ -393,3 +404,11 @@ class ParserVasp:
         if cartesian:
             positions = positions.dot(np.linalg.inv(lattice))
         return lattice, positions, numbers
+
+    def parse_header(self):
+        tmp = self.fWAV.record(1)
+        NK = int(tmp[0])
+        NBin = int(tmp[1])
+        Ecut0 = tmp[2]
+        lattice = np.array(tmp[3:12]).reshape(3, 3)
+        return NK, NBin, Ecut0, lattice

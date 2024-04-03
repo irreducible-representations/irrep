@@ -224,6 +224,7 @@ class BandStructure:
             )
         self.spinor = spinor
 
+        # Parse POSCAR and determine space group
         parser = ParserVasp(fPOS, fWAV)
         lattice, positions, typat = parser.parse_poscar()
         self.spacegroup = SpaceGroup(
@@ -236,6 +237,7 @@ class BandStructure:
         if onlysym:
             return
 
+        # Fix Fermi level
         if EF.lower() == "auto":
             self.efermi = 0.0
             msg = " (Fermi-energy not found in WAVECAR)"
@@ -249,23 +251,10 @@ class BandStructure:
                          "a number or 'auto'")
                         )
         print("Efermi = {:.4f} eV".format(self.efermi) + msg)
-        WCF = WAVECARFILE(fWAV)
-        # RECLENGTH=3 # the length of a record in WAVECAR. It is defined in the
-        # first record, so let it be 3 fo far"
-        WCF.rl, ispin, iprec = [int(x) for x in WCF.record(0)]
-        if iprec != 45200:
-            raise RuntimeError("double precision WAVECAR is not supported")
-        if ispin != 1:
-            raise RuntimeError(
-                "WAVECAR contains spin-polarized non-spinor wavefunctions. "
-                + "ISPIN={0}  this is not supported yet".format(ispin)
-            )
 
-        tmp = WCF.record(1)
-        NK = int(tmp[0])
-        NBin = int(tmp[1])
-        Ecut0 = tmp[2]
+        NK, NBin, Ecut0, lattice = parser.parse_header()
 
+        # Fix IBstart, IBend and NBout. Move this lines to __init__ at some point
         IBstart = 0 if (IBstart is None or IBstart <= 0) else IBstart - 1
         if IBend is None or IBend <= 0 or IBend > NBin:
             IBend = NBin
@@ -273,11 +262,14 @@ class BandStructure:
         if NBout <= 0:
             raise RuntimeError("No bands to calculate")
         if Ecut is None or Ecut > Ecut0 or Ecut <= 0:
-            Ecut = Ecut0
-        self.Ecut = Ecut
+            self.Ecut = Ecut0
+        else:
+            self.Ecut = Ecut
         self.Ecut0 = Ecut0
 
-        self.Lattice = np.array(tmp[3:12]).reshape(3, 3)
+        self.Lattice = lattice
+        # todo: compare lattices parsed from POSCAR and WAVECAR
+
         self.RecLattice = (
             np.array(
                 [
@@ -316,7 +308,7 @@ class BandStructure:
                 self.RecLattice,
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
-                WCF=WCF,
+                WCF=parser.fWAV,
             )
             for ik in kplist
         ]
