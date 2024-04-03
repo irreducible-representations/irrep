@@ -164,27 +164,27 @@ class Kpoint:
 
     def __init__(
         self,
-        ik,
-        NBin,
-        IBstart,
-        IBend,
-        Ecut,
-        Ecut0,
-        RecLattice,
+        ik=None,
+        NBin=None,
+        IBstart=None,
+        IBend=None,
+        Ecut=None,
+        Ecut0=None,
+        RecLattice=None,  # this was last mandatory argument
         symmetries_SG=None,
         spinor=None,
         code="vasp",
         kpt=None,
-        npw_=None,
-        fWFK=None,
         WCF=None,
         prefix=None,
         kptxml=None,
-        flag=-1,
-        usepaw=0,
         eigenval=None,
         spin_channel=None,
-        IBstartE=0
+        IBstartE=0,
+        WF=None,  # first arg added for abinit (to be kept at the end)
+        Energy=None,
+        ig=None,
+        upper=None
     ):
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
@@ -198,19 +198,13 @@ class Kpoint:
                 WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0
             )
         elif code.lower() == "abinit":
-            self.WF, self.ig = self.__init_abinit(
-                fWFK,
-                ik,
-                NBin,
-                IBstart,
-                IBend,
-                Ecut,
-                Ecut0,
-                kpt=kpt,
-                npw_=npw_,
-                flag=flag,
-                usepaw=usepaw,
-            )
+            # Move following assignments to __init__ once parsing implemented for all of codes
+            self.K = kpt
+            self.WF = WF
+            self.Energy = Energy
+            self.ig = ig
+            self.upper = upper
+
         elif code.lower() == "espresso":
             self.WF, self.ig = self.__init_espresso(
                 prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml=kptxml,
@@ -614,128 +608,6 @@ class Kpoint:
             ]
         )
         return WF, ig
-
-    def __init_abinit(
-        self,
-        fWFK,
-        ik,
-        NBin,
-        IBstart,
-        IBend,
-        Ecut,
-        Ecut0,
-        kpt,
-        npw_,
-        flag,
-        usepaw,
-    ):
-        """
-        Initialization for Abinit. Read data and store it in attibutes.
-
-        Parameters
-        ----------
-        fWFK : file object
-            File object corresponding to Abinit's WFK. Returned by `FortranFile`.
-        ik : int
-            Index of kpoint, starting count from 0.
-        NBin : int
-            Number of bands considered at every k-point in the DFT calculation.
-        IBstart : int
-            First band to be considered.
-        IBend : int, default=None
-            Last band to be considered.
-        Ecut : float
-            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
-            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
-            the value of this is negative or larger than `Ecut0`.
-        Ecut0 : float
-            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
-            DFT files. Insignificant if `code`=`wannier90`.
-        kpt : list or array
-            Direct coordinates of the k-point.
-        npw_ : int
-            Number of plane-waves considered in the expansion of wave-functions. 
-        flag : int
-            Index of the k-point, used when parsing WFK file (Abinit). Info is read 
-            for all k-points, but stored only for k-points whose index is passed 
-            through `flag`.
-        usepaw : int
-            Only used for Abinit. 1 if pseudopotentials are PAW, 0 otherwise. When 
-            `usepaw`=0, normalization of wave-functions is checked.
-
-        Returns
-        -------
-        array
-            Contains the coefficients (same row-column formatting as argument 
-            `CG`) of the expansion of wave-functions corresponding to 
-            plane-waves of energy smaller than `Ecut`. Columns (plane-waves) 
-            are shorted based on their energy, from smaller to larger. 
-            Only plane-waves if energy smaller than `Ecut` are kept.
-        array
-            Every column corresponds to a plane-wave of energy smaller than 
-            `Ecut`. The number of rows is 6: the first 3 contain direct 
-            coordinates of the plane-wave, the third row stores indices needed
-            to short plane-waves based on energy (ascending order). Fitfth 
-            (sixth) row contains the index of the first (last) plane-wave with 
-            the same energy as the plane-wave of the current column.
-        """
-        assert not (kpt is None)
-        self.K = kpt
-        nspinor = 2 if self.spinor else 1
-        print("Reading k-point", ik)
-
-        # We need to skip lines in fWFK until we reach the lines of ik
-        while flag < ik:
-
-            # 1st record: npw, nspinor, nband
-            record = record_abinit(fWFK, "i4")  # [0]
-            npw, nspinor_loc, nband_loc = record
-
-            # 2nd record: reciprocal lattice vectors in the expansion
-            kg = record_abinit(fWFK, "i4").reshape(npw, 3)
-
-            # 3rd record: energies and occupations
-            record = record_abinit(fWFK, "f8")
-            eigen, occ = record[:nband_loc], record[nband_loc:]
-
-            # 4th record: coefficients of expansions in plane waves
-            CG = np.zeros((IBend - IBstart, npw * nspinor), dtype=complex)
-            for iband in range(nband_loc):
-                record = record_abinit(fWFK, "f8")
-                if iband >= IBstart and iband < IBend:
-                    CG[iband - IBstart] = record[0::2] + 1.0j * record[1::2]
-            flag += 1
-
-        # Check consistency of WFK file
-        assert npw == npw_, ("Different number of plane waves in header and "
-                             "k-point's block. Probably a bug in Abinit..."
-                             )
-        assert nband_loc == NBin, ("Different number of bands in header and "
-                                   "k-point's block. Probably a bug in "
-                                   "Abinit..."
-                                   )
-
-        assert (
-            (nspinor_loc == 2 and self.spinor)
-            or (nspinor_loc == 1 and not self.spinor)
-        ), ("Different values of nspinor in header and "
-            "k-point's block. Probably a bug in Abinit..."
-            )
-
-        # Check orthonormality for norm-conserving pseudos
-        if usepaw == 0:
-            largest_value = np.max(np.abs(CG.conj().dot(CG.T)
-                                          - np.eye(IBend - IBstart)))
-            assert largest_value < 1e-10, "Wave functions are not orthonormal"
-
-        # Convert energies to eV and pick upper value
-        self.Energy = eigen[IBstart:IBend] * Hartree_eV
-        try:
-            self.upper = eigen[IBend] * Hartree_eV
-        except BaseException:
-            self.upper = np.NaN
-
-        return sortIG(self.ik0, kg, kpt, CG, self.RecLattice, Ecut0, Ecut, self.spinor)
 
     def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval):
         """

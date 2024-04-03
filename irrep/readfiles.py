@@ -127,13 +127,14 @@ class ParserAbinit():
          self.nkpt,
          self.rprimd,
          self.ecut,
-         self.spinor,
+         self.spinor,  # keep as attribute
          self.typat,
          self.xred,
          self.kpt,
          self.efermi,
          self.npwarr,
          self.usepaw) = self.parse_header(filename)
+        self.kpt_count = 0  # index of the next k-point to be read
 
     def parse_header(self, filename):
 
@@ -279,4 +280,56 @@ class ParserAbinit():
         return (nband, nkpt, rprimd, ecut, spinor, typat, xred, kpt, 
                 efermi, npwarr, usepaw)
 
-        # TODO: write parser of single WF
+    def parse_kpoint(self, ik):
+
+        print("Reading k-point", ik)
+        nspinor = 2 if self.spinor else 1
+
+        # We need to skip lines in fWFK until we reach the lines of ik
+        for i in range(self.kpt_count, ik+1):
+
+            if self.kpt_count < ik:
+                skip = True
+            else:
+                skip = False
+
+            # 1st record: npw, nspinor, nband
+            record = record_abinit(self.fWFK, "i4")  # [0]
+            npw, nspinor_loc, nband = record
+            assert npw == self.npwarr[ik], ("Different number of plane waves "
+                                            "in header and k-point's block. "
+                                            "Probably a bug in Abinit...")
+            assert nspinor_loc == nspinor, ("Different values of nspinor in "
+                                            "header and k-point's block. "
+                                            "Probably a bug in Abinit...")
+            assert nband == self.nband[ik], ("Different number of bands in "
+                                             "header and k-point's block. "
+                                             "Probably a bug in Abinit...")
+
+            # 2nd record: reciprocal lattice vectors in the expansion
+            kg = record_abinit(self.fWFK, "i4").reshape(npw, 3)
+
+            # 3rd record: energies and occupations
+            record = record_abinit(self.fWFK, "f8")
+            if not skip:
+                eigen, occ = record[:nband], record[nband:]
+                eigen *= Hartree_eV
+
+            # 4th record: coefficients of expansions in plane waves
+            if skip:
+                record = record_abinit(self.fWFK, "f8")
+            else:
+                CG = np.zeros((nband, npw * nspinor), dtype=complex)
+                for iband in range(nband):
+                    record = record_abinit(self.fWFK, "f8")
+                    CG[iband] = record[0::2] + 1.0j * record[1::2]
+
+            self.kpt_count += 1
+
+        return CG, eigen, kg
+
+        # Check orthonormality for norm-conserving pseudos
+        #if self.usepaw == 0:
+        #    largest_value = np.max(np.abs(CG.conj().dot(CG.T)
+        #                                  - np.eye(IBend - IBstart)))
+        #    assert largest_value < 1e-10, "Wave functions are not orthonormal"

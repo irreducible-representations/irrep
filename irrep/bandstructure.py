@@ -27,6 +27,7 @@ from .readfiles import ParserAbinit, Hartree_eV
 from .readfiles import WAVECARFILE
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
+from .gvectors import sortIG
 
 
 class BandStructure:
@@ -432,34 +433,42 @@ class BandStructure:
         )
         print("lattice vectors:\n", self.Lattice)
 
+        # Set list of indices of k-points to be parsed
         if kplist is None:
             kplist = range(NK)
         else:
             kplist -= 1
             kplist = np.array([k for k in kplist if k >= 0 and k < NK])
-        #        print ("kplist",kplist)
+
+        # Parse wave functions of k-points
         self.kpoints = []
-        flag = -1
         for ik in kplist:
+            WF, Energy, kg = parser.parse_kpoint(ik)
+            WF = WF[IBstart:IBend,:]
+            try:  # Pick energy of IBend+1 band
+                upper = Energy[IBend]
+            except BaseException:
+                upper = np.NaN
+            Energy = Energy[IBstart:IBend]
+            WF, kg = sortIG(ik, kg, parser.kpt[ik], WF, self.RecLattice, self.Ecut0, self.Ecut, self.spinor)
             kp = Kpoint(
-                ik,
-                parser.nband[ik],
-                IBstart,
-                IBend,
-                self.Ecut,
-                self.Ecut0,
-                self.RecLattice,
+                ik=ik,
+                NBin=parser.nband[ik],
+                IBstart=IBstart,
+                IBend=IBend,
+                RecLattice=self.RecLattice,
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 code="abinit",
                 kpt=parser.kpt[ik],
-                npw_=parser.npwarr[ik],
-                fWFK=fWFK,
-                flag=flag,
-                usepaw=usepaw,
-            )
+                WF=WF,
+                Energy=Energy,
+                ig=kg,
+                upper=upper
+                )
             self.kpoints.append(kp)
-            flag = ik
+
+            
 
     def __init_wannier(
         self,
