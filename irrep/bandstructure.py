@@ -27,7 +27,7 @@ from .readfiles import ParserAbinit, ParserVasp, Hartree_eV
 from .readfiles import WAVECARFILE
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
-from .gvectors import sortIG
+from .gvectors import sortIG, calc_gvectors
 
 
 class BandStructure:
@@ -289,29 +289,56 @@ class BandStructure:
         )
         print("Energy cutoff in WAVECAR : ", Ecut0)
         print("Energy cutoff reduced to : ", Ecut)
-        #        print (kplist,NK)
 
         if kplist is None:
             kplist = range(NK)
         else:
             kplist -= 1
             kplist = np.array([k for k in kplist if k >= 0 and k < NK])
-        #        print (kplist)
-        self.kpoints = [
-            Kpoint(
-                ik,
-                NBin,
-                IBstart,
-                IBend,
-                Ecut,
-                Ecut0*(1.+_correct_Ecut0),
-                self.RecLattice,
+
+        # Parse data of k-point from WAVECAR
+        self.kpoints = []
+        for ik in kplist:
+            WF, Energy, kpt, npw = parser.parse_kpoint(ik, NBin, self.spinor)
+            # Determine energy of next band from above
+            try:
+                upper = Energy[IBend]
+            except BaseException:
+                upper = np.NaN
+
+            # Get rid of bands out of specified window
+            Energy = Energy[IBstart:IBend]
+            WF = WF[IBstart:IBend]
+
+            # Calculate indices of lattice vectors in plane wave expansion
+            kg = calc_gvectors(
+                kpt, self.RecLattice, Ecut0, npw, Ecut, spinor=self.spinor
+            )
+
+            # Apply plane wave cutoff and sort plane waves based on energy
+            if not self.spinor:
+                selectG = kg[3]
+            else:
+                selectG = np.hstack((kg[3], kg[3] + int(npw / 2)))
+            WF = WF[:, selectG]
+
+            kp = Kpoint(
+                ik=ik,
+                NBin=NBin,
+                IBstart=IBstart,
+                IBend=IBend,
+                RecLattice=self.RecLattice,
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
-                WCF=parser.fWAV,
-            )
-            for ik in kplist
-        ]
+                code="vasp",
+                kpt=kpt,
+                WF=WF,
+                Energy=Energy,
+                ig=kg,
+                upper=upper
+                )
+            self.kpoints.append(kp)
+
 
     def __init_abinit(
         self,

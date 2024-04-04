@@ -194,9 +194,14 @@ class Kpoint:
         self.symmetries_SG = symmetries_SG  # lazy_property needs it
 
         if code.lower() == "vasp":
-            self.WF, self.ig = self.__init_vasp(
-                WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0
-            )
+            self.K = kpt
+            self.WF = WF
+            self.Energy = Energy
+            self.ig = ig
+            self.upper = upper
+            #self.WF, self.ig = self.__init_vasp(
+            #    WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0
+            #)
         elif code.lower() == "abinit":
             # Move following assignments to __init__ once parsing implemented for all of codes
             self.K = kpt
@@ -542,72 +547,6 @@ class Kpoint:
 
         return subspaces
 
-    def __init_vasp(self, WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0):
-        """
-        Initialization for vasp. Read data and save it in attributes.
-
-        Parameters
-        ----------
-        WCF : class
-            Instance of `class` `WAVECARFILE`.
-        ik : int
-            Index of kpoint, starting count from 0.
-        NBin : int
-            Number of bands considered at every k-point in the DFT calculation.
-        IBstart : int
-            First band to be considered.
-        IBend : int
-            Last band to be considered.
-        Ecut : float
-            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
-            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
-            the value of this is negative or larger than `Ecut0`.
-        Ecut0 : float
-            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
-            DFT files. Insignificant if `code`=`wannier90`.
-
-        Returns
-        -------
-        WF : array
-            `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
-            plane-wave in the expansion of the wave-function in :math:`i^{th}`
-            band. Only plane-waves if energy smaller than `Ecut` are kept.
-        ig : array
-            Every column corresponds to a plane-wave of energy smaller than 
-            `Ecut`. The number of rows is 6: the first 3 contain direct 
-            coordinates of the plane-wave, the fourth row stores indices needed
-            to short plane-waves based on energy (ascending order). Fitfth 
-            (sixth) row contains the index of the first (last) groups of 
-            plane-waves of identical energy.
-        """
-        r = WCF.record(2 + ik * (NBin + 1))
-        # get the number of planewave coefficients. It should be even for spinor wavefunctions
-        #    print (r)
-        npw = int(r[0])
-        if self.spinor:
-            if npw != int(npw / 2) * 2:
-                raise RuntimeError(
-                    "odd number of coefs {0} for spinor wavefunctions".format(npw)
-                )
-        self.K = r[1:4]
-        eigen = np.array(r[4 : 4 + NBin * 3]).reshape(NBin, 3)[:, 0]
-        self.Energy = eigen[IBstart:IBend]
-        try:
-            self.upper = eigen[IBend]
-        except BaseException:
-            self.upper = np.NaN
-
-        ig = calc_gvectors(
-            self.K, self.RecLattice, Ecut0, npw, Ecut, spinor=self.spinor
-        )
-        selectG = np.hstack((ig[3], ig[3] + int(npw / 2))) if self.spinor else ig[3]
-        WF = np.array(
-            [
-                WCF.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)[selectG]
-                for ib in range(IBstart, IBend)
-            ]
-        )
-        return WF, ig
 
     def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval):
         """

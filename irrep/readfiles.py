@@ -412,3 +412,24 @@ class ParserVasp:
         Ecut0 = tmp[2]
         lattice = np.array(tmp[3:12]).reshape(3, 3)
         return NK, NBin, Ecut0, lattice
+
+    def parse_kpoint(self, ik, NBin, spinor):
+
+        r = self.fWAV.record(2 + ik * (NBin + 1))
+
+        # Check if number of plane waves is even for spinors
+        npw = int(r[0])
+        if spinor and npw % 2 != 0:
+            raise RuntimeError("odd number of coefs {0} for spinor "
+                               "wavefunctions".format(npw))
+        kpt = r[1:4]
+        Energy = np.array(r[4 : 4 + NBin * 3]).reshape(NBin, 3)[:, 0]
+        WF = np.array(
+            [
+                self.fWAV.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)
+                #self.WCF.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)[selectG]
+                for ib in range(NBin)
+            ]
+        )
+        #return WF, ig
+        return WF, Energy, kpt, npw
