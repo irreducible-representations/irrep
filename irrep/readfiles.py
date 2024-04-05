@@ -21,6 +21,8 @@ import scipy
 from scipy.io import FortranFile as FF
 from sys import stdout
 from .utility import FortranFileR as FFR
+from .utility import str2bool, BOHR
+import xml.etree.ElementTree as ET
 
 
 class WAVECARFILE:
@@ -433,3 +435,50 @@ class ParserVasp:
         )
         #return WF, ig
         return WF, Energy, kpt, npw
+
+class ParserEspresso:
+
+    def __init__(self, prefix):
+        mytree = ET.parse(prefix + ".save/data-file-schema.xml")
+        myroot = mytree.getroot()
+
+        self.input = myroot.find("input")
+        outp = myroot.find("output")
+        self.bandstr = outp.find("band_structure")
+
+        # todo: define spinor as property with getter
+        self.spinor = str2bool(self.bandstr.find("noncolin").text)
+
+    def parse_lattice(self):
+
+        ntyp = int(self.input.find("atomic_species").attrib["ntyp"])
+        struct = self.input.find("atomic_structure")
+        nat = int(struct.attrib["nat"])
+
+        # Parse lattice vectors
+        lattice = []
+        for i in range(3):
+            lattice.append(struct.find("cell").find("a{}".format(i + 1)).text.strip().split())
+        lattice = BOHR * np.array(lattice, dtype=float)
+
+        # Parse atomic positions in cartesian coordinates
+        positions = []
+        for at in struct.find("atomic_positions").findall("atom"):
+            positions.append(at.text.split())
+        positions = np.dot(np.array(positions, dtype=float)*BOHR,
+                      np.linalg.inv(lattice))
+
+        # Parse indices denoting type of atom
+        atnames = []
+        for sp in self.input.find("atomic_species").findall("species"):
+            atnames.append(sp.attrib["name"])
+        if len(atnames) != ntyp:
+            raise RuntimeError("Error in the assigment of atom species. "
+                               "Probably a bug in Quantum Espresso, but "
+                               "your DFT input files")
+        atnumbers = {atn: i + 1 for i, atn in enumerate(atnames)}
+        numbers = []
+        for at in struct.find("atomic_positions").findall("atom"):
+            numbers.append(atnumbers[at.attrib["name"]])
+
+        return lattice, positions, numbers

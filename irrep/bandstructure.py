@@ -23,7 +23,7 @@ import numpy as np
 import numpy.linalg as la
 
 from .utility import str2bool, BOHR
-from .readfiles import ParserAbinit, ParserVasp, Hartree_eV
+from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, Hartree_eV
 from .readfiles import WAVECARFILE
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
@@ -866,39 +866,19 @@ class BandStructure:
             Threshold to compare translational parts of symmetries.
         """
         import xml.etree.ElementTree as ET
+        parser = ParserEspresso(prefix)
+        self.spinor = parser.spinor
+        self.Lattice, positions, numbers = parser.parse_lattice()
 
+        # Rm this 5 lines once parser is finished
         mytree = ET.parse(prefix + ".save/data-file-schema.xml")
         myroot = mytree.getroot()
-
         inp = myroot.find("input")
         outp = myroot.find("output")
         bandstr = outp.find("band_structure")
-        ntyp = int(inp.find("atomic_species").attrib["ntyp"])
-        atnames = [
-            sp.attrib["name"] for sp in inp.find("atomic_species").findall("species")
-        ]
-        assert len(atnames) == ntyp
-        atnumbers = {atn: i + 1 for i, atn in enumerate(atnames)}
-        self.spinor = str2bool(bandstr.find("noncolin").text)
-        #        print ('spinor=',self.spinor)
-        struct = inp.find("atomic_structure")
-        nat = struct.attrib["nat"]
-        self.Lattice = BOHR * np.array(
-            [
-                struct.find("cell").find("a{}".format(i + 1)).text.strip().split()
-                for i in range(3)
-            ],
-            dtype=float,
-        )
-        xcart = []
-        typat = []
-        for at in struct.find("atomic_positions").findall("atom"):
-            typat.append(atnumbers[at.attrib["name"]])
-            xcart.append(at.text.split())
-        xred = (np.array(xcart, dtype=float) * BOHR).dot(np.linalg.inv(self.Lattice))
-        #        print ("xred=",xred)
+
         self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, xred, typat),
+            cell=(self.Lattice, positions, numbers),
             spinor=self.spinor,
             refUC=refUC,
             shiftUC=shiftUC,
