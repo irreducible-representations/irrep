@@ -1,0 +1,150 @@
+'NoneType' object has no attribute 'split'
+
+
+ ----------INFORMATION ABOUT THE UNIT CELL----------- 
+
+
+Primitive vectors : 
+ [[ 6.15687003  0.          0.        ]
+ [ 0.          2.80920501  2.75739001]
+ [ 0.         -2.80920501  2.75739001]] 
+ Atomic positions: 
+ [[0.25    0.52466 0.00124]
+ [0.75    0.00124 0.52466]
+ [0.75    0.01651 0.86691]
+ [0.25    0.86691 0.01651]
+ [0.      0.49834 0.49834]
+ [0.5     0.49834 0.49834]] 
+ Atom type indices: 
+ [1, 1, 2, 2, 3, 3]
+ Reciprocal lattice:
+ [[ 1.02051615  0.         -0.        ]
+ [-0.          1.11832089  1.13933562]
+ [ 0.         -1.11832089  1.13933562]]
+Reading symmetries from tables
+
+The cell transformation is given by: 
+        |   1.0000  0.0000  0.0000 |
+refUC = |   0.0000  1.0000 -1.0000 |    shiftUC = [-0. -0. -0.]
+        |   0.0000  1.0000  1.0000 |
+
+Lattice vectors of DFT (a) and reference (c) cells:
+a(0)=[  6.1569  0.0000  0.0000 ]    c(0)=[  6.1569  0.0000  0.0000 ]
+a(1)=[  0.0000  2.8092  2.7574 ]    c(1)=[  0.0000  5.6184  0.0000 ]
+a(2)=[  0.0000 -2.8092  2.7574 ]    c(2)=[  0.0000  0.0000  5.5148 ]
+Efermi: 0.0000 eV
+Found cutoff:   476.199255 eV   Largest plane wave energy in K-point    1:   475.922738 eV
+
+
+ ---------- INFORMATION ABOUT THE SPACE GROUP ---------- 
+
+
+Space group Ama2 (# 40) has 4 symmetry operations  
+
+ ### 1 
+
+rotation : |  1   0   0 |     rotation : |  1   0   0 |
+           |  0   1   0 |      (refUC)   |  0   1   0 |
+           |  0   0   1 |                |  0   0   1 |
+
+
+ gk = [kx, ky, kz]  |   refUC:  gk = [kx, ky, kz]
+
+spinor rot.         : | 1.000+0.000j  0.000+0.000j |
+                      | 0.000+0.000j  1.000+0.000j |
+spinor rot. (refUC) : | 1.000+0.000j  0.000+0.000j |
+                      | 0.000+0.000j  1.000+0.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [1. 0. 0.] ; angle =  0 , inversion : False
+
+
+ ### 2 
+
+rotation : | -1   0   0 |     rotation : | -1   0   0 |
+           |  0   0   1 |      (refUC)   |  0  -1   0 |
+           |  0   1   0 |                |  0   0   1 |
+
+
+ gk = [-kx, kz, ky]  |   refUC:  gk = [-kx, -ky, kz]
+
+spinor rot.         : | 0.000-1.000j  0.000+0.000j |
+                      | 0.000+0.000j  0.000+1.000j |
+spinor rot. (refUC) : |-0.000+1.000j -0.000+0.000j |
+                      |-0.000+0.000j -0.000-1.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [0. 0. 1.] ; angle = 1 pi, inversion : False
+
+
+ ### 3 
+
+rotation : |  1   0   0 |     rotation : |  1   0   0 |
+           |  0   0   1 |      (refUC)   |  0  -1   0 |
+           |  0   1   0 |                |  0   0   1 |
+
+
+ gk = [kx, kz, ky]  |   refUC:  gk = [kx, -ky, kz]
+
+spinor rot.         : | 0.000-0.000j -1.000+0.000j |
+                      | 1.000+0.000j  0.000+0.000j |
+spinor rot. (refUC) : |-0.000+0.000j  1.000-0.000j |
+                      |-1.000+0.000j -0.000-0.000j |
+
+translation         :  [   0.5000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.5000   0.0000   0.0000 ] 
+
+axis: [0. 1. 0.] ; angle = 1 pi, inversion : True
+
+
+ ### 4 
+
+rotation : | -1   0   0 |     rotation : | -1   0   0 |
+           |  0   1   0 |      (refUC)   |  0   1   0 |
+           |  0   0   1 |                |  0   0   1 |
+
+
+ gk = [-kx, ky, kz]  |   refUC:  gk = [-kx, ky, kz]
+
+spinor rot.         : | 0.000+0.000j  0.000-1.000j |
+                      | 0.000-1.000j  0.000+0.000j |
+spinor rot. (refUC) : | 0.000+0.000j  0.000-1.000j |
+                      | 0.000-1.000j  0.000+0.000j |
+
+translation         :  [   0.5000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.5000   0.0000   0.0000 ] 
+
+axis: [1. 0. 0.] ; angle = 1 pi, inversion : True
+
+Reading symmetries from tables
+
+
+ k-point   1 : [0. 0. 0.] (in DFT cell)
+               [0. 0. 0.] (after cell trasformation)
+
+ number of states : 28
+
+   Energy  |   degeneracy  |   irreps   | sym. operations  
+           |               |            |     1        2        3        4    
+ -43.2258  |        2      | -GM5(1.0)  |   2.0000   0.0000   0.0000   0.0000
+ -43.2191  |        2      | -GM5(1.0)  |   2.0000   0.0000  -0.0000  -0.0000
+ -11.2532  |        2      | -GM5(1.0)  |   2.0000   0.0000   0.0000   0.0000
+ -10.8523  |        2      | -GM5(1.0)  |   2.0000  -0.0000  -0.0000   0.0000
+  -2.2542  |        2      | -GM5(1.0)  |   2.0000  -0.0000  -0.0000   0.0000
+  -2.2091  |        2      | -GM5(1.0)  |   2.0000   0.0000   0.0000   0.0000
+  -1.1259  |        2      | -GM5(1.0)  |   2.0000   0.0000  -0.0000  -0.0000
+   0.3207  |        2      | -GM5(1.0)  |   2.0000   0.0000   0.0000   0.0000
+   0.3721  |        2      | -GM5(1.0)  |   2.0000  -0.0000  -0.0000   0.0000
+   0.9458  |        2      | -GM5(1.0)  |   2.0000  -0.0000   0.0000  -0.0000
+   4.4458  |        2      | -GM5(1.0)  |   2.0000   0.0000   0.0000   0.0000
+   4.7887  |        2      | -GM5(1.0)  |   2.0000  -0.0000  -0.0000   0.0000
+   6.1406  |        2      | -GM5(1.0)  |   2.0000   0.0000   0.0000   0.0000
+   6.1650  |        2      | -GM5(1.0)  |   2.0000  -0.0000  -0.0000   0.0000
+no inversion
+number of inversion-odd Kramers pairs IN THE LISTED KPOINTS:  0   Z4=  0
+Minimal direct gap: inf  eV
+indirect  gap: inf  eV
