@@ -15,9 +15,9 @@ def test_espresso_spinor_example():
         "-spinor",
         "-Ecut=100",
         "-code=espresso",
-        "-prefix=SHLi",
-        "-kpoints=1",
-        "-kpnames=GM",
+        "-prefix=Bi",
+        "-kpoints=1,2,3,4,5,6",
+        "-kpnames=A,GM,M,Y,L,V",
     ]
     output = subprocess.run(command, capture_output=True, text=True)
     return_code = output.returncode
