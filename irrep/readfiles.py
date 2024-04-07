@@ -439,6 +439,7 @@ class ParserVasp:
 class ParserEspresso:
 
     def __init__(self, prefix):
+        self.prefix = prefix
         mytree = ET.parse(prefix + ".save/data-file-schema.xml")
         myroot = mytree.getroot()
 
@@ -448,6 +449,35 @@ class ParserEspresso:
 
         # todo: define spinor as property with getter
         self.spinor = str2bool(self.bandstr.find("noncolin").text)
+
+
+    def parse_header(self):
+
+        Ecut0 = float(self.input.find("basis").find("ecutwfc").text)
+        Ecut0 *= Hartree_eV
+        NK = len(self.bandstr.findall("ks_energies"))
+
+        # Parse number of bands
+        try:
+            NBin_dw=int(self.bandstr.find('nbnd_dw').text)
+            NBin_up=int(self.bandstr.find('nbnd_up').text)
+            spinpol=True
+            print ("spin-polarised bandstructure composed of {} up and {} dw states".format(NBin_dw,NBin_up))
+            NBin_dw+NBin_up
+        except AttributeError as err:
+            spinpol=False
+            NBin=int(self.bandstr.find('nbnd').text)
+
+        try:
+            EF = float(self.bandstr.find("fermi_energy").text) * Hartree_eV
+        except:
+            EF = None
+
+
+        if spinpol:
+            return spinpol, Ecut0, EF, NK, [NBin_up, NBin_dw]
+        else:
+            return spinpol, Ecut0, EF, NK, [NBin]
 
     def parse_lattice(self):
 
@@ -482,3 +512,44 @@ class ParserEspresso:
             numbers.append(atnumbers[at.attrib["name"]])
 
         return lattice, positions, numbers
+
+
+    def parse_kpoint(self, ik, NBin, spin_channel):
+
+        kptxml = self.bandstr.findall("ks_energies")[ik]
+
+        # Parse energy levels
+        Energy = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)
+        Energy *= Hartree_eV
+
+        # Open file with the wave functions
+        wfcname="wfc{}{}".format({None:"","dw":"dw","up":"up"}[spin_channel], ik+1)
+        try:
+            fWFC=FF("{}.save/{}.dat".format(self.prefix,wfcname.lower()),"r")
+        except FileNotFoundError:
+            fWFC=FF("{}.save/{}.dat".format(self.prefix,wfcname.upper()),"r")
+
+        rec = record_abinit(fWFC, "i4,3f8,i4,i4,f8")[0]
+        kpt = rec[1]  # cartesian coords of k-point
+
+        rec = record_abinit(fWFC, "4i4")
+        igwx = rec[1]
+
+        # Determine direct coords of k-point
+        rec = record_abinit(fWFC, "(3,3)f8")
+        B = np.array(rec)
+        kpt = kpt.dot(np.linalg.inv(B))
+
+        rec = record_abinit(fWFC, "({},3)i4".format(igwx))
+        kg = np.array(rec)
+
+        # Parse coefficients of wave functions
+        npw = int(kptxml.find("npw").text)
+        npwtot = npw * (2 if self.spinor else 1)
+        print('npwtot: {}, igwx: {}'.format(npwtot, igwx))
+        WF = np.zeros((NBin, npwtot), dtype=complex)
+        for ib in range(NBin):
+            rec = record_abinit(fWFC, "{}f8".format(npwtot * 2))
+            WF[ib] = rec[0::2] + 1.0j * rec[1::2]
+
+        return WF, Energy, kg, kpt

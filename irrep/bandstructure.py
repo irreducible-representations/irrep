@@ -865,7 +865,7 @@ class BandStructure:
         trans_thresh : float, default=1e-5
             Threshold to compare translational parts of symmetries.
         """
-        import xml.etree.ElementTree as ET
+        import xml.etree.ElementTree as ET  # rm line when moving all parsing to readfiles.py
         parser = ParserEspresso(prefix)
         self.spinor = parser.spinor
         self.Lattice, positions, numbers = parser.parse_lattice()
@@ -887,47 +887,39 @@ class BandStructure:
         )
         if onlysym:
             return
-        Ecut0 = float(inp.find("basis").find("ecutwfc").text) * Hartree_eV
 
-        IBstartE=0
-        try:
-            NBin_dw=int(bandstr.find('nbnd_dw').text)
-            NBin_up=int(bandstr.find('nbnd_up').text)
-            spinpol=True
-            print ("spin-polarised bandstructure composed of {} up and {} dw states".format(NBin_dw,NBin_up))
-            NBin_dw+NBin_up
-        except AttributeError as err: 
-            spinpol=False
-            NBin=int(bandstr.find('nbnd').text)
-
+        spinpol, Ecut0, EF_in, NK, NBin_list = parser.parse_header()
 
         IBstartE=0
         if self.spinor and spinpol:
             raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
-        if spinpol :
+        elif spinpol:
             if spin_channel is None:
                 raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
             assert (spin_channel in ['dw','up'])
-            if spin_channel=='dw':
-                IBstartE=NBin_up
-                NBin=NBin_dw
-            else : 
-                NBin=NBin_up
-        else :
+            if spin_channel == 'dw':
+                IBstartE = NBin_up[0]
+                NBin = NBin_list[1]
+            else:
+                NBin = NBin_list[0]
+        else:
+            NBin = NBin_list[0]
             if spin_channel is not None:
                 raise ValueError("Found a non-polarized bandstructure, but spin channel is set to {}".format(spin_channel))
 
 
+        # Set indices for 1st and last bands to be considered
         IBstart = 0 if (IBstart is None or IBstart <= 0) else IBstart - 1
         if IBend is None or IBend <= 0 or IBend > NBin:
             IBend = NBin
         NBout = IBend - IBstart
         if NBout <= 0:
             raise RuntimeError("No bands to calculate")
-        if Ecut is None or Ecut > Ecut0 or Ecut <= 0:
-            Ecut = Ecut0
 
-        self.Ecut = Ecut
+        # Set cutoff to calculate traces
+        if Ecut is None or Ecut > Ecut0 or Ecut <= 0:
+            self.Ecut = Ecut0
+
         self.RecLattice = (
             np.array(
                 [
@@ -939,16 +931,14 @@ class BandStructure:
             * np.pi
             / np.linalg.det(self.Lattice)
         )
-        
+
+        # Set Fermi energy
         if EF.lower() == "auto":
-            try:
-                self.efermi = (
-                               float(bandstr.find("fermi_energy").text) 
-                               * Hartree_eV
-                               )
-            except:
+            if EF_in is None:
                 print("WARNING : fermi-energy not found. Setting it as zero")
                 self.efermi = 0.0
+            else:
+                self.efermi = EF_in
         else:
             try:
                 self.efermi = float(EF)
@@ -959,19 +949,25 @@ class BandStructure:
                         )
         print("Efermi: {:.4f} eV".format(self.efermi))
 
-        kpall = bandstr.findall("ks_energies")
-        NK = len(kpall)
+        # Set list of indices of k-points
         if kplist is None:
             kplist = np.arange(NK)
         else:
             kplist -= 1
             kplist = np.array([k for k in kplist if k >= 0 and k < NK])
-        #        print ("kplist",kplist)
-        #        for kp in kpall:
-        #            print(kp.find('k_point').text)
+
+        # Parse wave functions
         self.kpoints = []
-        flag = -1
+        kpall = bandstr.findall("ks_energies")
         for ik in kplist:
+            WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel)
+            WF = WF[IBstart:IBend,:]
+            try:  # Pick energy of IBend+1 band
+                upper = Energy[IBend]
+            except BaseException:
+                upper = np.NaN
+            Energy = Energy[IBstart:IBend]
+            WF, kg = sortIG(ik+1, kg, kpt, WF, self.RecLattice/2.0, Ecut0, Ecut, self.spinor)
             kp = Kpoint(
                 ik,
                 NBin,
@@ -983,20 +979,15 @@ class BandStructure:
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 code="espresso",
-                kptxml=kpall[ik],
-                prefix=prefix,
                 spin_channel=spin_channel,
-                IBstartE=IBstartE
+                WF=WF,  # first arg added for abinit (to be kept at the end)
+                Energy=Energy,
+                ig=kg,
+                upper=upper,
+                kpt=kpt
             )
             self.kpoints.append(kp)
-            flag = ik
 
-    #        tagname= mytree.getElementsByTagName('item')[0]
-    #        print(tagname)
-    # If I try to fetch the first ele
-    #        myroot = mytree.getroot()
-    #        print (myroot)
-    #        exit()
 
     def getNK():
         """Getter for `self.kpoints`."""

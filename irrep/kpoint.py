@@ -211,10 +211,11 @@ class Kpoint:
             self.upper = upper
 
         elif code.lower() == "espresso":
-            self.WF, self.ig = self.__init_espresso(
-                prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml=kptxml,
-                spin_channel=spin_channel,IBstartE=IBstartE
-            )
+            self.K = kpt
+            self.WF = WF
+            self.Energy = Energy
+            self.ig = ig
+            self.upper = upper
         elif code.lower() == "wannier":
             self.WF, self.ig = self.__init_wannier(
                 NBin, IBstart, IBend, Ecut, kpt=kpt, eigenval=eigenval
@@ -714,6 +715,7 @@ class Kpoint:
             (sixth) row contains the index of the first (last) plane-wave with 
             the same energy as the plane-wave of the current column.
         """
+
         self.K = np.array(kptxml.find("k_point").text.split(), dtype=float)
 
         eigen = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)
