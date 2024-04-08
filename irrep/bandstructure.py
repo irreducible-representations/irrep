@@ -22,8 +22,8 @@ import functools
 import numpy as np
 import numpy.linalg as la
 
-from .utility import str2bool, BOHR
-from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, Hartree_eV
+from .utility import str2bool, BOHR, split
+from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, Hartree_eV
 from .readfiles import WAVECARFILE
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
@@ -537,93 +537,23 @@ class BandStructure:
         trans_thresh : float, default=1e-5
             Threshold to compare translational parts of symmetries.
         """
+
         if Ecut is None:
             raise RuntimeError("Ecut mandatory for Wannier90")
 
-        fwin = [l.strip().lower() for l in open(prefix + ".win").readlines()]
+        parser = ParserW90(prefix)
 
-        def split(l):
-            """
-            Determine symbol used for assignment and split accordingly.
+        #fwin = [l.strip().lower() for l in open(prefix + ".win").readlines()]
 
-            Parameters
-            ---------
-            l : str
-                Part of a line read from .win file.
-            """
-            if "=" in l:
-                return l.split("=")
-            elif ":" in l:
-                return l.split(":")
-            else:
-                return l.split()
 
-        fwin = [
-            [s.strip() for s in split(l)]
-            for l in fwin
-            if len(l) > 0 and l[0] not in ("!", "#")
-        ]
-        ind = np.array([l[0] for l in fwin])
+        #fwin = [
+        #    [s.strip() for s in split(l)]
+        #    for l in fwin
+        #    if len(l) > 0 and l[0] not in ("!", "#")
+        #]
+        #ind = np.array([l[0] for l in fwin])
         # print(fwin) #com
 
-        def get_param(key, tp, default=None, join=False):
-            """
-            Return value of a parameter in .win file.
-
-            Parameters
-            ----------
-            key : str
-                Wannier90 input parameter.
-            tp : function
-                Function to apply to the value of the parameter, before 
-                returning it.
-            default
-                Default value to return in case parameter `key` is not found.
-            join : bool, default=False
-                If the value of parameter `key` contains more than one element, 
-                they will be concatenated with a blank space if `join` is set 
-                to `True`. Used when the parameter is `mpgrid`.
-
-            Returns
-            -------
-            Type(`tp`)
-                Return the value of the parameter, after applying function 
-                passed es keyword `tp`.
-
-            Raises
-            ------
-            RuntimeError
-                The parameter is not found in .win file, it is found more than 
-                once or its value is formed by many elements but it is not
-                `mpgrid`.
-            """
-            i = np.where(ind == key)[0]
-            if len(i) == 0:
-                if default is None:
-                    raise RuntimeError(
-                        "parameter {} was not found in {}.win".format(key, prefix)
-                    )
-                else:
-                    return default
-            if len(i) > 1:
-                raise RuntimeError(
-                    "parameter {} was found {} times in {}.win".format(
-                        key, len(i), prefix
-                    )
-                )
-            x = fwin[i[0]][1:]  # mp_grid should work
-            if len(x) > 1:
-                if join:
-                    x = " ".join(x)
-                else:
-                    raise RuntimeError(
-                        "length {} found for parameter {}, rather than lenght 1 in {}.win".format(
-                            len(x), key, prefix
-                        )
-                    )
-            else:
-                x = fwin[i[0]][1]
-            return tp(x)
 
         NBin = get_param("num_bands", int)
         #        print ("nbands=",NBin)

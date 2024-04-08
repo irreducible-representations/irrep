@@ -553,3 +553,80 @@ class ParserEspresso:
             WF[ib] = rec[0::2] + 1.0j * rec[1::2]
 
         return WF, Energy, kg, kpt
+
+
+class ParserW90:
+
+    def __init__(self, prefix):
+
+        self.prefix = prefix
+        self.fwin = [l.strip().lower() for l in open(prefix + ".win").readlines()]
+        self.fwin = [
+            [s.strip() for s in split(l)]
+            for l in fwin
+            if len(l) > 0 and l[0] not in ("!", "#")
+        ]
+        self.ind = np.array([l[0] for l in fwin])
+
+
+   def get_param(self, key, tp, default=None, join=False):
+       """
+       Return value of a parameter in .win file.
+
+       Parameters
+       ----------
+       key : str
+           Wannier90 input parameter.
+       tp : function
+           Function to apply to the value of the parameter, before 
+           returning it.
+       default
+           Default value to return in case parameter `key` is not found.
+       join : bool, default=False
+           If the value of parameter `key` contains more than one element, 
+           they will be concatenated with a blank space if `join` is set 
+           to `True`. Used when the parameter is `mpgrid`.
+
+       Returns
+       -------
+       Type(`tp`)
+           Return the value of the parameter, after applying function 
+           passed es keyword `tp`.
+
+       Raises
+       ------
+       RuntimeError
+           The parameter is not found in .win file, it is found more than 
+           once or its value is formed by many elements but it is not
+           `mpgrid`.
+       """
+       i = np.where(self.ind == key)[0]
+       if len(i) == 0:
+           if default is None:
+               raise RuntimeError(
+                   "parameter {} was not found in {}.win".format(key, self.prefix)
+               )
+           else:
+               return default
+       if len(i) > 1:
+           raise RuntimeError(
+               "parameter {} was found {} times in {}.win".format(
+                   key, len(i), self.prefix
+               )
+           )
+
+       x = self.fwin[i[0]][1:]  # mp_grid should work
+       if len(x) > 1:
+           if join:
+               x = " ".join(x)
+           else:
+               raise RuntimeError(
+                   "length {} found for parameter {}, rather than lenght 1 in {}.win".format(
+                       len(x), key, self.prefix
+                   )
+               )
+       else:
+           x = self.fwin[i[0]][1]
+       return tp(x)
+
+

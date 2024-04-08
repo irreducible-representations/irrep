@@ -214,3 +214,20 @@ def short(x, nd=3):
     if abs(x.real) < 10 ** (-nd):
         return fmt.format(x.imag) + "j"
     return short(x.real, nd) + short(1j * x.imag)
+
+
+def split(l):
+    """
+    Determine symbol used for assignment and split accordingly.
+
+    Parameters
+    ---------
+    l : str
+        Part of a line read from .win file.
+    """
+    if "=" in l:
+        return l.split("=")
+    elif ":" in l:
+        return l.split(":")
+    else:
+        return l.split()
