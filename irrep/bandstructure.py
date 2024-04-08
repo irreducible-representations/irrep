@@ -597,51 +597,60 @@ class BandStructure:
 
         # Set indices for k-points
         if kplist is None:
-            kplist = np.arange(NK) + 1
+            kplist = np.arange(NK)
         else:
             # kplist-=1 #files start from 1 in W90
-            kplist = np.array([k for k in kplist if k > 0 and k <= NK])
+            kplist = np.array([k-1 for k in kplist if k > 0 and k <= NK])
 
-        Energy = parser.parse_energies()
-        #feig = prefix + ".eig"
-        #eigenval = np.loadtxt(prefix + ".eig")
-        #try:
-        #    if eigenval.shape[0] != NBin * NK:
-        #        raise RuntimeError("wrong number of entries ")
-        #    ik = np.array(eigenval[:, 1]).reshape(NK, NBin)
-        #    if not np.all(
-        #        ik == np.arange(1, NK + 1)[:, None] * np.ones(NBin, dtype=int)[None, :]
-        #    ):
-        #        raise RuntimeError("wrong k-point indices")
-        #    ib = np.array(eigenval[:, 0]).reshape(NK, NBin)
-        #    if not np.all(
-        #        ib == np.arange(1, NBin + 1)[None, :] * np.ones(NK, dtype=int)[:, None]
-        #    ):
-        #        raise RuntimeError("wrong band indices")
-        #    eigenval = eigenval[:, 2].reshape(NK, NBin)
-        #except Exception as err:
-        #    raise RuntimeError(" error reading {} : {}".format(feig,err))
-  
+        # Parse energy levels from .eig file
+        Energies = parser.parse_energies()
 
+        self.kpoints = []
+        for ik in kplist:
 
-        #        print ("eigenvalues are : ",eigenval)
-        self.kpoints = [
-            Kpoint(
-                ik - 1,
-                NBin,
-                IBstart,
-                IBend,
-                Ecut,
-                None,
+            # Parse grid for WF expansion
+            Energy = Energies[ik]
+            ngx, ngy, ngz = parser.parse_grid(ik+1)
+            ig = calc_gvectors(
+                kpred[ik],
                 self.RecLattice,
-                symmetries_SG=self.spacegroup.symmetries,
+                Ecut,
                 spinor=self.spinor,
-                code="wannier",
-                eigenval=Energy[ik - 1],
-                kpt=kpred[ik - 1],
+                nplanemax=np.max([ngx, ngy, ngz]) // 2,
             )
-            for ik in kplist
-        ]
+
+            # Parse coefficients of WF expansion
+            selectG = tuple(ig[0:3])
+            WF = parser.parse_kpoint(ik+1, selectG)
+
+            try:
+                upper = Energy[IBend]
+            except BaseException:
+                upper = np.NaN
+
+            # Get rid of unwanned bands
+            Energy = Energy[IBstart:IBend]
+            WF = WF[IBstart:IBend]
+
+            self.kpoints.append(
+                Kpoint(
+                    ik,
+                    NBin,
+                    IBstart,
+                    IBend,
+                    Ecut,
+                    None,
+                    self.RecLattice,
+                    symmetries_SG=self.spacegroup.symmetries,
+                    spinor=self.spinor,
+                    code="wannier",
+                    WF=WF,  # first arg added for abinit (to be kept at the end)
+                    Energy=Energy,
+                    ig=ig,
+                    upper=upper,
+                    kpt=kpred[ik]
+                ))
+
 
     def __init_espresso(
         self,

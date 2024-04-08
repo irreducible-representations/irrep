@@ -682,6 +682,92 @@ class ParserW90:
         return Energy
 
 
+    def parse_kpoint(self, ik, selectG):
+
+        fname = "UNK{:05d}.{}".format(ik, "NC" if self.spinor else "1")
+        fUNK = FF(fname, "r")
+        ngx, ngy, ngz, ik_in, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
+        ngtot = ngx * ngy * ngz
+        nspinor = 2 if self.spinor else 1
+
+        # Checks of consistency between UKN and .win
+        if ik_in != ik:
+            raise RuntimeError(
+                "file {} contains point number {}, expected {}".format(
+                    fname, ik_in, ik
+                ))
+        if nbnd != self.NBin:
+            raise RuntimeError(
+                "file {} contains {} bands , expected {}".format(fname, nbnd, self.NBin)
+            )
+
+        # Parse WF coefficients
+        WF = []
+        for ib in range(self.NBin):
+            WF_tmp = []
+            for i in range(nspinor):
+                cg_tmp = record_abinit(fUNK, "{}f8".format(ngtot * 2))
+                cg_tmp = (cg_tmp[0::2] + 1.0j * cg_tmp[1::2]).reshape(
+                    (ngx, ngy, ngz), order="F")
+                cg_tmp = np.fft.fftn(cg_tmp)
+                WF_tmp.append(cg_tmp[selectG])
+            WF.append(np.hstack(WF_tmp))
+
+        WF = np.array(WF)
+        return WF
+
+
+    def parse_grid(self, ik):
+
+        fname = "UNK{:05d}.{}".format(ik, "NC" if self.spinor else "1")
+        fUNK = FF(fname, "r")
+        ngx, ngy, ngz, ik_in, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
+        fUNK.close()
+        return ngx, ngy, ngz
+
+
+
+    #def _readWF_1(self, skip=False):
+    #    """
+    #    Parse coefficients of a wave-function corresponding to one element
+    #    of the spinor.
+
+    #    Parameters
+    #    ----------
+    #    skip : bool, default=False
+    #        Read coefficients but do not return them.
+    #    
+    #    Returns
+    #    -------
+    #    array
+    #        Coefficients of the plane-wave expansion.
+    #    """
+    #    cg_tmp = record_abinit(fUNK, "{}f8".format(ngtot * 2))
+    #    if skip:
+    #        return np.array([0], dtype=complex)
+    #    cg_tmp = (cg_tmp[0::2] + 1.0j * cg_tmp[1::2]).reshape(
+    #        (ngx, ngy, ngz), order="F"
+    #    )
+    #    cg_tmp = np.fft.fftn(cg_tmp)
+    #    return cg_tmp[selectG]
+
+    #def _readWF(self, skip=False):
+    #    """
+    #    Read and return the coefficients of the plane-wave expansion of a 
+    #    wave-function.
+
+    #    Parameters
+    #    ----------
+    #    skip : bool, default=False
+    #        Read coefficients but do not return them.
+
+    #    Returns
+    #    -------
+    #    array
+    #        Coefficients of the plane-wave expansion.
+    #    """
+    #    return np.hstack([self._readWF_1(skip) for i in range(nspinor)])
+
     def check_end(self, name):
         """
         Check if block in .win file is closed.

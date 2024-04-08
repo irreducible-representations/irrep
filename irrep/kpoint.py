@@ -217,9 +217,11 @@ class Kpoint:
             self.ig = ig
             self.upper = upper
         elif code.lower() == "wannier":
-            self.WF, self.ig = self.__init_wannier(
-                NBin, IBstart, IBend, Ecut, kpt=kpt, eigenval=eigenval
-            )
+            self.K = kpt
+            self.WF = WF
+            self.Energy = Energy
+            self.ig = ig
+            self.upper = upper
         else:
             raise RuntimeError("unknown code : {}".format(code))
 
@@ -547,121 +549,6 @@ class Kpoint:
                 subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF))
 
         return subspaces
-
-
-    def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval):
-        """
-        Initialization for wannier90. Read info and store it in attributes.
-       
-        Parameters
-        ----------
-        NBin : int
-            Number of bands considered at every k-point in the DFT calculation.
-        IBstart : int
-            First band to be considered.
-        IBend : int, default=None
-            Last band to be considered.
-        Ecut : float
-            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
-            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
-            the value of this is negative or larger than `Ecut0`.
-        kpt : list or array
-            Direct coordinates of the k-point.
-        eigenval : array, default=None
-            Contains all energy-levels in a particular k-point.
-
-        Returns
-        -------
-        WF : array
-            `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
-            plane-wave in the expansion of the wave-function in :math:`i^{th}`
-            band. Only plane-waves if energy smaller than `Ecut` are kept.
-        ig : array
-            Every column corresponds to a plane-wave of energy smaller than 
-            `Ecut`. The number of rows is 6: the first 3 contain direct 
-            coordinates of the plane-wave, the fourth row stores indices needed
-            to short plane-waves based on energy (ascending order). Fitfth 
-            (sixth) row contains the index of the first (last) groups of 
-            plane-waves of identical energy.
-        """
-        self.K = np.array(kpt, dtype=float)
-        self.Energy = eigenval[IBstart:IBend]
-        fname = "UNK{:05d}.{}".format(self.ik0, "NC" if self.spinor else "1")
-        fUNK = FF(fname, "r")
-        ngx, ngy, ngz, ik, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
-        ngtot = ngx * ngy * ngz
-        if ik != self.ik0:
-            raise RuntimeError(
-                "file {} contains point number {}, expected {}".format(
-                    fname, ik, self.ik0
-                )
-            )
-        if nbnd != NBin:
-            raise RuntimeError(
-                "file {} contains {} bands , expected {}".format(fname, nbnd, NBin)
-            )
-        nspinor = 2 if self.spinor else 1
-
-        try:
-            self.upper = eigenval[IBend]
-        except BaseException:
-            self.upper = np.NaN
-
-        ig = calc_gvectors(
-            self.K,
-            self.RecLattice,
-            Ecut,
-            spinor=self.spinor,
-            nplanemax=np.max([ngx, ngy, ngz]) // 2,
-        )
-
-        selectG = tuple(ig[0:3])
-
-        def _readWF_1(skip=False):
-            """
-            Parse coefficients of a wave-function corresponding to one element
-            of the spinor.
-
-            Parameters
-            ----------
-            skip : bool, default=False
-                Read coefficients but do not return them.
-            
-            Returns
-            -------
-            array
-                Coefficients of the plane-wave expansion.
-            """
-            cg_tmp = record_abinit(fUNK, "{}f8".format(ngtot * 2))
-            if skip:
-                return np.array([0], dtype=complex)
-            cg_tmp = (cg_tmp[0::2] + 1.0j * cg_tmp[1::2]).reshape(
-                (ngx, ngy, ngz), order="F"
-            )
-            cg_tmp = np.fft.fftn(cg_tmp)
-            return cg_tmp[selectG]
-
-        def _readWF(skip=False):
-            """
-            Read and return the coefficients of the plane-wave expansion of a 
-            wave-function.
-
-            Parameters
-            ----------
-            skip : bool, default=False
-                Read coefficients but do not return them.
-
-            Returns
-            -------
-            array
-                Coefficients of the plane-wave expansion.
-            """
-            return np.hstack([_readWF_1(skip) for i in range(nspinor)])
-
-        for ib in range(IBstart):
-            _readWF(skip=True)
-        WF = np.array([_readWF(skip=False) for ib in range(IBend - IBstart)])
-        return WF, ig
 
     def __init_espresso(
         self, prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml,
