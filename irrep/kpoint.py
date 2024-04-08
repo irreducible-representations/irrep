@@ -165,22 +165,13 @@ class Kpoint:
     def __init__(
         self,
         ik=None,
-        NBin=None,
         IBstart=None,
         IBend=None,
-        Ecut=None,
-        Ecut0=None,
         RecLattice=None,  # this was last mandatory argument
         symmetries_SG=None,
         spinor=None,
         code="vasp",
         kpt=None,
-        WCF=None,
-        prefix=None,
-        kptxml=None,
-        eigenval=None,
-        spin_channel=None,
-        IBstartE=0,
         WF=None,  # first arg added for abinit (to be kept at the end)
         Energy=None,
         ig=None,
