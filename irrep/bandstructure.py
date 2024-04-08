@@ -135,100 +135,82 @@ class BandStructure:
         shiftUC = None,
         search_cell = False,
         trans_thresh=1e-5,
-        _correct_Ecut0 = 0.,
     ):
-        code = code.lower()
 
+        code = code.lower()
         if spin_channel is not None:
             spin_channel=spin_channel.lower()
-        if spin_channel=='down' : spin_channel='dw'
+        if spin_channel=='down':
+            spin_channel='dw'
         
         if code == "vasp":
-            self.__init_vasp(
-                fWAV, fPOS, Ecut, IBstart, IBend, kplist, spinor, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell,
-                _correct_Ecut0=_correct_Ecut0, trans_thresh=trans_thresh
-            )
+
+            if spinor is None:
+                raise RuntimeError(
+                    "spinor should be specified in the command line for VASP bandstructure"
+                )
+            self.spinor = spinor
+            parser = ParserVasp(fPOS, fWAV)
+            self.Lattice, positions, typat = parser.parse_poscar()
+            NK, NBin, self.Ecut0, lattice = parser.parse_header()
+            if not np.allclose(self.Lattice, lattice):
+                raise RuntimeError("POSCAR and WAVECAR contain different lattices")
+            EF_in = None  # not written in WAVECAR
+
         elif code == "abinit":
-            self.__init_abinit(
-                fWFK, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell, trans_thresh=trans_thresh
-            )
+
+            # To do: use a return instead of attributes
+            parser = ParserAbinit(fWFK)
+            self.spinor = parser.spinor
+            self.Lattice = parser.rprimd
+            positions = parser.xred
+            typat = parser.typat
+            self.Ecut0 = parser.ecut
+            EF_in = parser.efermi
+            NBin = parser.nband
+            NK = parser.nkpt
+
         elif code == "espresso":
-            self.__init_espresso(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, spin_channel=spin_channel, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell, trans_thresh=trans_thresh
-            )
+
+            parser = ParserEspresso(prefix)
+            self.spinor = parser.spinor
+            self.Lattice, positions, typat = parser.parse_lattice()
+            spinpol, self.Ecut0, EF_in, NK, NBin_list = parser.parse_header()
+
+            # Set NBin
+            IBstartE=0
+            if self.spinor and spinpol:
+                raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
+            elif spinpol:
+                if spin_channel is None:
+                    raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
+                assert (spin_channel in ['dw','up'])
+                if spin_channel == 'dw':
+                    IBstartE = NBin_list[0]
+                    NBin = NBin_list[1]
+                else:
+                    NBin = NBin_list[0]
+            else:
+                NBin = NBin_list[0]
+                if spin_channel is not None:
+                    raise ValueError("Found a non-polarized bandstructure, but spin channel is set to {}".format(spin_channel))
+
         elif code == "wannier90":
-            self.__init_wannier(
-                prefix, Ecut, IBstart, IBend, kplist, EF=EF, onlysym=onlysym, refUC=refUC, shiftUC=shiftUC, search_cell=search_cell, trans_thresh=trans_thresh
-            )
+
+            if Ecut is None:
+                raise RuntimeError("Ecut mandatory for Wannier90")
+
+            self.Ecut0 = Ecut
+            parser = ParserW90(prefix)
+            NK, NBin, self.spinor, EF_in = parser.parse_header()
+            self.Lattice, positions, typat, kpred = parser.parse_lattice()
+            Energies = parser.parse_energies()
+
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
 
-    def __init_vasp(
-        self,
-        fWAV,
-        fPOS,
-        Ecut=None,
-        IBstart=None,
-        IBend=None,
-        kplist=None,
-        spinor=None,
-        EF='0.0',
-        onlysym=False,
-        refUC=None,
-        shiftUC=None,
-        search_cell=False,
-        trans_thresh=1e-5,
-        _correct_Ecut0=0.,
-    ):
-        """
-        Initialization for vasp. Read data and save it in attributes.
-
-        Parameters
-        ----------
-        fWAV : str, default=None
-            Filename for wavefunction in VASP WAVECAR format.
-        fPOS : str, default=None
-            Filename for wavefunction in VASP POSCAR format.
-        Ecut : float, default=None
-            Plane-wave cutoff in eV to consider in the expansion of wave-functions.
-        IBstart : int, default=None
-            First band to be considered.
-        IBend : int, default=None
-            Last band to be considered.
-        kplist : , default=None
-            List of indices of k-points to be considered.
-        spinor : bool, default=None
-            `True` if wave functions are spinors, `False` if they are scalars.
-        EF : str, default='0.0'
-            Fermi-energy.
-        onlysym : bool, default=False
-            Exit after printing info about space-group.
-        refUC : array, default=None
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array, default=None
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
-        search_cell : bool, default=False
-            Whether the transformation to the conventional cell should be computed.
-            It is `True` if kpnames was specified in CLI.
-        trans_thresh : float, default=1e-5
-            Threshold to compare translational parts of symmetries.
-        _correct_Ecut0 : float
-            if you get an error like ' computed ncnt=*** != input nplane=*** ', 
-            try to set this parameter to a small positive or negative value (usually of order +- 1e-7)
-        """
-        if spinor is None:
-            raise RuntimeError(
-                "spinor should be specified in the command line for VASP bandstructure"
-            )
-        self.spinor = spinor
-
-        # Parse POSCAR and determine space group
-        parser = ParserVasp(fPOS, fWAV)
-        lattice, positions, typat = parser.parse_poscar()
         self.spacegroup = SpaceGroup(
-                              cell=(lattice, positions, typat),
+                              cell=(self.Lattice, positions, typat),
                               spinor=self.spinor,
                               refUC=refUC,
                               shiftUC=shiftUC,
@@ -237,329 +219,7 @@ class BandStructure:
         if onlysym:
             return
 
-        # Fix Fermi level
-        if EF.lower() == "auto":
-            self.efermi = 0.0
-            msg = " (Fermi-energy not found in WAVECAR)"
-        else:
-            try:
-                self.efermi = float(EF)
-                msg = ""
-            except:
-                raise RuntimeError(
-                        ("Invalid value for keyword EF. It must be "
-                         "a number or 'auto'")
-                        )
-        print("Efermi = {:.4f} eV".format(self.efermi) + msg)
-
-        NK, NBin, Ecut0, lattice = parser.parse_header()
-
-        # Fix IBstart, IBend and NBout. Move this lines to __init__ at some point
-        IBstart = 0 if (IBstart is None or IBstart <= 0) else IBstart - 1
-        if IBend is None or IBend <= 0 or IBend > NBin:
-            IBend = NBin
-        NBout = IBend - IBstart
-        if NBout <= 0:
-            raise RuntimeError("No bands to calculate")
-        if Ecut is None or Ecut > Ecut0 or Ecut <= 0:
-            self.Ecut = Ecut0
-        else:
-            self.Ecut = Ecut
-        self.Ecut0 = Ecut0
-
-        self.Lattice = lattice
-        # todo: compare lattices parsed from POSCAR and WAVECAR
-
-        self.RecLattice = (
-            np.array(
-                [
-                    np.cross(self.Lattice[(i + 1) % 3], self.Lattice[(i + 2) % 3])
-                    for i in range(3)
-                ]
-            )
-            * 2
-            * np.pi
-            / np.linalg.det(self.Lattice)
-        )
-
-        print(
-            "WAVECAR contains {0} k-points and {1} bands.\n Saving {2} bands starting from {3} in the output".format(
-                NK, NBin, NBout, IBstart + 1
-            )
-        )
-        print("Energy cutoff in WAVECAR : ", Ecut0)
-        print("Energy cutoff reduced to : ", Ecut)
-
-        if kplist is None:
-            kplist = range(NK)
-        else:
-            kplist -= 1
-            kplist = np.array([k for k in kplist if k >= 0 and k < NK])
-
-        # Parse data of k-point from WAVECAR
-        self.kpoints = []
-        for ik in kplist:
-            WF, Energy, kpt, npw = parser.parse_kpoint(ik, NBin, self.spinor)
-            # Determine energy of next band from above
-            try:
-                upper = Energy[IBend]
-            except BaseException:
-                upper = np.NaN
-
-            # Get rid of bands out of specified window
-            Energy = Energy[IBstart:IBend]
-            WF = WF[IBstart:IBend]
-
-            # Calculate indices of lattice vectors in plane wave expansion
-            kg = calc_gvectors(
-                kpt, self.RecLattice, Ecut0, npw, Ecut, spinor=self.spinor
-            )
-
-            # Apply plane wave cutoff and sort plane waves based on energy
-            if not self.spinor:
-                selectG = kg[3]
-            else:
-                selectG = np.hstack((kg[3], kg[3] + int(npw / 2)))
-            WF = WF[:, selectG]
-
-            kp = Kpoint(
-                ik=ik,
-                NBin=NBin,
-                IBstart=IBstart,
-                IBend=IBend,
-                RecLattice=self.RecLattice,
-                symmetries_SG=self.spacegroup.symmetries,
-                spinor=self.spinor,
-                code="vasp",
-                kpt=kpt,
-                WF=WF,
-                Energy=Energy,
-                ig=kg,
-                upper=upper
-                )
-            self.kpoints.append(kp)
-
-
-    def __init_abinit(
-        self,
-        WFKname,
-        Ecut=None,
-        IBstart=None,
-        IBend=None,
-        kplist=None,
-        EF='0.0',
-        onlysym=False,
-        refUC=None,
-        shiftUC=None,
-        search_cell = False,
-        trans_thresh=1e-5
-    ):
-        """
-        Initialization for abinit. Read data and store it in attributes.
-
-        Parameters
-        ----------
-        WFKname : str
-            Filename for wavefunction in ABINIT WFK format.
-        Ecut : float, default=None
-            Plane-wave cutoff in eV to consider in the expansion of wave-functions.
-        IBstart : int, default=None
-            First band to be considered.
-        IBend : int, default=None
-            Last band to be considered.
-        kplist : , default=None
-            List of indices of k-points to be considered.
-        EF : str, default='0.0'
-            Fermi-energy.
-        onlysym : bool, default=False
-            Exit after printing info about space-group.
-        refUC : array, default=None
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array, default=None
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
-        search_cell : bool, default=False
-            Whether the transformation to the conventional cell should be computed.
-            It is `True` if kpnames was specified in CLI.
-        trans_thresh : float, default=1e-5
-            Threshold to compare translational parts of symmetries.
-        """
-
-        parser = ParserAbinit(WFKname)
-        usepaw = parser.usepaw
-        self.spinor = parser.spinor
-        self.spacegroup = SpaceGroup(
-            cell=(parser.rprimd, parser.xred, parser.typat),
-            spinor=self.spinor,
-            refUC=refUC,
-            shiftUC=shiftUC,
-            search_cell=search_cell,
-            trans_thresh=trans_thresh
-        )
-        if onlysym:
-            return
-
         # Set Fermi energy
-        if EF.lower() == "auto":
-            self.efermi = parser.efermi
-        else:
-            try:
-                self.efermi = float(EF)
-            except:
-                raise RuntimeError(
-                        ("Invalid value for keyword EF. It must be "
-                         "a number or 'auto'")
-                        )
-        print("Efermi: {:.4f} eV".format(self.efermi))
-
-        fWFK = parser.fWFK
-
-        # Set indices and number of bands
-        NBin = parser.nband.min()
-        NK = parser.nkpt
-        IBstart = 0 if (IBstart is None or IBstart <= 0) else IBstart - 1
-        if IBend is None or IBend <= 0 or IBend > NBin:
-            IBend = NBin
-        NBout = IBend - IBstart
-        if NBout <= 0:
-            raise RuntimeError("No bands to calculate")
-        print(
-            "WFK contains {0} k-points and {1} bands.\n Saving {2} bands starting from {3} in the output".format(
-                NK, NBin, NBout, IBstart + 1
-            )
-        )
-
-        # Set cutoff to be used to save wave functions
-        self.Ecut0 = parser.ecut
-        if Ecut is None or Ecut > self.Ecut0 or Ecut <= 0:
-            self.Ecut = self.Ecut0
-        else:
-            self.Ecut = Ecut
-        print("Energy cutoff in WFK file : ", self.Ecut0)
-        print("Energy cutoff reduced to : ", self.Ecut)
-
-        # Set real and primitive lattice vectors
-        self.Lattice = parser.rprimd
-        self.RecLattice = (
-            np.array(
-                [
-                    np.cross(self.Lattice[(i + 1) % 3], self.Lattice[(i + 2) % 3])
-                    for i in range(3)
-                ]
-            )
-            * 2
-            * np.pi
-            / np.linalg.det(self.Lattice)
-        )
-        print("lattice vectors:\n", self.Lattice)
-
-        # Set list of indices of k-points to be parsed
-        if kplist is None:
-            kplist = range(NK)
-        else:
-            kplist -= 1
-            kplist = np.array([k for k in kplist if k >= 0 and k < NK])
-
-        # Parse wave functions of k-points
-        self.kpoints = []
-        for ik in kplist:
-            WF, Energy, kg = parser.parse_kpoint(ik)
-            WF = WF[IBstart:IBend,:]
-            try:  # Pick energy of IBend+1 band
-                upper = Energy[IBend]
-            except BaseException:
-                upper = np.NaN
-            Energy = Energy[IBstart:IBend]
-            WF, kg = sortIG(ik, kg, parser.kpt[ik], WF, self.RecLattice, self.Ecut0, self.Ecut, self.spinor)
-            kp = Kpoint(
-                ik=ik,
-                NBin=parser.nband[ik],
-                IBstart=IBstart,
-                IBend=IBend,
-                RecLattice=self.RecLattice,
-                symmetries_SG=self.spacegroup.symmetries,
-                spinor=self.spinor,
-                code="abinit",
-                kpt=parser.kpt[ik],
-                WF=WF,
-                Energy=Energy,
-                ig=kg,
-                upper=upper
-                )
-            self.kpoints.append(kp)
-
-            
-
-    def __init_wannier(
-        self,
-        prefix,
-        Ecut=None,
-        IBstart=None,
-        IBend=None,
-        kplist=None,
-        EF='0.0',
-        onlysym=False,
-        refUC=None,
-        shiftUC=None,
-        search_cell = False,
-        trans_thresh=1e-5,
-    ):
-        """
-        Initialization for wannier90. Read data and store it in attibutes.
-
-        Parameters
-        ----------
-        prefix : str, default=None
-            Prefix used for Quantum Espresso calculations or seedname of Wannier90 
-            files.
-        Ecut : float, default=None
-            Plane-wave cutoff in eV to consider in the expansion of wave-functions.
-        IBstart : int, default=None
-            First band to be considered.
-        IBend : int, default=None
-            Last band to be considered.
-        kplist : , default=None
-            List of indices of k-points to be considered.
-        EF : str, default='0.0'
-            Fermi-energy.
-        onlysym : bool, default=False
-            Exit after printing info about space-group.
-        refUC : array, default=None
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array, default=None
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
-        search_cell : bool, default=False
-            Whether the transformation to the conventional cell should be computed.
-            It is `True` if kpnames was specified in CLI.
-        trans_thresh : float, default=1e-5
-            Threshold to compare translational parts of symmetries.
-        """
-
-        if Ecut is None:
-            raise RuntimeError("Ecut mandatory for Wannier90")
-
-        parser = ParserW90(prefix)
-
-        # Parse "header" info from .win file
-        NK, NBin, self.spinor, EF_in = parser.parse_header()
-
-        # Parse begin/end blocks in .win file
-        self.Lattice, positions, typat, kpred = parser.parse_lattice()
-        self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, positions, typat),
-            spinor=self.spinor,
-            refUC=refUC,
-            shiftUC=shiftUC,
-            search_cell=search_cell,
-            trans_thresh=trans_thresh
-        )
-        if onlysym:
-            return
-
-        # Set Fermi level
         if EF.lower() == "auto":
             if EF_in is None:
                 print("WARNING : fermi-energy not found. Setting it as zero")
@@ -570,182 +230,15 @@ class BandStructure:
             try:
                 self.efermi = float(EF)
             except:
-                raise RuntimeError(
-                        ("Invalid value for keyword EF. It must be "
-                         "a number or 'auto'"))
-        print("Efermi = {:.4f} eV".format(self.efermi))
+                raise RuntimeError("Invalid value for keyword EF. It must be "
+                                   "a number or 'auto'")
+        print("Efermi: {:.4f} eV".format(self.efermi))
 
-        # Set indices for first and last bands
-        IBstart = 0 if (IBstart is None or IBstart <= 0) else IBstart - 1
-        if IBend is None or IBend <= 0 or IBend > NBin:
-            IBend = NBin
-        NBout = IBend - IBstart
-        if NBout <= 0:
-            raise RuntimeError("No bands to calculate")
-
-        self.RecLattice = (
-            np.array(
-                [
-                    np.cross(self.Lattice[(i + 1) % 3], self.Lattice[(i + 2) % 3])
-                    for i in range(3)
-                ]
-            )
-            * 2
-            * np.pi
-            / np.linalg.det(self.Lattice)
-        )
-
-        # Set indices for k-points
-        if kplist is None:
-            kplist = np.arange(NK)
+        # Fix indices of bands to be considered
+        if IBstart is None or IBstart <= 0:
+            IBstart = 0
         else:
-            # kplist-=1 #files start from 1 in W90
-            kplist = np.array([k-1 for k in kplist if k > 0 and k <= NK])
-
-        # Parse energy levels from .eig file
-        Energies = parser.parse_energies()
-
-        self.kpoints = []
-        for ik in kplist:
-
-            # Parse grid for WF expansion
-            Energy = Energies[ik]
-            ngx, ngy, ngz = parser.parse_grid(ik+1)
-            ig = calc_gvectors(
-                kpred[ik],
-                self.RecLattice,
-                Ecut,
-                spinor=self.spinor,
-                nplanemax=np.max([ngx, ngy, ngz]) // 2,
-            )
-
-            # Parse coefficients of WF expansion
-            selectG = tuple(ig[0:3])
-            WF = parser.parse_kpoint(ik+1, selectG)
-
-            try:
-                upper = Energy[IBend]
-            except BaseException:
-                upper = np.NaN
-
-            # Get rid of unwanned bands
-            Energy = Energy[IBstart:IBend]
-            WF = WF[IBstart:IBend]
-
-            self.kpoints.append(
-                Kpoint(
-                    ik,
-                    NBin,
-                    IBstart,
-                    IBend,
-                    Ecut,
-                    None,
-                    self.RecLattice,
-                    symmetries_SG=self.spacegroup.symmetries,
-                    spinor=self.spinor,
-                    code="wannier",
-                    WF=WF,  # first arg added for abinit (to be kept at the end)
-                    Energy=Energy,
-                    ig=ig,
-                    upper=upper,
-                    kpt=kpred[ik]
-                ))
-
-
-    def __init_espresso(
-        self,
-        prefix,
-        Ecut=None,
-        IBstart=None,
-        IBend=None,
-        kplist=None,
-        EF='0.0',
-        onlysym=False,
-        spin_channel=None,
-        refUC=None,
-        shiftUC=None,
-        search_cell = False,
-        trans_thresh=1e-5
-    ):
-        """
-        Initialization for Quantum Espresso. Read data and store in attributes.
-
-        Parameters
-        ----------
-        prefix : str, default=None
-            Prefix used for Quantum Espresso calculations or seedname of Wannier90 
-            files.
-        Ecut : float, default=None
-            Plane-wave cutoff in eV to consider in the expansion of wave-functions.
-        IBstart : int, default=None
-            First band to be considered.
-        IBend : int, default=None
-            Last band to be considered.
-        kplist : , default=None
-            List of indices of k-points to be considered.
-        EF : str, default='0.0'
-            Fermi-energy.
-        onlysym : bool, default=False
-            Exit after printing info about space-group.
-        spin_channel : str, default=None
-            Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
-        refUC : array, default=None
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array, default=None
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
-        search_cell : bool, default=False
-            Whether the transformation to the conventional cell should be computed.
-            It is `True` if kpnames was specified in CLI.
-        trans_thresh : float, default=1e-5
-            Threshold to compare translational parts of symmetries.
-        """
-        import xml.etree.ElementTree as ET  # rm line when moving all parsing to readfiles.py
-        parser = ParserEspresso(prefix)
-        self.spinor = parser.spinor
-        self.Lattice, positions, numbers = parser.parse_lattice()
-
-        # Rm this 5 lines once parser is finished
-        mytree = ET.parse(prefix + ".save/data-file-schema.xml")
-        myroot = mytree.getroot()
-        inp = myroot.find("input")
-        outp = myroot.find("output")
-        bandstr = outp.find("band_structure")
-
-        self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, positions, numbers),
-            spinor=self.spinor,
-            refUC=refUC,
-            shiftUC=shiftUC,
-            search_cell=search_cell,
-            trans_thresh=trans_thresh
-        )
-        if onlysym:
-            return
-
-        spinpol, Ecut0, EF_in, NK, NBin_list = parser.parse_header()
-
-        IBstartE=0
-        if self.spinor and spinpol:
-            raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
-        elif spinpol:
-            if spin_channel is None:
-                raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
-            assert (spin_channel in ['dw','up'])
-            if spin_channel == 'dw':
-                IBstartE = NBin_up[0]
-                NBin = NBin_list[1]
-            else:
-                NBin = NBin_list[0]
-        else:
-            NBin = NBin_list[0]
-            if spin_channel is not None:
-                raise ValueError("Found a non-polarized bandstructure, but spin channel is set to {}".format(spin_channel))
-
-
-        # Set indices for 1st and last bands to be considered
-        IBstart = 0 if (IBstart is None or IBstart <= 0) else IBstart - 1
+            IBstart -= 1
         if IBend is None or IBend <= 0 or IBend > NBin:
             IBend = NBin
         NBout = IBend - IBstart
@@ -753,79 +246,102 @@ class BandStructure:
             raise RuntimeError("No bands to calculate")
 
         # Set cutoff to calculate traces
-        if Ecut is None or Ecut > Ecut0 or Ecut <= 0:
-            self.Ecut = Ecut0
-
-        self.RecLattice = (
-            np.array(
-                [
-                    np.cross(self.Lattice[(i + 1) % 3], self.Lattice[(i + 2) % 3])
-                    for i in range(3)
-                ]
-            )
-            * 2
-            * np.pi
-            / np.linalg.det(self.Lattice)
-        )
-
-        # Set Fermi energy
-        if EF.lower() == "auto":
-            if EF_in is None:
-                print("WARNING : fermi-energy not found. Setting it as zero")
-                self.efermi = 0.0
-            else:
-                self.efermi = EF_in
+        if Ecut is None or Ecut > self.Ecut0 or Ecut <= 0:
+            self.Ecut = self.Ecut0
         else:
-            try:
-                self.efermi = float(EF)
-            except:
-                raise RuntimeError(
-                        ("Invalid value for keyword EF. It must be "
-                         "a number or 'auto'")
-                        )
-        print("Efermi: {:.4f} eV".format(self.efermi))
+            self.Ecut = Ecut
 
-        # Set list of indices of k-points
+        # Calculate vectors of reciprocal lattice
+        self.RecLattice = np.zeros((3,3), dtype=float)
+        for i in range(3):
+            self.RecLattice[i] = np.cross(self.Lattice[(i + 1) % 3], self.Lattice[(i + 2) % 3])
+        self.RecLattice *= (2.0*np.pi/np.linalg.det(self.Lattice))
+
+        # To do: create writer of description for this class
+        print(
+            "WAVECAR contains {0} k-points and {1} bands.\n Saving {2} bands starting from {3} in the output".format(
+                NK, NBin, NBout, IBstart + 1
+            )
+        )
+        print("Energy cutoff in WAVECAR : ", self.Ecut0)
+        print("Energy cutoff reduced to : ", self.Ecut)
+
+        # Create list of indices for k-points
         if kplist is None:
-            kplist = np.arange(NK)
+            kplist = range(NK)
         else:
             kplist -= 1
             kplist = np.array([k for k in kplist if k >= 0 and k < NK])
 
-        # Parse wave functions
+        # Parse wave functions at each k-point
         self.kpoints = []
-        kpall = bandstr.findall("ks_energies")
         for ik in kplist:
-            WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel)
-            WF = WF[IBstart:IBend,:]
-            try:  # Pick energy of IBend+1 band
+
+            if code == 'vasp':
+                WF, Energy, kpt, npw = parser.parse_kpoint(ik, NBin, self.spinor)
+                kg = calc_gvectors(kpt,
+                                   self.RecLattice,
+                                   self.Ecut0,
+                                   npw,
+                                   Ecut,
+                                   spinor=self.spinor
+                                   )
+                if not self.spinor:
+                    selectG = kg[3]
+                else:
+                    selectG = np.hstack((kg[3], kg[3] + int(npw / 2)))
+                WF = WF[:, selectG]
+
+            elif code == 'abinit':
+                NBin = parser.nband[ik]
+                kpt = parser.kpt[ik]
+                WF, Energy, kg = parser.parse_kpoint(ik)
+                WF, kg = sortIG(ik, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, self.spinor)
+
+            elif code == 'espresso':
+                WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel)
+                WF, kg = sortIG(ik+1, kg, kpt, WF, self.RecLattice/2.0, self.Ecut0, Ecut, self.spinor)
+
+            elif code == 'wannier90':
+                kpt = kpred[ik]
+                Energy = Energies[ik]
+                ngx, ngy, ngz = parser.parse_grid(ik+1)
+                kg = calc_gvectors(kpred[ik],
+                                   self.RecLattice,
+                                   Ecut,
+                                   spinor=self.spinor,
+                                   nplanemax=np.max([ngx, ngy, ngz]) // 2
+                                   )
+                selectG = tuple(kg[0:3])
+                WF = parser.parse_kpoint(ik+1, selectG)
+
+            # Pick energy of IBend+1 band to calculate gaps
+            try:
                 upper = Energy[IBend]
             except BaseException:
                 upper = np.NaN
+
+            # Preserve only bands in between IBstart and IBend
+            WF = WF[IBstart:IBend]
             Energy = Energy[IBstart:IBend]
-            WF, kg = sortIG(ik+1, kg, kpt, WF, self.RecLattice/2.0, Ecut0, Ecut, self.spinor)
+
             kp = Kpoint(
-                ik,
-                NBin,
-                IBstart,
-                IBend,
-                Ecut,
-                Ecut0,
-                self.RecLattice,
-                symmetries_SG=self.spacegroup.symmetries,
-                spinor=self.spinor,
-                code="espresso",
-                spin_channel=spin_channel,
-                WF=WF,  # first arg added for abinit (to be kept at the end)
+                ik=ik,
+                kpt=kpt,
+                WF=WF,
                 Energy=Energy,
                 ig=kg,
                 upper=upper,
-                kpt=kpt
-            )
+                IBstart=IBstart,
+                IBend=IBend,
+                RecLattice=self.RecLattice,
+                symmetries_SG=self.spacegroup.symmetries,
+                spinor=self.spinor,
+                )
             self.kpoints.append(kp)
 
 
-    def getNK():
+    def getNK(self):
         """Getter for `self.kpoints`."""
         return len(self.kpoints)
 

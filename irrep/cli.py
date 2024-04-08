@@ -362,7 +362,6 @@ def cli(
         refUC = refuc,
         shiftUC = shiftuc,
         search_cell = searchcell,
-        _correct_Ecut0=correct_ecut0
     )
 
     json_data ["spacegroup"] = bandstr.spacegroup.show(symmetries=symmetries)
