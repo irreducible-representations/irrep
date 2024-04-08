@@ -199,9 +199,6 @@ class Kpoint:
             self.Energy = Energy
             self.ig = ig
             self.upper = upper
-            #self.WF, self.ig = self.__init_vasp(
-            #    WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0
-            #)
         elif code.lower() == "abinit":
             # Move following assignments to __init__ once parsing implemented for all of codes
             self.K = kpt
@@ -549,109 +546,6 @@ class Kpoint:
                 subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF))
 
         return subspaces
-
-    def __init_espresso(
-        self, prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml,
-           spin_channel=None,IBstartE=0
-    ):
-        """
-        Initialization QE. Read info and store it in attributes.
-
-        Parameters
-        ----------
-        prefix : str
-            Prefix used for Quantum Espresso calculations or seedname of 
-            Wannier90 files.
-        ik : int
-            Index of kpoint, starting count from 0.
-        IBstart : int, default=None
-            First band to be considered.
-        IBend : int, default=None
-            Last band to be considered.
-        Ecut : float
-            Plane-wave cutoff (in eV) to consider in the expansion of 
-            wave-functions. Will be set equal to `Ecut0` if input parameter 
-            `Ecut` was not set or the value of this is negative or larger than 
-            `Ecut0`.
-        Ecut0 : float
-            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
-            DFT files. Insignificant if `code`=`wannier90`.
-        kptxml
-            `Element` object (see `ElementTree XML API`) corresponding to a 
-            k-point.
-        spin_channel : str
-            Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
-        IBstartE : int
-            Only used with Quantum Espresso. Index of first band in particular 
-            spin channel. If `spin_channel`='dw', `IBstartE` is equal to the 
-            number of bands in spin-up channel.
-        
-        Returns
-        -------
-        array
-            Contains the coefficients (same row-column formatting as argument 
-            `CG`) of the expansion of wave-functions corresponding to 
-            plane-waves of energy smaller than `Ecut`. Columns (plane-waves) 
-            are shorted based on their energy, from smaller to larger. 
-            Only plane-waves if energy smaller than `Ecut` are kept.
-        array
-            Every column corresponds to a plane-wave of energy smaller than 
-            `Ecut`. The number of rows is 6: the first 3 contain direct 
-            coordinates of the plane-wave, the third row stores indices needed
-            to short plane-waves based on energy (ascending order). Fitfth 
-            (sixth) row contains the index of the first (last) plane-wave with 
-            the same energy as the plane-wave of the current column.
-        """
-
-        self.K = np.array(kptxml.find("k_point").text.split(), dtype=float)
-
-        eigen = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)
-
-        self.Energy=eigen[IBstartE+IBstart:IBstartE+IBend]*Hartree_eV
-        try:
-            self.upper=eigen[IBstartE+IBend]*Hartree_eV
-        except:
-            self.upper = np.NaN
-
-
-        npw = int(kptxml.find("npw").text)
-        #        kg= np.random.randint(100,size=(npw,3))-50
-        npwtot = npw * (2 if self.spinor else 1)
-        CG = np.zeros((IBend - IBstart, npwtot), dtype=complex)
-        wfcname="wfc{}{}".format({None:"","dw":"dw","up":"up"}[spin_channel],ik+1)
-        try:
-            fWFC=FF("{}.save/{}.dat".format(prefix,wfcname.lower()),"r")
-        except FileNotFoundError:
-            fWFC=FF("{}.save/{}.dat".format(prefix,wfcname.upper()),"r")
-
-        rec = record_abinit(fWFC, "i4,3f8,i4,i4,f8")[0]
-        ik, xk, ispin, gamma_only, scalef = rec
-        #        xk/=bohr
-        #        xk=xk.dot(np.linalg.inv(RecLattice))
-
-        rec = record_abinit(fWFC, "4i4")
-        #        print ('rec=',rec)
-        ngw, igwx, npol, nbnd = rec
-
-        rec = record_abinit(fWFC, "(3,3)f8")
-        #        print ('rec=',rec)
-        B = np.array(rec)
-        #        print (np.mean(B/RecLattice))
-        self.K = xk.dot(np.linalg.inv(B))
-
-        rec = record_abinit(fWFC, "({},3)i4".format(igwx))
-        #        print ('rec=',rec)
-        kg = np.array(rec)
-        #        print (np.mean(B/RecLattice))
-        #        print ("k-point {0}: {1}/{2}={3}".format(ik, self.K,xk,self.K/xk))
-        #        print ("k-point {0}: {1}".format(ik,self.K ))
-
-        for ib in range(IBend):
-            cg_tmp = record_abinit(fWFC, "{}f8".format(npwtot * 2))
-            if ib >= IBstart:
-                CG[ib - IBstart] = cg_tmp[0::2] + 1.0j * cg_tmp[1::2]
-
-        return sortIG(self.ik0, kg, self.K, CG, B, Ecut0, Ecut, self.spinor)
 
     def write_characters(
         self,
