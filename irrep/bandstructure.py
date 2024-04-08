@@ -543,140 +543,46 @@ class BandStructure:
 
         parser = ParserW90(prefix)
 
-        #fwin = [l.strip().lower() for l in open(prefix + ".win").readlines()]
+        # Parse "header" info from .win file
+        NK, NBin, self.spinor, EF_in = parser.parse_header()
 
+        # Parse begin/end blocks in .win file
+        self.Lattice, positions, typat, kpred = parser.parse_lattice()
+        self.spacegroup = SpaceGroup(
+            cell=(self.Lattice, positions, typat),
+            spinor=self.spinor,
+            refUC=refUC,
+            shiftUC=shiftUC,
+            search_cell=search_cell,
+            trans_thresh=trans_thresh
+        )
+        if onlysym:
+            return
 
-        #fwin = [
-        #    [s.strip() for s in split(l)]
-        #    for l in fwin
-        #    if len(l) > 0 and l[0] not in ("!", "#")
-        #]
-        #ind = np.array([l[0] for l in fwin])
-        # print(fwin) #com
-
-
-        NBin = get_param("num_bands", int)
-        #        print ("nbands=",NBin)
-        self.spinor = str2bool(get_param("spinors", str))
-
+        # Set Fermi level
         if EF.lower() == "auto":
-            try:
-                self.efermi = (
-                    get_param("fermi_energy", float, 0.0)
-                    )
-            except:
+            if EF_in is None:
                 print("WARNING : fermi-energy not found. Setting it as zero")
+                self.efermi = 0.0
+            else:
+                self.efermi = EF_in
         else:
             try:
                 self.efermi = float(EF)
             except:
                 raise RuntimeError(
                         ("Invalid value for keyword EF. It must be "
-                         "a number or 'auto'")
-                        )
+                         "a number or 'auto'"))
         print("Efermi = {:.4f} eV".format(self.efermi))
 
-        NK = np.prod(np.array(get_param("mp_grid", str).split(), dtype=int))
+        # Set indices for first and last bands
+        IBstart = 0 if (IBstart is None or IBstart <= 0) else IBstart - 1
+        if IBend is None or IBend <= 0 or IBend > NBin:
+            IBend = NBin
+        NBout = IBend - IBstart
+        if NBout <= 0:
+            raise RuntimeError("No bands to calculate")
 
-        self.Lattice = None
-        kpred = None
-
-        if kplist is None:
-            kplist = np.arange(NK) + 1
-        else:
-            # kplist-=1 #files start from 1 in W90
-            kplist = np.array([k for k in kplist if k > 0 and k <= NK])
-        found_atoms = False
-        # todo : use an iterator to avoid double looping over lines between
-        # "begin" and "end"
-        iterwin = iter(fwin)
-
-        def check_end(name):
-            """
-            Check if block in .win file is closed.
-
-            Parameters
-            ----------
-            name : str
-                Name of the block in .win file.
-            
-            Raises
-            ------
-            RuntimeError
-                Block is not closed.
-            """
-            s = next(iterwin)
-            if " ".join(s) != "end " + name:
-                raise RuntimeError(
-                    "expected 'end {}, found {}'".format(name, " ".join(s))
-                )
-
-        for l in iterwin:
-            if l[0].startswith("begin"):
-                if l[1] == "unit_cell_cart":
-                    if self.Lattice is not None:
-                        raise RuntimeError(
-                            "'begin unit_cell_cart' found more then once  in {}.win".format(
-                                prefix
-                            )
-                        )
-                    j = 0
-                    l1 = next(iterwin)
-                    if l1[0] in ("bohr", "ang"):
-                        units = l1[0]
-                        L = [next(iterwin) for i in range(3)]
-                    else:
-                        units = "ang"
-                        L = [l1] + [next(iterwin) for i in range(2)]
-                    self.Lattice = np.array(L, dtype=float)
-                    if units == "bohr":
-                        self.Lattice *= BOHR
-                    check_end("unit_cell_cart")
-                elif l[1] == "kpoints":
-                    if kpred is not None:
-                        raise RuntimeError(
-                            "'begin kpoints' found more then once  in {}.win".format(
-                                prefix
-                            )
-                        )
-                    kpred = np.array(
-                        [next(iterwin)[:3] for i in range(NK)], dtype=float
-                    )
-                    #                    kpred=np.array([kpred[j].split()[:3] for j in kplist],dtype=float)
-                    check_end("kpoints")
-                elif l[1].startswith("atoms_"):
-                    if l[1][6:10] not in ("cart", "frac"):
-                        raise RuntimeError("unrecognised block :  '{}' ".format(l[0]))
-                    if found_atoms:
-                        raise RuntimeError(
-                            "'begin atoms_***' found more then once  in {}.win".format(
-                                prefix
-                            )
-                        )
-                    found_atoms = True
-                    xred = []
-                    nameat = []
-                    while True:
-                        l1 = next(iterwin)
-                        if l1[0] == "end":
-                            # if l1[1]!=l[0].split()[1]:
-                            if l1[1] != l[1]:
-                                #                                print (l1[1],l[0].split()[1])
-                                raise RuntimeError(
-                                    "'{}' ended with 'end {}'".format(
-                                        " ".join(l), l1[1]
-                                    )
-                                )
-                            break
-                        nameat.append(l1[0])
-                        xred.append(l1[1:4])
-                    typatdic = {n: i + 1 for i, n in enumerate(set(nameat))}
-                    typat = [typatdic[n] for n in nameat]
-                    xred = np.array(xred, dtype=float)
-                    if l[1][6:10] == "cart":
-                        xred = xred.dot(np.linalg.inv(self.Lattice))
-
-        #        print ("lattice vectors:\n",self.Lattice)
         self.RecLattice = (
             np.array(
                 [
@@ -689,43 +595,34 @@ class BandStructure:
             / np.linalg.det(self.Lattice)
         )
 
-        self.spacegroup = SpaceGroup(
-            cell=(self.Lattice, xred, typat),
-            spinor=self.spinor,
-            refUC=refUC,
-            shiftUC=shiftUC,
-            search_cell=search_cell,
-            trans_thresh=trans_thresh
-        )
-        if onlysym:
-            return
+        # Set indices for k-points
+        if kplist is None:
+            kplist = np.arange(NK) + 1
+        else:
+            # kplist-=1 #files start from 1 in W90
+            kplist = np.array([k for k in kplist if k > 0 and k <= NK])
 
-        feig = prefix + ".eig"
-        eigenval = np.loadtxt(prefix + ".eig")
-        try:
-            if eigenval.shape[0] != NBin * NK:
-                raise RuntimeError("wrong number of entries ")
-            ik = np.array(eigenval[:, 1]).reshape(NK, NBin)
-            if not np.all(
-                ik == np.arange(1, NK + 1)[:, None] * np.ones(NBin, dtype=int)[None, :]
-            ):
-                raise RuntimeError("wrong k-point indices")
-            ib = np.array(eigenval[:, 0]).reshape(NK, NBin)
-            if not np.all(
-                ib == np.arange(1, NBin + 1)[None, :] * np.ones(NK, dtype=int)[:, None]
-            ):
-                raise RuntimeError("wrong band indices")
-            eigenval = eigenval[:, 2].reshape(NK, NBin)
-        except Exception as err:
-            raise RuntimeError(" error reading {} : {}".format(feig,err))
+        Energy = parser.parse_energies()
+        #feig = prefix + ".eig"
+        #eigenval = np.loadtxt(prefix + ".eig")
+        #try:
+        #    if eigenval.shape[0] != NBin * NK:
+        #        raise RuntimeError("wrong number of entries ")
+        #    ik = np.array(eigenval[:, 1]).reshape(NK, NBin)
+        #    if not np.all(
+        #        ik == np.arange(1, NK + 1)[:, None] * np.ones(NBin, dtype=int)[None, :]
+        #    ):
+        #        raise RuntimeError("wrong k-point indices")
+        #    ib = np.array(eigenval[:, 0]).reshape(NK, NBin)
+        #    if not np.all(
+        #        ib == np.arange(1, NBin + 1)[None, :] * np.ones(NK, dtype=int)[:, None]
+        #    ):
+        #        raise RuntimeError("wrong band indices")
+        #    eigenval = eigenval[:, 2].reshape(NK, NBin)
+        #except Exception as err:
+        #    raise RuntimeError(" error reading {} : {}".format(feig,err))
   
 
-        IBstart = 0 if (IBstart is None or IBstart <= 0) else IBstart - 1
-        if IBend is None or IBend <= 0 or IBend > NBin:
-            IBend = NBin
-        NBout = IBend - IBstart
-        if NBout <= 0:
-            raise RuntimeError("No bands to calculate")
 
         #        print ("eigenvalues are : ",eigenval)
         self.kpoints = [
@@ -740,7 +637,7 @@ class BandStructure:
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 code="wannier",
-                eigenval=eigenval[ik - 1],
+                eigenval=Energy[ik - 1],
                 kpt=kpred[ik - 1],
             )
             for ik in kplist

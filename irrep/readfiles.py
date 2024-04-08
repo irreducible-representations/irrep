@@ -21,7 +21,7 @@ import scipy
 from scipy.io import FortranFile as FF
 from sys import stdout
 from .utility import FortranFileR as FFR
-from .utility import str2bool, BOHR
+from .utility import str2bool, BOHR, split
 import xml.etree.ElementTree as ET
 
 
@@ -563,70 +563,205 @@ class ParserW90:
         self.fwin = [l.strip().lower() for l in open(prefix + ".win").readlines()]
         self.fwin = [
             [s.strip() for s in split(l)]
-            for l in fwin
+            for l in self.fwin
             if len(l) > 0 and l[0] not in ("!", "#")
         ]
-        self.ind = np.array([l[0] for l in fwin])
+        self.ind = np.array([l[0] for l in self.fwin])
+        self.iterwin = iter(self.fwin)
+
+    def parse_header(self):
+
+        self.NBin = self.get_param("num_bands", int)
+        self.spinor = str2bool(self.get_param("spinors", str))
+        try:
+            EF = self.get_param("fermi_energy", float, None)
+        except RuntimeError:
+            EF = None
+        self.NK = np.prod(np.array(self.get_param("mp_grid", str).split(), dtype=int))
+
+        return self.NK, self.NBin, self.spinor, EF
 
 
-   def get_param(self, key, tp, default=None, join=False):
-       """
-       Return value of a parameter in .win file.
+    def parse_lattice(self):
 
-       Parameters
-       ----------
-       key : str
-           Wannier90 input parameter.
-       tp : function
-           Function to apply to the value of the parameter, before 
-           returning it.
-       default
-           Default value to return in case parameter `key` is not found.
-       join : bool, default=False
-           If the value of parameter `key` contains more than one element, 
-           they will be concatenated with a blank space if `join` is set 
-           to `True`. Used when the parameter is `mpgrid`.
+        # Initialize quantities to make sure they aren't twice in .win
+        lattice = None
+        kpred = None
+        found_atoms = False
 
-       Returns
-       -------
-       Type(`tp`)
-           Return the value of the parameter, after applying function 
-           passed es keyword `tp`.
+        for l in self.iterwin:
 
-       Raises
-       ------
-       RuntimeError
-           The parameter is not found in .win file, it is found more than 
-           once or its value is formed by many elements but it is not
-           `mpgrid`.
-       """
-       i = np.where(self.ind == key)[0]
-       if len(i) == 0:
-           if default is None:
-               raise RuntimeError(
-                   "parameter {} was not found in {}.win".format(key, self.prefix)
-               )
-           else:
-               return default
-       if len(i) > 1:
-           raise RuntimeError(
-               "parameter {} was found {} times in {}.win".format(
-                   key, len(i), self.prefix
-               )
-           )
+            if l[0].startswith("begin"):
 
-       x = self.fwin[i[0]][1:]  # mp_grid should work
-       if len(x) > 1:
-           if join:
-               x = " ".join(x)
-           else:
-               raise RuntimeError(
-                   "length {} found for parameter {}, rather than lenght 1 in {}.win".format(
-                       len(x), key, self.prefix
-                   )
-               )
-       else:
-           x = self.fwin[i[0]][1]
-       return tp(x)
+                # Parse lattice vectors
+                if l[1] == "unit_cell_cart":
+                    if lattice is not None:
+                        raise RuntimeError(
+                            "'begin unit_cell_cart' found more then once  in {}.win".format(
+                                self.prefix
+                            ))
+                    j = 0
+                    l1 = next(self.iterwin)
+                    if l1[0] in ("bohr", "ang"):
+                        units = l1[0]
+                        L = [next(self.iterwin) for i in range(3)]
+                    else:
+                        units = "ang"
+                        L = [l1] + [next(self.iterwin) for i in range(2)]
+                    lattice = np.array(L, dtype=float)
+                    if units == "bohr":
+                        lattice *= BOHR
+                    self.check_end("unit_cell_cart")
+
+                # Parse k-points
+                elif l[1] == "kpoints":
+                    if kpred is not None:
+                        raise RuntimeError(
+                            "'begin kpoints' found more then once  in {}.win".format(
+                                self.prefix
+                            ))
+                    kpred = np.zeros((self.NK, 3), dtype=float)
+                    for i in range(self.NK):
+                        kpred[i] = next(self.iterwin)[:3]
+                    self.check_end("kpoints")
+
+                # Parse atomic positions
+                elif l[1].startswith("atoms_"):
+                    if l[1][6:10] not in ("cart", "frac"):
+                        raise RuntimeError("unrecognised block :  '{}' ".format(l[0]))
+                    if found_atoms:
+                        raise RuntimeError(
+                            "'begin atoms_***' found more then once  in {}.win".format(
+                                self.prefix
+                            ))
+                    found_atoms = True
+                    positions = []
+                    nameat = []
+                    while True:
+                        l1 = next(self.iterwin)
+                        if l1[0] == "end":
+                            if l1[1] != l[1]:
+                                raise RuntimeError(
+                                    "'{}' ended with 'end {}'".format(
+                                        " ".join(l), l1[1]
+                                    )
+                                )
+                            else:
+                                break
+                        nameat.append(l1[0])
+                        positions.append(l1[1:4])
+                    typatdic = {n: i + 1 for i, n in enumerate(set(nameat))}
+                    typat = [typatdic[n] for n in nameat]
+                    positions = np.array(positions, dtype=float)
+                    if l[1][6:10] == "cart":  # from cartesian to direct coords
+                        positions = positions.dot(np.linalg.inv(lattice))
+
+        return lattice, positions, typat, kpred
+
+
+    def parse_energies(self):
+
+        feig = self.prefix + ".eig"
+        Energy = np.loadtxt(self.prefix + ".eig")
+        try:
+            if Energy.shape[0] != self.NBin * self.NK:
+                raise RuntimeError("wrong number of entries ")
+            ik = np.array(Energy[:, 1]).reshape(self.NK, self.NBin)
+            if not np.all(
+                ik == np.arange(1, self.NK + 1)[:, None] * np.ones(self.NBin, dtype=int)[None, :]
+            ):
+                raise RuntimeError("wrong k-point indices")
+            ib = np.array(Energy[:, 0]).reshape(self.NK, self.NBin)
+            if not np.all(
+                ib == np.arange(1, self.NBin + 1)[None, :] * np.ones(self.NK, dtype=int)[:, None]
+            ):
+                raise RuntimeError("wrong band indices")
+            Energy = Energy[:, 2].reshape(self.NK, self.NBin)
+        except Exception as err:
+            raise RuntimeError(" error reading {} : {}".format(feig,err))
+        return Energy
+
+
+    def check_end(self, name):
+        """
+        Check if block in .win file is closed.
+
+        Parameters
+        ----------
+        name : str
+            Name of the block in .win file.
+        
+        Raises
+        ------
+        RuntimeError
+            Block is not closed.
+        """
+        s = next(self.iterwin)
+        if " ".join(s) != "end " + name:
+            raise RuntimeError(
+                "expected 'end {}, found {}'".format(name, " ".join(s))
+            )
+
+
+
+    def get_param(self, key, tp, default=None, join=False):
+        """
+        Return value of a parameter in .win file.
+
+        Parameters
+        ----------
+        key : str
+            Wannier90 input parameter.
+        tp : function
+            Function to apply to the value of the parameter, before 
+            returning it.
+        default
+            Default value to return in case parameter `key` is not found.
+        join : bool, default=False
+            If the value of parameter `key` contains more than one element, 
+            they will be concatenated with a blank space if `join` is set 
+            to `True`. Used when the parameter is `mpgrid`.
+
+        Returns
+        -------
+        Type(`tp`)
+            Return the value of the parameter, after applying function 
+            passed es keyword `tp`.
+
+        Raises
+        ------
+        RuntimeError
+            The parameter is not found in .win file, it is found more than 
+            once or its value is formed by many elements but it is not
+            `mpgrid`.
+        """
+        i = np.where(self.ind == key)[0]
+        if len(i) == 0:
+            if default is None:
+                raise RuntimeError(
+                    "parameter {} was not found in {}.win".format(key, self.prefix)
+                )
+            else:
+                return default
+        if len(i) > 1:
+            raise RuntimeError(
+                "parameter {} was found {} times in {}.win".format(
+                    key, len(i), self.prefix
+                )
+            )
+
+        x = self.fwin[i[0]][1:]  # mp_grid should work
+        if len(x) > 1:
+            if join:
+                x = " ".join(x)
+            else:
+                raise RuntimeError(
+                    "length {} found for parameter {}, rather than lenght 1 in {}.win".format(
+                        len(x), key, self.prefix
+                    )
+                )
+        else:
+            x = self.fwin[i[0]][1]
+        return tp(x)
 
 
