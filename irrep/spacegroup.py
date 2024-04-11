@@ -433,6 +433,33 @@ class SymmetryOperation():
         return ("   ".join(" ".join("{0:2d}".format(x) for x in r) for r in R) + "     " + " ".join("{0:10.6f}".format(x) for x in t) + (
             ("      " + "    ".join("  ".join("{0:10.6f}".format(x) for x in (X.real, X.imag)) for X in S.reshape(-1))) if S is not None else "") + "\n")
 
+    def json_dict(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
+        '''
+        Prepare dictionary with info of symmetry to save in JSON
+
+        Returns
+        -------
+        d : dict
+            Dictionary with info about symmetry
+        '''
+
+        d = {}
+        d["axis"]  = self.axis
+        d["angle_str"] = self.angle_str
+        d["angle_pi"] = self.angle/np.pi
+        d["inversion"] = self.inversion
+        d["sign"] = self.sign
+
+        d["rotation_matrix"] = self.rotation
+        d["translation"] = self.translation
+
+        R = self.rotation_refUC(refUC)
+        t = self.translation_refUC(refUC, shiftUC)
+        d["rotation_matrix_refUC"] = R
+        d["translation_refUC"]= t
+
+        return d
+
 
 class SpaceGroup():
     """
@@ -623,6 +650,35 @@ class SpaceGroup():
                        "tables, try not specifying refUC and shiftUC."))
                 pass
 
+    def json_dict(self, symmetries=None):
+        '''
+        Prepare dictionary with info of space group to save in JSON
+
+        Returns
+        -------
+        d : dict
+            Dictionary with info about space group
+        '''
+
+        d = {}
+
+        if (not np.allclose(self.refUC, np.eye(3)) or
+            not np.allclose(self.shiftUC, np.zeros(3))):
+            cells_match = True
+        else:
+            cells_match = False
+
+        d = {"name": self.name,
+             "number": self.number,
+             "spinor": self.spinor,
+             "num_symmetries": self.order,
+             "cells_match": cells_match,
+             "symmetries": {}
+             }
+
+        for sym in self.symmetries:
+            if symmetries is None or sym.ind in symmetries:
+                d["symmetries"][sym.ind] = sym.json_dict(self.refUC, self.shiftUC)
 
     def show(self, symmetries=None):
         """
@@ -640,6 +696,7 @@ class SpaceGroup():
         json_data : `json` object
             Object with output structured in `json` format.
         """
+
 
         if (not np.allclose(self.refUC, np.eye(3)) or
             not np.allclose(self.shiftUC, np.zeros(3))):
@@ -700,16 +757,6 @@ class SpaceGroup():
             print(s)
 
         return json_data
-
-
-#  def show2(self,refUC=None,shiftUC=np.zeros(3)):
-#    print('')
-#    print("\n ---------- INFORMATION ABOUT THE SPACE GROUP ---------- \n")
-#    print('')
-#    print ("Space group # {0} has {1} symmetry operations  ".format(self.number,len(self.symmetries)))
-#    for symop in self.symmetries:
-#       symop.show2(refUC=refUC,shiftUC=shiftUC)
-
 
     def write_trace(self):
         """
