@@ -175,7 +175,11 @@ class Kpoint:
         WF=None,  # first arg added for abinit (to be kept at the end)
         Energy=None,
         ig=None,
-        upper=None
+        upper=None,
+        degen_thresh=1e-8,
+        symmetries=None,
+        refUC=np.eye(3),
+        shiftUC=np.zeros(3)
     ):
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
@@ -183,6 +187,7 @@ class Kpoint:
         #        self.n=np.arange(IBstart,IBend)+1
         self.RecLattice = RecLattice
         self.symmetries_SG = symmetries_SG  # lazy_property needs it
+        self.upper = upper
 
         if code.lower() == "vasp":
             self.K = kpt
@@ -213,9 +218,29 @@ class Kpoint:
         else:
             raise RuntimeError("unknown code : {}".format(code))
 
+        self.k_refUC = np.dot(refUC.T, self.K)
         self.WF /= (
             np.sqrt(np.abs(np.einsum("ij,ij->i", self.WF.conj(), self.WF)))
         ).reshape(self.Nband, 1)
+
+        # Calculate traces
+        self.char, self.char_refUC, self.Energy, self.degeneracies = self.calculate_traces(refUC, shiftUC, symmetries, degen_thresh)
+
+        # Determine number of band inversions based on parity
+        found = False
+        for sym in self.symmetries:
+            if (
+                sum(abs(sym.translation)) < 1e-6
+                and
+                abs(sym.rotation + np.eye(3)).sum() < 1e-6
+            ):
+                found = True
+                break
+        if found:
+            self.num_bandinvs = int(round(sum(1 - self.symmetries[sym].real) / 2))
+        else:
+            self.num_bandinvs = None
+
 
     def copy_sub(self, E, WF):
         """
@@ -538,6 +563,176 @@ class Kpoint:
 
         return subspaces
 
+    def calculate_traces(self, refUC, shiftUC, symmetries, degen_thresh=1e-8):
+        '''
+        Calculate traces of symmetry operations
+        '''
+
+        if symmetries is None:
+            sym = {s.ind: s for s in self.symmetries}
+        else:
+            sym = {s.ind: s for s in self.symmetries if s.ind in symmetries}
+
+        # Put all traces in an array. Rows (cols) correspond to syms (wavefunc)
+        char = np.vstack([self.symmetries[sym[i]] for i in sorted(sym)])
+        borders = np.hstack(
+            [
+                [0],
+                np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
+                [self.Nband],
+            ]
+        )
+        degeneracies = borders[1:] - borders[:-1]
+
+        # Check that number of irreps is int
+        Nirrep = np.linalg.norm(char.sum(axis=1)) ** 2 / char.shape[0]
+        if abs(Nirrep - round(Nirrep)) > 1e-2:
+            print("WARNING - non-integer number of states : {0}".format(Nirrep))
+        Nirrep = int(round(Nirrep))
+
+        # Sum traces of degenerate states. Rows (cols) correspond to states (syms)
+        char = np.array(
+            [char[:, start:end].sum(axis=1) for start, end in zip(borders, borders[1:])]
+            )
+
+        # Take average of energies over degenerate states
+        Energy_mean = np.array(
+            [self.Energy[start:end].mean() for start, end in zip(borders, borders[1:])]
+        )
+
+        # Transfer traces in calculational cell to refUC
+        char_refUC = char.copy()
+        if (not np.allclose(refUC, np.eye(3, dtype=float)) or
+            not np.allclose(shiftUC, np.zeros(3, dtype=float))):
+            # Calculational and reference cells are not identical
+            for i,ind in enumerate(sym):
+                dt = (symmetries_tables[ind-1].t 
+                      - sym[ind].translation_refUC(refUC, shiftUC))
+                char_refUC[:,i] *= (sym[ind].sign 
+                                     * np.exp(-2j*np.pi*dt.dot(self.k_refUC)))
+
+        return char, char_refUC, Energy_mean, degeneracies
+
+
+    def identify_irreps(self, irreptable=None):
+
+        if irreptable is None:
+            irreps = ["None"] * (len(self.degeneracies) - 1)
+
+        else:
+
+            # irreps is a list. Each element is a dict corresponding to a 
+            # group of degen. states. Every key is an irrep and its value 
+            # the multiplicity of the irrep in the rep. of degen. states
+            try:
+                irreps = []
+                for ch in self.char:
+                    multiplicities = {}
+                    for ir in irreptable:
+                        multipl = np.dot(np.array([irreptable[ir][sym.ind] for sym in self.symmetries]),
+                                         ch.conj()
+                                         ) / len(ch)
+                        if abs(multipl) > 1e-3:
+                            multiplicities[ir] = multipl
+                    irreps.append(multiplicities)
+            except KeyError as ke:
+                print(ke)
+                print("irreptable:", irreptable)
+                print([sym.ind for sym in self.symmetries])
+                raise ke
+
+        self.irreps = irreps
+
+
+    def write_characters2(self,
+                          efermi=0.0,
+                          ):
+
+        # Print header for k-point
+        print(("\n\n k-point {0:3d} : {1} (in DFT cell)\n"
+               "               {2} (after cell trasformation)\n\n"
+               " number of states : {3}\n"
+               .format(self.ik0,
+                       np.round(self.K, 5),
+                       np.round(self.k_refUC, 5),
+                       self.Nband)
+              ))
+
+        # Generate str describing irrep corresponding to sets of states
+        str_irreps = []
+        for irreps in self.irreps:  # set of IRs for a set of degenerate states
+            s = ''
+            for ir in irreps:  # label and multiplicity of one irrep
+                if s != '':
+                    s += ', '  # separation between labels for irreps
+                s += ir
+                s += '({0:.5}'.format(irreps[ir].real)
+                if abs(irreps[ir].imag) > 1e-4:
+                    s += '{0:+.5f}i'.format(irreps[ir].imag)
+                s += ')'
+            str_irreps.append(s)
+
+        # Set auxiliary blank strings for formatting
+        writeimaginary = np.abs(self.char.imag).max() > 1e-4
+        if writeimaginary:
+            aux1 = ' ' * 4
+        else:
+            aux1 = ''
+        irreplen = max(len(irr) for irr in str_irreps)
+        #if irreplen % 2 == 1:
+        #    irreplen += 1
+        #aux2 = " " * int(irreplen / 2 - 3)
+        num_spaces = (irreplen-8) / 2
+        aux2 = " " * int(num_spaces)
+        if irreplen % 2 == 0:
+            aux3 = aux2 
+        else:
+            aux3 = aux2 + " "
+
+        print("   Energy  |   degeneracy  | {0} irreps {1} | sym. operations  ".format(aux2, aux3))
+
+        # Print indices of little-group symmetries
+        s = "           |               | {0}        {1} | ".format(aux2, aux3)
+        inds = []
+        for sym in self.symmetries:
+            inds.append(aux1 + "{0:4d}    ".format(sym.ind) + aux1)
+        s += " ".join(inds)
+        print(s)
+        #print(
+        #    "           |               |{0}        {0}| ".format(aux2),
+        #    " ".join(aux1 + "{0:4d}    ".format(i) + aux1 for i in sorted(sym)),
+        #)
+
+        # Print line associated to a set of degenerate states
+        for e, d, ir, ch1, ch2 in zip(self.Energy, self.degeneracies, str_irreps, self.char, self.char_refUC):
+
+            # Traces in DFT unit cell
+            right_str1 = []
+            right_str2 = []
+            for tr1, tr2 in zip(ch1, ch2):
+                s1 = "{0:8.4f}".format(tr1.real)
+                s2 = "{0:8.4f}".format(tr2.real)
+                if writeimaginary:
+                    s1 += "{0:+7.4f}j".format(tr1.imag)
+                    s2 += "{0:+7.4f}j".format(tr2.imag)
+                right_str1.append(s1)
+                right_str2.append(s2)
+            right_str1 = ' '.join(right_str1)
+            right_str2 = ' '.join(right_str2)
+
+            # Energy, degeneracy, irrep's label and character in DFT cell
+            left_str = (" {0:8.4f}  |    {1:5d}      | {2:{3}s} |"
+                        .format(e - efermi, d, ir, irreplen)
+                        )
+            print(left_str + " " + right_str1)
+
+            # Line for character in reference cell
+            left_str = ("           |               | {0:{1}s} |"
+                        .format(len(ir)*" ", irreplen)
+                        )
+            print(left_str + " " + right_str2)  # line for character in DFT
+
+
     def write_characters(
         self,
         degen_thresh=1e-8,
@@ -684,7 +879,6 @@ class Kpoint:
 
         # Transfer traces in calculational cell to refUC
         char_refUC = char.copy()
-        k_refUC = np.dot(refUC.T, self.K)
         if (not np.allclose(refUC, np.eye(3, dtype=float)) or
             not np.allclose(shiftUC, np.zeros(3, dtype=float))):
             # Calculational and reference cells are not identical
@@ -692,7 +886,7 @@ class Kpoint:
                 dt = (symmetries_tables[ind-1].t 
                       - sym[ind].translation_refUC(refUC, shiftUC))
                 char_refUC[:,i] *= (sym[ind].sign 
-                                     * np.exp(-2j*np.pi*dt.dot(k_refUC)))
+                                     * np.exp(-2j*np.pi*dt.dot(self.k_refUC)))
 
         json_data["characters_refUC"] = char_refUC
         if np.allclose(char, char_refUC, rtol=0.0, atol=1e-4):
@@ -718,7 +912,7 @@ class Kpoint:
                " number of states : {3}\n"
                .format(self.ik0,
                        np.round(self.K, 5),
-                       np.round(k_refUC,5),
+                       np.round(self.k_refUC,5),
                        self.Nband
                        )
               ))
@@ -773,23 +967,6 @@ class Kpoint:
                 + "\n\n"
             )
 
-        isyminv = None
-        for s in sym:
-            if (
-                sum(abs(sym[s].translation)) < 1e-6
-                and abs(sym[s].rotation + np.eye(3)).sum() < 1e-6
-            ):
-                isyminv = s
-        if isyminv is None:
-            print("no inversion")
-            NBANDINV = 0
-        else:
-            print("inversion is #", isyminv)
-            NBANDINV = int(round(sum(1 - self.symmetries[sym[isyminv]].real) / 2))
-            if self.spinor:
-                print("number of inversions-odd Kramers pairs : ", int(NBANDINV / 2))
-            else:
-                print("number of inversions-odd states : ", NBANDINV)
             print("Gap with upper bands : ", self.upper - self.Energy[-1])
 
         firrep = open("irreps.dat", "a")
@@ -806,7 +983,42 @@ class Kpoint:
                 except IndexError:
                     pass
 
-        return NBANDINV, self.Energy[-1], self.upper , json_data
+        return num_bandinvs
+
+
+    def write_plotfile(self, plotfile, kpl, efermi):
+
+        writeimaginary = np.abs(self.character.imag).max() > 1e-4
+        s = []
+        for e, dim, char in zip(self.Energy, self.degeneracies, self.character):
+            s_loc = '{2:8.4f}   {0:8.4f}      {1:5d}   '.format(e-efermi, d, kpl)
+            for tr in char:
+                s_loc += "{0:8.4f}".format(tr.real)
+                if writeimaginary:
+                    s_loc += "{0:+7.4f}j ".format(tr.imag)
+            s.append(s_loc)
+        s = '\n'.join(s)
+        s += '\n\n'
+
+
+    def write_irrepfile(self, firrep, efermi):
+
+        file = open(firrep, "a")
+        for e, ir in zip(self.Energy, self.irreps):
+            for irrep in ir.split(","):
+                try:
+                    weight = abs(compstr(irrep.split("(")[1].strip(")")))
+                    if weight > 0.3:
+                        file.write(
+                            preline
+                            + " {0:10s} ".format(irrep.split("(")[0])
+                            + "  {0:10.5f}\n".format(e - efermi)
+                        )
+                except IndexError:
+                    pass
+        file.close()
+
+
 
     def write_trace(self, degen_thresh=1e-8, symmetries=None, efermi=0.0):
         """

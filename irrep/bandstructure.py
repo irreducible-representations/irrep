@@ -135,6 +135,7 @@ class BandStructure:
         shiftUC = None,
         search_cell = False,
         trans_thresh=1e-5,
+        degen_thresh=1e-8
     ):
 
         code = code.lower()
@@ -337,6 +338,7 @@ class BandStructure:
                 RecLattice=self.RecLattice,
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
+                degen_thresh=degen_thresh
                 )
             self.kpoints.append(kp)
 
@@ -346,6 +348,60 @@ class BandStructure:
         return len(self.kpoints)
 
     NK = property(getNK)
+
+
+    def identify_irreps(self, kpnames):
+
+        for ik, KP in enumerate(self.kpoints):
+            
+            if kpnames is not None:
+                irreps = self.spacegroup.get_irreps_from_table(kpnames[ik], KP.K)
+            else:
+                irreps = None
+            KP.identify_irreps(irreptable=irreps)
+
+    def write_characters2(self):
+
+        for KP in self.kpoints:
+
+            # Print block of irreps and their characters
+            KP.write_characters2(self.efermi)
+
+            # Print number of inversion odd Kramers pairs
+            if KP.num_bandinvs is None:
+                print("Invariant under inversion: No")
+            else:
+                print("Invariant under inversion: Yes")
+                if self.spinor:
+                    print("Number of inversions-odd Kramers pairs : {}"
+                          .format(int(KP.num_bandinvs / 2))
+                          )
+                else:
+                    print("Number of inversions-odd states : {}"
+                          .format(KP.num_bandinvs))
+
+            # Print gap with respect to next band
+            if not np.isnan(KP.upper):
+                print("Gap with upper bands: ", KP.upper - KP.Energy[-1])
+
+    def write_plotfile(self, plotFile):
+
+        try:
+            pFile = open(plotFile, "w")
+        except BaseException:
+            return
+
+        kpline = self.KPOINTSline()
+        for KP, kpl in zip(self.kpoints, kpline):
+            KP.write_plotfile(pFile, kpl, self.fermi)
+        pFile.close()
+
+
+    def write_irrepsfile(self):
+
+        for KP in self.kpoints:
+            KP.write_irrepsfile('irreps.dat', self.efermi)
+
 
     def write_characters(
         self,

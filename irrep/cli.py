@@ -362,6 +362,7 @@ def cli(
         refUC = refuc,
         shiftUC = shiftuc,
         search_cell = searchcell,
+        degen_thresh=degenthresh
     )
 
     json_data ["spacegroup"] = bandstr.spacegroup.show(symmetries=symmetries)
@@ -419,6 +420,13 @@ def cli(
                 )
             )
         exit()
+
+    if kpnames is not None:
+        bandstr.identify_irreps(kpnames)
+
+    # Temporary, until we make it valid for isymsep
+    bandstr.write_characters2()
+    exit()
 
     bandstr.write_trace(
         degen_thresh=degenthresh,
