@@ -383,6 +383,22 @@ class BandStructure:
             # Print gap with respect to next band
             if not np.isnan(KP.upper):
                 print("Gap with upper bands: ", KP.upper - KP.Energy[-1])
+    
+
+    def write_json(self, kpnames):
+
+        kpline = self.KPOINTSline()
+        json_data = {}
+        json_data['kpoints_line'] = kpline
+        json_data['k-points'] = []
+        
+        for kpl, KP in zip(kpline, self.kpoints):
+            json_kpoint = KP.json()
+            json_kpoint['kp in line'] = kpl
+            json_data['k-points'].append(json_kpoint)
+
+
+
 
     def write_plotfile(self, plotFile):
 

@@ -616,7 +616,8 @@ class Kpoint:
 
     def identify_irreps(self, irreptable=None):
 
-        if irreptable is None:
+        self.onlytraces = irreptable is None
+        if self.onlytraces:
             irreps = ["None"] * (len(self.degeneracies) - 1)
 
         else:
@@ -661,15 +662,18 @@ class Kpoint:
         # Generate str describing irrep corresponding to sets of states
         str_irreps = []
         for irreps in self.irreps:  # set of IRs for a set of degenerate states
-            s = ''
-            for ir in irreps:  # label and multiplicity of one irrep
-                if s != '':
-                    s += ', '  # separation between labels for irreps
-                s += ir
-                s += '({0:.5}'.format(irreps[ir].real)
-                if abs(irreps[ir].imag) > 1e-4:
-                    s += '{0:+.5f}i'.format(irreps[ir].imag)
-                s += ')'
+            if self.onlytraces:
+                s = '  None  '
+            else:
+                s = ''
+                for ir in irreps:  # label and multiplicity of one irrep
+                    if s != '':
+                        s += ', '  # separation between labels for irreps
+                    s += ir
+                    s += '({0:.5}'.format(irreps[ir].real)
+                    if abs(irreps[ir].imag) > 1e-4:
+                        s += '{0:+.5f}i'.format(irreps[ir].imag)
+                    s += ')'
             str_irreps.append(s)
 
         # Set auxiliary blank strings for formatting
@@ -731,6 +735,42 @@ class Kpoint:
                         .format(len(ir)*" ", irreplen)
                         )
             print(left_str + " " + right_str2)  # line for character in DFT
+
+
+    def json(self, symmetries=None):
+
+        json_data = {}
+
+        # Dictionary with symmetry eigenvalues (do we need this?)
+        if symmetries is None:
+            sym = {s.ind: s for s in self.symmetries}
+        else:
+            sym = {s.ind: s for s in self.symmetries if s.ind in symmetries}
+        json_data ['symmetries'] = list(sym.keys())
+
+        json_data['energies'] = self.Energy
+        json_data['characters'] = self.char
+
+        #if irreptable is None:
+        #    irreps = ["None"] * (len(borders) - 1)
+        #    json_data["irreps"] = None 
+        #else:
+        #    try:
+        #        # irreps is a list. Each element is a dict corresponding to a 
+        #        # group of degen. states. Every key is an irrep and its value 
+        #        # the multiplicity of the irrep in the rep. of degen. states
+        #        irreps = []
+        #        for ch in char:
+        #            multiplicities = {}
+        #            for ir in irreptable:
+        #                multipl = np.dot(np.array([irreptable[ir][sym.ind] for sym in self.symmetries]),
+        #                                 ch.conj()
+        #                                 ) / len(ch)
+        #                if abs(multipl) > 1e-3:
+        #                    multiplicities[ir] = multipl
+        #            irreps.append(multiplicities)
+        #        json_data["irreps"] = [{ir:(val.real,val.imag) for ir,val in irr.items()} for irr in irreps]
+        
 
 
     def write_characters(

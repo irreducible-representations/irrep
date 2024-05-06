@@ -421,8 +421,8 @@ def cli(
             )
         exit()
 
-    if kpnames is not None:
-        bandstr.identify_irreps(kpnames)
+    # Identify irreps. If kpnames wasn't set, all will be labelled as None
+    bandstr.identify_irreps(kpnames)
 
     # Temporary, until we make it valid for isymsep
     bandstr.write_characters2()
