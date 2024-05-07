@@ -344,7 +344,6 @@ def cli(
     except Exception as err:
         print(err)
         preline = ""
-    json_data = {}
 
     bandstr = BandStructure(
         fWAV=fwav,
@@ -365,7 +364,6 @@ def cli(
         degen_thresh=degenthresh
     )
 
-    json_data ["spacegroup"] = bandstr.spacegroup.show(symmetries=symmetries)
 
     if onlysym:
         exit()
@@ -374,6 +372,20 @@ def cli(
         f.write(
                 bandstr.spacegroup.str()
                 )
+
+    # Identify irreps. If kpnames wasn't set, all will be labelled as None
+    bandstr.identify_irreps(kpnames)
+
+    # Temporary, until we make it valid for isymsep
+    bandstr.write_characters2()
+
+    # Temporary, until we make it valid for isymsep
+    json_data = {}
+    json_data ["spacegroup"] = bandstr.spacegroup.show(symmetries=symmetries)
+    json_bandstr = bandstr.json()
+    json_data['characters_and_irreps'] = [{"subspace": json_bandstr}]
+    dumpfn(json_data,"irrep-output.json",indent=4)
+    exit()
 
     subbands = {(): bandstr}
 
@@ -420,13 +432,6 @@ def cli(
                 )
             )
         exit()
-
-    # Identify irreps. If kpnames wasn't set, all will be labelled as None
-    bandstr.identify_irreps(kpnames)
-
-    # Temporary, until we make it valid for isymsep
-    bandstr.write_characters2()
-    exit()
 
     bandstr.write_trace(
         degen_thresh=degenthresh,

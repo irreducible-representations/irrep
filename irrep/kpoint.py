@@ -179,7 +179,8 @@ class Kpoint:
         degen_thresh=1e-8,
         symmetries=None,
         refUC=np.eye(3),
-        shiftUC=np.zeros(3)
+        shiftUC=np.zeros(3),
+        symmetries_tables=None  # calculate_traces needs it
     ):
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
@@ -224,7 +225,7 @@ class Kpoint:
         ).reshape(self.Nband, 1)
 
         # Calculate traces
-        self.char, self.char_refUC, self.Energy, self.degeneracies = self.calculate_traces(refUC, shiftUC, symmetries, degen_thresh)
+        self.char, self.char_refUC, self.Energy, self.degeneracies = self.calculate_traces(refUC, shiftUC, symmetries, symmetries_tables, degen_thresh)
 
         # Determine number of band inversions based on parity
         found = False
@@ -563,7 +564,7 @@ class Kpoint:
 
         return subspaces
 
-    def calculate_traces(self, refUC, shiftUC, symmetries, degen_thresh=1e-8):
+    def calculate_traces(self, refUC, shiftUC, symmetries, symmetries_tables, degen_thresh=1e-8):
         '''
         Calculate traces of symmetry operations
         '''
@@ -748,28 +749,30 @@ class Kpoint:
             sym = {s.ind: s for s in self.symmetries if s.ind in symmetries}
         json_data ['symmetries'] = list(sym.keys())
 
+        # Energy levels and degeneracies
         json_data['energies'] = self.Energy
-        json_data['characters'] = self.char
+        json_data['dimensions'] = self.degeneracies
 
-        #if irreptable is None:
-        #    irreps = ["None"] * (len(borders) - 1)
-        #    json_data["irreps"] = None 
-        #else:
-        #    try:
-        #        # irreps is a list. Each element is a dict corresponding to a 
-        #        # group of degen. states. Every key is an irrep and its value 
-        #        # the multiplicity of the irrep in the rep. of degen. states
-        #        irreps = []
-        #        for ch in char:
-        #            multiplicities = {}
-        #            for ir in irreptable:
-        #                multipl = np.dot(np.array([irreptable[ir][sym.ind] for sym in self.symmetries]),
-        #                                 ch.conj()
-        #                                 ) / len(ch)
-        #                if abs(multipl) > 1e-3:
-        #                    multiplicities[ir] = multipl
-        #            irreps.append(multiplicities)
-        #        json_data["irreps"] = [{ir:(val.real,val.imag) for ir,val in irr.items()} for irr in irreps]
+        # Irreps and multiplicities
+        if self.onlytraces:
+            json_data['irreps'] = None 
+        else:
+            json_data['irreps'] = []
+            for state in self.irreps:
+                d = {}
+                for irrep, multipl in state.items():
+                    d[irrep] = (multipl.real, multipl.imag)
+                json_data['irreps'].append(d)
+
+        # Traces of symmetries
+        json_data['characters'] = self.char
+        json_data['characters_refUC'] = self.char_refUC
+        if np.allclose(self.char, self.char_refUC, rtol=0.0, atol=1e-4):
+            json_data['characters_refUC_is_the_same'] = True
+        else:
+            json_data['characters_refUC_is_the_same'] = False
+        
+        return json_data
         
 
 

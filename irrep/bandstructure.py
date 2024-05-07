@@ -338,9 +338,14 @@ class BandStructure:
                 RecLattice=self.RecLattice,
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
-                degen_thresh=degen_thresh
+                degen_thresh=degen_thresh,
+                refUC=self.spacegroup.refUC,
+                shiftUC=self.spacegroup.shiftUC,
+                symmetries_tables=self.spacegroup.symmetries_tables
                 )
             self.kpoints.append(kp)
+        
+        self.num_bandinvs, self.gap_direct, self.gap_indirect = self.calculate_gaps()
 
 
     def getNK(self):
@@ -383,21 +388,64 @@ class BandStructure:
             # Print gap with respect to next band
             if not np.isnan(KP.upper):
                 print("Gap with upper bands: ", KP.upper - KP.Energy[-1])
+        
+        # Print total number of band inversions
+        if self.spinor:
+            print("TOTAL number of inversions-odd Kramers pairs : {}"
+                  .format(int(self.num_bandinvs/2)))
+        else:
+            print("TOTAL number of inversions-odd states : {}"
+                  .format(self.num_bandinvs))
+
+        # Print indirect gap and smalles direct gap
+        print('Indirect gap: {}'.format(self.gap_indirect))
+        print('Smallest direct gap: {}'.format(self.gap_direct))
     
 
-    def write_json(self, kpnames):
+    def json(self, kpnames=None):
 
         kpline = self.KPOINTSline()
         json_data = {}
         json_data['kpoints_line'] = kpline
         json_data['k-points'] = []
         
-        for kpl, KP in zip(kpline, self.kpoints):
+        for ik, KP in enumerate(self.kpoints):
             json_kpoint = KP.json()
-            json_kpoint['kp in line'] = kpl
+            json_kpoint['kp in line'] = kpline[ik]
+            if kpnames is None:
+                json_kpoint['kpname'] = None
+            else:
+                json_kpoint['kpname'] = kpnames[ik]
             json_data['k-points'].append(json_kpoint)
+        
+        json_data['indirect gap (eV)'] =  self.gap_indirect
+        json_data['Minimal direct gap (eV)'] =  self.gap_direct
 
+        if self.spinor:
+            json_data["number of inversion-odd Kramers pairs"]  = int(self.num_bandinvs / 2)
+            json_data["Z4"] = int(self.num_bandinvs / 2) % 4,
+        else:
+            json_data["number of inversion-odd states"]  = self.num_bandinvs
 
+        return json_data
+
+    
+    def calculate_gaps(self):
+
+        num_bandinvs = 0
+        gap_direct = np.Inf
+        min_upper = np.Inf  # smallest energy of bands above set
+        max_lower = -np.inf  # largest energy of bands in the set
+
+        for KP in self.kpoints:
+            if KP.num_bandinvs is not None:
+                num_bandinvs += KP.num_bandinvs
+            gap_direct = min(gap_direct, KP.upper-KP.Energy[-1])
+            min_upper = min(min_upper, KP.upper)
+            max_lower = max(max_lower, KP.Energy[-1])
+        
+        gap_indirect = min_upper - max_lower
+        return num_bandinvs, gap_direct, gap_indirect
 
 
     def write_plotfile(self, plotFile):
