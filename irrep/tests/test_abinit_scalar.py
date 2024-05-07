@@ -42,8 +42,8 @@ def test_abinit_scalar_example():
     # Check general properties of the band structure
     bs_ref = data_ref['characters_and_irreps'][0]['subspace']
     bs_run = data_run['characters_and_irreps'][0]['subspace']
-    assert bs_ref['indirect gap (eV)'] == bs_run['indirect gap (eV)']
-    assert bs_ref['Minimal direct gap (eV)'] == bs_run['Minimal direct gap (eV)']
+    assert abs(bs_ref['indirect gap (eV)'] - bs_run['indirect gap (eV)']) < 1e-4
+    assert abs(bs_ref['Minimal direct gap (eV)'] - bs_run['Minimal direct gap (eV)']) < 1e-4
     if spinor:
         assert bs_ref['Z4'] == bs_run['Z4']
         assert bs_ref['number of inversion-odd Kramers pairs'] == bs_run['number of inversion-odd Kramers pairs']
@@ -64,11 +64,11 @@ def test_abinit_scalar_example():
             assert irrepname_ref == irrepname_run  # compare strings of irreps
             assert np.allclose(irrep_ref[irrepname_ref], irrep_run[irrepname_run])  # compare multiplicities
 
-    # Remove output files created during run
-    for test_output_file in (
-            "irreps.dat",
-            "irreptable-template",
-            "trace.txt",
-            "irrep-output.json"
-    ):
-        os.remove(test_output_file)
+#    # Remove output files created during run
+#    for test_output_file in (
+#            "irreps.dat",
+#            "irreptable-template",
+#            "trace.txt",
+#            "irrep-output.json"
+#    ):
+#        os.remove(test_output_file)

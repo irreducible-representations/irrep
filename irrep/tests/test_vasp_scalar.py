@@ -64,10 +64,10 @@ def test_vasp_scalar():
             assert np.allclose(irrep_ref[irrepname_ref], irrep_run[irrepname_run])  # compare multiplicities
 
     # Remove output files created during run
-    for test_output_file in (
-            "irreps.dat",
-            "irreptable-template",
-            "trace.txt",
-            "irrep-output.json"
-    ):
-        os.remove(test_output_file)
+#    for test_output_file in (
+#            "irreps.dat",
+#            "irreptable-template",
+#            "trace.txt",
+#            "irrep-output.json"
+#    ):
+#        os.remove(test_output_file)
