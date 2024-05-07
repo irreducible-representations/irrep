@@ -381,7 +381,7 @@ def cli(
 
     # Temporary, until we make it valid for isymsep
     json_data = {}
-    json_data ["spacegroup"] = bandstr.spacegroup.show(symmetries=symmetries)
+    json_data ["spacegroup"] = bandstr.spacegroup.json(symmetries=symmetries)
     json_bandstr = bandstr.json()
     json_data['characters_and_irreps'] = [{"subspace": json_bandstr}]
     dumpfn(json_data,"irrep-output.json",indent=4)

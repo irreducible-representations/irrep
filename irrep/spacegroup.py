@@ -650,7 +650,7 @@ class SpaceGroup():
                        "tables, try not specifying refUC and shiftUC."))
                 pass
 
-    def json_dict(self, symmetries=None):
+    def json(self, symmetries=None):
         '''
         Prepare dictionary with info of space group to save in JSON
 
@@ -661,9 +661,10 @@ class SpaceGroup():
         '''
 
         d = {}
+        print(self.refUC, self.shiftUC)
 
-        if (not np.allclose(self.refUC, np.eye(3)) or
-            not np.allclose(self.shiftUC, np.zeros(3))):
+        if (np.allclose(self.refUC, np.eye(3)) and
+            np.allclose(self.shiftUC, np.zeros(3))):
             cells_match = True
         else:
             cells_match = False
@@ -679,6 +680,8 @@ class SpaceGroup():
         for sym in self.symmetries:
             if symmetries is None or sym.ind in symmetries:
                 d["symmetries"][sym.ind] = sym.json_dict(self.refUC, self.shiftUC)
+
+        return d
 
     def show(self, symmetries=None):
         """
