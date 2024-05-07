@@ -1,0 +1,360 @@
+'NoneType' object has no attribute 'split'
+
+
+ ----------INFORMATION ABOUT THE UNIT CELL----------- 
+
+
+Primitive vectors : 
+ [[ 2.274       1.31289451  3.95066667]
+ [-2.274       1.31289451  3.95066667]
+ [ 0.         -2.62578902  3.95066667]] 
+ Atomic positions: 
+ [[0.763 0.763 0.763]
+ [0.237 0.237 0.237]] 
+ Atom type indices: 
+ [1, 1]
+ Reciprocal lattice:
+ [[ 1.38152711  0.79762505  0.53013713]
+ [-1.38152711  0.79762505  0.53013713]
+ [ 0.         -1.5952501   0.53013713]]
+Reading symmetries from tables
+refUC was specified in CLI, but shiftUC was not. Taking shiftUC=(0,0,0).
+
+The cell transformation is given by: 
+        |   1.0000 -1.0000  0.0000 |
+refUC = |   0.0000  1.0000 -1.0000 |    shiftUC = [0. 0. 0.]
+        |   1.0000  1.0000  1.0000 |
+
+Lattice vectors of DFT (a) and reference (c) cells:
+a(0)=[  2.2740  1.3129  3.9507 ]    c(0)=[  4.5480  0.0000  0.0000 ]
+a(1)=[ -2.2740  1.3129  3.9507 ]    c(1)=[ -2.2740  3.9387  0.0000 ]
+a(2)=[  0.0000 -2.6258  3.9507 ]    c(2)=[  0.0000  0.0000 11.8520 ]
+Efermi = 5.2156 eV
+WAVECAR contains 4 k-points and 24 bands.
+ Saving 6 bands starting from 5 in the output
+Energy cutoff in WAVECAR :  520.0
+Energy cutoff reduced to :  50.0
+0 0
+10 1027
+20 1867
+
+
+ ---------- INFORMATION ABOUT THE SPACE GROUP ---------- 
+
+
+Space group R-3m (# 166) has 12 symmetry operations  
+
+ ### 1 
+
+rotation : |  1   0   0 |     rotation : |  1   0   0 |
+           |  0   1   0 |      (refUC)   |  0   1   0 |
+           |  0   0   1 |                |  0   0   1 |
+
+
+ gk = [kx, ky, kz]  |   refUC:  gk = [kx, ky, kz]
+
+spinor rot.         : | 1.000+0.000j  0.000+0.000j |
+                      |-0.000+0.000j  1.000+0.000j |
+spinor rot. (refUC) : | 1.000+0.000j  0.000+0.000j |
+                      |-0.000+0.000j  1.000+0.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.759693 -0.650246  0.006844] ; angle =  0 , inversion : False
+
+
+ ### 2 
+
+rotation : |  0   0   1 |     rotation : |  0  -1   0 |
+           |  1   0   0 |      (refUC)   |  1  -1   0 |
+           |  0   1   0 |                |  0   0   1 |
+
+
+ gk = [kz, kx, ky]  |   refUC:  gk = [-kx-ky, kx, kz]
+
+spinor rot.         : | 0.500-0.866j -0.000-0.000j |
+                      | 0.000-0.000j  0.500+0.866j |
+spinor rot. (refUC) : | 0.500-0.866j -0.000-0.000j |
+                      | 0.000-0.000j  0.500+0.866j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [0. 0. 1.] ; angle = 2/3 pi, inversion : False
+
+
+ ### 3 
+
+rotation : |  0   1   0 |     rotation : | -1   1   0 |
+           |  0   0   1 |      (refUC)   | -1   0   0 |
+           |  1   0   0 |                |  0   0   1 |
+
+
+ gk = [ky, kz, kx]  |   refUC:  gk = [ky, -kx-ky, kz]
+
+spinor rot.         : | 0.500+0.866j  0.000-0.000j |
+                      |-0.000-0.000j  0.500-0.866j |
+spinor rot. (refUC) : | 0.500+0.866j  0.000-0.000j |
+                      |-0.000-0.000j  0.500-0.866j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.  0.  1.] ; angle = -2/3 pi, inversion : False
+
+
+ ### 4 
+
+rotation : |  0   0  -1 |     rotation : |  0   1   0 |
+           |  0  -1   0 |      (refUC)   |  1   0   0 |
+           | -1   0   0 |                |  0   0  -1 |
+
+
+ gk = [-kz, -ky, -kx]  |   refUC:  gk = [ky, kx, -kz]
+
+spinor rot.         : |-0.000+0.000j  0.866+0.500j |
+                      |-0.866+0.500j -0.000-0.000j |
+spinor rot. (refUC) : |-0.000+0.000j  0.866+0.500j |
+                      |-0.866+0.500j -0.000-0.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.5      -0.866025 -0.      ] ; angle = 1 pi, inversion : False
+
+
+ ### 5 
+
+rotation : |  0  -1   0 |     rotation : |  1  -1   0 |
+           | -1   0   0 |      (refUC)   |  0  -1   0 |
+           |  0   0  -1 |                |  0   0  -1 |
+
+
+ gk = [-ky, -kx, -kz]  |   refUC:  gk = [kx, -kx-ky, -kz]
+
+spinor rot.         : | 0.000+0.000j  0.000-1.000j |
+                      | 0.000-1.000j  0.000+0.000j |
+spinor rot. (refUC) : |-0.000+0.000j  0.000+1.000j |
+                      | 0.000+1.000j -0.000+0.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [1. 0. 0.] ; angle = 1 pi, inversion : False
+
+
+ ### 6 
+
+rotation : | -1   0   0 |     rotation : | -1   0   0 |
+           |  0   0  -1 |      (refUC)   | -1   1   0 |
+           |  0  -1   0 |                |  0   0  -1 |
+
+
+ gk = [-kx, -kz, -ky]  |   refUC:  gk = [-kx-ky, ky, -kz]
+
+spinor rot.         : |-0.000-0.000j -0.866+0.500j |
+                      | 0.866+0.500j -0.000+0.000j |
+spinor rot. (refUC) : |-0.000-0.000j -0.866+0.500j |
+                      | 0.866+0.500j -0.000+0.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.5       0.866025  0.      ] ; angle = 1 pi, inversion : False
+
+
+ ### 7 
+
+rotation : | -1   0   0 |     rotation : | -1   0   0 |
+           |  0  -1   0 |      (refUC)   |  0  -1   0 |
+           |  0   0  -1 |                |  0   0  -1 |
+
+
+ gk = [-kx, -ky, -kz]  |   refUC:  gk = [-kx, -ky, -kz]
+
+spinor rot.         : | 1.000+0.000j  0.000+0.000j |
+                      |-0.000+0.000j  1.000+0.000j |
+spinor rot. (refUC) : | 1.000+0.000j  0.000+0.000j |
+                      |-0.000+0.000j  1.000+0.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.759693 -0.650246  0.006844] ; angle =  0 , inversion : True
+
+
+ ### 8 
+
+rotation : |  0   0  -1 |     rotation : |  0   1   0 |
+           | -1   0   0 |      (refUC)   | -1   1   0 |
+           |  0  -1   0 |                |  0   0  -1 |
+
+
+ gk = [-kz, -kx, -ky]  |   refUC:  gk = [kx+ky, -kx, -kz]
+
+spinor rot.         : | 0.500-0.866j -0.000-0.000j |
+                      | 0.000-0.000j  0.500+0.866j |
+spinor rot. (refUC) : | 0.500-0.866j -0.000-0.000j |
+                      | 0.000-0.000j  0.500+0.866j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [0. 0. 1.] ; angle = 2/3 pi, inversion : True
+
+
+ ### 9 
+
+rotation : |  0  -1   0 |     rotation : |  1  -1   0 |
+           |  0   0  -1 |      (refUC)   |  1   0   0 |
+           | -1   0   0 |                |  0   0  -1 |
+
+
+ gk = [-ky, -kz, -kx]  |   refUC:  gk = [-ky, kx+ky, -kz]
+
+spinor rot.         : | 0.500+0.866j  0.000-0.000j |
+                      |-0.000-0.000j  0.500-0.866j |
+spinor rot. (refUC) : | 0.500+0.866j  0.000-0.000j |
+                      |-0.000-0.000j  0.500-0.866j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.  0.  1.] ; angle = -2/3 pi, inversion : True
+
+
+ ### 10 
+
+rotation : |  0   0   1 |     rotation : |  0  -1   0 |
+           |  0   1   0 |      (refUC)   | -1   0   0 |
+           |  1   0   0 |                |  0   0   1 |
+
+
+ gk = [kz, ky, kx]  |   refUC:  gk = [-ky, -kx, kz]
+
+spinor rot.         : |-0.000+0.000j  0.866+0.500j |
+                      |-0.866+0.500j -0.000-0.000j |
+spinor rot. (refUC) : |-0.000+0.000j  0.866+0.500j |
+                      |-0.866+0.500j -0.000-0.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.5      -0.866025 -0.      ] ; angle = 1 pi, inversion : True
+
+
+ ### 11 
+
+rotation : |  0   1   0 |     rotation : | -1   1   0 |
+           |  1   0   0 |      (refUC)   |  0   1   0 |
+           |  0   0   1 |                |  0   0   1 |
+
+
+ gk = [ky, kx, kz]  |   refUC:  gk = [-kx, kx+ky, kz]
+
+spinor rot.         : | 0.000+0.000j  0.000-1.000j |
+                      | 0.000-1.000j  0.000+0.000j |
+spinor rot. (refUC) : |-0.000+0.000j  0.000+1.000j |
+                      | 0.000+1.000j -0.000+0.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [1. 0. 0.] ; angle = 1 pi, inversion : True
+
+
+ ### 12 
+
+rotation : |  1   0   0 |     rotation : |  1   0   0 |
+           |  0   0   1 |      (refUC)   |  1  -1   0 |
+           |  0   1   0 |                |  0   0   1 |
+
+
+ gk = [kx, kz, ky]  |   refUC:  gk = [kx+ky, -ky, kz]
+
+spinor rot.         : |-0.000-0.000j -0.866+0.500j |
+                      | 0.866+0.500j -0.000+0.000j |
+spinor rot. (refUC) : |-0.000-0.000j -0.866+0.500j |
+                      | 0.866+0.500j -0.000+0.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.5       0.866025  0.      ] ; angle = 1 pi, inversion : True
+
+Separating by symmetry operation #  3
+
+ ### 3 
+
+rotation : |  0   1   0 |
+           |  0   0   1 |
+           |  1   0   0 |
+
+
+ gk = [ky, kz, kx]
+
+spinor rot.         : | 0.500+0.866j  0.000-0.000j |
+                      |-0.000-0.000j  0.500-0.866j |
+spinor rot. (refUC) : | 0.500+0.866j  0.000-0.000j |
+                      |-0.000-0.000j  0.500-0.866j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.  0.  1.] ; angle = -2/3 pi, inversion : False
+
+orthogonality (largest of diag. <psi_nk|psi_mk>): 0.0057698 > 1e-5   
+
+
+
+
+
+ ################################################ 
+
+
+ next subspace:   3:+0.500
+Reading symmetries from tables
+
+
+ k-point   2 : [0. 0. 0.] (in DFT cell)
+               [0. 0. 0.] (after cell trasformation)
+
+ number of states : 4
+
+   Energy  |   degeneracy  |   irreps   | sym. operations  
+           |               |            |     1        2        3        4        5        6        7        8        9       10       11       12    
+  -2.7306  |        2      | -GM8(1.0)  |   2.0000   1.0000   1.0000  -0.0000   0.0000  -0.0000   2.0000   1.0000   1.0000  -0.0000   0.0000  -0.0000
+  -0.7762  |        2      | -GM8(1.0)  |   2.0000   1.0000   1.0000  -0.0000   0.0000  -0.0000   2.0000   1.0000   1.0000  -0.0000   0.0000  -0.0000
+inversion is # 7
+number of inversions-odd Kramers pairs :  0
+Gap with upper bands :  2.0416760458391403
+number of inversion-odd Kramers pairs IN THE LISTED KPOINTS:  0   Z4=  0
+Minimal direct gap: 2.0416760458391403  eV
+indirect  gap: 2.0416760458391403  eV
+
+
+
+
+ ################################################ 
+
+
+ next subspace:   3:-1.000
+Reading symmetries from tables
+For each irrep, traces of symmetries in the calculation unit cell will be printed first and traces of symmetries in tables will be printed in the line below
+
+
+ k-point   2 : [0. 0. 0.] (in DFT cell)
+               [0. 0. 0.] (after cell trasformation)
+
+ number of states : 2
+
+   Energy  |   degeneracy  |            irreps            | sym. operations  
+           |               |                              |         1                2                3                4                5                6                7                8                9               10               11               12        
+  -0.4961  |        2      | -GM4(0.99987), -GM5(1.0001)  |   2.0000-0.0000j  -2.0000+0.0000j  -2.0000-0.0000j   0.0000+0.0003j   0.0000+0.0003j   0.0000+0.0003j   2.0000+0.0000j  -2.0000-0.0000j  -2.0000+0.0000j   0.0000+0.0003j   0.0000+0.0003j   0.0000+0.0003j
+           |               |                              |   2.0000-0.0000j  -2.0000+0.0000j  -2.0000-0.0000j   0.0000+0.0003j  -0.0000-0.0003j   0.0000+0.0003j   2.0000+0.0000j  -2.0000-0.0000j  -2.0000+0.0000j   0.0000+0.0003j  -0.0000-0.0003j   0.0000+0.0003j
+inversion is # 7
+number of inversions-odd Kramers pairs :  0
+Gap with upper bands :  1.7616217490413115
+number of inversion-odd Kramers pairs IN THE LISTED KPOINTS:  0   Z4=  0
+Minimal direct gap: 1.7616217490413115  eV
+indirect  gap: 1.7616217490413115  eV
