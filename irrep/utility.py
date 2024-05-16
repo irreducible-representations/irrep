@@ -233,7 +233,7 @@ def split(l):
         return l.split()
 
 
-def short(A):
+def format_matrix(A):
     """
     Format array to print it.
 

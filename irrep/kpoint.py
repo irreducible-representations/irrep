@@ -22,7 +22,7 @@ import copy
 from .gvectors import calc_gvectors, symm_eigenvalues, NotSymmetryError, symm_matrix, sortIG
 from .readfiles import Hartree_eV
 from .readfiles import record_abinit
-from .utility import compstr, is_round, short
+from .utility import compstr, is_round, format_matrix
 from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
 
@@ -225,7 +225,7 @@ class Kpoint:
         ).reshape(self.Nband, 1)
 
         # Calculate traces
-        self.char, self.char_refUC, self.Energy, self.degeneracies = self.calculate_traces(refUC, shiftUC, symmetries, symmetries_tables, degen_thresh)
+        self.char, self.char_refUC, self.Energy, self.degeneracies, self.borders = self.calculate_traces(refUC, shiftUC, symmetries, symmetries_tables, degen_thresh)
 
         # Determine number of band inversions based on parity
         found = False
@@ -243,7 +243,7 @@ class Kpoint:
             self.num_bandinvs = None
 
 
-    def copy_sub(self, E, WF):
+    def copy_sub(self, E, WF, degen_thresh, inds):
         """
         Create an instance of class `Kpoint` for a restricted set of states.
 
@@ -261,17 +261,29 @@ class Kpoint:
             Instance of `Kpoints` corresponding to the group of states passed. 
             They are shorted by energy-levels.
         """
-        #        print ("making a subspace with E={0}\n WF = {1}".format(E,WF.shape))
+
         other = copy.copy(self) # copy of whose class
+
+        # Sort energy levels
         sortE = np.argsort(E)
         other.Energy = E[sortE]
         other.WF = WF[sortE]
         other.Nband = len(E)
-        # other.__calc_sym_eigenvalues()
-        #        print ( self.Energy,other.Energy)
-        #        print ( self.WF.shape, other.WF.shape)
-        #        other.write_characters()
-        #        print ("self overlap:\n",self.overlap(self))
+        inds = inds[sortE]
+
+        # Do not group by degeneracy of energy-levels for printing
+        other.degeneracies = [1] * self.Nband
+        char = []
+        char_refUC = []
+        for i in inds:
+            char.append(other.char[i])
+            char_refUC.append(other.char_refUC[i])
+        other.char = np.array(char)
+        other.char_refUC = np.array(char_refUC)
+        irreps = []
+        for i in inds:
+            irreps.append(other.irreps[i])
+        other.irreps = irreps
         return other
 
     def unfold(self, supercell, kptPBZ, degen_thresh=1e-4):
@@ -421,7 +433,7 @@ class Kpoint:
                 result.append((b1, b2, E, (W,)))
         return result
 
-    def Separate(self, symop, degen_thresh=1e-5, groupKramers=True):
+    def Separate(self, symop, degen_thresh, groupKramers=True):
         """
         Separate the band structure in a particular k-point according to the 
         eigenvalues of a symmetry operation.
@@ -443,6 +455,17 @@ class Kpoint:
             states with that eigenvalue.
         """
 
+        # Check orthogonality of wave functions
+        # Rm once tests are fixed
+        norms = self.WF.conj().dot(self.WF.T)
+        check = np.max(abs(norms - np.eye(norms.shape[0])))
+        if check > 1e-5:
+            print(
+                "orthogonality (largest of diag. <psi_nk|psi_mk>): {0:7.5} > 1e-5   \n".format(
+                    check
+                )
+            )
+
         S = symm_matrix(
             self.K,
             self.RecLattice,
@@ -454,88 +477,89 @@ class Kpoint:
             self.spinor,
         )
 
-        # Check orthogonality of wave functions
-        norms = self.WF.conj().dot(self.WF.T)
-        check = np.max(abs(norms - np.eye(norms.shape[0])))
-        if check > 1e-5:
-            print(
-                "orthogonality (largest of diag. <psi_nk|psi_mk>): {0:7.5} > 1e-5   \n".format(
-                    check
-                )
-            )
 
-        eigenvalues = []
-        eigenvectors = []
-        Eloc = []
-
-        # check that S is block-diagonal
+        # Check that S is block-diagonal
         Sblock = np.copy(S)
-        for b1, b2 in zip(borders, borders[1:]):
+        for b1, b2 in zip(self.borders, self.borders[1:]):
             Sblock[b1:b2, b1:b2] = 0
         check = np.max(abs(Sblock))
         if check > 0.1:
-            print("WARNING: off-block:  \n", check)
-            print(short(Sblock))
+            print(("WARNING: matrix of symmetry has non-zero elements between "
+                   "states of different energy:  \n", check))
+            print("Printing matrix of symmetry at k={}".format(self.K))
+            print(format_matrix(Sblock))
 
-        # calculate eigenvalues and eigenvectors in each block
-        for b1, b2 in zip(borders, borders[1:]):
+        # Calculate eigenvalues and eigenvectors in each block
+        eigenvalues = []
+        eigenvectors = []
+        inds_states = []
+        Eloc = []
+        for istate, num_states in  enumerate(self.degeneracies):
+            b1 = self.borders[istate]
+            b2 = self.borders[istate+1]
+            inds_states += [istate] * num_states  # index for set of states
             W, V = la.eig(S[b1:b2, b1:b2])
-            #            print (b1,b2,"symmetry submatrix \n",short(S[b1:b2,b1:b2]))
             for w, v in zip(W, V.T):
                 eigenvalues.append(w)
-                Eloc.append(self.Energy[b1:b2].mean())
+                Eloc.append(self.Energy[istate])
                 eigenvectors.append(
                     np.hstack((np.zeros(b1), v, np.zeros(self.Nband - b2)))
                 )
         w = np.array(eigenvalues)
         v = np.array(eigenvectors).T # each col an eigenvector
         Eloc = np.array(Eloc)
+        inds_states = np.array(inds_states)
 
-        #        print ("eigenvalues:",w)
-        #        print ("eigenvectors:\n",v)
-        #        print ("Eloc:\n",Eloc)
+        # Check unitarity of the symmetry
         if np.abs((np.abs(w) - 1.0)).max() > 1e-4:
             print("WARNING : some eigenvalues are not unitary :{0} ".format(w))
         if np.abs((np.abs(w) - 1.0)).max() > 3e-1:
             raise RuntimeError(" some eigenvalues are not unitary :{0} ".format(w))
         w /= np.abs(w)
-        nb = len(w)
 
         subspaces = {}
 
         if groupKramers:
-            w1 = np.argsort(np.real(w))
-            w = w[w1]
-            v = v[:, w1]
-            Eloc = Eloc[w1]
+
+            # Sort based on real part of eigenvalues
+            arg = np.argsort(np.real(w))
+            w = w[arg]
+            v = v[:, arg]
+            Eloc = Eloc[arg]
+            inds_states = inds_states[arg]
             borders = np.hstack(
-                ([0], np.where((w[1:] - w[:-1]) > 0.05)[0] + 1, [len(w)])
+                ([0], np.where((w[1:] - w[:-1]) > 0.05)[0] + 1, [self.Nband])
             )
+
+            # Probably this if-else statement can be removed
             if len(borders) > 0:
                 for b1, b2 in zip(borders, borders[1:]):
                     v1 = v[:, b1:b2]
-                    subspaces[w[b1:b2].mean()] = self.copy_sub(
-                        E=Eloc[b1:b2], WF=v1.T.dot(self.WF)
-                    )
+                    print(w[b1:b2].mean())
+                    subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.dot(self.WF), degen_thresh=degen_thresh, inds=inds_states[b1:b2])
             else:
                 v1 = v
-                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF))
-        else:
+                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF), degen_thresh=degen_thresh, inds_states=inds_states)
+
+        else:  # don't group Kramers pairs
             
-            w1 = np.argsort(np.angle(w))
-            w = w[w1]
-            v = v[:, w1]
-            Eloc = Eloc[w1]
+            # Sort based on the argument of eigenvalues
+            arg = np.argsort(np.angle(w))
+            w = w[arg]
+            v = v[:, arg]
+            Eloc = Eloc[arg]
             borders = np.where(abs(w - np.roll(w, 1)) > 0.1)[0]
+
             if len(borders) > 0:
                 for b1, b2 in zip(borders, np.roll(borders, -1)):
-                    v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % nb]
-                    subspaces[np.roll(w, -b1)[: (b2 - b1) % nb].mean()] = self.copy_sub(
-                        E=np.roll(Eloc, -b1)[: (b2 - b1) % nb], WF=v1.T.dot(self.WF)
+                    v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.Nband]
+                    subspaces[np.roll(w, -b1)[: (b2 - b1) % self.Nband].mean()] = self.copy_sub(
+                        E=np.roll(Eloc, -b1)[: (b2 - b1) % self.Nband], degen_thresh=degen_thresh, WF=v1.T.dot(self.WF)
                     )
+
             else:
                 v1 = v
-                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF))
+                subspaces[w.mean()] = self.copy_sub(E=Eloc, degen_thresh=degen_thresh, WF=v1.T.dot(self.WF))
 
         return subspaces
 
@@ -587,7 +611,7 @@ class Kpoint:
                 char_refUC[:,i] *= (sym[ind].sign 
                                      * np.exp(-2j*np.pi*dt.dot(self.k_refUC)))
 
-        return char, char_refUC, Energy_mean, degeneracies
+        return char, char_refUC, Energy_mean, degeneracies, borders
 
 
     def identify_irreps(self, irreptable=None):
@@ -621,9 +645,7 @@ class Kpoint:
         self.irreps = irreps
 
 
-    def write_characters2(self,
-                          efermi=0.0,
-                          ):
+    def write_characters2(self):
 
         # Print header for k-point
         print(("\n\n k-point {0:3d} : {1} (in DFT cell)\n"
@@ -702,7 +724,7 @@ class Kpoint:
 
             # Energy, degeneracy, irrep's label and character in DFT cell
             left_str = (" {0:8.4f}  |    {1:5d}      | {2:{3}s} |"
-                        .format(e - efermi, d, ir, irreplen)
+                        .format(e, d, ir, irreplen)
                         )
             print(left_str + " " + right_str1)
 

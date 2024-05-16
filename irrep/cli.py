@@ -364,6 +364,7 @@ def cli(
         degen_thresh=degenthresh
     )
 
+    bandstr.spacegroup.show()
 
     if onlysym:
         exit()

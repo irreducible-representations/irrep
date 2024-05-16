@@ -324,7 +324,7 @@ class BandStructure:
 
             # Preserve only bands in between IBstart and IBend
             WF = WF[IBstart:IBend]
-            Energy = Energy[IBstart:IBend]
+            Energy = Energy[IBstart:IBend] - self.efermi
 
             kp = Kpoint(
                 ik=ik,
@@ -345,9 +345,6 @@ class BandStructure:
                 )
             self.kpoints.append(kp)
         
-        self.num_bandinvs, self.gap_direct, self.gap_indirect = self.calculate_gaps()
-
-
     def getNK(self):
         """Getter for `self.kpoints`."""
         return len(self.kpoints)
@@ -370,7 +367,7 @@ class BandStructure:
         for KP in self.kpoints:
 
             # Print block of irreps and their characters
-            KP.write_characters2(self.efermi)
+            KP.write_characters2()
 
             # Print number of inversion odd Kramers pairs
             if KP.num_bandinvs is None:
@@ -429,24 +426,29 @@ class BandStructure:
 
         return json_data
 
-    
-    def calculate_gaps(self):
+    @property
+    def gap_direct(self):
+        gap = np.Inf
+        for KP in self.kpoints:
+            gap = min(gap, KP.upper-KP.Energy[-1])
+        return gap
 
-        num_bandinvs = 0
-        gap_direct = np.Inf
+    @property
+    def gap_indirect(self):
         min_upper = np.Inf  # smallest energy of bands above set
         max_lower = -np.inf  # largest energy of bands in the set
+        for KP in self.kpoints:
+            min_upper = min(min_upper, KP.upper)
+            max_lower = max(max_lower, KP.Energy[-1])
+        return min_upper - max_lower
 
+    @property
+    def num_bandinvs(self):
+        num_bandinvs = 0
         for KP in self.kpoints:
             if KP.num_bandinvs is not None:
                 num_bandinvs += KP.num_bandinvs
-            gap_direct = min(gap_direct, KP.upper-KP.Energy[-1])
-            min_upper = min(min_upper, KP.upper)
-            max_lower = max(max_lower, KP.Energy[-1])
-        
-        gap_indirect = min_upper - max_lower
-        return num_bandinvs, gap_direct, gap_indirect
-
+        return num_bandinvs
 
     def write_plotfile(self, plotFile):
 
@@ -678,15 +680,20 @@ class BandStructure:
             corresponding value is an instance of `class` `BandStructure` for 
             the subspace of that eigenvalue.
         """
+
         if isymop == 1:
             return {1: self}
+
+        # Print description of symmetry used for separation
         symop = self.spacegroup.symmetries[isymop - 1]
-        #print("Separating by symmetry operation # ", isymop)
         symop.show()
+
+        # Separate each k-point
         kpseparated = [
             kp.Separate(symop, degen_thresh=degen_thresh, groupKramers=groupKramers)
             for kp in self.kpoints
         ] # each element is a dict with separated bandstructure of a k-point
+
         allvalues = np.array(sum((list(kps.keys()) for kps in kpseparated), []))
         #        print (allvalues)
         #        for kps in kpseparated :
