@@ -231,3 +231,24 @@ def split(l):
         return l.split(":")
     else:
         return l.split()
+
+
+def short(A):
+    """
+    Format array to print it.
+
+    Parameters
+    ----------
+    A : array
+        Matrix that should be printed.
+
+    Returns
+    -------
+    str
+        Description of the matrix. Ready to be printed.
+    """
+    return "".join(
+        "   ".join("{0:+5.2f} {1:+5.2f}".format(x.real, x.imag) for x in a)
+        + "\n"
+        for a in A
+    )

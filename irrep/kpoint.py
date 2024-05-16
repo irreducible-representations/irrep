@@ -22,7 +22,7 @@ import copy
 from .gvectors import calc_gvectors, symm_eigenvalues, NotSymmetryError, symm_matrix, sortIG
 from .readfiles import Hartree_eV
 from .readfiles import record_abinit
-from .utility import compstr, is_round
+from .utility import compstr, is_round, short
 from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
 
@@ -442,13 +442,7 @@ class Kpoint:
             corresponding value is an instance of `class` `Kpoint` for the 
             states with that eigenvalue.
         """
-        borders = np.hstack(
-            [
-                [0],
-                np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
-                [self.Nband],
-            ]
-        )
+
         S = symm_matrix(
             self.K,
             self.RecLattice,
@@ -459,39 +453,20 @@ class Kpoint:
             symop.translation,
             self.spinor,
         )
-        # check orthogonality
-        S1 = self.WF.conj().dot(self.WF.T)
-        check = np.max(abs(S1 - np.eye(S1.shape[0])))
+
+        # Check orthogonality of wave functions
+        norms = self.WF.conj().dot(self.WF.T)
+        check = np.max(abs(norms - np.eye(norms.shape[0])))
         if check > 1e-5:
             print(
                 "orthogonality (largest of diag. <psi_nk|psi_mk>): {0:7.5} > 1e-5   \n".format(
                     check
                 )
             )
-        #        print ("symmetry matrix \n",shortS)
+
         eigenvalues = []
         eigenvectors = []
         Eloc = []
-
-        def short(A):
-            """
-            Format array to print it.            
-            
-            Parameters
-            ----------
-            A : array
-                Matrix that should be printed.
-                
-            Returns
-            -------
-            str
-                Description of the matrix. Ready to be printed.
-            """
-            return "".join(
-                "   ".join("{0:+5.2f} {1:+5.2f}".format(x.real, x.imag) for x in a)
-                + "\n"
-                for a in A
-            )
 
         # check that S is block-diagonal
         Sblock = np.copy(S)
