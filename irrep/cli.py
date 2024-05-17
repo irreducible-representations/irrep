@@ -400,7 +400,7 @@ def cli(
         json_data["separating symmetries"]=isymsep
         tmp_subbands = {}
         for isym in isymsep:
-            print("Separating by symmetry operation # ", isym)
+            print("\n-------- SEPARATING BY SYMMETRY # {} --------".format(isym))
             for s_old, bs in subbands.items():
                 separated = bs.Separate(isym, degen_thresh=degenthresh, groupKramers=groupkramers)
                 for s_new, bs_separated in separated.items():
@@ -413,9 +413,9 @@ def cli(
     for k, sub in subbands.items():
         if isymsep is not None:
             print(
-                "\n\n\n\n ################################################ \n\n\n next subspace:  ",
+                "\n\n\n\n ################################################ \n\n\n NEXT SUBSPACE:  ",
                 " , ".join(
-                    "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
+                    "sym # {0} -> eigenvalue {1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
                 ),
             )
         plotfile=None # being implemented, not finished yet...

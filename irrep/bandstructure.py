@@ -393,6 +393,9 @@ class BandStructure:
         else:
             print("TOTAL number of inversions-odd states : {}"
                   .format(self.num_bandinvs))
+        
+        print('Z2 invariant: {}'.format(int(self.num_bandinvs/2 % 2)))
+        print('Z4 invariant: {}'.format(int(self.num_bandinvs/2 % 4)))
 
         # Print indirect gap and smalles direct gap
         print('Indirect gap: {}'.format(self.gap_indirect))
