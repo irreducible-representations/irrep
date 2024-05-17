@@ -318,7 +318,7 @@ class BandStructure:
 
             # Pick energy of IBend+1 band to calculate gaps
             try:
-                upper = Energy[IBend]
+                upper = Energy[IBend] - self.efermi
             except BaseException:
                 upper = np.NaN
 
@@ -371,9 +371,9 @@ class BandStructure:
 
             # Print number of inversion odd Kramers pairs
             if KP.num_bandinvs is None:
-                print("Invariant under inversion: No")
+                print("\nInvariant under inversion: No")
             else:
-                print("Invariant under inversion: Yes")
+                print("\nInvariant under inversion: Yes")
                 if self.spinor:
                     print("Number of inversions-odd Kramers pairs : {}"
                           .format(int(KP.num_bandinvs / 2))
@@ -388,7 +388,7 @@ class BandStructure:
         
         # Print total number of band inversions
         if self.spinor:
-            print("TOTAL number of inversions-odd Kramers pairs : {}"
+            print("\nTOTAL number of inversions-odd Kramers pairs : {}"
                   .format(int(self.num_bandinvs/2)))
         else:
             print("TOTAL number of inversions-odd states : {}"
@@ -396,7 +396,7 @@ class BandStructure:
 
         # Print indirect gap and smalles direct gap
         print('Indirect gap: {}'.format(self.gap_indirect))
-        print('Smallest direct gap: {}'.format(self.gap_direct))
+        print('Smallest direct gap in the given set of k-points: {}'.format(self.gap_direct))
     
 
     def json(self, kpnames=None):
@@ -465,8 +465,10 @@ class BandStructure:
 
     def write_irrepsfile(self):
 
+        file = open('irreps.dat', 'w')
         for KP in self.kpoints:
-            KP.write_irrepsfile('irreps.dat', self.efermi)
+            KP.write_irrepsfile(file)
+        file.close()
 
 
     def write_characters(
@@ -497,8 +499,6 @@ class BandStructure:
             If it is not specified, only traces will be printed, not irreps.
         symmetries : list, default=None
             Index of symmetry operations whose description will be printed. 
-        preline : str, default=''
-            Characters to write before labels of irreps in file `irreps.dat`.
         plotFile : str, default=None
             Name of file in which energy-levels and corresponding irreps will be 
             written to later place irreps in a band structure plot.

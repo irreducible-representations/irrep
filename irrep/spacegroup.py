@@ -661,7 +661,6 @@ class SpaceGroup():
         '''
 
         d = {}
-        print(self.refUC, self.shiftUC)
 
         if (np.allclose(self.refUC, np.eye(3)) and
             np.allclose(self.shiftUC, np.zeros(3))):
@@ -736,7 +735,7 @@ class SpaceGroup():
 
         # Print cell vectors in DFT and reference cells
         vecs_refUC = np.dot(self.Lattice, self.refUC).T
-        print('Cell vectors in angstroms')
+        print('Cell vectors in angstroms:\n')
         print('{:^32}|{:^32}'.format('Vectors of DFT cell', 'Vectors of REF. cell'))
         for i in range(3):
             vec1 = self.Lattice[i]
@@ -748,7 +747,7 @@ class SpaceGroup():
         print()
 
         # Print atomic positions
-        print('Atomic positions in direct coordinates')
+        print('Atomic positions in direct coordinates:\n')
         print('{:^} | {:^25} | {:^25}'.format('Atom type', 'Position in DFT cell', 'Position in REF cell'))
         positions_refUC = self.positions.dot(np.linalg.inv(self.refUC.T))
         for itype, pos1, pos2 in zip(self.typat, self.positions, positions_refUC):

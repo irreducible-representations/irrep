@@ -771,6 +771,12 @@ class Kpoint:
         
         return json_data
         
+    def write_irrepsfile(self, file):
+
+        for energy, irrep_dict in zip(self.Energy, self.irreps):
+            irrep = ''.join(irrep_dict.keys())
+            s = '{:15.7f}    {:15s}\n'.format(energy, irrep)
+            file.write(s)
 
 
     def write_characters(

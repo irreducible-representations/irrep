@@ -380,12 +380,14 @@ def cli(
     # Temporary, until we make it valid for isymsep
     bandstr.write_characters2()
 
+    # Write irreps.dat file
+    bandstr.write_irrepsfile()
+
     # Temporary, until we make it valid for isymsep
     json_data = {}
     json_data ["spacegroup"] = bandstr.spacegroup.json(symmetries=symmetries)
     json_bandstr = bandstr.json()
     json_data['characters_and_irreps'] = [{"subspace": json_bandstr}]
-#    dumpfn(json_data,"irrep-output.json",indent=4)
 
     subbands = {(): bandstr}
 
