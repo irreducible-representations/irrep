@@ -168,7 +168,7 @@ class BandStructure:
             typat = parser.typat
             self.Ecut0 = parser.ecut
             EF_in = parser.efermi
-            NBin = parser.nband
+            NBin = max(parser.nband)
             NK = parser.nkpt
 
         elif code == "espresso":
