@@ -383,12 +383,16 @@ def cli(
     # Write irreps.dat file
     bandstr.write_irrepsfile()
 
+    # Write trace.txt file
+    bandstr.write_trace(degen_thresh=degenthresh, symmetries=symmetries)
+
     # Temporary, until we make it valid for isymsep
     json_data = {}
     json_data ["spacegroup"] = bandstr.spacegroup.json(symmetries=symmetries)
     json_bandstr = bandstr.json()
     json_data['characters_and_irreps'] = [{"subspace": json_bandstr}]
 
+    # Separate in terms of symmetry eigenvalues
     subbands = {(): bandstr}
 
     if isymsep is not None:
@@ -402,17 +406,24 @@ def cli(
                 for s_new, bs_separated in separated.items():
                     tmp_subbands[tuple(list(s_old) + [s_new])] = bs_separated
             subbands = tmp_subbands
-
-            #subbands = {
-            #    tuple(list(s_old) + [s_new]): sub
-            #    for s_old, bands in subbands.items()
-            #    for s_new, sub in bands.Separate(
-            #        isym, degen_thresh=degenthresh, groupKramers=groupkramers
-            #    ).items()
-            #}
     else :
         json_data["separated by symmetry"]=False
         
+    json_data["characters_and_irreps"]=[]
+    for k, sub in subbands.items():
+        if isymsep is not None:
+            print(
+                "\n\n\n\n ################################################ \n\n\n next subspace:  ",
+                " , ".join(
+                    "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
+                ),
+            )
+        plotfile=None # being implemented, not finished yet...
+        sub.write_characters2()
+        json_data["characters_and_irreps"].append({"symmetry_eigenvalues":k , "subspace": sub.json(symmetries)})
+
+    dumpfn(json_data,"irrep-output.json",indent=4)
+    exit()
 
     if zak:
         for k in subbands:
@@ -442,25 +453,6 @@ def cli(
             )
         exit()
 
-    bandstr.write_trace(
-        degen_thresh=degenthresh,
-        symmetries=symmetries,
-    )
-    json_data["characters_and_irreps"]=[]
-    for k, sub in subbands.items():
-        if isymsep is not None:
-            print(
-                "\n\n\n\n ################################################ \n\n\n next subspace:  ",
-                " , ".join(
-                    "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
-                ),
-            )
-        plotfile=None # being implemented, not finished yet...
-        sub.write_characters2()
-        json_data["characters_and_irreps"].append({"symmetry_eigenvalues":k , "subspace": sub.json(symmetries)})
-
-    dumpfn(json_data,"irrep-output.json",indent=4)
-    exit()
     if plotbands:
         json_data["characters_and_irreps"] = {}
         print("plotbands = True --> writing bands")
