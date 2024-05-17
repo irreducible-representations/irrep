@@ -384,7 +384,7 @@ def cli(
     bandstr.write_irrepsfile()
 
     # Write trace.txt file
-    bandstr.write_trace(degen_thresh=degenthresh, symmetries=symmetries)
+    bandstr.write_trace()
 
     # Temporary, until we make it valid for isymsep
     json_data = {}

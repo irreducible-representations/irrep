@@ -1066,7 +1066,7 @@ class Kpoint:
 
 
 
-    def write_trace(self, degen_thresh=1e-8, symmetries=None, efermi=0.0):
+    def write_trace(self):
         """
         Write in `trace.txt` the block corresponding to a single k-point.
 
@@ -1086,11 +1086,8 @@ class Kpoint:
             Block to write in `trace.txt` with description of traces in a
             single k-point.
         """
-        if symmetries is None:
-            sym = {s.ind: s for s in self.symmetries}
-        else:
-            sym = {s.ind: s for s in self.symmetries if s.ind in symmetries}
 
+        sym = {s.ind: s for s in self.symmetries}
         res = (
             "{0} \n"
             + " {1} \n"  # Number of symmetry operations of the little co-group of the 1st maximal k-vec. In the next line the position of each element of the point group in the list above.
@@ -1098,28 +1095,12 @@ class Kpoint:
             # (3) energy and eigenvalues (real part, imaginary part) for each symmetry operation of the little group (listed above).
         ).format(len(sym.keys()), "  ".join(str(x) for x in sym))
 
-        char = np.vstack([self.symmetries[sym[i]] for i in sorted(sym)])
-        borders = np.hstack(
-            [
-                [0],
-                np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
-                [self.Nband],
-            ]
-        )
-        char = np.array(
-            [char[:, start:end].sum(axis=1) for start, end in zip(borders, borders[1:])]
-        )
-
-        E = np.array(
-            [self.Energy[start:end].mean() for start, end in zip(borders, borders[1:])]
-        )
-        dim = np.array([end - start for start, end in zip(borders, borders[1:])])
-        IB = np.cumsum(np.hstack(([0], dim[:-1]))) + 1
+        IB = np.cumsum(np.hstack(([0], self.degeneracies[:-1]))) + 1
         res += (
             "\n".join(
-                (" {ib:8d}  {d:8d}   {E:8.4f} ").format(E=e - efermi, d=d, ib=ib)
+                (" {ib:8d}  {d:8d}   {E:8.4f} ").format(E=e, d=d, ib=ib)
                 + "  ".join("{0:10.6f}   {1:10.6f} ".format(c.real, c.imag) for c in ch)
-                for e, d, ib, ch in zip(E, dim, IB, char)
+                for e, d, ib, ch in zip(self.Energy, self.degeneracies, IB, self.char)
             )
             + "\n"
         )

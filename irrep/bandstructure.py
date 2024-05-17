@@ -613,25 +613,12 @@ class BandStructure:
 
     def write_trace(
         self,
-        degen_thresh=1e-8,
-        kpnames=None,
-        symmetries=None,
     ):
         """
         Generate `trace.txt` file to upload to the program `CheckTopologicalMat` 
         in `BCS <https://www.cryst.ehu.es/cgi-bin/cryst/programs/topological.pl>`_ .
-
-        Parameters
-        ----------
-        degen_thresh : float, default=1e-8
-            Threshold energy used to decide whether wave-functions are
-            degenerate in energy.
-        kpnames : list, default=None
-            Labels of maximal k-points at which irreps of bands must be computed. 
-            If it is not specified, only traces will be printed, not irreps.
-        symmetries : list, default=None
-            Index of symmetry operations whose description will be printed. 
         """
+
         f = open("trace.txt", "w")
         f.write(
             (
@@ -656,7 +643,7 @@ class BandStructure:
             )
         for KP in self.kpoints:
             f.write(
-                KP.write_trace(degen_thresh, symmetries=symmetries, efermi=self.efermi)
+                KP.write_trace()
             )
 
     def Separate(self, isymop, degen_thresh=1e-5, groupKramers=True):
