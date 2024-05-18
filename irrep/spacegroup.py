@@ -262,7 +262,6 @@ class SymmetryOperation():
                 is_first = False
             return s
 
-        json_data = {} 
         if (not np.allclose(refUC, np.eye(3)) or
             not np.allclose(shiftUC, np.zeros(3))):
             write_ref = True  # To avoid writing this huge block again
@@ -273,7 +272,6 @@ class SymmetryOperation():
         print("\n ### {} \n".format(self.ind))
 
         # Print rotation part
-        json_data ["rotation_matrix"]=self.rotation
         rotstr = [s +
                   " ".join("{0:3d}".format(x) for x in row) +
                   t for s, row, t in zip(["rotation : |", " " *
@@ -284,7 +282,6 @@ class SymmetryOperation():
         if write_ref:
             fstr = ("{0:3d}")
             R = self.rotation_refUC(refUC)
-            json_data ["rotation_matrix_refUC"]=R
             rotstr1 = [" " *
                        5 +
                        s +
@@ -296,8 +293,6 @@ class SymmetryOperation():
                                               R,
                                               [" |", " |", " |"])]
             rotstr = [r + r1 for r, r1 in zip(rotstr, rotstr1)]
-        else: 
-            json_data ["rotation_matrix_refUC"]=self.rotation
 
         kstring = "gk = [" + ", ".join(
                     [parse_row_transform(r) for r in np.transpose(np.linalg.inv(self.rotation))]
@@ -336,9 +331,6 @@ class SymmetryOperation():
                        ]
             print("\n".join(spinstr))
 
-            json_data ["spinor_rotation_matrix"]=self.spinor_rotation
-            json_data ["spinor_rotation_matrix_refUC"]=self.spinor_rotation*self.sign
-
         # Print translation part
         trastr = ("\ntranslation         :  [ " 
                   + " ".join("{0:8.4f}"
@@ -347,7 +339,6 @@ class SymmetryOperation():
                   + " ] "
                   )
         print(trastr)
-        json_data ["translation"]=self.translation
 
         if write_ref:
             _t=self.translation_refUC(refUC,shiftUC)
@@ -358,18 +349,9 @@ class SymmetryOperation():
                   + " ] "
                   )
             print(trastr)
-            json_data ["translation_refUC"]=_t
-        else: 
-            json_data ["translation_refUC"]=self.translation
 
         print("\naxis: {0} ; angle = {1}, inversion : {2}\n".format(
             self.axis.round(6), self.angle_str, self.inversion))
-        json_data["axis"]  = self.axis
-        json_data["angle_str"] = self.angle_str
-        json_data["angle_pi"] = self.angle/np.pi
-        json_data["inversion"] = self.inversion
-        json_data["sign"] = self.sign
-        return json_data
 
     def str(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
@@ -706,29 +688,6 @@ class SpaceGroup():
         else:
             write_ref = False
 
-        json_data = {"name": self.name,
-                     "number": self.number,
-                     "spinor": self.spinor,
-                     "num_symmetries": len(self.symmetries),
-                     "cells_match": not write_ref,
-                     "symmetries": {}
-                     }
-        print()
-        print('\n ---------- SPACE GROUP ----------- \n')
-        print()
-        print('Space group: {} (# {})'.format(self.name, self.number))
-        print('Number of symmetries: {} (mod. lattice translations)'.format(self.order))
-        refUC_print = self.refUC.T  # print following convention in paper
-        print("\nThe transformation from the DFT cell to the reference cell of tables is given by: \n"
-              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[0]]))
-              + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[1]]), np.round(self.shiftUC, 5))
-              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[2]]))
-              )
-
-        for symop in self.symmetries:
-            if symmetries is None or symop.ind in symmetries:
-                json_data["symmetries"][symop.ind]=symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
-
         print('')
         print("\n ---------- CRYSTAL STRUCTURE ---------- \n")
         print('')
@@ -758,7 +717,22 @@ class SpaceGroup():
             s += '  '.join(['{:7.4f}'.format(x) for x in pos2])
             print(s)
 
-        return json_data
+        print()
+        print('\n ---------- SPACE GROUP ----------- \n')
+        print()
+        print('Space group: {} (# {})'.format(self.name, self.number))
+        print('Number of symmetries: {} (mod. lattice translations)'.format(self.order))
+        refUC_print = self.refUC.T  # print following convention in paper
+        print("\nThe transformation from the DFT cell to the reference cell of tables is given by: \n"
+              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[0]]))
+              + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[1]]), np.round(self.shiftUC, 5))
+              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[2]]))
+              )
+
+        for symop in self.symmetries:
+            if symmetries is None or symop.ind in symmetries:
+                symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
+
 
     def write_trace(self):
         """
