@@ -418,9 +418,9 @@ def cli(
                     "sym # {0} -> eigenvalue {1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
                 ),
             )
-        plotfile=None # being implemented, not finished yet...
-        sub.write_characters2()
-        json_data["characters_and_irreps"].append({"symmetry_eigenvalues":k , "subspace": sub.json(symmetries)})
+            plotfile=None # being implemented, not finished yet...
+            sub.write_characters2()
+            json_data["characters_and_irreps"].append({"symmetry_eigenvalues":k , "subspace": sub.json(symmetries)})
 
     dumpfn(json_data,"irrep-output.json",indent=4)
     exit()
