@@ -1,7 +1,13 @@
 # Bi: diagnosing higher-order topology
 
 In this tutorial, we will use IrRep to classify the topology of Bi. We will use as input DFT data obtained with the Vienna *ab initio* simulation package. This data consists of the POSCAR and WAVECAR files in the current directory. The input files for VASP necessary to obtain this data ca be found in the directory `inputs`.
-Indize bat gehitu
+
+**Exercises:**
+
+- [Exercise 1: Identify the space group](#identification-of-the-space-group)
+- [Exercise 2: Calculate the irreducible representations at maximal k-points](#irreducible-representations-at-maximal-k-points)
+- [Exercise 3: Diagnose the topology of valence bands](#diagnosing-topology-of-valence-bands)
+- [Exercise 4: Separate wave functions by inversion eigenvalues](#separating-states-by-inversion-eigenvalues)
 
 ## Identification of the space group
 
@@ -20,7 +26,7 @@ With `> out`, we have saved the output of IrRep into a file called `out`. If we 
 - A list of symmetry operations. Each symmetry operation is described by giving the matrix of its rotational part, the vector of the translational part, its action on a generic **k**-point, its rotation axis, angle and whether it respects chirality or not (`inversion` tag).
 
 
-## Calculation of irreducible representations at maximal **k**-points
+## Irreducible representations at maximal k-points
 
 IrRep is able calculate the traces of symmetry operations in every **k**-point. Furthermore, if the **k**-point is maximal, IrRep can identify the irreducible representation of every wave function by comparing the traces to the character tables of irreducible representations. For that, we have to run IrRep with the `-kpnames` option:
 
@@ -122,7 +128,7 @@ You should see something like the following picture:
 According to this analysis, Bi hosts a topological phase classified by a $z_4=2$, due to a double band inversion invisible to the $z_2$ indicator. This [number indicates](https://www.nature.com/articles/s41467-018-06010-w) that **Bi is a higher-order topological insulator**. Indeed, [F. Schindler *et al.*](https://www.nature.com/articles/s41567-018-0224-7) demonstrated that Bi exhibits with gapless hinge modes.
 
 
-## Separating states by symmetry eigenvalues
+## Separating states by inversion eigenvalues
 
 Identifying irreducible representations is not IrRep's only function. It is also able to separate wave functions based on eigenvalue of a symmetry operation. Let us take advantage of this function to corroborate the calculation of strong $z_2$ invariant and the $z_4$. For that, we have to separate wave functions in subspaces of inversion.
 
@@ -171,10 +177,10 @@ Since there are 3 partners for the points and L, the number of inversion-odd wav
 N<sub>4</sub> = 6 + 2 + 6 x 3 + 6 x 3 = 44.
 </div>
 
-According to [Fu-Kane's formula](), the strong invariant is $z_2$:
+According to [Fu-Kane's formula](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.76.045302), the strong invariant is $z_2$:
 
 <div align="center">
-z<sub>4</sub> = N<sub>-</sub> mod 2 = 0.
+z<sub>2</sub> = N<sub>-</sub> mod 2 = 0.
 </div>
 
 On the other hand, the $z_4$ number is:
