@@ -1,9 +1,17 @@
 # SnTe: diagnosing crystalline topology and explaining the cell transformation
 
 In this tutorial, we will use IrRep to classify the topology of SnTe. We will force ourselves to use the `-refUC` tag to explain the difference between DFT and conventional settings. We will use as input DFT data obtained with the [Abinit](https://www.abinit.org). This data consists of the file maxK_WFK located in the current directory. The input files for Abinit necessary to obtain this data ca be found in the directory `inputs`.
-Indize bat gehitu
 
-## Identification of the space group
+**Exercises**:
+
+- [Exercise 1: Identification of the space group](#Ex 1)
+- [Exercise 2: Transformation to the conventional cell ](#Ex 2)
+- [Exercise 3: Irreducible representations at maximal k-points](#Ex 3)
+- [Exercise 4: Topology of valence bands](#Ex 4)
+- [Exercise 5: Separation into subspaces of inversion](#Ex 5)
+
+
+## Identification of the space group <a name="Ex 1"></a>
 
 SnTe crystallizes in a face-centered cubic structure. There exist 11 different face-centered cubic space groups. To determine the precise space group of our material, we need the cell vectors that describe the periodicity of the lattice, and the positions of atoms within the unit cell. This information is in the maxK_WFK file, but we can not open and read it, as this is a binary file. Instead, we can use IrRep to extract this information:
 
@@ -19,7 +27,8 @@ With the specifications `-code=abinit` and `-fWFK=maxK_WFK`, we are telling IrRe
 
 - A list of symmetry operations. Each symmetry operation is described by giving the matrix of its rotational part, the vector of the translational part, its action on a generic **k**-point, its rotation axis, angle and whether it respects chirality or not (`inversion` tag).
 
-## Transformation to the conventional cell
+
+## Transformation to the conventional cell <a name="Ex 2"></a>
 
 IrRep is able calculate the traces of symmetry operations in every **k**-point, also to identify the irreducible representatins (irreps). For that, it needs the transformation from the DFT cell to the conventional setting in which the tables of irreps are written. As long as we set a valid `-kpnames`, IrRep will work out the transformation automatically. But, we enjoy challenges, so **let us assume that we want to use -refUC**.
 
@@ -37,7 +46,7 @@ We have to set `-refUC` as to pass to irrep this transformation matrix, so we wi
 
 For a more detailed explanation of the cell transformation, visit [IrRep's documentation](https://irrep.dipc.org/cell_transformation.html).
 
-## Calculation of irreducible representations at maximal **k**-points
+## Calculation of irreducible representations at maximal **k**-points <a name="Ex 3"></a>
 
 Now, we can calculate the irreps. There are 20 electrons in the unit cell, so there are 20 occupied bands. Let us set `-IBend=22` to calculate the irreps of all valence and the first 2 conduction bands:
 
@@ -88,7 +97,7 @@ Once we know the irreps, we can place them on top of a band structure plot, whic
 </p>
 
 
-## Diagnosing topology of valence bands
+## Diagnosing topology of valence bands <a name="Ex 4"></a>
 
 In the previous section, we have determined the irreducible representations of valence and some conduction bands. In order to classify the topology of a material, **we need to focus on its valence bands**. We can do so by **setting** `-IBend` **to the index of the last valence band**, which is 20 in the case of SnTe:
 
@@ -111,7 +120,7 @@ You should see something like the following picture:
 According to this analysis, SnTe is a topological insulator classified by a $z_8=4$, which indicates that the phase hosts mirror Chern invariants, as well as glide invariants ([see the work by Song *et al.*](https://www.nature.com/articles/s41467-018-06010-w).
 
 
-## Separating states by inversion eigenvalues
+## Separating states by inversion eigenvalues <a name="Ex 5"></a>
 
 Identifying irreducible representations is not IrRep's only function. It is also able to separate wave functions based on eigenvalues of a symmetry operations. Let us take advantage of this function to corroborate the calculation of strong $z_2$ invariant and the $z_4$. For that, we have to separate wave functions in subspaces of inversion.
 
