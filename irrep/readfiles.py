@@ -349,9 +349,10 @@ class ParserAbinit():
 
 class ParserVasp:
 
-    def __init__(self, fPOS, fWAV):
+    def __init__(self, fPOS, fWAV, onlysym=False):
         self.fPOS = fPOS
-        self.fWAV = WAVECARFILE(fWAV)
+        if not onlysym:
+            self.fWAV = WAVECARFILE(fWAV)
 
     def parse_poscar(self):
         """
