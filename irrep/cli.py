@@ -318,16 +318,6 @@ def cli(
                "-kpnames must be specified to identify irreps"
                ))
 
-    #if kpnames is None:
-    #    identify_irreps = False
-    #    print(("Warning: kpnames not specified. Only traces of "
-    #           "symmetry operations will be calculated. Remember that "
-    #           "kpnames must be specified to identify irreps"
-    #           )
-    #          )
-    #else:
-    #    identify_irreps = True
-
     # parse input arguments into lists if supplied
     if symmetries:
         symmetries = str2list(symmetries)
@@ -423,7 +413,6 @@ def cli(
         
 
     dumpfn(json_data,"irrep-output.json",indent=4)
-    exit()
 
     if zak:
         for k in subbands:

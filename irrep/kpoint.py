@@ -190,34 +190,11 @@ class Kpoint:
         self.symmetries_SG = symmetries_SG  # lazy_property needs it
         self.upper = upper
 
-        if code.lower() == "vasp":
-            self.K = kpt
-            self.WF = WF
-            self.Energy = Energy
-            self.ig = ig
-            self.upper = upper
-        elif code.lower() == "abinit":
-            # Move following assignments to __init__ once parsing implemented for all of codes
-            self.K = kpt
-            self.WF = WF
-            self.Energy = Energy
-            self.ig = ig
-            self.upper = upper
-
-        elif code.lower() == "espresso":
-            self.K = kpt
-            self.WF = WF
-            self.Energy = Energy
-            self.ig = ig
-            self.upper = upper
-        elif code.lower() == "wannier":
-            self.K = kpt
-            self.WF = WF
-            self.Energy = Energy
-            self.ig = ig
-            self.upper = upper
-        else:
-            raise RuntimeError("unknown code : {}".format(code))
+        self.K = kpt
+        self.WF = WF
+        self.Energy = Energy
+        self.ig = ig
+        self.upper = upper
 
         self.k_refUC = np.dot(refUC.T, self.K)
         self.WF /= (
