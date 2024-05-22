@@ -1,0 +1,5 @@
+&bands
+   outdir='out',
+   prefix          =  'Bi2Se3',
+   filband         = 'Bi2Se3.bands.dat'
+/

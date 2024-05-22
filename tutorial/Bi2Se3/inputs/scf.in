@@ -1,0 +1,45 @@
+&CONTROL
+   calculation     =  'scf',
+   prefix          =  'Bi2Se3',
+   pseudo_dir = './',
+   outdir='out',
+   restart_mode    =  'from_scratch',
+   disk_io         = 'low'
+ /
+
+ &SYSTEM
+   ibrav           =  0,
+   A               =  1.0,
+   degauss         =  0.0001,
+   ecutwfc         =  20,
+   nat             =  5,
+   ntyp            =  2,
+   occupations     =  'smearing',
+   smearing        =  'mv',
+   lspinorb        = .TRUE.
+   noncolin        = .TRUE.
+ /
+
+ &ELECTRONS
+   mixing_beta = 0.3,
+   conv_thr    = 1e-8,
+ /
+
+CELL_PARAMETERS alat
+     2.0714999999999995    1.1959810826263095    9.5453333333333319
+    -2.0714999999999995    1.1959810826263095    9.5453333333333319
+     0.0000000000000000   -2.3919621652526191    9.5453333333333319
+
+ATOMIC_SPECIES
+  Bi 209  Bi.upf
+  Se 79   Se.upf
+
+ATOMIC_POSITIONS crystal
+Bi  0.6014999999999998  0.6014999999999999  0.6014999999999999
+Bi  0.3985000000000000  0.3985000000000001  0.3984999999999999
+Se  0.0000000000000000  0.0000000000000000  0.0000000000000000
+Se  0.7885000000000000  0.7885000000000000  0.7885000000000000
+Se  0.2114999999999999  0.2114999999999999  0.2114999999999999
+
+K_POINTS automatic
+  5   5   5   0   0   0
