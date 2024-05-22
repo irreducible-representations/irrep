@@ -319,17 +319,18 @@ class SymmetryOperation():
                                            )
                        ]
             print("\n".join(spinstr))
-            spinstr = [s +
-                       " ".join("{0:6.3f}{1:+6.3f}j".format(x.real, x.imag) for x in row) +
-                       t 
-                       for s, row, t in zip(["spinor rot. (refUC) : |",
-                                             " " * 22 + "|",
-                                             ], 
-                                             self.spinor_rotation*self.sign, 
-                                             [" |", " |"]
-                                           )
-                       ]
-            print("\n".join(spinstr))
+            if write_ref:
+                spinstr = [s +
+                           " ".join("{0:6.3f}{1:+6.3f}j".format(x.real, x.imag) for x in row) +
+                           t 
+                           for s, row, t in zip(["spinor rot. (refUC) : |",
+                                                 " " * 22 + "|",
+                                                 ], 
+                                                 self.spinor_rotation*self.sign, 
+                                                 [" |", " |"]
+                                               )
+                           ]
+                print("\n".join(spinstr))
 
         # Print translation part
         trastr = ("\ntranslation         :  [ " 
