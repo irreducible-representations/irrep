@@ -368,7 +368,7 @@ def cli(
     bandstr.identify_irreps(kpnames)
 
     # Temporary, until we make it valid for isymsep
-    bandstr.write_characters2()
+    bandstr.write_characters()
 
     # Write irreps.dat file
     bandstr.write_irrepsfile()
@@ -406,7 +406,7 @@ def cli(
                     ),
                 )
                 plotfile=None # being implemented, not finished yet...
-                sub.write_characters2()
+                sub.write_characters()
                 json_data["characters_and_irreps"].append({"symmetry_eigenvalues":k , "subspace": sub.json(symmetries)})
     else :
         json_data["separated by symmetry"]=False
@@ -417,9 +417,7 @@ def cli(
     if zak:
         for k in subbands:
             print("symmetry eigenvalue : {0} \n Traces are : ".format(k))
-            subbands[k].write_characters(
-                degen_thresh=0.001, symmetries=symmetries
-            )
+            subbands[k].write_characters()
             print("symmetry eigenvalue : {0} \n Zak phases are : ".format(k))
             zak = subbands[k].zakphase()
             for n, (z, gw, gc, lgw) in enumerate(zip(*zak)):

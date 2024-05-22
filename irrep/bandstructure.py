@@ -363,12 +363,12 @@ class BandStructure:
                 irreps = None
             KP.identify_irreps(irreptable=irreps)
 
-    def write_characters2(self):
+    def write_characters(self):
 
         for KP in self.kpoints:
 
             # Print block of irreps and their characters
-            KP.write_characters2()
+            KP.write_characters()
 
             # Print number of inversion odd Kramers pairs
             if KP.num_bandinvs is None:
@@ -474,121 +474,6 @@ class BandStructure:
             KP.write_irrepsfile(file)
         file.close()
 
-
-    def write_characters(
-        self,
-        degen_thresh=1e-8,
-        kpnames=None,
-        symmetries=None,
-        preline="",
-        plotFile=None,
-    ):
-        """
-        Calculate irreps, number of band-inversion (if little-group contains 
-        inversion), smallest direct gap and indirect gap and print all of them.
-
-        Parameters
-        ----------
-        degen_thresh : float, default=1e-8
-            Threshold energy used to decide whether wave-functions are
-            degenerate in energy.
-        refUC : array, default=None
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the standard setting.
-        shiftUC : array, default=np.zeros(3)
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting.
-        kpnames : list, default=None
-            Labels of maximal k-points at which irreps of bands must be computed. 
-            If it is not specified, only traces will be printed, not irreps.
-        symmetries : list, default=None
-            Index of symmetry operations whose description will be printed. 
-        plotFile : str, default=None
-            Name of file in which energy-levels and corresponding irreps will be 
-            written to later place irreps in a band structure plot.
-
-        Returns
-        -------
-        json_data : `json` object
-            Object with output structured in `json` format.
-        """
-        #        if refUC is not None:
-        #        self.spacegroup.show(refUC=refUC,shiftUC=shiftUC)
-        #        self.spacegroup.show2(refUC=refUC)
-        kpline = self.KPOINTSline()
-        json_data = {}
-        json_data[ "kpoints_line"] = kpline
-        try:
-            pFile = open(plotFile, "w")
-        except BaseException:
-            pFile = None
-        NBANDINV = 0
-        GAP = np.Inf
-        Low = -np.Inf
-        Up = np.inf
-        json_data["k-points" ] = []
-        if kpnames is not None:
-            for kpname, KP in zip(kpnames, self.kpoints):
-                irreps = self.spacegroup.get_irreps_from_table(kpname, KP.K)
-                ninv, low, up , kdata = KP.write_characters(
-                    degen_thresh,
-                    irreptable=irreps,
-                    symmetries=symmetries,
-                    preline=preline,
-                    efermi=self.efermi,
-                    plotFile=pFile,
-                    kpl=kpline,
-                    symmetries_tables=self.spacegroup.symmetries_tables,
-                    refUC=self.spacegroup.refUC,
-                    shiftUC=self.spacegroup.shiftUC
-                )
-                kdata["kpname"] = kpname
-                json_data["k-points" ].append(kdata)
-
-                NBANDINV += ninv
-                GAP = min(GAP, up - low)
-                Up = min(Up, up)
-                Low = max(Low, low)
-        else:
-            for KP, kpl in zip(self.kpoints, kpline):
-                ninv, low, up , kdata = KP.write_characters(
-                    degen_thresh,
-                    symmetries=symmetries,
-                    preline=preline,
-                    efermi=self.efermi,
-                    plotFile=pFile,
-                    kpl=kpl,
-                    symmetries_tables=self.spacegroup.symmetries_tables,
-                    refUC=self.spacegroup.refUC,
-                    shiftUC=self.spacegroup.shiftUC
-                )
-                kdata["kp in line"] = kpl
-                json_data["k-points" ].append(kdata)
-                NBANDINV += ninv
-                GAP = min(GAP, up - low)
-                Up = min(Up, up)
-                Low = max(Low, low)
-
-        if self.spinor:
-            print(
-                "number of inversion-odd Kramers pairs IN THE LISTED KPOINTS: ",
-                int(NBANDINV / 2),
-                "  Z4= ",
-                int(NBANDINV / 2) % 4,
-            )
-            json_data["number of inversion-odd Kramers pairs"]  = int(NBANDINV / 2)
-            json_data["Z4"] = int(NBANDINV / 2) % 4,
-        else:
-            print("number of inversion-odd states : ", NBANDINV)
-            json_data["number of inversion-odd states"]  = NBANDINV
-
-        #        print ("Total number of inversion-odd Kramers pairs IN THE LISTED KPOINTS: ",NBANDINV,"  Z4= ",NBANDINV%4)
-        print("Minimal direct gap:", GAP, " eV")
-        print("indirect  gap:", Up - Low, " eV")
-        json_data["indirect gap (eV)"] =  Up-Low
-        json_data["Minimal direct gap (eV)"] =  GAP
-       
-        return json_data
 
     def getNbands(self):
         """
