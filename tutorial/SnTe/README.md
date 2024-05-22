@@ -142,15 +142,15 @@ Thus, **inversion is the symmetry number 25**.
 irrep -isymsep=25 -kpnames=GM,X,L,W -IBend=20 -Ecut=100 -refUC=-1,1,1,1,-1,1,1,1,-1 -EF=auto  -code=abinit -fWFK=maxK_WFK  > out
 ```
 
-    Ups, it seems something went wrong... The problem is in the list of points. We are asking IrRep to separate wave functions based on their eigenvalue of inversion at W. But this point is not invariant under inversion! So, what we are trying to do does not make sense. 
-    
-    We need to get rig of the point W. For that, we have to specified only the inversion invariant  **k**-points via the argument `-kpoints`:
-    
-    ```
-    irrep -isymsep=25 -kpnames=GM,X,L -kpoints=1,2,3 -IBend=20 -Ecut=100 -refUC=-1,1,1,1,-1,1,1,1,-1 -EF=auto  -code=abinit -fWFK=maxK_WFK  > out
-    ```
+Ups, it seems something went wrong... The problem is in the list of points. We are asking IrRep to separate wave functions based on their eigenvalue of inversion at W. But this point is not invariant under inversion! So, what we are trying to do does not make sense. 
 
-    IrRep will write first the traces and irreducible representations without separating them. Then, it will focus on each subspace of inversion and write the traces and irreps within each. 
+We need to get rig of the point W. For that, we have to specified only the inversion invariant  **k**-points via the argument `-kpoints`:
+
+```
+irrep -isymsep=25 -kpnames=GM,X,L -kpoints=1,2,3 -IBend=20 -Ecut=100 -refUC=-1,1,1,1,-1,1,1,1,-1 -EF=auto  -code=abinit -fWFK=maxK_WFK  > out
+```
+
+IrRep will write first the traces and irreducible representations without separating them. Then, it will focus on each subspace of inversion and write the traces and irreps within each. 
 
 3- We are interested in the inversion-odd subspace. We can find the data about odd wave functions after the heading
 

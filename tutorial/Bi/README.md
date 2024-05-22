@@ -110,7 +110,7 @@ Once we know the irreps, we can place them on top of a band structure plot, whic
 In the previous section, we have determined the irreducible representations of valence and some conduction bands. In order to classify the topology of a material, **we need to focus on its valence bands**. We can do so by **setting** `-IBend` **to the index of the last valence band**, which is 10 in the case of Bi:
 
 ```
-irrep -kpnames=GM,F,T,L -IBend=78 -Ecut=100 -EF=auto -code=espresso -prefix=out/Bi2Se3 > output
+irrep -code=vasp -kpnames=T,GM,F,L -Ecut=50 -IBend=10 -searchcell -spinor -EF=5.2244 > out
 ```
 
 If we inspect the output saved into the file `out`, we will notice that only the lowest 10 bands (*i.e.* the valence bands) where considered for the calculation. According to the formalism of [topological quantum chemistry](https://www.nature.com/articles/nature23268), to show that the material is topological, it is enough demonstrate that the irreducible representations do not match with those of a linear combination of elementary band representation. We can check this by means of the file `trace.txt` written by IrRep.
