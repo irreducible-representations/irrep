@@ -302,7 +302,7 @@ class BandStructure:
 
             elif code == 'espresso':
                 WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel)
-                WF, kg = sortIG(ik+1, kg, kpt, WF, self.RecLattice/2.0, self.Ecut0, Ecut, self.spinor)
+                WF, kg = sortIG(ik+1, kg, kpt, WF, self.RecLattice/2.0, self.Ecut0, self.Ecut, self.spinor)
 
             elif code == 'wannier90':
                 kpt = kpred[ik]
@@ -310,7 +310,7 @@ class BandStructure:
                 ngx, ngy, ngz = parser.parse_grid(ik+1)
                 kg = calc_gvectors(kpred[ik],
                                    self.RecLattice,
-                                   Ecut,
+                                   self.Ecut,
                                    spinor=self.spinor,
                                    nplanemax=np.max([ngx, ngy, ngz]) // 2
                                    )
