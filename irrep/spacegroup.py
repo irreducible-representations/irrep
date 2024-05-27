@@ -695,6 +695,7 @@ class SpaceGroup():
 
         # Print cell vectors in DFT and reference cells
         vecs_refUC = np.dot(self.Lattice, self.refUC).T
+        #vecs_refUC = np.dot(self.refUC, self.Lattice)
         print('Cell vectors in angstroms:\n')
         print('{:^32}|{:^32}'.format('Vectors of DFT cell', 'Vectors of REF. cell'))
         for i in range(3):

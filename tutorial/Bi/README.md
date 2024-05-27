@@ -147,7 +147,7 @@ Thus, **inversion is the symmetry number 7**.
 2- Indicate IrRep that we want to separate the wave functions in terms of inversion, by setting `-isymsep=7`:
 
 ```
-irrep -isymsep=7 -kpnames=GM,F,T,L -IBend=78 -Ecut=100 -EF=auto -code=espresso -prefix=out/Bi2Se3 > output
+irrep -isymsep=7 -code=vasp -kpnames=T,GM,F,L -Ecut=50 -IBend=10 -searchcell -spinor -EF=5.2244 > out
 ```
 
     IrRep will write first the traces and irreducible representations without separating them. Then, it will focus on each subspace of inversion and write the traces and irreps within each. 
@@ -180,13 +180,13 @@ N<sub>4</sub> = 6 + 2 + 6 x 3 + 6 x 3 = 44.
 According to [Fu-Kane's formula](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.76.045302), the strong invariant is z<sub>2</sub>:
 
 <div align="center">
-z<sub>2</sub> = N<sub>-</sub> mod 2 = 0.
+z<sub>2</sub> = N<sub>-</sub>/2 mod 2 = 0.
 </div>
 
 On the other hand, the z<sub>4</sub> number is:
 
 <div align="center">
-z<sub>4</sub> = N<sub>-</sub> mod 4 = 2.
+z<sub>4</sub> = N<sub>-</sub>/2 mod 4 = 2.
 </div>
 
 
