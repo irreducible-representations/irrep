@@ -161,16 +161,16 @@ class BandStructure:
 
         elif code == "abinit":
 
-            # To do: use a return instead of attributes
             parser = ParserAbinit(fWFK)
-            self.spinor = parser.spinor
-            self.Lattice = parser.rprimd
-            positions = parser.xred
-            typat = parser.typat
-            self.Ecut0 = parser.ecut
-            EF_in = parser.efermi
-            NBin = max(parser.nband)
-            NK = parser.nkpt
+            (nband,
+             NK,
+             self.Lattice,
+             self.Ecut0,
+             self.spinor,
+             typat,
+             positions,
+             EF_in) = parser.parse_header()
+            NBin = max(nband)
 
         elif code == "espresso":
 
