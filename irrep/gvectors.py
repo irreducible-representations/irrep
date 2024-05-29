@@ -229,7 +229,6 @@ def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor):
     )
     assert Ecut0 * 1.000000001 > np.max(eKG)
     sel = np.where(eKG < Ecut)[0]
-    npw1 = sel.shape[0]
 
     KG = KG[sel]
     kg = kg[sel]
@@ -317,9 +316,7 @@ def transformed_g(kpt, ig, RecLattice, A):
                     "obtained when transforming the g-vector ig[{i}]={ig} "
                     .format(i=i, ig=ig[:3,i] +
                     "with the matrix {B}, where B=inv(A).T with A={A}"
-                    .format(B=B, A=A) +
-                    "other g-vectors with the same energy:\n{other}"
-                    .format(other)
+                    .format(B=B, A=A)
                 )
             )
     return rotind
