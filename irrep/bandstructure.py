@@ -22,9 +22,7 @@ import functools
 import numpy as np
 import numpy.linalg as la
 
-from .utility import str2bool, BOHR, split
-from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, Hartree_eV
-from .readfiles import WAVECARFILE
+from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .gvectors import sortIG, calc_gvectors
@@ -180,7 +178,6 @@ class BandStructure:
             spinpol, self.Ecut0, EF_in, NK, NBin_list = parser.parse_header()
 
             # Set NBin
-            IBstartE=0
             if self.spinor and spinpol:
                 raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
             elif spinpol:
@@ -188,7 +185,6 @@ class BandStructure:
                     raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
                 assert (spin_channel in ['dw','up'])
                 if spin_channel == 'dw':
-                    IBstartE = NBin_list[0]
                     NBin = NBin_list[1]
                 else:
                     NBin = NBin_list[0]
