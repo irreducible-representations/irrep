@@ -451,6 +451,7 @@ class BandStructure:
         return num_bandinvs
 
     def write_plotfile(self, plotFile):
+        '''Used nowhere for now'''
 
         try:
             pFile = open(plotFile, "w")
@@ -459,7 +460,7 @@ class BandStructure:
 
         kpline = self.KPOINTSline()
         for KP, kpl in zip(self.kpoints, kpline):
-            KP.write_plotfile(pFile, kpl, self.fermi)
+            KP.write_plotfile(pFile, kpl)
         pFile.close()
 
 

@@ -768,7 +768,7 @@ class Kpoint:
         s += '\n\n'
 
 
-    def write_irrepfile(self, firrep, efermi):
+    def write_irrepfile(self, firrep):
 
         file = open(firrep, "a")
         for e, ir in zip(self.Energy, self.irreps):
@@ -778,7 +778,7 @@ class Kpoint:
                     if weight > 0.3:
                         file.write(
                             " {0:10s} ".format(irrep.split("(")[0])
-                            + "  {0:10.5f}\n".format(e - efermi)
+                            + "  {0:10.5f}\n".format(e)
                         )
                 except IndexError:
                     pass
