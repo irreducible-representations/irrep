@@ -558,7 +558,6 @@ class SpaceGroup():
                 spinor=self.spinor) for i,
             rot in enumerate(
                 dataset['rotations'])]
-        nsym = len(symmetries)
 
         return (symmetries, 
                 dataset['international'],
@@ -681,13 +680,6 @@ class SpaceGroup():
         json_data : `json` object
             Object with output structured in `json` format.
         """
-
-
-        if (not np.allclose(self.refUC, np.eye(3)) or
-            not np.allclose(self.shiftUC, np.zeros(3))):
-            write_ref = True  # To avoid writing this huge block again
-        else:
-            write_ref = False
 
         print('')
         print("\n ---------- CRYSTAL STRUCTURE ---------- \n")
@@ -871,10 +863,6 @@ class SpaceGroup():
         return np.array([R1.dot(b).dot(R1.T.conj()).dot(np.linalg.inv(
             a)).diagonal().mean().real.round() for a, b in zip(S1, S2)], dtype=int)
 
-    def __gen_refUC():
-        '''used somewhere?'''
-        nmax = 3
-
     def get_irreps_from_table(self, kpname, K):
         """
         Read irreps of the little-group of a maximal k-point. 
@@ -933,7 +921,7 @@ class SpaceGroup():
                         dt = sym2.t - sym1.translation_refUC(self.refUC, self.shiftUC)
                         tab[irr.name][i + 1] = irr.characters[i + 1] * \
                             sym1.sign * np.exp(2j * np.pi * dt.dot(irr.k))
-                    except KeyError as err:
+                    except KeyError:
                         pass
         if len(tab) == 0:
             raise RuntimeError(
@@ -1034,7 +1022,6 @@ class SpaceGroup():
             return refUC, shiftUC
         else:  # Neither specifiend in CLI.
             refUC = np.linalg.inv(refUC_lib)  # from DFT to convenctional cell
-            found = False
 
             # Check if the shift given by spglib works
             shiftUC = -refUC.dot(shiftUC_lib)
@@ -1156,7 +1143,6 @@ class SpaceGroup():
             shiftUC = self.shiftUC
         ind = []
         dt = []
-        errtxt = ""
         for j, sym in enumerate(self.symmetries):
             R = sym.rotation_refUC(refUC)
             t = sym.translation_refUC(refUC, shiftUC)
