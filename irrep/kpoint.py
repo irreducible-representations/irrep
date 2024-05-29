@@ -19,11 +19,8 @@
 import numpy as np
 import numpy.linalg as la
 import copy
-from .gvectors import calc_gvectors, symm_eigenvalues, NotSymmetryError, symm_matrix, sortIG
-from .readfiles import Hartree_eV
-from .readfiles import record_abinit
+from .gvectors import symm_eigenvalues, NotSymmetryError, symm_matrix
 from .utility import compstr, is_round, format_matrix
-from scipy.io import FortranFile as FF
 from lazy_property import LazyProperty
 
 class Kpoint:
@@ -158,8 +155,8 @@ class Kpoint:
                         symop.translation,
                         self.spinor,
                     )
-                except NotSymmetryError as err:
-                    pass  # print  ( err )
+                except NotSymmetryError:
+                    pass
         return symmetries
 
     def __init__(
@@ -761,7 +758,7 @@ class Kpoint:
         writeimaginary = np.abs(self.character.imag).max() > 1e-4
         s = []
         for e, dim, char in zip(self.Energy, self.degeneracies, self.character):
-            s_loc = '{2:8.4f}   {0:8.4f}      {1:5d}   '.format(e-efermi, d, kpl)
+            s_loc = '{2:8.4f}   {0:8.4f}      {1:5d}   '.format(e-efermi, dim, kpl)
             for tr in char:
                 s_loc += "{0:8.4f}".format(tr.real)
                 if writeimaginary:
@@ -780,8 +777,7 @@ class Kpoint:
                     weight = abs(compstr(irrep.split("(")[1].strip(")")))
                     if weight > 0.3:
                         file.write(
-                            preline
-                            + " {0:10s} ".format(irrep.split("(")[0])
+                            " {0:10s} ".format(irrep.split("(")[0])
                             + "  {0:10.5f}\n".format(e - efermi)
                         )
                 except IndexError:
