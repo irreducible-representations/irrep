@@ -16,13 +16,9 @@
 
 __version__="1.0.3"
 
-import copy
 import os
-import sys
 import logging
-
 import numpy as np
-
 from irrep.utility import str2bool, str2list_space, str_
 
 # using a logger to print useful information during debugging,

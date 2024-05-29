@@ -1,7 +1,7 @@
 import os
 import subprocess
 from pathlib import Path
-from monty.serialization import dumpfn, loadfn
+from monty.serialization import loadfn
 import numpy as np
 
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"

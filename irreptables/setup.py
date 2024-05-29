@@ -1,4 +1,4 @@
-import setuptools,sys
+import setuptools
 
 long_description = """
 Tables of irreducible representations from the Bilbao Crystallographic Server, 
