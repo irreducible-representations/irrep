@@ -19,17 +19,13 @@
 Defines the command line interface to "irrep".
 """
 
-import sys
 import numpy as np
-import datetime
-import math
 
 import click
 from monty.serialization import dumpfn, loadfn
 
-from .spacegroup import SpaceGroup
 from .bandstructure import BandStructure
-from .utility import str2bool, str2list, short
+from .utility import str2list, short
 from . import __version__ as version
 
 
@@ -206,12 +202,6 @@ do not hesitate to contact the author:
     default=False,
     help="Write gnuplottable files with all symmetry eigenvalues",
 )
-@click.option(
-    "-plotFile", 
-    type=str, 
-    help="file where bands for plotting will be written."
-    "In development...!"
-)
 @click.option("-EF", 
     type=str, 
     default='0.0',
@@ -281,7 +271,6 @@ def cli(
     zak,
     wcc,
     plotbands,
-    plotfile,
     ef,
     degenthresh,
     groupkramers,
@@ -327,13 +316,6 @@ def cli(
         isymsep = str2list(isymsep)
     if kpnames:
         kpnames = kpnames.split(",")
-
-    try:
-        print(fwfk.split("/")[0].split("-"))
-        preline = " ".join(s.split("_")[1] for s in fwfk.split("/")[0].split("-")[:3])
-    except Exception as err:
-        print(err)
-        preline = ""
 
     bandstr = BandStructure(
         fWAV=fwav,
@@ -405,7 +387,6 @@ def cli(
                         "sym # {0} -> eigenvalue {1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
                     ),
                 )
-                plotfile=None # being implemented, not finished yet...
                 sub.write_characters()
                 json_data["characters_and_irreps"].append({"symmetry_eigenvalues":k , "subspace": sub.json(symmetries)})
     else :
