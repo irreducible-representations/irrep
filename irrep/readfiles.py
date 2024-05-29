@@ -324,7 +324,7 @@ class ParserAbinit():
             # 3rd record: energies and occupations
             record = record_abinit(self.fWFK, "f8")
             if not skip:
-                eigen, occ = record[:nband], record[nband:]
+                eigen = record[:nband]
                 eigen *= Hartree_eV
 
             # 4th record: coefficients of expansions in plane waves
@@ -370,7 +370,8 @@ class ParserVasp:
         """
 
         fpos = (l.strip() for l in open(self.fPOS))
-        title = next(fpos)
+        title = next(fpos)  # title
+        del title
         lattice = float(
             next(fpos)) * np.array([next(fpos).split() for i in range(3)], dtype=float)
         try:
@@ -465,7 +466,7 @@ class ParserEspresso:
             spinpol=True
             print ("spin-polarised bandstructure composed of {} up and {} dw states".format(NBin_dw,NBin_up))
             NBin_dw+NBin_up
-        except AttributeError as err:
+        except AttributeError:
             spinpol=False
             NBin=int(self.bandstr.find('nbnd').text)
 
@@ -485,6 +486,7 @@ class ParserEspresso:
         ntyp = int(self.input.find("atomic_species").attrib["ntyp"])
         struct = self.input.find("atomic_structure")
         nat = int(struct.attrib["nat"])
+        del nat
 
         # Parse lattice vectors
         lattice = []
@@ -601,7 +603,6 @@ class ParserW90:
                             "'begin unit_cell_cart' found more then once  in {}.win".format(
                                 self.prefix
                             ))
-                    j = 0
                     l1 = next(self.iterwin)
                     if l1[0] in ("bohr", "ang"):
                         units = l1[0]
