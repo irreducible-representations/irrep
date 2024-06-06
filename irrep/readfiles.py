@@ -24,6 +24,9 @@ from .utility import FortranFileR as FFR
 from .utility import str2bool, BOHR, split
 import xml.etree.ElementTree as ET
 
+Rydberg_eV = 13.605693  # eV
+Hartree_eV = 2 * Rydberg_eV
+
 
 class WAVECARFILE:
     """
@@ -85,9 +88,6 @@ def record_abinit(fWFK, st):
         r = r[0]
     return r
 
-
-Rydberg_eV = 13.605693  # eV
-Hartree_eV = 2 * Rydberg_eV
 
 
 class ParserAbinit():
