@@ -94,7 +94,7 @@ class ParserAbinit():
     """
     Parse header of the WFK file of Abinit.
 
-    Paramters
+    Parameters
     ---------
     filename : str
         Name of the WFK file of Abinit.
@@ -366,6 +366,26 @@ class ParserAbinit():
 
 
 class ParserVasp:
+    """
+    Parser for Vasp interface
+
+    Parameters
+    ---------
+    fPOS : str
+        Name of the POSCAR file.
+    fWAV : str
+        Name of the WAVECAR file.
+    onlysym : bool
+        To stop right after parsing the POSCAR, before parsing the 
+        header of the WAVECAR.
+
+    Attributes
+    ----------
+    fPOS : str
+        Name of the POSCAR file.
+    fWAV : class
+        Instance of `WAVECARFILE`
+    """
 
     def __init__(self, fPOS, fWAV, onlysym=False):
         self.fPOS = fPOS
@@ -428,6 +448,21 @@ class ParserVasp:
         return lattice, positions, numbers
 
     def parse_header(self):
+        '''
+        Parse header of WAVECAR
+
+        Returns
+        -------
+        NK : int
+            Number of k-points
+        NBin : int
+            Number of bands
+        Ecut0 : float
+            Plane-wave cutoff (in eV) used in DFT
+        lattice : array
+            Each row contains the cartesian coords of a unit cell vector
+        '''
+
         tmp = self.fWAV.record(1)
         NK = int(tmp[0])
         NBin = int(tmp[1])
@@ -436,6 +471,28 @@ class ParserVasp:
         return NK, NBin, Ecut0, lattice
 
     def parse_kpoint(self, ik, NBin, spinor):
+        '''
+        Parse block of a particular k-point from WAVECAR
+
+        Parameters
+        ----------
+        ik : int
+            Index of the k-point
+        NBin : int
+            Number of bands
+        spinor : bool
+            Whether wave functions are spinors (SOC)
+
+        Returns
+        -------
+        Energy : array
+            Energy levels. Degenerate levels are repeated
+        kpt : array
+            Direct coords of the k-points with respect to the basis vectors 
+            of the DFT reciprocal space cell
+        npw : int
+            Number of plane waves in the expansion of wave functions
+        '''
 
         r = self.fWAV.record(2 + ik * (NBin + 1))
 
@@ -449,7 +506,6 @@ class ParserVasp:
         WF = np.array(
             [
                 self.fWAV.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)
-                #self.WCF.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)[selectG]
                 for ib in range(NBin)
             ]
         )
@@ -457,6 +513,28 @@ class ParserVasp:
         return WF, Energy, kpt, npw
 
 class ParserEspresso:
+    '''
+    Parser of the interface for Quantum Espresso
+
+    Parameters
+    ----------
+    prefix : str
+        Prefix that serves as path to the `.save` directory. For example: 
+        if the path is `./foo/bar.save` then `prefix` is `foo/bar`.
+
+    Attributes
+    ----------
+    prefix : str
+        Prefix that serves as path to the `.save` directory.
+    input : class
+        Instance of `Element` in the ElementTree XML API corresponding 
+        to tag `input` in `data-file-schema.xml` file
+    bandstructure : class
+        Instance of `Element` in the ElementTree XML API corresponding 
+        to tag `band_structure` in `data-file-schema.xml` file
+    spinor : bool
+        Whether wave functions are spinors (SOC)
+    '''
 
     def __init__(self, prefix):
         self.prefix = prefix
@@ -472,6 +550,26 @@ class ParserEspresso:
 
 
     def parse_header(self):
+        '''
+        Parse universal info of the bandstructure from `data-file-schema.xml` 
+        file
+
+        Returns
+        -------
+        spinpol : bool
+            Whether the calculation is spin-polarized
+        Ecut0 : float
+            Plane-wave cutoff (in eV) used in DFT
+        EF : float
+            Fermi energy in eV
+        NK : int
+            Number of k-points
+        NBin_list : list
+            If the calculation was spin polarized, `NBin_list[0]` and 
+            `NBin_list[1]` are the number of bands for spin up and down 
+            channels, respectively. Otherwise, `NBin_list[0]` is the 
+            number of bands.
+        '''
 
         Ecut0 = float(self.input.find("basis").find("ecutwfc").text)
         Ecut0 *= Hartree_eV
@@ -493,13 +591,27 @@ class ParserEspresso:
         except:
             EF = None
 
-
         if spinpol:
-            return spinpol, Ecut0, EF, NK, [NBin_up, NBin_dw]
+            NBin_list = [NBin_up, NBin_dw]
         else:
-            return spinpol, Ecut0, EF, NK, [NBin]
+            NBin_list = [NBin]
+        return spinpol, Ecut0, EF, NK, NBin_list
 
     def parse_lattice(self):
+        '''
+        Parse info about the crystal structure from `data-file-schema.xml` 
+        file
+
+        Returns
+        -------
+        lattice : array
+            Each row contains the cartesian coords of a DFT unit cell vector
+        positions : array
+            Each row contains the direct coords of an ion in the DFT cell
+        numbers : list
+            Indices that describe the type of element at each position. 
+            All ions of the same type share the same index.
+        '''
 
         ntyp = int(self.input.find("atomic_species").attrib["ntyp"])
         struct = self.input.find("atomic_structure")
@@ -536,6 +648,31 @@ class ParserEspresso:
 
 
     def parse_kpoint(self, ik, NBin, spin_channel):
+        '''
+        Parse block of a particular k-point from `data-file-schema.xml` file
+
+        Parameters
+        ----------
+        ik : int
+            Index of the k-point
+        NBin : int
+            Number of bands
+        spin_channel : str
+            `up` for spin up, `dw` for spin down, `None` if not spin polarized
+
+        Returns
+        -------
+        WF : array
+            Each row contains the coefficients of the plane-wave expansion of 
+            a wave function
+        Energy : array
+            Energy levels in eV. Degenerate levels are repeated
+        kg : array
+            Each row contains the direct coords (ints) of a plane wave's 
+            reciprocal lattice vector
+        kpt : array
+            Direct coords of the k-point w.r.t. DFT cell vectors
+        '''
 
         kptxml = self.bandstr.findall("ks_energies")[ik]
 
@@ -577,6 +714,34 @@ class ParserEspresso:
 
 
 class ParserW90:
+    '''
+    Parser for Wannier90's interface
+
+    Parameters
+    ----------
+    prefix : str
+        Part of the path that serves as prefix for the `wannier90.win` file.
+        For example: if the path is `./foo/bar.win`, then `prefix` is 
+        `foo/bar`
+    
+    Attributes
+    ----------
+    prefix : str
+        Part of the path that serves as prefix for the `wannier90.win` file.
+    fwin : list
+        Each element is a list of a non-comment line in `wannier90.win` file,
+        split by blank spaces
+    ind : list
+        Each element is the first keyword of a line in `wannier90.win`
+    iterwin : iterator object
+        Iterator object for attribute `fwin`
+    NBin : int
+        Number of DFT bands
+    spinor : bool
+        Whether wave functions are spinors (SOC)
+    NK : int
+        Number of k-points in DFT calculation
+    '''
 
     def __init__(self, prefix):
 
@@ -591,6 +756,20 @@ class ParserW90:
         self.iterwin = iter(self.fwin)
 
     def parse_header(self):
+        '''
+        Parse universal properties of the band structure
+
+        Returns
+        -------
+        NK : int
+            Number of k-points in DFT calculation
+        NBin : int
+            Number of DFT bands
+        spinor : bool
+            Whether wave functions are spinors (SOC)
+        EF : float
+            Fermi energy in eV
+        '''
 
         self.NBin = self.get_param("num_bands", int)
         self.spinor = str2bool(self.get_param("spinors", str))
@@ -604,6 +783,21 @@ class ParserW90:
 
 
     def parse_lattice(self):
+        '''
+        Parse crystal structure from `wannier90.win` file
+
+        Returns
+        -------
+        lattice : array
+            Each row contains the cartesian coords of a DFT unit cell vector
+        positions : array
+            Each row contains the direct coords of an ion in the DFT cell
+        typat : list
+            Indices that describe the type of element at each position. 
+            All ions of the same type share the same index.
+        kpred : array
+            Each row contains the direct coords of a k-point in the DFT cell
+        '''
 
         # Initialize quantities to make sure they aren't twice in .win
         lattice = None
@@ -680,6 +874,15 @@ class ParserW90:
 
 
     def parse_energies(self):
+        '''
+        Parse energies from `wannier90.eig` file
+
+        Returns
+        -------
+        Energy : array
+            Each row contains the energy levels of a k-point. Degenerate 
+            levels are repeated
+        '''
 
         feig = self.prefix + ".eig"
         Energy = np.loadtxt(self.prefix + ".eig")
@@ -703,6 +906,22 @@ class ParserW90:
 
 
     def parse_kpoint(self, ik, selectG):
+        '''
+        Parse wave functions' file of a k-point
+
+        Parameters
+        ----------
+        ik : int
+            Index of the k-point
+        selectG : array
+            First 3 rows of the array returned by :func:`~gvectors.calc_gvectors`
+
+        Returns
+        -------
+        WF : array
+            Each row contains the coefficients of the expansion of a wave 
+            function in plane waves
+        '''
 
         fname = "UNK{:05d}.{}".format(ik, "NC" if self.spinor else "1")
         fUNK = FF(fname, "r")
@@ -736,57 +955,31 @@ class ParserW90:
         WF = np.array(WF)
         return WF
 
-
     def parse_grid(self, ik):
+        '''
+        Parse grid of plane waves for a k-point from the file of 
+        wave functions
+
+        Parameters
+        ----------
+        ik : int
+            Index of k-point
+
+        Returns
+        -------
+        ngx : int
+            Number of k-point along 1st direction in reciprocal space 
+        ngy : int
+            Number of k-point along 2nd direction in reciprocal space 
+        ngz : int
+            Number of k-point along 3rd direction in reciprocal space 
+        '''
 
         fname = "UNK{:05d}.{}".format(ik, "NC" if self.spinor else "1")
         fUNK = FF(fname, "r")
         ngx, ngy, ngz, ik_in, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
         fUNK.close()
         return ngx, ngy, ngz
-
-
-
-    #def _readWF_1(self, skip=False):
-    #    """
-    #    Parse coefficients of a wave-function corresponding to one element
-    #    of the spinor.
-
-    #    Parameters
-    #    ----------
-    #    skip : bool, default=False
-    #        Read coefficients but do not return them.
-    #    
-    #    Returns
-    #    -------
-    #    array
-    #        Coefficients of the plane-wave expansion.
-    #    """
-    #    cg_tmp = record_abinit(fUNK, "{}f8".format(ngtot * 2))
-    #    if skip:
-    #        return np.array([0], dtype=complex)
-    #    cg_tmp = (cg_tmp[0::2] + 1.0j * cg_tmp[1::2]).reshape(
-    #        (ngx, ngy, ngz), order="F"
-    #    )
-    #    cg_tmp = np.fft.fftn(cg_tmp)
-    #    return cg_tmp[selectG]
-
-    #def _readWF(self, skip=False):
-    #    """
-    #    Read and return the coefficients of the plane-wave expansion of a 
-    #    wave-function.
-
-    #    Parameters
-    #    ----------
-    #    skip : bool, default=False
-    #        Read coefficients but do not return them.
-
-    #    Returns
-    #    -------
-    #    array
-    #        Coefficients of the plane-wave expansion.
-    #    """
-    #    return np.hstack([self._readWF_1(skip) for i in range(nspinor)])
 
     def check_end(self, name):
         """
@@ -869,5 +1062,3 @@ class ParserW90:
         else:
             x = self.fwin[i[0]][1]
         return tp(x)
-
-
