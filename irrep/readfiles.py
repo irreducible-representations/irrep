@@ -103,27 +103,16 @@ class ParserAbinit():
     ----------
     fWFK : file object
         Corresponds to the WFK file.
-    rprim : array, shape=(3,3)
-        Each row contains cartesian coordinates of a basis vector forming the 
-        unit-cell in real space.
-    ecut : float
-        Plane-wave cutoff (in eV) to consider in the expansion of 
-        wave-functions.
-    usepaw : int
-        1 if pseudopotentials are PAW, 0 otherwise.
-    typat : array
-        Each element is a number identifying the atomic species of an ion. 
-        atomic species of an ion. See `cell` parameter of function 
-        `get_symmetry` in 
-        `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
     kpt : array
         Each row contains the direct coordinates of a k-point.
     nband : array
         Each element contains the number of bands in a k-point.
-    xred : array
-        Each row contains the direct coordinates of an ion's position. 
-    efermi : float
-        Fermi-level.
+    spinor : bool
+        Whether the DFT calculation involved spinors (SOC) or not
+    npwarr : array
+        Each element is the number of plane waves used at a k-point
+    kpt : array
+        Each row contains the coordinates of a k-point in the DFT BZ
 
     Notes
     -----
@@ -135,20 +124,32 @@ class ParserAbinit():
     def __init__(self, filename):
         #fWFK = FF(fname, "r")
         self.fWFK = FFR(filename)  # temporary
-        (self.nband,
-         self.nkpt,
-         self.rprimd,
-         self.ecut,
-         self.spinor,  # keep as attribute
-         self.typat,
-         self.xred,
-         self.kpt,
-         self.efermi,
-         self.npwarr,
-         self.usepaw) = self.parse_header(filename)
         self.kpt_count = 0  # index of the next k-point to be read
 
-    def parse_header(self, filename):
+    def parse_header(self):
+        '''
+        Parse header of WFK file and save as attributes quantities that 
+        will be used in the rest of methods
+
+        Returns
+        -------
+        nband : array
+            Each element contains the number of bands in a k-point.
+        nkpt : int
+            Number of k-points in WFK file
+        rprimd : array
+            Each row contains the Cartesian coords of a DFT cell vector
+        ecut : float
+            Plane-wave cutoff used for the DFT calculation
+        spinor : bool
+            Whether the DFT calculation involved spinors (SOC) or not
+        typat : array
+            Each element is an integer expressing the type ion
+        xred : array
+            Each row contains the direct coords of an ion
+        efermi : float
+            Fermi energy
+        '''
 
         # 1st record
             # write(unit=header) codvsn,headform,fform
@@ -288,11 +289,28 @@ class ParserAbinit():
             record_abinit(self.fWFK,"i4")
             record_abinit(self.fWFK,"i4")
 
-        # Set as attributes quantities that need to be retrieved from outside the class
-        return (nband, nkpt, rprimd, ecut, spinor, typat, xred, kpt, 
-                efermi, npwarr, usepaw)
+        # Set as attributes quantities that need to be retrieved by the rest of methods
+        self.nband = nband
+        self.spinor = spinor
+        self.npwarr = npwarr
+        self.kpt = kpt
+        return (nband, nkpt, rprimd, ecut, spinor, typat, xred, efermi)
 
     def parse_kpoint(self, ik):
+        '''
+        Parse block of a k-point from WFK file
+
+        Returns
+        -------
+        CG : array
+            Each row contains the coefficients of the plane-wave 
+            expansion of a wave function
+        eigen : array
+            Energies of the wave functions
+        kg : array
+            Each row contains the direct coords of a reciprocal vector 
+            used in the expansion of wave functions
+        '''
 
         print("Reading k-point", ik)
         nspinor = 2 if self.spinor else 1
