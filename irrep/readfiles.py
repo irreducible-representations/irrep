@@ -503,13 +503,9 @@ class ParserVasp:
                                "wavefunctions".format(npw))
         kpt = r[1:4]
         Energy = np.array(r[4 : 4 + NBin * 3]).reshape(NBin, 3)[:, 0]
-        WF = np.array(
-            [
-                self.fWAV.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)
-                for ib in range(NBin)
-            ]
-        )
-        #return WF, ig
+        WF = np.zeros((NBin, npw), dtype=np.complex64)
+        for ib in range(NBin):
+            WF[ib] = self.fWAV.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)
         return WF, Energy, kpt, npw
 
 class ParserEspresso:
