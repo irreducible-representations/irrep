@@ -451,9 +451,6 @@ class SpaceGroup():
 
     Parameters
     ----------
-    inPOSCAR : str, default=None 
-        Name of the POSCAR file from which lattice vectors, atomic species and 
-        positions of ions will be read.
     cell : tuple, default=None
         `cell[0]` is a 3x3 array where cartesian coordinates of basis 
         vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array
@@ -497,6 +494,20 @@ class SpaceGroup():
     RecLattice : array, shape=(3,3)
         Each row contains the cartesian coordinates of a basis vector forming 
         the unit-cell in reciprocal space.
+    positions : array
+        Direct coordinate of sites in the DFT cell setting.
+    typat : list
+        Indices to identify the element in each atom. Atoms of the same element 
+        share the same index.
+    order : int
+        Number of symmetries in the space group (in the coset decomposition 
+        w.r.t. the translation subgroup).
+    refUC : array, default=None
+        3x3 array describing the transformation of vectors defining the 
+        unit cell to the standard setting.
+    shiftUC : array, default=None
+        Translation taking the origin of the unit cell used in the DFT 
+        calculation to that of the standard setting.
 
     Notes
     -----
@@ -580,9 +591,6 @@ class SpaceGroup():
         
         Parameters
         ----------
-        inPOSCAR : str, default=None 
-            POSCAR file from which lattice vectors, atomic species and positions of
-            ions will be read.
         cell : list
             `cell[0]` is a 3x3 array where cartesian coordinates of basis 
             vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array
@@ -674,11 +682,6 @@ class SpaceGroup():
             Index of symmetry operations whose description will be printed. 
             Run `IrRep` with flag `onlysym` to check the index corresponding 
             to each symmetry operation.
-
-        Returns
-        -------
-        json_data : `json` object
-            Object with output structured in `json` format.
         """
 
         print('')
@@ -727,7 +730,6 @@ class SpaceGroup():
             if symmetries is None or symop.ind in symmetries:
                 symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
 
-
     def write_trace(self):
         """
         Construct description of matrices of symmetry operations of the 
@@ -742,6 +744,7 @@ class SpaceGroup():
         str
             String describing matrices of symmetry operations.
         """
+
         res = (" {0} \n"  # Number of Symmetry operations
                # In the following lines, one symmetry operation for each operation of the point group n"""
                ).format(len(self.symmetries))
@@ -751,7 +754,7 @@ class SpaceGroup():
 
     def str(self):
         """
-        Print description of space-group and its symmetry operations.
+        Create a string to describe of space-group and its symmetry operations.
 
         Returns
         -------
@@ -792,8 +795,6 @@ class SpaceGroup():
             The `j`-th element is the matrix to match the `j`-th matrices of 
             `S1` and `S2`.
         """
-        #        for s1,s2 in zip (S1,S2):
-        #            np.savetxt(stdout,np.hstack( (s1,s2) ),fmt="%8.5f%+8.5fj "*4)
         n = 2
 
         def RR(x): 
@@ -812,6 +813,7 @@ class SpaceGroup():
             array, shape=(2,2)
                 Matrix of complex elements. 
             """
+
             return np.array([[x1 + 1j * x2 for x1, x2 in zip(l1, l2)] for l1, l2 in zip(x[:n * n].reshape((n, n)), x[n * n:].reshape((n, n)))])
 
         def residue_matrix(r): 
@@ -827,6 +829,7 @@ class SpaceGroup():
             -------
             float            
             """
+
             return sum([min(abs(r.dot(b).dot(r.T.conj()) - s * a).sum() for s in (1, -1)) for a, b in zip(S1, S2)])
 
         def residue(x): 
@@ -849,7 +852,6 @@ class SpaceGroup():
             x0 = np.random.random(2 * n * n)
             res = minimize(residue, x0)
             r = res.fun
-#            print("accuracy achieved : ",r)
             if r < 1e-4:
                 break
         if r > 1e-3:
@@ -857,8 +859,6 @@ class SpaceGroup():
                 "the accurcy is only {0}. Is this good?".format(r))
 
         R1 = RR(res.x)
-#        print ("R=")
-#        np.savetxt(stdout,np.hstack( (abs(R1),np.angle(R1)/np.pi) ),fmt="%8.5f")
 
         return np.array([R1.dot(b).dot(R1.T.conj()).dot(np.linalg.inv(
             a)).diagonal().mean().real.round() for a, b in zip(S1, S2)], dtype=int)
@@ -898,7 +898,7 @@ class SpaceGroup():
             There is not any k-point in the tables whose label matches that 
             given in parameter `kpname`.
         """
-        #        self.show()
+
         table = IrrepTable(self.number, self.spinor)
         tab = {}
         for irr in table.irreps:
@@ -914,7 +914,6 @@ class SpaceGroup():
                                 irr.k,
                                 3),
                             k1))
-#            print (irr.characters)
                 tab[irr.name] = {}
                 for i,(sym1,sym2) in enumerate(zip(self.symmetries,table.symmetries)):
                     try:
@@ -931,12 +930,7 @@ class SpaceGroup():
                             irr.kpname, irr.k, np.linalg.inv(self.refUC).dot(
                                 irr.k) %
                             1) for irr in table.irreps)))
-#            raise RuntimeError("the k-point with name {0} is not found in the spacegroup {1}. found only {2}".format(kpname,table.number,set([irr.kpname for irr in table.irreps]) ) )
         return tab
-
-#            irr.characters[i]
-# return( { irr.name: np.array([irr.characters[i]*signs[j] for j,i in
-# enumerate(ind)]) for irr in table.irreps if irr.kpname==kpname})
 
     def determine_basis_transf(
             self,
