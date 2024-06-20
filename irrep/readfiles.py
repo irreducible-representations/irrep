@@ -239,7 +239,7 @@ class ParserAbinit():
 
         # istwfk and npwarr are int, should be set, array and array
         if nkpt == 1:
-            istwfk = set([istwfk])
+            istwfk = set([int(istwfk)])
             npwarr = np.array([npwarr])
             nband  = np.array([nband])
         else:
