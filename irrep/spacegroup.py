@@ -508,64 +508,6 @@ class SpaceGroup():
     ..math:: G=T+ g_1 T + g_2 T +...+ g_N T 
     """
 
-    def _findsym(self, cell):
-        """
-        Finds the space-group and constructs a list of symmetry operations
-        
-        Parameters
-        ----------
-        inPOSCAR : str, default=None 
-            POSCAR file from which lattice vectors, atomic species and positions of
-            ions will be read.
-        cell : list
-            `cell[0]` is a 3x3 array where cartesian coordinates of basis 
-            vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array
-            where each row contains the direct coordinates of an ion's position. 
-            `cell[2]` is an array where each element is a number identifying the 
-            atomic species of an ion. See `cell` parameter of function 
-            `get_symmetry` in 
-            `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
-        
-        Returns
-        -------
-        list
-            Each element is an instance of class `SymmetryOperation` corresponding 
-            to a symmetry in the point group of the space-group.
-        str
-            Symbol of the space-group in Hermann-Mauguin notation. 
-        int
-            Number of the space-group.
-        array
-            3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
-            and **c** are given in rows. 
-        array
-            3x3 array describing the transformation of vectors defining the 
-            unit cell to the convenctional setting.
-        array
-            Translation taking the origin of the unit cell used in the DFT 
-            calculation to that of the standard setting of spglib. It may not be
-            the shift taking to the convenctional cell of tables; indeed, in 
-            centrosymmetric groups they adopt origin choice 1 of ITA, rather 
-            than choice 2 (BCS).
-        """
-        dataset = spglib.get_symmetry_dataset(cell)
-        symmetries = [
-            SymmetryOperation(
-                rot,
-                dataset['translations'][i],
-                cell[0],
-                ind=i + 1,
-                spinor=self.spinor) for i,
-            rot in enumerate(
-                dataset['rotations'])]
-
-        return (symmetries, 
-                dataset['international'],
-                dataset['number'], 
-                dataset['transformation_matrix'],
-                dataset['origin_shift']
-                )
-
     def __init__(
             self,
             cell,
@@ -631,6 +573,64 @@ class SpaceGroup():
                        "tables. If you want to achieve the same cell as in "
                        "tables, try not specifying refUC and shiftUC."))
                 pass
+
+    def _findsym(self, cell):
+        """
+        Finds the space-group and constructs a list of symmetry operations
+        
+        Parameters
+        ----------
+        inPOSCAR : str, default=None 
+            POSCAR file from which lattice vectors, atomic species and positions of
+            ions will be read.
+        cell : list
+            `cell[0]` is a 3x3 array where cartesian coordinates of basis 
+            vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array
+            where each row contains the direct coordinates of an ion's position. 
+            `cell[2]` is an array where each element is a number identifying the 
+            atomic species of an ion. See `cell` parameter of function 
+            `get_symmetry` in 
+            `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
+        
+        Returns
+        -------
+        list
+            Each element is an instance of class `SymmetryOperation` corresponding 
+            to a symmetry in the point group of the space-group.
+        str
+            Symbol of the space-group in Hermann-Mauguin notation. 
+        int
+            Number of the space-group.
+        array
+            3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
+            and **c** are given in rows. 
+        array
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the convenctional setting.
+        array
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting of spglib. It may not be
+            the shift taking to the convenctional cell of tables; indeed, in 
+            centrosymmetric groups they adopt origin choice 1 of ITA, rather 
+            than choice 2 (BCS).
+        """
+        dataset = spglib.get_symmetry_dataset(cell)
+        symmetries = [
+            SymmetryOperation(
+                rot,
+                dataset['translations'][i],
+                cell[0],
+                ind=i + 1,
+                spinor=self.spinor) for i,
+            rot in enumerate(
+                dataset['rotations'])]
+
+        return (symmetries, 
+                dataset['international'],
+                dataset['number'], 
+                dataset['transformation_matrix'],
+                dataset['origin_shift']
+                )
 
     def json(self, symmetries=None):
         '''
