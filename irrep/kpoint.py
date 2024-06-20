@@ -30,6 +30,8 @@ class Kpoint:
     traces (and irreps), for the separation of the band structure in terms of a 
     symmetry operation and for the calculation of the Zak phase.
 
+        symmetries=None,
+        symmetries_tables=None  # calculate_traces needs it
     Parameters
     ----------
     ik : int
@@ -54,37 +56,29 @@ class Kpoint:
         passed is the attribute `symmetries` of class `SpaceGroup`.
     spinor : bool, default=None
         `True` if wave functions are spinors, `False` if they are scalars.
-    code : str, default='vasp'
-        DFT code used. Set to 'vasp', 'abinit', 'espresso' or 'wannier90'.
     kpt : list or array, default=None
         Direct coordinates of the k-point.
-    npw_ : int, default=None
-        Number of plane-waves considered in the expansion of wave-functions. 
-    fWFK : file object, default=None
-        File object corresponding to WFK file of Abinit. Returned by 
-        `FortranFile`.
-    WCF : class, default=None
-        Instance of `class WAVECARFILE`.
-    prefix : str, default=None
-        Prefix used for Quantum Espresso calculations or seedname of Wannier90 
-        files.
-    kptxml : default=None
-        `Element` object (see `ElementTree XML API` ) corresponding to a k-point.
-    flag : int, default=-1
-        When parsing WFK file (Abinit), info for all k-points is read, but 
-        stored only for k-points whose index is matches `flag`.
-    usepaw : int, default=None
-        Only used for Abinit. 1 if pseudopotentials are PAW, 0 otherwise. When 
-        `usepaw` is 0, normalization of wave-functions is checked.
-    eigenval : array, default=None
-        Contains all energy-levels in a particular k-point.
-    spin_channel : str, default=None
-        Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
-        Only applied in the interface to Quantum Espresso.
-    IBstartE : int, default=0
-        Only used with Quantum Espresso. Index of first band in particular spin 
-        channel. If `spin_channel` is 'dw', `IBstartE` is equal to the number of 
-        bands in spin-up channel.
+    Energy : array
+        Energy levels of the states with band indices between `IBstart` and 
+        `IBend`.
+    ig : array
+        Array returned by :func:`~gvectors.sortIG`. It contains data about the 
+        plane waves in the expansion of wave functions.
+    upper : float
+        Energy of the state `IBend`+1. Used to calculate the gap with upper 
+        bands.
+    degen_thresh : float, default=1e-8
+        Threshold to identify degenerate energy levels.
+    refUC : array, default=None
+        3x3 array describing the transformation of vectors defining the 
+        unit cell to the standard setting.
+    shiftUC : array, default=None
+        Translation taking the origin of the unit cell used in the DFT 
+        calculation to that of the standard setting.
+    symmetries_tables : list
+        Attribute `symmetries` of class `IrrepTable`. Each component is an 
+        instance of class `SymopTable` corresponding to a symmetry operation
+        in the "point-group" of the space-group.
     
     Attributes
     ----------
@@ -100,7 +94,7 @@ class Kpoint:
     WF : array
         Coefficients of wave-functions in the plane-wave expansion. A row for 
         each wave-function, a column for each plane-wave.
-    igall : array
+    ig : array
         Returned by `sortIG`.
         Every column corresponds to a plane-wave of energy smaller than 
         `Ecut`. The number of rows is 6: the first 3 contain direct 
@@ -109,7 +103,9 @@ class Kpoint:
         (sixth) row contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.
     K : array, shape=(3,)
-        Direct coordinates of the k-point.
+        Direct coordinates of the k point in the DFT cell setting.
+    k_refUC : array, shape=(3,)
+        Direct coordinates of the k point in the reference cell setting.
     Energy : array
         Energy-levels of bands whose traces should be calculated.
     upper : float
@@ -120,6 +116,31 @@ class Kpoint:
         Each element is an instance of class `SymmetryOperation` corresponding 
         to a symmetry in the point group of the space-group. The value 
         passed is the attribute `symmetries` of class `SpaceGroup`.
+    symmetries : dict
+        Each key is an instance of `class` `SymmetryOperation` corresponding 
+        to an operation in the little-(co)group and the attached value is an 
+        array with the traces of the operation.
+    char : array
+        Each row corresponds to a set of degenerate states. Each column is the 
+        trace of a symmetry in the little cogroup in the DFT cell setting.
+    char_refUC : array
+        The same as `char`, but in the reference cell setting.
+    degeneracies : array
+        Degeneracies of energy levels between `IBstart` and `IBend`.
+    borders : array
+        Integers representing the band index of the first state in each set of 
+        degenerate states. The bounds can be obtained as 
+        `for ibot, itop in zip(borders[:-1], borders[1:])`.
+    Energy_mean : array
+        Average of energy levels within each set of degenerate states
+    num_bandinvs : int
+        Property getter for the number of inversion-odd states. If the 
+        k point is not inversion symmetric, `None` is returned.
+    NG : int
+        Property getter for the number of plane waves in the expansion of 
+        wave functions.
+    onlytraces : bool
+        `False` if irreps have been identified and have to be written.
     """
     
     # creates attribute symmetries, if it was not created before
@@ -167,7 +188,6 @@ class Kpoint:
         RecLattice=None,  # this was last mandatory argument
         symmetries_SG=None,
         spinor=None,
-        code="vasp",
         kpt=None,
         WF=None,  # first arg added for abinit (to be kept at the end)
         Energy=None,
@@ -217,7 +237,7 @@ class Kpoint:
             self.num_bandinvs = None
 
 
-    def copy_sub(self, E, WF, degen_thresh, inds):
+    def copy_sub(self, E, WF, inds):
         """
         Create an instance of class `Kpoint` for a restricted set of states.
 
@@ -510,7 +530,7 @@ class Kpoint:
                 for b1, b2 in zip(borders, borders[1:]):
                     v1 = v[:, b1:b2]
                     print(w[b1:b2].mean())
-                    subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.dot(self.WF), degen_thresh=degen_thresh, inds=inds_states[b1:b2])
+                    subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.dot(self.WF), inds=inds_states[b1:b2])
             else:
                 v1 = v
                 subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF), degen_thresh=degen_thresh, inds_states=inds_states)
@@ -540,6 +560,39 @@ class Kpoint:
     def calculate_traces(self, refUC, shiftUC, symmetries, symmetries_tables, degen_thresh=1e-8):
         '''
         Calculate traces of symmetry operations
+
+        Parameters
+        ----------
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=None
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+        symmetries : list
+            Indices of symmetries whose traces will be calculated.
+        symmetries_tables : list
+            Attribute `symmetries` of class `IrrepTable`. Each component is an 
+            instance of class `SymopTable` corresponding to a symmetry operation
+            in the "point-group" of the space-group.
+        degen_thresh : float, default=1e-8
+            Threshold to identify degenerate energy levels.
+        
+        Returns
+        -------
+        char : array
+            Each row corresponds to a set of degenerate states. Each column is the 
+            trace of a symmetry in the little cogroup in the DFT cell setting.
+        char_refUC : array
+            The same as `char`, but in the reference cell setting.
+        Energy_mean : array
+            Average of energy levels within each set of degenerate states
+        degeneracies : array
+            Degeneracies of energy levels between `IBstart` and `IBend`.
+        borders : array
+            Integers representing the band index of the first state in each set of 
+            degenerate states. The bounds can be obtained as 
+            `for ibot, itop in zip(borders[:-1], borders[1:])`.
         '''
 
         if symmetries is None:
@@ -589,6 +642,18 @@ class Kpoint:
 
 
     def identify_irreps(self, irreptable=None):
+        '''
+        Identify irreps based on traces. Sets attributes `onlytraces` and  
+        `irreps`.
+
+        Parameters
+        ----------
+        irreptable : dict
+            Each key is the label of an irrep, each value another `dict`. Keys 
+            of every secondary `dict` are indices of symmetries (starting from 
+            1 and following order of operations in tables of BCS) and 
+            values are traces of symmetries.
+        '''
 
         self.onlytraces = irreptable is None
         if self.onlytraces:
@@ -620,6 +685,10 @@ class Kpoint:
 
 
     def write_characters(self):
+        '''
+        Write the block of data of the k point, including energy levels,
+        degeneracies, traces and irreps.
+        '''
 
         # Print header for k-point
         print(("\n\n k-point {0:3d} : {1} (in DFT cell)\n"
@@ -674,10 +743,6 @@ class Kpoint:
             inds.append(aux1 + "{0:4d}    ".format(sym.ind) + aux1)
         s += " ".join(inds)
         print(s)
-        #print(
-        #    "           |               |{0}        {0}| ".format(aux2),
-        #    " ".join(aux1 + "{0:4d}    ".format(i) + aux1 for i in sorted(sym)),
-        #)
 
         # Print line associated to a set of degenerate states
         for e, d, ir, ch1, ch2 in zip(self.Energy, self.degeneracies, str_irreps, self.char, self.char_refUC):
@@ -710,6 +775,19 @@ class Kpoint:
 
 
     def json(self, symmetries=None):
+        '''
+        Prepare the data to save it in JSON format.
+
+        Parameters
+        ----------
+        symmetries : list
+            Indices of symmetries whose traces should be written.
+
+        Returns
+        -------
+        json_data : dict
+            Data that will be saved in JSON format.
+        '''
 
         json_data = {}
 
@@ -746,6 +824,14 @@ class Kpoint:
         return json_data
         
     def write_irrepsfile(self, file):
+        '''
+        Write the irreps of this k point into `irreps.dat` file.
+
+        Parameters
+        ----------
+        file : File object
+            File object for the `irreps.dat` file.
+        '''
 
         for energy, irrep_dict in zip(self.Energy, self.irreps):
             irrep = ''.join(irrep_dict.keys())
@@ -753,7 +839,7 @@ class Kpoint:
             file.write(s)
 
 
-    def write_plotfile(self, plotfile, kpl, efermi):
+    def write_plotfile(self, kpl, efermi):
 
         writeimaginary = np.abs(self.character.imag).max() > 1e-4
         s = []
