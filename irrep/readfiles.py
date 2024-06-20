@@ -61,7 +61,7 @@ class WAVECARFILE:
                 + "ISPIN={0}  this is not supported yet".format(ispin)
             )
 
-    def record(self, irec, cnt=np.Inf, dtype=float):
+    def record(self, irec, cnt=np.inf, dtype=float):
         """An auxilary function to get records from WAVECAR"""
         self.f.seek(irec * self.rl)
         return np.fromfile(self.f, dtype=dtype, count=min(self.rl, cnt))
