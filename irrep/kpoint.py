@@ -142,43 +142,6 @@ class Kpoint:
     onlytraces : bool
         `False` if irreps have been identified and have to be written.
     """
-    
-    # creates attribute symmetries, if it was not created before
-    @LazyProperty
-    def symmetries(self):
-        """
-        Sets the attribute `Kpoint.symmetries` to a dictionary. Works as a 
-        lazy-property.
-
-        Returns
-        -------
-        symmetries : dict
-            Each key is an instance of `class` `SymmetryOperation` corresponding 
-            to an operation in the little-(co)group and the attached value is an 
-            array with the traces of the operation.
-    
-        Notes
-        -----
-        For more about `lazy-property`, check the documentation `here <https://pypi.org/project/lazy-property/>`_ .
-        """
-        symmetries = {}
-        #        print ("calculating symmetry eigenvalues for E={0}, WF={1} SG={2}".format(self.Energy,self.WF.shape,symmetries_SG) )
-        if not (self.symmetries_SG is None):
-            for symop in self.symmetries_SG:
-                try:
-                    symmetries[symop] = symm_eigenvalues(
-                        self.K,
-                        self.RecLattice,
-                        self.WF,
-                        self.ig,
-                        symop.rotation,
-                        symop.spinor_rotation,
-                        symop.translation,
-                        self.spinor,
-                    )
-                except NotSymmetryError:
-                    pass
-        return symmetries
 
     def __init__(
         self,
@@ -236,6 +199,42 @@ class Kpoint:
         else:
             self.num_bandinvs = None
 
+    # creates attribute symmetries, if it was not created before
+    @LazyProperty
+    def symmetries(self):
+        """
+        Sets the attribute `Kpoint.symmetries` to a dictionary. Works as a 
+        lazy-property.
+
+        Returns
+        -------
+        symmetries : dict
+            Each key is an instance of `class` `SymmetryOperation` corresponding 
+            to an operation in the little-(co)group and the attached value is an 
+            array with the traces of the operation.
+    
+        Notes
+        -----
+        For more about `lazy-property`, check the documentation `here <https://pypi.org/project/lazy-property/>`_ .
+        """
+        symmetries = {}
+        #        print ("calculating symmetry eigenvalues for E={0}, WF={1} SG={2}".format(self.Energy,self.WF.shape,symmetries_SG) )
+        if not (self.symmetries_SG is None):
+            for symop in self.symmetries_SG:
+                try:
+                    symmetries[symop] = symm_eigenvalues(
+                        self.K,
+                        self.RecLattice,
+                        self.WF,
+                        self.ig,
+                        symop.rotation,
+                        symop.spinor_rotation,
+                        symop.translation,
+                        self.spinor,
+                    )
+                except NotSymmetryError:
+                    pass
+        return symmetries
 
     def copy_sub(self, E, WF, inds):
         """
