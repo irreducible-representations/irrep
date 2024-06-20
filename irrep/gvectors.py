@@ -40,7 +40,7 @@ def calc_gvectors(
     K,
     RecLattice,
     Ecut,
-    nplane=np.Inf,
+    nplane=np.inf,
     Ecut1=-1,
     thresh=1e-3,
     spinor=True,
@@ -61,7 +61,7 @@ def calc_gvectors(
     Ecut : float
         Plane-wave cutoff (in eV) used in the DFT calulation. Always read from 
         DFT files.
-    nplane : int, default=np.Inf
+    nplane : int, default=np.inf
         Number of plane-waves in the expansion of wave-functions (read from DFT 
         files). Only significant for VASP. 
     Ecut1 : float, default=Ecut
@@ -125,7 +125,7 @@ def calc_gvectors(
         memory[-1] = flag
 
     ncnt = len(igall)
-    if nplane < np.Inf: # vasp
+    if nplane < np.inf: # vasp
         if spinor:
             if 2 * ncnt != nplane:
                 raise RuntimeError(

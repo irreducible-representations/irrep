@@ -471,7 +471,7 @@ class BandStructure:
             Smallest direct gap
         '''
 
-        gap = np.Inf
+        gap = np.inf
         for KP in self.kpoints:
             gap = min(gap, KP.upper-KP.Energy[-1])
         return gap
@@ -487,7 +487,7 @@ class BandStructure:
             Smallest indirect gap
         '''
 
-        min_upper = np.Inf  # smallest energy of bands above set
+        min_upper = np.inf  # smallest energy of bands above set
         max_lower = -np.inf  # largest energy of bands in the set
         for KP in self.kpoints:
             min_upper = min(min_upper, KP.upper)
@@ -729,7 +729,7 @@ class BandStructure:
         #        print (np.array([k.Energy[1:] for k in self.kpoints] ))
         #        print (np.min([k.Energy[1:] for k in self.kpoints],axis=0) )
         emin = np.hstack(
-            (np.min([k.Energy[1:nmax] for k in self.kpoints], axis=0), [np.Inf])
+            (np.min([k.Energy[1:nmax] for k in self.kpoints], axis=0), [np.inf])
         )
         emax = np.max([k.Energy[:nmax] for k in self.kpoints], axis=0)
         locgap = np.hstack(
@@ -738,7 +738,7 @@ class BandStructure:
                     [k.Energy[1:nmax] - k.Energy[0 : nmax - 1] for k in self.kpoints],
                     axis=0,
                 ),
-                [np.Inf],
+                [np.inf],
             )
         )
         return z, emin - emax, (emin + emax) / 2, locgap
@@ -779,7 +779,7 @@ class BandStructure:
         kpline = self.KPOINTSline()
         nbmax = max(k.Nband for k in self.kpoints)
         EN = np.zeros((nbmax, len(kpline)))
-        EN[:, :] = np.Inf
+        EN[:, :] = np.inf
         for i, k in enumerate(self.kpoints):
             EN[: k.Nband, i] = k.Energy - self.efermi
         if locs is not None:
