@@ -320,7 +320,7 @@ class BandStructure:
             try:
                 upper = Energy[IBend] - self.efermi
             except BaseException:
-                upper = np.NaN
+                upper = np.nan
 
             # Preserve only bands in between IBstart and IBend
             WF = WF[IBstart:IBend]
