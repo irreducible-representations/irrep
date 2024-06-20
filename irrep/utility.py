@@ -123,10 +123,8 @@ def str2list_space(string):
     Ranges can be generated as part of the output `array`. For example, 
     `str2list('1,3-5,7')` will give as ouput `array([1,3,4,5,7])`.
     """
-    #    print ("str2list  <{0}> ".format(string))
     res = np.hstack([np.arange(*(np.array(s.split("-"), dtype=int) + np.array([0, 1])))
                      if "-" in s else np.array([int(s)]) for s in string.split()])
-#    print ("str2list  <{0}> -> <{1}>".format(string,res))
     return res
 
 
