@@ -75,11 +75,10 @@ class BandStructure:
     search_cell : bool, default=False
         Whether the transformation to the conventional cell should be computed.
         It is `True` if kpnames was specified in CLI.
-    _correct_Ecut0 : float
-        In case of VASP, if you get an error like ' computed ncnt=*** != input nplane=*** ', 
-        try to set this parameter to a small positive or negative value (usually of order  +- 1e-7)
     trans_thresh : float, default=1e-5
         Threshold to compare translational parts of symmetries.
+    degen_thresh : float, default=1e-8
+        Threshold to determine the degeneracy of energy levels.
 
     Attributes
     ----------
@@ -109,9 +108,13 @@ class BandStructure:
         Each element is an instance of `class Kpoint` corresponding to a 
         k-point specified in input parameter `kpoints`. If this input was not 
         set, all k-points found in DFT files will be considered.
-    _correct_Ecut0 : float
-        if you get an error like ' computed ncnt=*** != input nplane=*** ', 
-        try to set this parameter to a small positive or negative value (usually of order  +- 1e-7)
+    num_bandinvs : int
+        Property that returns the number of inversion odd states in the 
+        given TRIM.
+    gap_direct : float
+        Property that returns the smallest direct gap in the given k points.
+    gap_indirect : float
+        Property that returns the smallest indirect gap in the given k points.
     """
 
     def __init__(
@@ -350,6 +353,17 @@ class BandStructure:
 
 
     def identify_irreps(self, kpnames):
+        '''
+        Identifies the irreducible representations of wave functions based on 
+        the traces of symmetries of the little co-group. Each element of 
+        `kpoints`  will be assigned the attribute `irreps` with the labels of 
+        irreps.
+
+        Parameters
+        ----------
+        kpnames : list
+            List of labels of the maximal k points.
+        '''
 
         for ik, KP in enumerate(self.kpoints):
             
@@ -360,6 +374,13 @@ class BandStructure:
             KP.identify_irreps(irreptable=irreps)
 
     def write_characters(self):
+        '''
+        For each k point, write the energy levels, their degeneracies, traces 
+        of the little cogroup's symmetries, and the direct and indirect gaps. 
+        Also the irreps, if they have been identified. If the crystal is 
+        inversion symmetries, the number of total inversion odd states, the 
+        Z2 and Z4 numbers will be written.
+        '''
 
         for KP in self.kpoints:
 
@@ -400,6 +421,19 @@ class BandStructure:
     
 
     def json(self, kpnames=None):
+        '''
+        Prepare a dictionary to save the data in JSON format.
+
+        Parameters
+        ----------
+        kpnames : list
+            List of labels of the maximal k points.
+
+        Returns
+        -------
+        json_data : dict
+            Dictionary with the data.
+        '''
 
         kpline = self.KPOINTSline()
         json_data = {}
@@ -428,6 +462,15 @@ class BandStructure:
 
     @property
     def gap_direct(self):
+        '''
+        Getter for the direct gap
+
+        Returns
+        -------
+        gap : float
+            Smallest direct gap
+        '''
+
         gap = np.Inf
         for KP in self.kpoints:
             gap = min(gap, KP.upper-KP.Energy[-1])
@@ -435,6 +478,15 @@ class BandStructure:
 
     @property
     def gap_indirect(self):
+        '''
+        Getter for the indirect gap
+
+        Returns
+        -------
+        gap : float
+            Smallest indirect gap
+        '''
+
         min_upper = np.Inf  # smallest energy of bands above set
         max_lower = -np.inf  # largest energy of bands in the set
         for KP in self.kpoints:
@@ -444,6 +496,16 @@ class BandStructure:
 
     @property
     def num_bandinvs(self):
+        '''
+        Getter for the total number of inversion odd states
+
+        Returns
+        -------
+        num_bandinvs : int
+            Total number of inversion odd states. 0 if the crystal is not 
+            inversion symmetric.
+        '''
+
         num_bandinvs = 0
         for KP in self.kpoints:
             if KP.num_bandinvs is not None:
@@ -465,6 +527,9 @@ class BandStructure:
 
 
     def write_irrepsfile(self):
+        '''
+        Write the file `irreps.dat` with the identified irreps.
+        '''
 
         file = open('irreps.dat', 'w')
         for KP in self.kpoints:
@@ -497,9 +562,7 @@ class BandStructure:
             )
         return nbarray[0]
 
-    def write_trace(
-        self,
-    ):
+    def write_trace(self,):
         """
         Generate `trace.txt` file to upload to the program `CheckTopologicalMat` 
         in `BCS <https://www.cryst.ehu.es/cgi-bin/cryst/programs/topological.pl>`_ .
