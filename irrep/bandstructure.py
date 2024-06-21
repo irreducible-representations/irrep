@@ -115,6 +115,8 @@ class BandStructure:
         Property that returns the smallest direct gap in the given k points.
     gap_indirect : float
         Property that returns the smallest indirect gap in the given k points.
+    num_k : int
+        Property that returns the number of k points in the attribute `kpoints`
     """
 
     def __init__(
@@ -343,13 +345,11 @@ class BandStructure:
                 symmetries_tables=self.spacegroup.symmetries_tables
                 )
             self.kpoints.append(kp)
-        
-    def getNK(self):
-        """Getter for `self.kpoints`."""
+
+    @property
+    def num_k(self):
+        '''Getter for the number of k points'''
         return len(self.kpoints)
-
-    NK = property(getNK)
-
 
     def identify_irreps(self, kpnames):
         '''
