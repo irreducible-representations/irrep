@@ -421,6 +421,7 @@ def cli(
             )
         exit()
 
+    exit()  # the following code is not mainained for now: deactivate it
     if plotbands:
         json_data["characters_and_irreps"] = {}
         print("plotbands = True --> writing bands")

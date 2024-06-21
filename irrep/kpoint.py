@@ -161,7 +161,6 @@ class Kpoint:
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
         self.Nband = Nband
         self.RecLattice = RecLattice
-        self.symmetries_SG = symmetries_SG  # lazy_property needs it
         self.upper = upper
 
         self.K = kpt
@@ -175,12 +174,28 @@ class Kpoint:
             np.sqrt(np.abs(np.einsum("ij,ij->i", self.WF.conj(), self.WF)))
         ).reshape(self.Nband, 1)
 
+        # Determine little group and keep only passed symmetries
+        if symmetries is None:
+            symmetries = [symop.ind for symop in symmetries_SG]
+        self.little_group = []
+        for symop in symmetries_SG:
+            if symop.ind not in symmetries:
+                continue
+            k_rotated = np.dot(np.linalg.inv(symop.rotation).T, self.K)
+            dkpt = np.array(np.round(k_rotated - self.K), dtype=int)
+            if np.allclose(dkpt, k_rotated - self.K):
+                self.little_group.append(symop)
+
+        # Sort symmetries based on their indices
+        argsort = np.argsort([symop.ind for symop in self.little_group])
+        self.little_group = [self.little_group[ind] for ind in argsort]
+
         # Calculate traces
-        self.char, self.char_refUC, self.Energy, self.degeneracies, self.borders = self.calculate_traces(refUC, shiftUC, symmetries, symmetries_tables, degen_thresh)
+        self.char, self.char_refUC, self.Energy, self.degeneracies, self.borders = self.calculate_traces(refUC, shiftUC, symmetries_tables, degen_thresh)
 
         # Determine number of band inversions based on parity
         found = False
-        for sym in self.symmetries:
+        for i,sym in enumerate(self.little_group):
             if (
                 sum(abs(sym.translation)) < 1e-6
                 and
@@ -189,46 +204,11 @@ class Kpoint:
                 found = True
                 break
         if found:
-            self.num_bandinvs = int(round(sum(1 - self.symmetries[sym].real) / 2))
+            try:self.num_bandinvs = int(round(sum(1 - self.char[i].real) / 2))
+            except:
+                raise RuntimeError(i, sym.ind, len(self.little_group), self.char.shape)
         else:
             self.num_bandinvs = None
-
-    # creates attribute symmetries, if it was not created before
-    @LazyProperty
-    def symmetries(self):
-        """
-        Sets the attribute `Kpoint.symmetries` to a dictionary. Works as a 
-        lazy-property.
-
-        Returns
-        -------
-        symmetries : dict
-            Each key is an instance of `class` `SymmetryOperation` corresponding 
-            to an operation in the little-(co)group and the attached value is an 
-            array with the traces of the operation.
-    
-        Notes
-        -----
-        For more about `lazy-property`, check the documentation `here <https://pypi.org/project/lazy-property/>`_ .
-        """
-        symmetries = {}
-        #        print ("calculating symmetry eigenvalues for E={0}, WF={1} SG={2}".format(self.Energy,self.WF.shape,symmetries_SG) )
-        if not (self.symmetries_SG is None):
-            for symop in self.symmetries_SG:
-                try:
-                    symmetries[symop] = symm_eigenvalues(
-                        self.K,
-                        self.RecLattice,
-                        self.WF,
-                        self.ig,
-                        symop.rotation,
-                        symop.spinor_rotation,
-                        symop.translation,
-                        self.spinor,
-                    )
-                except NotSymmetryError:
-                    pass
-        return symmetries
 
     def copy_sub(self, E, WF, inds):
         """
@@ -550,7 +530,7 @@ class Kpoint:
 
         return subspaces
 
-    def calculate_traces(self, refUC, shiftUC, symmetries, symmetries_tables, degen_thresh=1e-8):
+    def calculate_traces(self, refUC, shiftUC, symmetries_tables, degen_thresh=1e-8):
         '''
         Calculate traces of symmetry operations
 
@@ -588,13 +568,24 @@ class Kpoint:
             `for ibot, itop in zip(borders[:-1], borders[1:])`.
         '''
 
-        if symmetries is None:
-            sym = {s.ind: s for s in self.symmetries}
-        else:
-            sym = {s.ind: s for s in self.symmetries if s.ind in symmetries}
-
         # Put all traces in an array. Rows (cols) correspond to syms (wavefunc)
-        char = np.vstack([self.symmetries[sym[i]] for i in sorted(sym)])
+        char = []
+        for symop in self.little_group:
+            char.append(
+                    symm_eigenvalues(
+                        self.K,
+                        self.RecLattice,
+                        self.WF,
+                        self.ig,
+                        symop.rotation,
+                        symop.spinor_rotation,
+                        symop.translation,
+                        self.spinor,
+                    ))
+        print(np.array(char).shape)
+        exit()
+        char = np.array(char).T
+
         borders = np.hstack(
             [
                 [0],
@@ -625,10 +616,10 @@ class Kpoint:
         if (not np.allclose(refUC, np.eye(3, dtype=float)) or
             not np.allclose(shiftUC, np.zeros(3, dtype=float))):
             # Calculational and reference cells are not identical
-            for i,ind in enumerate(sym):
-                dt = (symmetries_tables[ind-1].t 
-                      - sym[ind].translation_refUC(refUC, shiftUC))
-                char_refUC[:,i] *= (sym[ind].sign 
+            for i,sym in enumerate(self.little_group):
+                dt = (symmetries_tables[sym.ind-1].t 
+                      - sym.translation_refUC(refUC, shiftUC))
+                char_refUC[:,i] *= (sym.sign 
                                      * np.exp(-2j*np.pi*dt.dot(self.k_refUC)))
 
         return char, char_refUC, Energy_mean, degeneracies, borders
@@ -662,7 +653,7 @@ class Kpoint:
                 for ch in self.char:
                     multiplicities = {}
                     for ir in irreptable:
-                        multipl = np.dot(np.array([irreptable[ir][sym.ind] for sym in self.symmetries]),
+                        multipl = np.dot(np.array([irreptable[ir][sym.ind] for sym in self.little_group]),
                                          ch.conj()
                                          ) / len(ch)
                         if abs(multipl) > 1e-3:
@@ -671,7 +662,7 @@ class Kpoint:
             except KeyError as ke:
                 print(ke)
                 print("irreptable:", irreptable)
-                print([sym.ind for sym in self.symmetries])
+                print([sym.ind for sym in self.little_group])
                 raise ke
 
         self.irreps = irreps
@@ -732,7 +723,7 @@ class Kpoint:
         # Print indices of little-group symmetries
         s = "           |               | {0}        {1} | ".format(aux2, aux3)
         inds = []
-        for sym in self.symmetries:
+        for sym in self.little_group:
             inds.append(aux1 + "{0:4d}    ".format(sym.ind) + aux1)
         s += " ".join(inds)
         print(s)
@@ -767,14 +758,9 @@ class Kpoint:
             print(left_str + " " + right_str2)  # line for character in DFT
 
 
-    def json(self, symmetries=None):
+    def json(self):
         '''
         Prepare the data to save it in JSON format.
-
-        Parameters
-        ----------
-        symmetries : list
-            Indices of symmetries whose traces should be written.
 
         Returns
         -------
@@ -784,12 +770,8 @@ class Kpoint:
 
         json_data = {}
 
-        # Dictionary with symmetry eigenvalues (do we need this?)
-        if symmetries is None:
-            sym = {s.ind: s for s in self.symmetries}
-        else:
-            sym = {s.ind: s for s in self.symmetries if s.ind in symmetries}
-        json_data ['symmetries'] = list(sym.keys())
+        indices_symmetries = [sym.ind for sym in self.little_group]
+        json_data ['symmetries'] = list(indices_symmetries)
 
         # Energy levels and degeneracies
         json_data['energies'] = self.Energy
@@ -886,13 +868,14 @@ class Kpoint:
             single k-point.
         """
 
-        sym = {s.ind: s for s in self.symmetries}
-        res = (
-            "{0} \n"
-            + " {1} \n"  # Number of symmetry operations of the little co-group of the 1st maximal k-vec. In the next line the position of each element of the point group in the list above.
-            # For each band introduce a row with the followind data: (1) 1+number of bands below, (2) dimension (degeneracy) of the band,
-            # (3) energy and eigenvalues (real part, imaginary part) for each symmetry operation of the little group (listed above).
-        ).format(len(sym.keys()), "  ".join(str(x) for x in sym))
+        # Line 1: order of the little cogroup
+        # Line 2: indices of syms in the little cogroup
+        # Line 3: for each band introduce a row with the followind data:
+        # (1) 1+number of bands below, (2) dimension (degeneracy) of the band,
+        # (3) energy and eigenvalues (real part, imaginary part) for each 
+        # symmetry operation of the little group (listed above).
+        indices = [symop.ind for symop in self.little_group]
+        res = ("{0} \n {1} \n".format(len(self.little_group), "  ".join(str(x) for x in indices)))
 
         IB = np.cumsum(np.hstack(([0], self.degeneracies[:-1]))) + 1
         res += (
@@ -906,6 +889,7 @@ class Kpoint:
 
         return res
 
+    # This function is called in a nonmaintained functionality. Deactivate it for now
     def write_trace_all(self, degen_thresh=1e-8, symmetries=None, efermi=0.0, kpline=0):
         """
         Generate a block describing energy-levels and traces in a k-point.
