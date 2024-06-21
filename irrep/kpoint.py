@@ -38,10 +38,6 @@ class Kpoint:
         Index of kpoint, starting count from 0.
     NBin : int
         Number of bands considered at the k-point in the DFT calculation.
-    IBstart : int
-        First band to be considered.
-    IBend : int
-        Last band to be considered.
     Ecut : float
         Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
     Ecut0 : float
@@ -146,8 +142,7 @@ class Kpoint:
     def __init__(
         self,
         ik=None,
-        IBstart=None,
-        IBend=None,
+        Nband=None,
         RecLattice=None,  # this was last mandatory argument
         symmetries_SG=None,
         spinor=None,
@@ -164,8 +159,7 @@ class Kpoint:
     ):
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
-        self.Nband = IBend - IBstart
-        #        self.n=np.arange(IBstart,IBend)+1
+        self.Nband = Nband
         self.RecLattice = RecLattice
         self.symmetries_SG = symmetries_SG  # lazy_property needs it
         self.upper = upper
