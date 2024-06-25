@@ -284,7 +284,7 @@ class BandStructure:
                                    self.RecLattice,
                                    self.Ecut0,
                                    npw,
-                                   Ecut,
+                                   self.Ecut,
                                    spinor=self.spinor
                                    )
                 if not self.spinor:
