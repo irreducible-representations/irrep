@@ -189,8 +189,16 @@ class Kpoint:
         argsort = np.argsort([symop.ind for symop in self.little_group])
         self.little_group = [self.little_group[ind] for ind in argsort]
 
+        # Determine degeneracies
+        self.borders = np.hstack([
+             [0],
+             np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
+             [self.Nband],
+        ])
+        self.degeneracies = self.borders[1:] - self.borders[:-1]
+
         # Calculate traces
-        self.char, self.char_refUC, self.Energy, self.degeneracies, self.borders = self.calculate_traces(refUC, shiftUC, symmetries_tables, degen_thresh)
+        self.char, self.char_refUC, self.Energy = self.calculate_traces(refUC, shiftUC, symmetries_tables, degen_thresh)
 
         # Determine number of band inversions based on parity
         found = False
@@ -558,12 +566,6 @@ class Kpoint:
             The same as `char`, but in the reference cell setting.
         Energy_mean : array
             Average of energy levels within each set of degenerate states
-        degeneracies : array
-            Degeneracies of energy levels between `IBstart` and `IBend`.
-        borders : array
-            Integers representing the band index of the first state in each set of 
-            degenerate states. The bounds can be obtained as 
-            `for ibot, itop in zip(borders[:-1], borders[1:])`.
         '''
 
         # Put all traces in an array. Rows (cols) correspond to syms (wavefunc)
@@ -582,14 +584,6 @@ class Kpoint:
                     ))
         char = np.array(char)
 
-        borders = np.hstack(
-            [
-                [0],
-                np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
-                [self.Nband],
-            ]
-        )
-        degeneracies = borders[1:] - borders[:-1]
 
         # Check that number of irreps is int
         Nirrep = np.linalg.norm(char.sum(axis=1)) ** 2 / char.shape[0]
@@ -599,12 +593,12 @@ class Kpoint:
 
         # Sum traces of degenerate states. Rows (cols) correspond to states (syms)
         char = np.array(
-            [char[:, start:end].sum(axis=1) for start, end in zip(borders, borders[1:])]
+            [char[:, start:end].sum(axis=1) for start, end in zip(self.borders, self.borders[1:])]
             )
 
         # Take average of energies over degenerate states
         Energy_mean = np.array(
-            [self.Energy[start:end].mean() for start, end in zip(borders, borders[1:])]
+            [self.Energy[start:end].mean() for start, end in zip(self.borders, self.borders[1:])]
         )
 
         # Transfer traces in calculational cell to refUC
@@ -618,7 +612,7 @@ class Kpoint:
                 char_refUC[:,i] *= (sym.sign 
                                      * np.exp(-2j*np.pi*dt.dot(self.k_refUC)))
 
-        return char, char_refUC, Energy_mean, degeneracies, borders
+        return char, char_refUC, Energy_mean
 
 
     def identify_irreps(self, irreptable=None):
