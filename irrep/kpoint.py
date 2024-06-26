@@ -21,7 +21,6 @@ import numpy.linalg as la
 import copy
 from .gvectors import symm_eigenvalues, NotSymmetryError, symm_matrix
 from .utility import compstr, is_round, format_matrix
-from lazy_property import LazyProperty
 
 class Kpoint:
     """
