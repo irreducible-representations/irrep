@@ -335,7 +335,7 @@ class BandStructure:
                 Energy=Energy,
                 ig=kg,
                 upper=upper,
-                Nband=NBout,
+                num_bands=NBout,
                 RecLattice=self.RecLattice,
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
@@ -546,7 +546,7 @@ class BandStructure:
         int
             Number of bands in every k-point.
         """
-        nbarray = [k.Nband for k in self.kpoints]
+        nbarray = [k.num_bands for k in self.kpoints]
         if len(set(nbarray)) > 1:
             raise RuntimeError(
                 "the numbers of bands differs over k-points:{0} \n cannot write trace.txt \n".format(
@@ -776,15 +776,15 @@ class BandStructure:
         """
         #        print (locs)
         kpline = self.KPOINTSline()
-        nbmax = max(k.Nband for k in self.kpoints)
+        nbmax = max(k.num_bands for k in self.kpoints)
         EN = np.zeros((nbmax, len(kpline)))
         EN[:, :] = np.inf
         for i, k in enumerate(self.kpoints):
-            EN[: k.Nband, i] = k.Energy - self.efermi
+            EN[: k.num_bands, i] = k.Energy - self.efermi
         if locs is not None:
             loc = np.zeros((nbmax, len(kpline), len(locs)))
             for i, k in enumerate(self.kpoints):
-                loc[: k.Nband, i, :] = k.getloc(locs).T
+                loc[: k.num_bands, i, :] = k.getloc(locs).T
             return "\n\n\n".join(
                 "\n".join(
                     (

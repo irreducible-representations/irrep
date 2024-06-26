@@ -31,6 +31,7 @@ class Kpoint:
 
         symmetries=None,
         symmetries_tables=None  # calculate_traces needs it
+
     Parameters
     ----------
     ik : int
@@ -81,7 +82,7 @@ class Kpoint:
         `True` if wave-functions are spinors, `False` if they are scalars.
     ik0 : int
         Index of the k-point, starting the count from 1.
-    Nband : int
+    num_bands : int
         Number of bands whose traces should be calculated.
     RecLattice : array, shape=(3,3)
         Each row contains the cartesian coordinates of a basis vector forming 
@@ -141,7 +142,7 @@ class Kpoint:
     def __init__(
         self,
         ik=None,
-        Nband=None,
+        num_bands=None,
         RecLattice=None,  # this was last mandatory argument
         symmetries_SG=None,
         spinor=None,
@@ -158,7 +159,7 @@ class Kpoint:
     ):
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
-        self.Nband = Nband
+        self.num_bands = num_bands
         self.RecLattice = RecLattice
         self.upper = upper
 
@@ -171,7 +172,7 @@ class Kpoint:
         self.k_refUC = np.dot(refUC.T, self.K)
         self.WF /= (
             np.sqrt(np.abs(np.einsum("ij,ij->i", self.WF.conj(), self.WF)))
-        ).reshape(self.Nband, 1)
+        ).reshape(self.num_bands, 1)
 
         # Determine little group and keep only passed symmetries
         if symmetries is None:
@@ -193,7 +194,7 @@ class Kpoint:
         self.borders = np.hstack([
              [0],
              np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
-             [self.Nband],
+             [self.num_bands],
         ])
         self.degeneracies = self.borders[1:] - self.borders[:-1]
 
@@ -241,11 +242,11 @@ class Kpoint:
         sortE = np.argsort(E)
         other.Energy = E[sortE]
         other.WF = WF[sortE]
-        other.Nband = len(E)
+        other.num_bands = len(E)
         inds = inds[sortE]
 
         # Do not group by degeneracy of energy-levels for printing
-        other.degeneracies = [1] * self.Nband
+        other.degeneracies = [1] * self.num_bands
         char = []
         char_refUC = []
         for i in inds:
@@ -367,7 +368,7 @@ class Kpoint:
             [
                 [0],
                 np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
-                [self.Nband],
+                [self.num_bands],
             ]
         )
         result = []
@@ -476,7 +477,7 @@ class Kpoint:
                 eigenvalues.append(w)
                 Eloc.append(self.Energy[istate])
                 eigenvectors.append(
-                    np.hstack((np.zeros(b1), v, np.zeros(self.Nband - b2)))
+                    np.hstack((np.zeros(b1), v, np.zeros(self.num_bands - b2)))
                 )
         w = np.array(eigenvalues)
         v = np.array(eigenvectors).T # each col an eigenvector
@@ -501,7 +502,7 @@ class Kpoint:
             Eloc = Eloc[arg]
             inds_states = inds_states[arg]
             borders = np.hstack(
-                ([0], np.where((w[1:] - w[:-1]) > 0.05)[0] + 1, [self.Nband])
+                ([0], np.where((w[1:] - w[:-1]) > 0.05)[0] + 1, [self.num_bands])
             )
 
             # Probably this if-else statement can be removed
@@ -525,9 +526,9 @@ class Kpoint:
 
             if len(borders) > 0:
                 for b1, b2 in zip(borders, np.roll(borders, -1)):
-                    v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.Nband]
-                    subspaces[np.roll(w, -b1)[: (b2 - b1) % self.Nband].mean()] = self.copy_sub(
-                        E=np.roll(Eloc, -b1)[: (b2 - b1) % self.Nband], degen_thresh=degen_thresh, WF=v1.T.dot(self.WF)
+                    v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
+                    subspaces[np.roll(w, -b1)[: (b2 - b1) % self.num_bands].mean()] = self.copy_sub(
+                        E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands], degen_thresh=degen_thresh, WF=v1.T.dot(self.WF)
                     )
 
             else:
@@ -671,7 +672,7 @@ class Kpoint:
                .format(self.ik0,
                        np.round(self.K, 5),
                        np.round(self.k_refUC, 5),
-                       self.Nband)
+                       self.num_bands)
               ))
 
         # Generate str describing irrep corresponding to sets of states
@@ -914,7 +915,7 @@ class Kpoint:
             [
                 [0],
                 np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
-                [self.Nband],
+                [self.num_bands],
             ]
         )
         char = {
@@ -967,13 +968,13 @@ class Kpoint:
         igsize = igmax - igmin + 1
         #        print (self.ig.T)
         #        print (igsize)
-        res = np.zeros((self.Nband, other.Nband), dtype=complex)
+        res = np.zeros((self.num_bands, other.num_bands), dtype=complex)
         
         # short again coefficients of expansions
         for s in [0, 1] if self.spinor else [0]:
-            WF1 = np.zeros((self.Nband, igsize[0], igsize[1], igsize[2]), dtype=complex)
+            WF1 = np.zeros((self.num_bands, igsize[0], igsize[1], igsize[2]), dtype=complex)
             WF2 = np.zeros(
-                (other.Nband, igsize[0], igsize[1], igsize[2]), dtype=complex
+                (other.num_bands, igsize[0], igsize[1], igsize[2]), dtype=complex
             )
             for i, ig in enumerate(self.ig.T):
                 WF1[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = self.WF[
@@ -996,17 +997,16 @@ class Kpoint:
             grid[0][:, None, None], grid[1][None, :, None], grid[2][None, None, :]
         )
         print("loc=", loc, "loc_grid=\n", loc_grid)
-        #        FFTgrid=np.zeros( (self.Nband,*(2*gmax+1)),dtype=complex )
-        res = np.zeros(self.Nband)
+        res = np.zeros(self.num_bands)
         for s in [0, 1] if self.spinor else [0]:
-            WF1 = np.zeros((self.Nband, *(2 * gmax + 1)), dtype=complex)
+            WF1 = np.zeros((self.num_bands, *(2 * gmax + 1)), dtype=complex)
             for i, ig in enumerate(self.ig.T):
                 WF1[:, ig[0], ig[1], ig[2]] = self.WF[:, i + s * self.ig.shape[1]]
             #            print ("wfsum",WF1.sum()," shape ",WF1.shape,loc_grid.shape)
             res += np.array(
                 [
                     np.sum(np.abs(np.fft.ifftn(WF1[ib])) ** 2 * loc_grid).real
-                    for ib in range(self.Nband)
+                    for ib in range(self.num_bands)
                 ]
             )
         print("    ", loc_grid.shape)
