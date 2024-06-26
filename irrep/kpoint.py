@@ -204,9 +204,8 @@ class Kpoint:
                 found = True
                 break
         if found:
-            try:self.num_bandinvs = int(round(sum(1 - self.char[i].real) / 2))
-            except:
-                raise RuntimeError(i, sym.ind, len(self.little_group), self.char.shape)
+            # Number of inversion odd states (not pairs!)
+            self.num_bandinvs = int(round(sum(self.degeneracies - self.char[:,i].real) / 2))
         else:
             self.num_bandinvs = None
 
@@ -582,9 +581,7 @@ class Kpoint:
                         symop.translation,
                         self.spinor,
                     ))
-        print(np.array(char).shape)
-        exit()
-        char = np.array(char).T
+        char = np.array(char)
 
         borders = np.hstack(
             [
