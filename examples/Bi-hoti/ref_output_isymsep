@@ -1,4 +1,3 @@
-'NoneType' object has no attribute 'split'
 Reading symmetries from tables
 refUC was specified in CLI, but shiftUC was not. Taking shiftUC=(0,0,0).
 Efermi: 5.2156 eV
@@ -9,6 +8,23 @@ Energy cutoff reduced to :  50.0
 0 0
 10 1027
 20 1867
+
+
+ ---------- CRYSTAL STRUCTURE ---------- 
+
+
+Cell vectors in angstroms:
+
+      Vectors of DFT cell       |      Vectors of REF. cell      
+a0 =  2.2740   1.3129   3.9507  |  a0 =  0.9611  -3.5869   2.6258
+a1 = -2.2740   1.3129   3.9507  |  a1 = -2.6378  -2.6378  -6.5765
+a2 =  0.0000  -2.6258   3.9507  |  a2 =  7.5376   2.9896   1.3249
+
+Atomic positions in direct coordinates:
+
+Atom type |   Position in DFT cell    |   Position in REF cell   
+    1     |  0.7630   0.7630   0.7630 | -0.0000   0.0000   0.7630
+    1     |  0.2370   0.2370   0.2370 | -0.0000   0.0000   0.2370
 
 
  ---------- SPACE GROUP ----------- 
@@ -262,23 +278,6 @@ translation (refUC) :  [   0.0000   0.0000   0.0000 ]
 
 axis: [-0.5       0.866025  0.      ] ; angle = 1 pi, inversion : True
 
-
-
- ---------- CRYSTAL STRUCTURE ---------- 
-
-
-Cell vectors in angstroms:
-
-      Vectors of DFT cell       |      Vectors of REF. cell      
-a0 =  2.2740   1.3129   3.9507  |  a0 =  0.9611  -3.5869   2.6258
-a1 = -2.2740   1.3129   3.9507  |  a1 = -2.6378  -2.6378  -6.5765
-a2 =  0.0000  -2.6258   3.9507  |  a2 =  7.5376   2.9896   1.3249
-
-Atomic positions in direct coordinates:
-
-Atom type |   Position in DFT cell    |   Position in REF cell   
-    1     |  0.7630   0.7630   0.7630 | -0.0000   0.0000   0.7630
-    1     |  0.2370   0.2370   0.2370 | -0.0000   0.0000   0.2370
 Reading symmetries from tables
 
 
@@ -301,9 +300,12 @@ Number of inversions-odd Kramers pairs : 0
 Gap with upper bands:  1.7616217490413115
 
 TOTAL number of inversions-odd Kramers pairs : 0
+Z2 invariant: 0
+Z4 invariant: 0
 Indirect gap: 1.7616217490413115
 Smallest direct gap in the given set of k-points: 1.7616217490413115
-Separating by symmetry operation #  3
+
+-------- SEPARATING BY SYMMETRY # 3 --------
 
  ### 3 
 
@@ -315,8 +317,6 @@ rotation : |  0   1   0 |
  gk = [ky, kz, kx]
 
 spinor rot.         : | 0.500+0.866j  0.000-0.000j |
-                      |-0.000-0.000j  0.500-0.866j |
-spinor rot. (refUC) : | 0.500+0.866j  0.000-0.000j |
                       |-0.000-0.000j  0.500-0.866j |
 
 translation         :  [   0.0000   0.0000   0.0000 ] 
@@ -334,7 +334,7 @@ orthogonality (largest of diag. <psi_nk|psi_mk>): 0.0057698 > 1e-5
  ################################################ 
 
 
- next subspace:   3:+0.500
+ NEXT SUBSPACE:   sym # 3 -> eigenvalue +0.500
 
 
  k-point   2 : [0. 0. 0.] (in DFT cell)
@@ -358,6 +358,8 @@ Number of inversions-odd Kramers pairs : 0
 Gap with upper bands:  2.0416760458391403
 
 TOTAL number of inversions-odd Kramers pairs : 0
+Z2 invariant: 0
+Z4 invariant: 0
 Indirect gap: 2.0416760458391403
 Smallest direct gap in the given set of k-points: 2.0416760458391403
 
@@ -367,7 +369,7 @@ Smallest direct gap in the given set of k-points: 2.0416760458391403
  ################################################ 
 
 
- next subspace:   3:-1.000
+ NEXT SUBSPACE:   sym # 3 -> eigenvalue -1.000
 
 
  k-point   2 : [0. 0. 0.] (in DFT cell)
@@ -387,5 +389,7 @@ Number of inversions-odd Kramers pairs : 0
 Gap with upper bands:  1.7616217490413115
 
 TOTAL number of inversions-odd Kramers pairs : 0
+Z2 invariant: 0
+Z4 invariant: 0
 Indirect gap: 1.7616217490413115
 Smallest direct gap in the given set of k-points: 1.7616217490413115

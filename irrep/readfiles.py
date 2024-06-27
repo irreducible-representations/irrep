@@ -403,7 +403,7 @@ class ParserVasp:
             and **c** are given in rows. 
         positions : array
             Each row contains the direct coordinates of an ion's position. 
-        numbers : list
+        typat : list
             Each element is a number identifying the atomic species of an ion.
         """
 
@@ -417,7 +417,7 @@ class ParserVasp:
         except BaseException:
             nat = np.array(next(fpos).split(), dtype=int)
 
-        numbers = [i + 1 for i in range(len(nat)) for j in range(nat[i])]
+        typat = [i + 1 for i in range(len(nat)) for j in range(nat[i])]
 
         l = next(fpos)
         if l[0] in ['s', 'S']:
@@ -445,7 +445,7 @@ class ParserVasp:
                     i, sum(nat)))
         if cartesian:
             positions = positions.dot(np.linalg.inv(lattice))
-        return lattice, positions, numbers
+        return lattice, positions, typat
 
     def parse_header(self):
         '''
@@ -604,7 +604,7 @@ class ParserEspresso:
             Each row contains the cartesian coords of a DFT unit cell vector
         positions : array
             Each row contains the direct coords of an ion in the DFT cell
-        numbers : list
+        typat : list
             Indices that describe the type of element at each position. 
             All ions of the same type share the same index.
         '''
@@ -636,11 +636,11 @@ class ParserEspresso:
                                "Probably a bug in Quantum Espresso, but "
                                "your DFT input files")
         atnumbers = {atn: i + 1 for i, atn in enumerate(atnames)}
-        numbers = []
+        typat = []
         for at in struct.find("atomic_positions").findall("atom"):
-            numbers.append(atnumbers[at.attrib["name"]])
+            typat.append(atnumbers[at.attrib["name"]])
 
-        return lattice, positions, numbers
+        return lattice, positions, typat
 
 
     def parse_kpoint(self, ik, NBin, spin_channel):

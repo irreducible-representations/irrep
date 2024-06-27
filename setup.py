@@ -14,7 +14,6 @@ setuptools.setup(
         "numpy",
         "scipy>=1.0",
         "spglib>=1.14",
-        "lazy_property",
         "Click",
         "monty",
         "ruamel.yaml",

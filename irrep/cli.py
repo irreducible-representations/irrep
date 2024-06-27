@@ -353,7 +353,8 @@ def cli(
     bandstr.write_characters()
 
     # Write irreps.dat file
-    bandstr.write_irrepsfile()
+    if kpnames is not None:
+        bandstr.write_irrepsfile()
 
     # Write trace.txt file
     bandstr.write_trace()
@@ -362,7 +363,7 @@ def cli(
     json_data = {}
     json_data ["spacegroup"] = bandstr.spacegroup.json(symmetries=symmetries)
     json_bandstr = bandstr.json()
-    json_data['characters_and_irreps'] = [{"subspace": json_bandstr}]
+    json_data['characters and irreps'] = [{"subspace": json_bandstr}]
 
     # Separate in terms of symmetry eigenvalues
     subbands = {(): bandstr}
@@ -378,7 +379,7 @@ def cli(
                 for s_new, bs_separated in separated.items():
                     tmp_subbands[tuple(list(s_old) + [s_new])] = bs_separated
             subbands = tmp_subbands
-        json_data["characters_and_irreps"]=[]
+        json_data["characters and irreps"]=[]
         for k, sub in subbands.items():
             if isymsep is not None:
                 print(
@@ -388,7 +389,7 @@ def cli(
                     ),
                 )
                 sub.write_characters()
-                json_data["characters_and_irreps"].append({"symmetry_eigenvalues":k , "subspace": sub.json(symmetries)})
+                json_data["characters and irreps"].append({"symmetry eigenvalues":k , "subspace": sub.json(symmetries)})
     else :
         json_data["separated by symmetry"]=False
         
@@ -422,8 +423,7 @@ def cli(
         exit()
 
     if plotbands:
-        json_data["characters_and_irreps"] = {}
-        print("plotbands = True --> writing bands")
+        print("\nplotbands = True --> writing bands")
         for k, sub in subbands.items():
             if isymsep is not None:
                 print(
@@ -441,20 +441,6 @@ def cli(
                     )
                     + ".dat"
                 )
-                fname1 = (
-                    "bands-sym-"
-                    + suffix
-                    + "-"
-                    + "-".join(
-                        "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
-                    )
-                    + ".dat"
-                )
             else:
                 fname = "bands-{0}.dat".format(suffix)
-                fname1 = "bands-sym-{0}.dat".format(suffix)
-            with open(fname, "w") as f:
-                f.write(sub.write_bands())
-            sub.write_trace_all(degenthresh, fname=fname1)
-
-    dumpfn(json_data,"irrep-output.json",indent=4)
+            sub.write_plotfile(fname)

@@ -115,6 +115,10 @@ class BandStructure:
         Property that returns the smallest direct gap in the given k points.
     gap_indirect : float
         Property that returns the smallest indirect gap in the given k points.
+    num_k : int
+        Property that returns the number of k points in the attribute `kpoints`
+    num_bands : int
+        Property that returns the number of bands. Used to write trace.txt.
     """
 
     def __init__(
@@ -333,8 +337,7 @@ class BandStructure:
                 Energy=Energy,
                 ig=kg,
                 upper=upper,
-                IBstart=IBstart,
-                IBend=IBend,
+                num_bands=NBout,
                 RecLattice=self.RecLattice,
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
@@ -344,13 +347,11 @@ class BandStructure:
                 symmetries_tables=self.spacegroup.symmetries_tables
                 )
             self.kpoints.append(kp)
-        
-    def getNK(self):
-        """Getter for `self.kpoints`."""
+
+    @property
+    def num_k(self):
+        '''Getter for the number of k points'''
         return len(self.kpoints)
-
-    NK = property(getNK)
-
 
     def identify_irreps(self, kpnames):
         '''
@@ -368,7 +369,7 @@ class BandStructure:
         for ik, KP in enumerate(self.kpoints):
             
             if kpnames is not None:
-                irreps = self.spacegroup.get_irreps_from_table(kpnames[ik], KP.K)
+                irreps = self.spacegroup.get_irreps_from_table(kpnames[ik], KP.k)
             else:
                 irreps = None
             KP.identify_irreps(irreptable=irreps)
@@ -437,8 +438,8 @@ class BandStructure:
 
         kpline = self.KPOINTSline()
         json_data = {}
-        json_data['kpoints_line'] = kpline
-        json_data['k-points'] = []
+        json_data['kpoints line'] = kpline
+        json_data['k points'] = []
         
         for ik, KP in enumerate(self.kpoints):
             json_kpoint = KP.json()
@@ -447,7 +448,7 @@ class BandStructure:
                 json_kpoint['kpname'] = None
             else:
                 json_kpoint['kpname'] = kpnames[ik]
-            json_data['k-points'].append(json_kpoint)
+            json_data['k points'].append(json_kpoint)
         
         json_data['indirect gap (eV)'] =  self.gap_indirect
         json_data['Minimal direct gap (eV)'] =  self.gap_direct
@@ -512,20 +513,6 @@ class BandStructure:
                 num_bandinvs += KP.num_bandinvs
         return num_bandinvs
 
-    def write_plotfile(self, plotFile):
-        '''Used nowhere for now'''
-
-        try:
-            pFile = open(plotFile, "w")
-        except BaseException:
-            return
-
-        kpline = self.KPOINTSline()
-        for KP, kpl in zip(self.kpoints, kpline):
-            KP.write_plotfile(pFile, kpl)
-        pFile.close()
-
-
     def write_irrepsfile(self):
         '''
         Write the file `irreps.dat` with the identified irreps.
@@ -537,17 +524,18 @@ class BandStructure:
         file.close()
 
 
-    def getNbands(self):
+    @property
+    def num_bands(self):
         """
-        Return number of bands (if equal over all k-points), raise RuntimeError 
-        otherwise.
+        Return number of bands. Raise RuntimeError if the number of bands 
+        varies from on k-point to the other.
 
         Returns
         -------
         int
             Number of bands in every k-point.
         """
-        nbarray = [k.Nband for k in self.kpoints]
+        nbarray = [k.num_bands for k in self.kpoints]
         if len(set(nbarray)) > 1:
             raise RuntimeError(
                 "the numbers of bands differs over k-points:{0} \n cannot write trace.txt \n".format(
@@ -573,7 +561,7 @@ class BandStructure:
             (
                 " {0}  \n"
                 + " {1}  \n"  # Number of bands below the Fermi level  # Spin-orbit coupling. No: 0, Yes: 1
-            ).format(self.getNbands(), 1 if self.spinor else 0)
+            ).format(self.num_bands, 1 if self.spinor else 0)
         )
 
         f.write(
@@ -586,7 +574,7 @@ class BandStructure:
             f.write(
                 "   ".join(
                     "{0:10.6f}".format(x)
-                    for x in KP.K
+                    for x in KP.k
                 )
                 + "\n"
             )
@@ -757,14 +745,13 @@ class BandStructure:
             x.overlap(y)
             for x, y in zip(self.kpoints, self.kpoints[1:] + [self.kpoints[0]])
         ]
-        nmax = np.min([o.shape for o in overlaps])
         wilson = functools.reduce(
             np.dot,
             [functools.reduce(np.dot, np.linalg.svd(O)[0:3:2]) for O in overlaps],
         )
         return np.sort((np.angle(np.linalg.eig(wilson)) / (2 * np.pi)) % 1)
 
-    def write_bands(self, locs=None):
+    def write_plotfile(self, filename='bands-tognuplot.dat'):
         """
         Generate lines for a band structure plot, with cummulative length of the
         k-path as values for the x-axis and energy-levels for the y-axis.
@@ -775,79 +762,27 @@ class BandStructure:
             Lines to write into a file that will be parsed to plot the band 
             structure.
         """
-        #        print (locs)
-        kpline = self.KPOINTSline()
-        nbmax = max(k.Nband for k in self.kpoints)
-        EN = np.zeros((nbmax, len(kpline)))
-        EN[:, :] = np.inf
-        for i, k in enumerate(self.kpoints):
-            EN[: k.Nband, i] = k.Energy - self.efermi
-        if locs is not None:
-            loc = np.zeros((nbmax, len(kpline), len(locs)))
-            for i, k in enumerate(self.kpoints):
-                loc[: k.Nband, i, :] = k.getloc(locs).T
-            return "\n\n\n".join(
-                "\n".join(
-                    (
-                        "{0:8.4f}   {1:8.4f}  ".format(k, e)
-                        + "  ".join("{0:8.4f}".format(l) for l in L)
-                    )
-                    for k, e, L in zip(kpline, E, LC)
-                )
-                for E, LC in zip(EN, loc)
-            )
-        else:
-            return "\n\n\n".join(
-                "\n".join(
-                    ("{0:8.4f}   {1:8.4f}  ".format(k, e)) for k, e in zip(kpline, E)
-                )
-                for E in EN
-            )
 
-    def write_trace_all(
-        self,
-        degen_thresh=1e-8,
-        symmetries=None,
-        fname="trace_all.dat",
-    ):
-        """
-        Write in a file the description of symmetry operations, energy-levels 
-        and irreps calculated in all k-points.
-
-        Parameters
-        ----------
-        degen_thresh : float, default=1e-8
-            Threshold energy used to decide whether wave-functions are
-            degenerate in energy.
-        symmetries : list, default=None
-            Index of symmetry operations whose traces will be printed. 
-        fname : str, default=trace_all.dat
-            Name of output file.
-        """
-        f = open(fname, "w")
         kpline = self.KPOINTSline()
 
-        f.write(
-            (
-                "# {0}  # Number of bands below the Fermi level\n"
-                + "# {1}  # Spin-orbit coupling. No: 0, Yes: 1\n"  #
-            ).format(self.getNbands(), 1 if self.spinor else 0)
-        )
-        # add lines describing symmetry operations
-        f.write(
-            "\n".join(
-                ("#" + l)
-                for l in self.spacegroup.write_trace().split("\n")
-            )
-            + "\n\n"
-        )
-        for KP, KPL in zip(self.kpoints, kpline):
-            f.write(
-                KP.write_trace_all(
-                    degen_thresh, symmetries=symmetries, efermi=self.efermi, kpline=KPL
-                )
-            )
+        # Prepare energies at each k point
+        energies_expanded = np.full((self.num_bands, len(kpline)), np.inf)
+        for ik, kp in enumerate(self.kpoints):
+            count = 0
+            for iset, deg in enumerate(kp.degeneracies):
+                for i in range(deg):
+                    energies_expanded[count,ik] = kp.Energy[iset]
+                    count += 1
 
+        # Write energies of each band
+        file = open(filename, 'w')
+        file.write('column 1: k, column 2: energy in eV (w.r.t. Fermi level)')
+        for iband in range(self.num_bands):
+            file.write('\n')  # blank line separating blocks of k points
+            for k, energy in zip(kpline, energies_expanded[iband]):
+                s = '{:8.4f}    {:8.4f}\n'.format(k, energy)
+                file.write(s)
+        file.close()
 
     def KPOINTSline(self, kpred=None, breakTHRESH=0.1):
         """
@@ -870,7 +805,7 @@ class BandStructure:
             matches the number of k-points in the path.
         """
         if kpred is None:
-            kpred = [k.K for k in self.kpoints]
+            kpred = [k.k for k in self.kpoints]
         KPcart = np.array(kpred).dot(self.RecLattice)
         K = np.zeros(KPcart.shape[0])
         k = np.linalg.norm(KPcart[1:, :] - KPcart[:-1, :], axis=1)
