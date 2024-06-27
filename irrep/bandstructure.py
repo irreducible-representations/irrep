@@ -438,8 +438,8 @@ class BandStructure:
 
         kpline = self.KPOINTSline()
         json_data = {}
-        json_data['kpoints_line'] = kpline
-        json_data['k-points'] = []
+        json_data['kpoints line'] = kpline
+        json_data['k points'] = []
         
         for ik, KP in enumerate(self.kpoints):
             json_kpoint = KP.json()
@@ -448,7 +448,7 @@ class BandStructure:
                 json_kpoint['kpname'] = None
             else:
                 json_kpoint['kpname'] = kpnames[ik]
-            json_data['k-points'].append(json_kpoint)
+            json_data['k points'].append(json_kpoint)
         
         json_data['indirect gap (eV)'] =  self.gap_indirect
         json_data['Minimal direct gap (eV)'] =  self.gap_direct

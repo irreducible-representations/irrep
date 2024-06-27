@@ -33,15 +33,15 @@ def test_abinit_scalar_example():
     assert sg_ref['name'] == sg_run['name']
     assert sg_ref['number'] == sg_run['number']
     assert sg_ref['spinor'] == sg_run['spinor']
-    assert sg_ref['num_symmetries'] == sg_run['num_symmetries']
-    assert sg_ref['cells_match'] == sg_run['cells_match']
+    assert sg_ref['num symmetries'] == sg_run['num symmetries']
+    assert sg_ref['cells match'] == sg_run['cells match']
     spinor = sg_ref['spinor']  # used later
 
     # Todo: implement safe check of symmetries
 
     # Check general properties of the band structure
-    bs_ref = data_ref['characters_and_irreps'][0]['subspace']
-    bs_run = data_run['characters_and_irreps'][0]['subspace']
+    bs_ref = data_ref['characters and irreps'][0]['subspace']
+    bs_run = data_run['characters and irreps'][0]['subspace']
     assert abs(bs_ref['indirect gap (eV)'] - bs_run['indirect gap (eV)']) < 1e-4
     assert abs(bs_ref['Minimal direct gap (eV)'] - bs_run['Minimal direct gap (eV)']) < 1e-4
     if spinor:
@@ -51,12 +51,12 @@ def test_abinit_scalar_example():
         assert bs_ref['number of inversion-odd states'] == bs_run['number of inversion-odd states']
 
     # Check properties at each k-point
-    kp_ref = bs_ref['k-points'][0]
-    kp_run = bs_run['k-points'][0]
+    kp_ref = bs_ref['k points'][0]
+    kp_run = bs_run['k points'][0]
     assert np.allclose(kp_ref['symmetries'], kp_run['symmetries'])
     assert np.allclose(kp_ref['energies'], kp_run['energies'], rtol=0., atol=1e-4)
     assert np.allclose(kp_ref['characters'], kp_run['characters'], rtol=0., atol=1e-4)
-    assert kp_ref['characters_refUC_is_the_same'] == kp_run['characters_refUC_is_the_same']
+    assert kp_ref['characters refUC is the same'] == kp_run['characters refUC is the same']
     assert np.allclose(kp_ref['dimensions'], kp_run['dimensions'], rtol=0., atol=1e-4)
     for irrep_ref, irrep_run in zip(kp_ref['irreps'], kp_run['irreps']):
         assert len(irrep_ref) == len(irrep_run)

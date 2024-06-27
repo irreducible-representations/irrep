@@ -781,11 +781,11 @@ class Kpoint:
 
         # Traces of symmetries
         json_data['characters'] = self.char
-        json_data['characters_refUC'] = self.char_refUC
+        json_data['characters refUC'] = self.char_refUC
         if np.allclose(self.char, self.char_refUC, rtol=0.0, atol=1e-4):
-            json_data['characters_refUC_is_the_same'] = True
+            json_data['characters refUC is the same'] = True
         else:
-            json_data['characters_refUC_is_the_same'] = False
+            json_data['characters refUC is the same'] = False
         
         return json_data
         

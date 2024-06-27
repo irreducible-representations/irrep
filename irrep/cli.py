@@ -363,7 +363,7 @@ def cli(
     json_data = {}
     json_data ["spacegroup"] = bandstr.spacegroup.json(symmetries=symmetries)
     json_bandstr = bandstr.json()
-    json_data['characters_and_irreps'] = [{"subspace": json_bandstr}]
+    json_data['characters and irreps'] = [{"subspace": json_bandstr}]
 
     # Separate in terms of symmetry eigenvalues
     subbands = {(): bandstr}
@@ -379,7 +379,7 @@ def cli(
                 for s_new, bs_separated in separated.items():
                     tmp_subbands[tuple(list(s_old) + [s_new])] = bs_separated
             subbands = tmp_subbands
-        json_data["characters_and_irreps"]=[]
+        json_data["characters and irreps"]=[]
         for k, sub in subbands.items():
             if isymsep is not None:
                 print(
@@ -389,7 +389,7 @@ def cli(
                     ),
                 )
                 sub.write_characters()
-                json_data["characters_and_irreps"].append({"symmetry_eigenvalues":k , "subspace": sub.json(symmetries)})
+                json_data["characters and irreps"].append({"symmetry eigenvalues":k , "subspace": sub.json(symmetries)})
     else :
         json_data["separated by symmetry"]=False
         

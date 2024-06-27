@@ -3,8 +3,8 @@
         "name": "R-3m",
         "number": 166,
         "spinor": true,
-        "num_symmetries": 12,
-        "cells_match": false,
+        "num symmetries": 12,
+        "cells match": false,
         "symmetries": {
             "1": {
                 "axis": {
@@ -17,11 +17,11 @@
                         0.006843912755054115
                     ]
                 },
-                "angle_str": " 0 ",
-                "angle_pi": 0.0,
+                "angle str": " 0 ",
+                "angle pi": 0.0,
                 "inversion": false,
                 "sign": 1,
-                "rotation_matrix": {
+                "rotation matrix": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int32",
@@ -53,7 +53,7 @@
                         0.0
                     ]
                 },
-                "rotation_matrix_refUC": {
+                "rotation matrix refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int64",
@@ -75,7 +75,7 @@
                         ]
                     ]
                 },
-                "translation_refUC": {
+                "translation refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -97,11 +97,11 @@
                         1.0
                     ]
                 },
-                "angle_str": "2/3 pi",
-                "angle_pi": 0.6666666666666666,
+                "angle str": "2/3 pi",
+                "angle pi": 0.6666666666666666,
                 "inversion": false,
                 "sign": 1,
-                "rotation_matrix": {
+                "rotation matrix": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int32",
@@ -133,7 +133,7 @@
                         0.0
                     ]
                 },
-                "rotation_matrix_refUC": {
+                "rotation matrix refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int64",
@@ -155,7 +155,7 @@
                         ]
                     ]
                 },
-                "translation_refUC": {
+                "translation refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -177,11 +177,11 @@
                         1.0
                     ]
                 },
-                "angle_str": "-2/3 pi",
-                "angle_pi": -0.6666666666666666,
+                "angle str": "-2/3 pi",
+                "angle pi": -0.6666666666666666,
                 "inversion": false,
                 "sign": 1,
-                "rotation_matrix": {
+                "rotation matrix": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int32",
@@ -213,7 +213,7 @@
                         0.0
                     ]
                 },
-                "rotation_matrix_refUC": {
+                "rotation matrix refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int64",
@@ -235,7 +235,7 @@
                         ]
                     ]
                 },
-                "translation_refUC": {
+                "translation refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -257,11 +257,11 @@
                         -2.2201398905655182e-16
                     ]
                 },
-                "angle_str": "1 pi",
-                "angle_pi": 1.0,
+                "angle str": "1 pi",
+                "angle pi": 1.0,
                 "inversion": false,
                 "sign": 1,
-                "rotation_matrix": {
+                "rotation matrix": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int32",
@@ -293,7 +293,7 @@
                         0.0
                     ]
                 },
-                "rotation_matrix_refUC": {
+                "rotation matrix refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int64",
@@ -315,7 +315,7 @@
                         ]
                     ]
                 },
-                "translation_refUC": {
+                "translation refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -337,11 +337,11 @@
                         0.0
                     ]
                 },
-                "angle_str": "1 pi",
-                "angle_pi": 1.0,
+                "angle str": "1 pi",
+                "angle pi": 1.0,
                 "inversion": false,
                 "sign": -1,
-                "rotation_matrix": {
+                "rotation matrix": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int32",
@@ -373,7 +373,7 @@
                         0.0
                     ]
                 },
-                "rotation_matrix_refUC": {
+                "rotation matrix refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int64",
@@ -395,7 +395,7 @@
                         ]
                     ]
                 },
-                "translation_refUC": {
+                "translation refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -417,11 +417,11 @@
                         2.4157897366583545e-16
                     ]
                 },
-                "angle_str": "1 pi",
-                "angle_pi": 1.0,
+                "angle str": "1 pi",
+                "angle pi": 1.0,
                 "inversion": false,
                 "sign": 1,
-                "rotation_matrix": {
+                "rotation matrix": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int32",
@@ -453,7 +453,7 @@
                         0.0
                     ]
                 },
-                "rotation_matrix_refUC": {
+                "rotation matrix refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int64",
@@ -475,7 +475,7 @@
                         ]
                     ]
                 },
-                "translation_refUC": {
+                "translation refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -497,11 +497,11 @@
                         0.006843912755054115
                     ]
                 },
-                "angle_str": " 0 ",
-                "angle_pi": 0.0,
+                "angle str": " 0 ",
+                "angle pi": 0.0,
                 "inversion": true,
                 "sign": 1,
-                "rotation_matrix": {
+                "rotation matrix": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int32",
@@ -533,7 +533,7 @@
                         0.0
                     ]
                 },
-                "rotation_matrix_refUC": {
+                "rotation matrix refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int64",
@@ -555,7 +555,7 @@
                         ]
                     ]
                 },
-                "translation_refUC": {
+                "translation refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -577,11 +577,11 @@
                         1.0
                     ]
                 },
-                "angle_str": "2/3 pi",
-                "angle_pi": 0.6666666666666666,
+                "angle str": "2/3 pi",
+                "angle pi": 0.6666666666666666,
                 "inversion": true,
                 "sign": 1,
-                "rotation_matrix": {
+                "rotation matrix": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int32",
@@ -613,7 +613,7 @@
                         0.0
                     ]
                 },
-                "rotation_matrix_refUC": {
+                "rotation matrix refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int64",
@@ -635,7 +635,7 @@
                         ]
                     ]
                 },
-                "translation_refUC": {
+                "translation refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -657,11 +657,11 @@
                         1.0
                     ]
                 },
-                "angle_str": "-2/3 pi",
-                "angle_pi": -0.6666666666666666,
+                "angle str": "-2/3 pi",
+                "angle pi": -0.6666666666666666,
                 "inversion": true,
                 "sign": 1,
-                "rotation_matrix": {
+                "rotation matrix": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int32",
@@ -693,7 +693,7 @@
                         0.0
                     ]
                 },
-                "rotation_matrix_refUC": {
+                "rotation matrix refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int64",
@@ -715,7 +715,7 @@
                         ]
                     ]
                 },
-                "translation_refUC": {
+                "translation refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -737,11 +737,11 @@
                         -2.2201398905655182e-16
                     ]
                 },
-                "angle_str": "1 pi",
-                "angle_pi": 1.0,
+                "angle str": "1 pi",
+                "angle pi": 1.0,
                 "inversion": true,
                 "sign": 1,
-                "rotation_matrix": {
+                "rotation matrix": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int32",
@@ -773,7 +773,7 @@
                         0.0
                     ]
                 },
-                "rotation_matrix_refUC": {
+                "rotation matrix refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int64",
@@ -795,7 +795,7 @@
                         ]
                     ]
                 },
-                "translation_refUC": {
+                "translation refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -817,11 +817,11 @@
                         0.0
                     ]
                 },
-                "angle_str": "1 pi",
-                "angle_pi": 1.0,
+                "angle str": "1 pi",
+                "angle pi": 1.0,
                 "inversion": true,
                 "sign": -1,
-                "rotation_matrix": {
+                "rotation matrix": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int32",
@@ -853,7 +853,7 @@
                         0.0
                     ]
                 },
-                "rotation_matrix_refUC": {
+                "rotation matrix refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int64",
@@ -875,7 +875,7 @@
                         ]
                     ]
                 },
-                "translation_refUC": {
+                "translation refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -897,11 +897,11 @@
                         2.4157897366583545e-16
                     ]
                 },
-                "angle_str": "1 pi",
-                "angle_pi": 1.0,
+                "angle str": "1 pi",
+                "angle pi": 1.0,
                 "inversion": true,
                 "sign": 1,
-                "rotation_matrix": {
+                "rotation matrix": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int32",
@@ -933,7 +933,7 @@
                         0.0
                     ]
                 },
-                "rotation_matrix_refUC": {
+                "rotation matrix refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "int64",
@@ -955,7 +955,7 @@
                         ]
                     ]
                 },
-                "translation_refUC": {
+                "translation refUC": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -968,11 +968,10 @@
             }
         }
     },
-    "characters_and_irreps": [
+    "characters and irreps": [
         {
-            "symmetry_eigenvalues": [],
             "subspace": {
-                "kpoints_line": {
+                "kpoints line": {
                     "@module": "numpy",
                     "@class": "array",
                     "dtype": "float64",
@@ -983,7 +982,7 @@
                         0.0
                     ]
                 },
-                "k-points": [
+                "k points": [
                     {
                         "symmetries": [
                             1,
@@ -1138,7 +1137,7 @@
                                 ]
                             ]
                         },
-                        "characters_refUC": {
+                        "characters refUC": {
                             "@module": "numpy",
                             "@class": "array",
                             "dtype": "complex128",
@@ -1233,7 +1232,7 @@
                                 ]
                             ]
                         },
-                        "characters_refUC_is_the_same": true,
+                        "characters refUC is the same": true,
                         "kp in line": 0.0,
                         "kpname": null
                     },
@@ -1391,7 +1390,7 @@
                                 ]
                             ]
                         },
-                        "characters_refUC": {
+                        "characters refUC": {
                             "@module": "numpy",
                             "@class": "array",
                             "dtype": "complex128",
@@ -1486,7 +1485,7 @@
                                 ]
                             ]
                         },
-                        "characters_refUC_is_the_same": true,
+                        "characters refUC is the same": true,
                         "kp in line": 0.0,
                         "kpname": null
                     },
@@ -1596,7 +1595,7 @@
                                 ]
                             ]
                         },
-                        "characters_refUC": {
+                        "characters refUC": {
                             "@module": "numpy",
                             "@class": "array",
                             "dtype": "complex128",
@@ -1643,7 +1642,7 @@
                                 ]
                             ]
                         },
-                        "characters_refUC_is_the_same": true,
+                        "characters refUC is the same": true,
                         "kp in line": 0.0,
                         "kpname": null
                     },
@@ -1753,7 +1752,7 @@
                                 ]
                             ]
                         },
-                        "characters_refUC": {
+                        "characters refUC": {
                             "@module": "numpy",
                             "@class": "array",
                             "dtype": "complex128",
@@ -1800,7 +1799,7 @@
                                 ]
                             ]
                         },
-                        "characters_refUC_is_the_same": true,
+                        "characters refUC is the same": true,
                         "kp in line": 0.0,
                         "kpname": null
                     }

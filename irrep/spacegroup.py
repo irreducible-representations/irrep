@@ -233,12 +233,8 @@ class SymmetryOperation():
         shiftUC : array, default=np.zeros(3)
             Translation taking the origin of the unit cell used in the DFT 
             calculation to that of the standard setting.
-            
-        Returns
-        -------
-        json_data : `json` object
-            Object with output structured in `json` format.
         """
+
         def parse_row_transform(mrow):
             s = ""
             coord = ["kx","ky","kz"]
@@ -428,18 +424,18 @@ class SymmetryOperation():
 
         d = {}
         d["axis"]  = self.axis
-        d["angle_str"] = self.angle_str
-        d["angle_pi"] = self.angle/np.pi
+        d["angle str"] = self.angle_str
+        d["angle pi"] = self.angle/np.pi
         d["inversion"] = self.inversion
         d["sign"] = self.sign
 
-        d["rotation_matrix"] = self.rotation
+        d["rotation matrix"] = self.rotation
         d["translation"] = self.translation
 
         R = self.rotation_refUC(refUC)
         t = self.translation_refUC(refUC, shiftUC)
-        d["rotation_matrix_refUC"] = R
-        d["translation_refUC"]= t
+        d["rotation matrix refUC"] = R
+        d["translation refUC"]= t
 
         return d
 
@@ -661,8 +657,8 @@ class SpaceGroup():
         d = {"name": self.name,
              "number": self.number,
              "spinor": self.spinor,
-             "num_symmetries": self.order,
-             "cells_match": cells_match,
+             "num symmetries": self.order,
+             "cells match": cells_match,
              "symmetries": {}
              }
 

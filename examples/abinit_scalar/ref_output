@@ -1,52 +1,43 @@
-['O_DS2_WFK']
 Using fortio to read
 Long records not found in  O_DS2_WFK
-
-
- ----------INFORMATION ABOUT THE UNIT CELL----------- 
-
-
-Primitive vectors : 
- [[ 4.29723723  2.48101107  7.46567804]
- [-4.29723723  2.48101107  7.46567804]
- [ 0.         -4.96202214  7.46567804]] 
- Atomic positions: 
- [[0.763 0.763 0.763]
- [0.237 0.237 0.237]] 
- Atom type indices: 
- [1 1]
- Reciprocal lattice:
- [[ 0.73107266  0.422085    0.28053649]
- [-0.73107266  0.422085    0.28053649]
- [ 0.         -0.84417     0.28053649]]
 Reading symmetries from tables
+Efermi: 0.0000 eV
+WAVECAR contains 1 k-points and 60 bands.
+ Saving 5 bands starting from 11 in the output
+Energy cutoff in WAVECAR :  500.0000393217782
+Energy cutoff reduced to :  50.0
+Reading k-point 0
+Found cutoff:   500.000039 eV   Largest plane wave energy in K-point    0:   496.181248 eV
 
-The cell transformation is given by: 
+
+ ---------- CRYSTAL STRUCTURE ---------- 
+
+
+Cell vectors in angstroms:
+
+      Vectors of DFT cell       |      Vectors of REF. cell      
+a0 =  4.2972   2.4810   7.4657  |  a0 =  1.8162  -6.7782   4.9620
+a1 = -4.2972   2.4810   7.4657  |  a1 = -4.9847  -4.9847  -12.4277
+a2 =  0.0000  -4.9620   7.4657  |  a2 = 14.2439   5.6495   2.5037
+
+Atomic positions in direct coordinates:
+
+Atom type |   Position in DFT cell    |   Position in REF cell   
+    1     |  0.7630   0.7630   0.7630 |  0.0000  -0.0000   0.7630
+    1     |  0.2370   0.2370   0.2370 |  0.0000  -0.0000   0.2370
+
+
+ ---------- SPACE GROUP ----------- 
+
+
+Space group: R-3m (# 166)
+Number of symmetries: 12 (mod. lattice translations)
+
+The transformation from the DFT cell to the reference cell of tables is given by: 
         |   1.0000 -1.0000 -0.0000 |
 refUC = |  -0.0000  1.0000 -1.0000 |    shiftUC = [ 0. -0. -0.]
         |   1.0000  1.0000  1.0000 |
 
-Lattice vectors of DFT (a) and reference (c) cells:
-a(0)=[  4.2972  2.4810  7.4657 ]    c(0)=[  8.5945  0.0000 -0.0000 ]
-a(1)=[ -4.2972  2.4810  7.4657 ]    c(1)=[ -4.2972  7.4430 -0.0000 ]
-a(2)=[  0.0000 -4.9620  7.4657 ]    c(2)=[ -0.0000 -0.0000 22.3970 ]
-Efermi: 0.0000 eV
-lattice vectors:
- [[ 4.29723723  2.48101107  7.46567804]
- [-4.29723723  2.48101107  7.46567804]
- [ 0.         -4.96202214  7.46567804]]
-WFK contains 1 k-points and 60 bands.
- Saving 5 bands starting from 11 in the output
-Energy cutoff in WFK file :  500.0000393217782
-Energy cutoff reduced to :  50.0
-Reading k-point 0
-Found cutoff:   500.000039 eV   Largest plane wave energy in K-point    1:   496.181248 eV
-
-
- ---------- INFORMATION ABOUT THE SPACE GROUP ---------- 
-
-
-Space group R-3m (# 166) has 12 symmetry operations  
 
  ### 1 
 
@@ -235,15 +226,22 @@ Reading symmetries from tables
 
  number of states : 5
 
-   Energy  |   degeneracy  |   irreps   | sym. operations  
-           |               |            |     1        2        3        4        5        6        7        8        9       10       11       12    
-  -6.7692  |        1      | GM1+(1.0)  |   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
-  -1.2874  |        1      | GM2-(1.0)  |   1.0000   1.0000   1.0000  -1.0000  -1.0000  -1.0000  -1.0000  -1.0000  -1.0000   1.0000   1.0000   1.0000
-   4.6884  |        1      | GM1+(1.0)  |   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
-   5.0787  |        2      | GM3+(1.0)  |   2.0000  -1.0000  -1.0000  -0.0000   0.0001  -0.0001   2.0000  -1.0000  -1.0000  -0.0000   0.0001  -0.0001
-inversion is # 7
-number of inversions-odd states :  1
-Gap with upper bands :  3.872263695927045
-number of inversion-odd states :  1
-Minimal direct gap: 3.872263695927045  eV
-indirect  gap: 3.872263695927045  eV
+   Energy  |   degeneracy  |  irreps   | sym. operations  
+           |               |           |    1        2        3        4        5        6        7        8        9       10       11       12    
+  -6.7692  |        1      | GM1+(1.0) |   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+           |               |           |   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+  -1.2874  |        1      | GM2-(1.0) |   1.0000   1.0000   1.0000  -1.0000  -1.0000  -1.0000  -1.0000  -1.0000  -1.0000   1.0000   1.0000   1.0000
+           |               |           |   1.0000   1.0000   1.0000  -1.0000  -1.0000  -1.0000  -1.0000  -1.0000  -1.0000   1.0000   1.0000   1.0000
+   4.6884  |        1      | GM1+(1.0) |   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+           |               |           |   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000   1.0000
+   5.0787  |        2      | GM3+(1.0) |   2.0000  -1.0000  -1.0000  -0.0000   0.0001  -0.0001   2.0000  -1.0000  -1.0000  -0.0000   0.0001  -0.0001
+           |               |           |   2.0000  -1.0000  -1.0000  -0.0000   0.0001  -0.0001   2.0000  -1.0000  -1.0000  -0.0000   0.0001  -0.0001
+
+Invariant under inversion: Yes
+Number of inversions-odd states : 1
+Gap with upper bands:  3.8722794898066715
+TOTAL number of inversions-odd states : 1
+Z2 invariant: 0
+Z4 invariant: 0
+Indirect gap: 3.8722794898066715
+Smallest direct gap in the given set of k-points: 3.8722794898066715

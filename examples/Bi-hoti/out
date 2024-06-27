@@ -6,17 +6,8 @@ WAVECAR contains 4 k-points and 24 bands.
 Energy cutoff in WAVECAR :  520.0
 Energy cutoff reduced to :  50.0
 0 0
-10 1030
-20 1873
-0 0
 10 1027
 20 1867
-0 0
-10 1006
-20 1855
-0 0
-10 1012
-20 1870
 
 
  ---------- CRYSTAL STRUCTURE ---------- 
@@ -288,28 +279,6 @@ translation (refUC) :  [   0.0000   0.0000   0.0000 ]
 axis: [-0.5       0.866025  0.      ] ; angle = 1 pi, inversion : True
 
 Reading symmetries from tables
-Reading symmetries from tables
-Reading symmetries from tables
-Reading symmetries from tables
-
-
- k-point   1 : [0.5 0.5 0.5] (in DFT cell)
-               [0.  0.  1.5] (after cell trasformation)
-
- number of states : 6
-
-   Energy  |   degeneracy  |       irreps       | sym. operations  
-           |               |                    |    1        2        3        4        5        6        7        8        9       10       11       12    
-  -1.5597  |        2      | -T9(1.0)           |   2.0000   1.0000   1.0000   0.0000   0.0000  -0.0000  -2.0000  -1.0000  -1.0000   0.0000  -0.0000   0.0000
-           |               |                    |   2.0000   1.0000   1.0000   0.0000  -0.0000  -0.0000  -2.0000  -1.0000  -1.0000   0.0000   0.0000   0.0000
-  -1.2220  |        2      | -T8(1.0)           |   2.0000   1.0000   1.0000  -0.0000   0.0000   0.0000   2.0000   1.0000   1.0000   0.0000  -0.0000  -0.0000
-           |               |                    |   2.0000   1.0000   1.0000  -0.0000  -0.0000   0.0000   2.0000   1.0000   1.0000   0.0000   0.0000  -0.0000
-   0.1460  |        2      | -T6(1.0), -T7(1.0) |   2.0000  -2.0000  -2.0000  -0.0000   0.0000   0.0000  -2.0000   2.0000   2.0000  -0.0000  -0.0000   0.0000
-           |               |                    |   2.0000  -2.0000  -2.0000  -0.0000  -0.0000   0.0000  -2.0000   2.0000   2.0000  -0.0000   0.0000   0.0000
-
-Invariant under inversion: Yes
-Number of inversions-odd Kramers pairs : 2
-Gap with upper bands:  0.1561511933404347
 
 
  k-point   2 : [0. 0. 0.] (in DFT cell)
@@ -330,46 +299,97 @@ Invariant under inversion: Yes
 Number of inversions-odd Kramers pairs : 0
 Gap with upper bands:  1.7616217490413115
 
-
- k-point   3 : [0.5 0.5 0. ] (in DFT cell)
-               [0.  0.5 1. ] (after cell trasformation)
-
- number of states : 6
-
-   Energy  |   degeneracy  |       irreps       | sym. operations  
-           |               |                    |    1        5        7       11    
-  -4.8263  |        2      | -F3(1.0), -F4(1.0) |   2.0000   0.0000   2.0000  -0.0000
-           |               |                    |   2.0000  -0.0000   2.0000   0.0000
-  -3.6784  |        2      | -F5(1.0), -F6(1.0) |   2.0000   0.0000  -2.0000  -0.0000
-           |               |                    |   2.0000  -0.0000  -2.0000   0.0000
-  -2.4303  |        2      | -F5(1.0), -F6(1.0) |   2.0000  -0.0000  -2.0000  -0.0000
-           |               |                    |   2.0000   0.0000  -2.0000   0.0000
-
-Invariant under inversion: Yes
-Number of inversions-odd Kramers pairs : 2
-Gap with upper bands:  4.844806278974456
-
-
- k-point   4 : [0.  0.5 0. ] (in DFT cell)
-               [-0.5  0.5  0.5] (after cell trasformation)
-
- number of states : 6
-
-   Energy  |   degeneracy  |       irreps       | sym. operations  
-           |               |                    |    1        4        7       10    
-  -1.7054  |        2      | -L5(1.0), -L6(1.0) |   2.0000  -0.0000  -2.0000  -0.0000
-           |               |                    |   2.0000  -0.0000  -2.0000  -0.0000
-  -1.6885  |        2      | -L3(1.0), -L4(1.0) |   2.0000   0.0000   2.0000   0.0000
-           |               |                    |   2.0000   0.0000   2.0000   0.0000
-  -0.1312  |        2      | -L5(1.0), -L6(1.0) |   2.0000   0.0000  -2.0000   0.0000
-           |               |                    |   2.0000   0.0000  -2.0000   0.0000
-
-Invariant under inversion: Yes
-Number of inversions-odd Kramers pairs : 2
-Gap with upper bands:  0.08857045944482511
-
-TOTAL number of inversions-odd Kramers pairs : 6
+TOTAL number of inversions-odd Kramers pairs : 0
 Z2 invariant: 0
-Z4 invariant: 2
-Indirect gap: -0.1886088077382322
-Smallest direct gap in the given set of k-points: 0.08857045944482511
+Z4 invariant: 0
+Indirect gap: 1.7616217490413115
+Smallest direct gap in the given set of k-points: 1.7616217490413115
+
+-------- SEPARATING BY SYMMETRY # 3 --------
+
+ ### 3 
+
+rotation : |  0   1   0 |
+           |  0   0   1 |
+           |  1   0   0 |
+
+
+ gk = [ky, kz, kx]
+
+spinor rot.         : | 0.500+0.866j  0.000-0.000j |
+                      |-0.000-0.000j  0.500-0.866j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0.  0.  1.] ; angle = -2/3 pi, inversion : False
+
+orthogonality (largest of diag. <psi_nk|psi_mk>): 0.0057698 > 1e-5   
+
+(-1-4.905202071579302e-10j)
+(0.5000000000666225+1.5830364796798335e-11j)
+
+
+
+
+ ################################################ 
+
+
+ NEXT SUBSPACE:   sym # 3 -> eigenvalue +0.500
+
+
+ k-point   2 : [0. 0. 0.] (in DFT cell)
+               [0. 0. 0.] (after cell trasformation)
+
+ number of states : 4
+
+   Energy  |   degeneracy  |  irreps   | sym. operations  
+           |               |           |    1        2        3        4        5        6        7        8        9       10       11       12    
+  -2.7306  |        1      | -GM8(1.0) |   2.0000   1.0000   1.0000  -0.0000   0.0000   0.0000   2.0000   1.0000   1.0000   0.0000  -0.0000  -0.0000
+           |               |           |   2.0000   1.0000   1.0000  -0.0000  -0.0000   0.0000   2.0000   1.0000   1.0000   0.0000   0.0000  -0.0000
+  -2.7306  |        1      | -GM8(1.0) |   2.0000   1.0000   1.0000  -0.0000   0.0000   0.0000   2.0000   1.0000   1.0000   0.0000  -0.0000  -0.0000
+           |               |           |   2.0000   1.0000   1.0000  -0.0000  -0.0000   0.0000   2.0000   1.0000   1.0000   0.0000   0.0000  -0.0000
+  -0.7762  |        1      | -GM8(1.0) |   2.0000   1.0000   1.0000   0.0000  -0.0000   0.0000   2.0000   1.0000   1.0000  -0.0000  -0.0000  -0.0000
+           |               |           |   2.0000   1.0000   1.0000   0.0000   0.0000   0.0000   2.0000   1.0000   1.0000  -0.0000   0.0000  -0.0000
+  -0.7762  |        1      | -GM8(1.0) |   2.0000   1.0000   1.0000   0.0000  -0.0000   0.0000   2.0000   1.0000   1.0000  -0.0000  -0.0000  -0.0000
+           |               |           |   2.0000   1.0000   1.0000   0.0000   0.0000   0.0000   2.0000   1.0000   1.0000  -0.0000   0.0000  -0.0000
+
+Invariant under inversion: Yes
+Number of inversions-odd Kramers pairs : 0
+Gap with upper bands:  2.0416760458391403
+
+TOTAL number of inversions-odd Kramers pairs : 0
+Z2 invariant: 0
+Z4 invariant: 0
+Indirect gap: 2.0416760458391403
+Smallest direct gap in the given set of k-points: 2.0416760458391403
+
+
+
+
+ ################################################ 
+
+
+ NEXT SUBSPACE:   sym # 3 -> eigenvalue -1.000
+
+
+ k-point   2 : [0. 0. 0.] (in DFT cell)
+               [0. 0. 0.] (after cell trasformation)
+
+ number of states : 2
+
+   Energy  |   degeneracy  |        irreps        | sym. operations  
+           |               |                      |    1        2        3        4        5        6        7        8        9       10       11       12    
+  -0.4961  |        1      | -GM4(1.0), -GM5(1.0) |   2.0000  -2.0000  -2.0000  -0.0000   0.0000   0.0000   2.0000  -2.0000  -2.0000  -0.0000  -0.0000  -0.0000
+           |               |                      |   2.0000  -2.0000  -2.0000  -0.0000  -0.0000   0.0000   2.0000  -2.0000  -2.0000  -0.0000   0.0000  -0.0000
+  -0.4961  |        1      | -GM4(1.0), -GM5(1.0) |   2.0000  -2.0000  -2.0000  -0.0000   0.0000   0.0000   2.0000  -2.0000  -2.0000  -0.0000  -0.0000  -0.0000
+           |               |                      |   2.0000  -2.0000  -2.0000  -0.0000  -0.0000   0.0000   2.0000  -2.0000  -2.0000  -0.0000   0.0000  -0.0000
+
+Invariant under inversion: Yes
+Number of inversions-odd Kramers pairs : 0
+Gap with upper bands:  1.7616217490413115
+
+TOTAL number of inversions-odd Kramers pairs : 0
+Z2 invariant: 0
+Z4 invariant: 0
+Indirect gap: 1.7616217490413115
+Smallest direct gap in the given set of k-points: 1.7616217490413115
