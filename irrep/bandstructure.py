@@ -369,7 +369,7 @@ class BandStructure:
         for ik, KP in enumerate(self.kpoints):
             
             if kpnames is not None:
-                irreps = self.spacegroup.get_irreps_from_table(kpnames[ik], KP.K)
+                irreps = self.spacegroup.get_irreps_from_table(kpnames[ik], KP.k)
             else:
                 irreps = None
             KP.identify_irreps(irreptable=irreps)
@@ -574,7 +574,7 @@ class BandStructure:
             f.write(
                 "   ".join(
                     "{0:10.6f}".format(x)
-                    for x in KP.K
+                    for x in KP.k
                 )
                 + "\n"
             )
@@ -805,7 +805,7 @@ class BandStructure:
             matches the number of k-points in the path.
         """
         if kpred is None:
-            kpred = [k.K for k in self.kpoints]
+            kpred = [k.k for k in self.kpoints]
         KPcart = np.array(kpred).dot(self.RecLattice)
         K = np.zeros(KPcart.shape[0])
         k = np.linalg.norm(KPcart[1:, :] - KPcart[:-1, :], axis=1)

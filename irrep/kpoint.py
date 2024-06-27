@@ -163,13 +163,13 @@ class Kpoint:
         self.RecLattice = RecLattice
         self.upper = upper
 
-        self.K = kpt
+        self.k = kpt
         self.WF = WF
         self.Energy = Energy
         self.ig = ig
         self.upper = upper
 
-        self.k_refUC = np.dot(refUC.T, self.K)
+        self.k_refUC = np.dot(refUC.T, self.k)
         self.WF /= (
             np.sqrt(np.abs(np.einsum("ij,ij->i", self.WF.conj(), self.WF)))
         ).reshape(self.num_bands, 1)
@@ -181,9 +181,9 @@ class Kpoint:
         for symop in symmetries_SG:
             if symop.ind not in symmetries:
                 continue
-            k_rotated = np.dot(np.linalg.inv(symop.rotation).T, self.K)
-            dkpt = np.array(np.round(k_rotated - self.K), dtype=int)
-            if np.allclose(dkpt, k_rotated - self.K):
+            k_rotated = np.dot(np.linalg.inv(symop.rotation).T, self.k)
+            dkpt = np.array(np.round(k_rotated - self.k), dtype=int)
+            if np.allclose(dkpt, k_rotated - self.k):
                 self.little_group.append(symop)
 
         # Sort symmetries based on their indices
@@ -287,13 +287,13 @@ class Kpoint:
             W - weight of the band(s) projected onto the PBZ kpoint.
             Sx, Sy, Sz - Spin components projected onto the PBZ kpoint.
         """
-        if not is_round(kptPBZ.dot(supercell.T) - self.K, prec=1e-5):
+        if not is_round(kptPBZ.dot(supercell.T) - self.k, prec=1e-5):
             raise RuntimeError(
                 "unable to unfold {} to {}, withsupercell={}".format(
-                    self.K, kptPBZ, supercell
+                    self.k, kptPBZ, supercell
                 )
             )
-        g_shift = kptPBZ - self.K.dot(np.linalg.inv(supercell.T))
+        g_shift = kptPBZ - self.k.dot(np.linalg.inv(supercell.T))
         #        print ("g_shift={}".format(g_shift))
         selectG = np.array(
             np.where(
@@ -303,7 +303,6 @@ class Kpoint:
                 ]
             )[0]
         )
-        #        print ("unfolding {} to {}, selecting {} of {} g-vectors \n".format(self.K,kptPBZ,len(selectG),self.ig.shape[1],selectG,self.ig.T))
         if self.spinor:
             selectG = np.hstack((selectG, selectG + self.NG))
         WF = self.WF[:, selectG]
@@ -441,7 +440,7 @@ class Kpoint:
             )
 
         S = symm_matrix(
-            self.K,
+            self.k,
             self.RecLattice,
             self.WF,
             self.ig,
@@ -460,7 +459,7 @@ class Kpoint:
         if check > 0.1:
             print(("WARNING: matrix of symmetry has non-zero elements between "
                    "states of different energy:  \n", check))
-            print("Printing matrix of symmetry at k={}".format(self.K))
+            print("Printing matrix of symmetry at k={}".format(self.k))
             print(format_matrix(Sblock))
 
         # Calculate eigenvalues and eigenvectors in each block
@@ -574,7 +573,7 @@ class Kpoint:
         for symop in self.little_group:
             char.append(
                     symm_eigenvalues(
-                        self.K,
+                        self.k,
                         self.RecLattice,
                         self.WF,
                         self.ig,
@@ -670,7 +669,7 @@ class Kpoint:
                "               {2} (after cell trasformation)\n\n"
                " number of states : {3}\n"
                .format(self.ik0,
-                       np.round(self.K, 5),
+                       np.round(self.k, 5),
                        np.round(self.k_refUC, 5),
                        self.num_bands)
               ))
@@ -894,7 +893,7 @@ class Kpoint:
         res : array
             Matrix of `complex` elements  < u_m(k) | u_n(k+g) >.
         """
-        g = np.array((self.K - other.K).round(), dtype=int)
+        g = np.array((self.k - other.k).round(), dtype=int)
         igall = np.hstack((self.ig[:3], other.ig[:3] - g[:, None]))
         igmax = igall.max(axis=1)
         igmin = igall.min(axis=1)
