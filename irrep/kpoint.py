@@ -246,7 +246,7 @@ class Kpoint:
         inds = inds[sortE]
 
         # Do not group by degeneracy of energy-levels for printing
-        other.degeneracies = [1] * self.num_bands
+        other.degeneracies = [1] * other.num_bands
         char = []
         char_refUC = []
         for i in inds:
