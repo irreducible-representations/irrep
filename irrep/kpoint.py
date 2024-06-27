@@ -19,7 +19,7 @@
 import numpy as np
 import numpy.linalg as la
 import copy
-from .gvectors import symm_eigenvalues, NotSymmetryError, symm_matrix
+from .gvectors import symm_eigenvalues, symm_matrix
 from .utility import compstr, is_round, format_matrix
 
 class Kpoint:
@@ -878,73 +878,6 @@ class Kpoint:
             + "\n"
         )
 
-        return res
-
-    # This function is called in a nonmaintained functionality. Deactivate it for now
-    def write_trace_all(self, degen_thresh=1e-8, symmetries=None, efermi=0.0, kpline=0):
-        """
-        Generate a block describing energy-levels and traces in a k-point.
-
-        Parameters
-        ----------
-        degen_thresh : float, default=1e-8
-            Threshold energy used to decide whether wave-functions are
-            degenerate in energy.
-        symmetries : list, default=None
-            Index of symmetry operations whose traces will be printed. 
-        efermi : float, default=0.0
-            Fermi-energy. Used as origin for energy-levels. 
-        kpline : float, default=0
-            Cumulative length of the path up to current k-point.
-
-        Returns
-        -------
-        str
-            Block with the description of energy-levels and traces in a k-point.
-        """
-        preline = "{0:10.6f}     {1:10.6f}  {2:10.6f}  {3:10.6f}  ".format(
-            kpline, *tuple(self.K)
-        )
-        if symmetries is None:
-            sym = {s.ind: s for s in self.symmetries}
-        else:
-            sym = {s.ind: s for s in self.symmetries if s.ind in symmetries}
-
-        char0 = {i: self.symmetries[sym[i]] for i in sym}
-        borders = np.hstack(
-            [
-                [0],
-                np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
-                [self.num_bands],
-            ]
-        )
-        char = {
-            i: np.array(
-                [char0[i][start:end].sum() for start, end in zip(borders, borders[1:])]
-            )
-            for i in char0
-        } # keys are indices of symmetries, values are arrays with traces
-        E = np.array(
-            [self.Energy[start:end].mean() for start, end in zip(borders, borders[1:])]
-        )
-        dim = np.array([end - start for start, end in zip(borders, borders[1:])])
-        IB = np.cumsum(np.hstack(([0], dim[:-1]))) + 1
-        res = (
-            "\n".join(
-                preline
-                + (" {ib:8d}  {d:8d}   {E:8.4f} ").format(E=e - efermi, d=d, ib=ib)
-                + "     ".join(
-                    (
-                        "{0:10.6f} {1:10.6f}".format(char[i][j].real, char[i][j].imag)
-                        if i in char
-                        else (" " * 7 + "X" * 3 + " " * 8 + "X" * 3)
-                    )
-                    for i in range(1, len(self.symmetries_SG) + 1)
-                )
-                for e, d, ib, j in zip(E, dim, IB, np.arange(len(dim)))
-            )
-            + "\n"
-        )
         return res
 
     def overlap(self, other):

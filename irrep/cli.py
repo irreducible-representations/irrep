@@ -353,7 +353,8 @@ def cli(
     bandstr.write_characters()
 
     # Write irreps.dat file
-    bandstr.write_irrepsfile()
+    if kpnames is not None:
+        bandstr.write_irrepsfile()
 
     # Write trace.txt file
     bandstr.write_trace()
@@ -421,10 +422,8 @@ def cli(
             )
         exit()
 
-    exit()  # the following code is not mainained for now: deactivate it
     if plotbands:
-        json_data["characters_and_irreps"] = {}
-        print("plotbands = True --> writing bands")
+        print("\nplotbands = True --> writing bands")
         for k, sub in subbands.items():
             if isymsep is not None:
                 print(
@@ -442,20 +441,6 @@ def cli(
                     )
                     + ".dat"
                 )
-                fname1 = (
-                    "bands-sym-"
-                    + suffix
-                    + "-"
-                    + "-".join(
-                        "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
-                    )
-                    + ".dat"
-                )
             else:
                 fname = "bands-{0}.dat".format(suffix)
-                fname1 = "bands-sym-{0}.dat".format(suffix)
-            with open(fname, "w") as f:
-                f.write(sub.write_bands())
-            sub.write_trace_all(degenthresh, fname=fname1)
-
-    dumpfn(json_data,"irrep-output.json",indent=4)
+            sub.write_plotfile(fname)
