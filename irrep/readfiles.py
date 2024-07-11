@@ -1058,3 +1058,38 @@ class ParserW90:
         else:
             x = self.fwin[i[0]][1]
         return tp(x)
+    
+class ParserGPAW:
+
+    """
+    Parser for GPAW interface
+
+    Parameters
+    ----------
+    calculator : str or GPAW
+        instance of GPAW class or the name of the file containing it
+    """
+
+    def __init__(self, calculator):
+        from gpaw import GPAW
+        if isinstance(calculator, str):
+            print ("reading from file",calculator)	
+            calculator = GPAW(calculator)
+            print ("calculator read",calculator)
+        self.calculator = calculator
+        self.nband = self.calculator.get_number_of_bands()
+
+    def parse_header(self):
+        kpred = self.calculator.get_bz_k_points()
+        Lattice = self.calculator.atoms.cell
+        spinor = self.calculator.get_spin_polarized()
+        typat = self.calculator.atoms.get_atomic_numbers()
+        positions = self.calculator.atoms.get_scaled_positions()
+        EF_in = self.calculator.get_fermi_level() 
+        return (self.nband, kpred, Lattice, spinor, typat, positions, EF_in)
+
+    def parse_kpoint(self,ik):
+        energies = self.calculator.get_eigenvalues(kpt=ik)
+        wavefunctions = np.array([
+            self.calculator.get_pseudo_wave_function(kpt=ik,band=ib) for ib in range(self.nband)])
+        return energies, wavefunctions

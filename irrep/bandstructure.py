@@ -22,7 +22,7 @@ import functools
 import numpy as np
 import numpy.linalg as la
 
-from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90
+from .readfiles import ParserAbinit, ParserGPAW, ParserVasp, ParserEspresso, ParserW90
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .gvectors import sortIG, calc_gvectors
@@ -41,6 +41,9 @@ class BandStructure:
         Name of file containing wave-functions in VASP (WAVECAR format).
     fWFK : str, default=None
         Name of file containing wave-functions in ABINIT (WFK format).
+    calculator_gpaw : class or str, default=None
+        Instance of GPAW calculator or name of file containing wave-functions 
+        in GPAW (extension ".gpw")
     prefix : str, default=None
         Prefix used for Quantum Espresso calculations or seedname of Wannier90 
         files.
@@ -126,6 +129,7 @@ class BandStructure:
         fWAV=None,
         fWFK=None,
         prefix=None,
+        calculator_gpaw=None,
         fPOS=None,
         Ecut=None,
         IBstart=None,
@@ -211,6 +215,25 @@ class BandStructure:
             self.Lattice, positions, typat, kpred = parser.parse_lattice()
             Energies = parser.parse_energies()
 
+        elif code == "gpaw":
+            parser = ParserGPAW(calculator=calculator_gpaw)
+            (NBin,
+             kpred,
+             self.Lattice,
+             self.spinor,
+             typat,
+             positions,
+             EF_in) = parser.parse_header()
+            # print ("EF_in",EF_in)
+            # print ("NBin",NBin)
+            # print ("kpred",kpred)
+            # print ("Lattice",self.Lattice)
+            # print("positions\n", positions )
+            # exit()
+            if Ecut is None:
+                raise RuntimeError("Ecut mandatory for GPAW")
+            self.Ecut0 = Ecut
+            NK = kpred.shape[0]
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
 
@@ -319,7 +342,21 @@ class BandStructure:
                                    )
                 selectG = tuple(kg[0:3])
                 WF = parser.parse_kpoint(ik+1, selectG)
-
+            elif code == 'gpaw':
+                kpt = kpred[ik]
+                Energy, WF_grid = parser.parse_kpoint(ik)
+                ngx, ngy, ngz = WF_grid.shape[1:]
+                kg = calc_gvectors(kpt,
+                                   self.RecLattice,
+                                   self.Ecut,
+                                   spinor=self.spinor,
+                                   nplanemax=np.max([ngx, ngy, ngz]) // 2
+                )
+                selectG = tuple(kg[0:3])
+                WF = np.fft.fftn(WF_grid, axes=(1, 2, 3))
+                WF=np.array([wf[selectG] for wf in WF])
+                # print ("WF-shape", WF.shape)
+            
             # Pick energy of IBend+1 band to calculate gaps
             try:
                 upper = Energy[IBend] - self.efermi
