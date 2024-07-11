@@ -16,6 +16,7 @@
 ##################################################################
 
 
+from functools import lru_cache
 import numpy as np
 import numpy.linalg as la
 import copy
@@ -102,8 +103,10 @@ class Kpoint:
         Direct coordinates of the k point in the DFT cell setting.
     k_refUC : array, shape=(3,)
         Direct coordinates of the k point in the reference cell setting.
-    Energy : array
-        Energy-levels of bands whose traces should be calculated.
+    Energy_raw : array
+        energy levels of each state (1 energy for every row in WF)
+    Energy_mean : array
+        Energy-levels of degenerate froups of bands whose traces should be calculated.
     upper : float
         Energy of the first band above the set of bands whose traces should be 
         calculated. It will be set to `numpy.NaN` if the last band matches the 
@@ -145,6 +148,7 @@ class Kpoint:
         num_bands=None,
         RecLattice=None,  # this was last mandatory argument
         symmetries_SG=None,
+        calculate_traces=False,
         spinor=None,
         kpt=None,
         WF=None,  # first arg added for abinit (to be kept at the end)
@@ -165,7 +169,7 @@ class Kpoint:
 
         self.k = kpt
         self.WF = WF
-        self.Energy = Energy
+        self.Energy_raw = Energy
         self.ig = ig
         self.upper = upper
 
@@ -193,13 +197,14 @@ class Kpoint:
         # Determine degeneracies
         self.borders = np.hstack([
              [0],
-             np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
+             np.where(self.Energy_raw[1:] - self.Energy_raw[:-1] > degen_thresh)[0] + 1,
              [self.num_bands],
         ])
         self.degeneracies = self.borders[1:] - self.borders[:-1]
 
         # Calculate traces
-        self.char, self.char_refUC, self.Energy = self.calculate_traces(refUC, shiftUC, symmetries_tables, degen_thresh)
+        if calculate_traces:
+            self.char, self.char_refUC, self.Energy_mean = self.calculate_traces(refUC, shiftUC, symmetries_tables, degen_thresh)
 
         # Determine number of band inversions based on parity
         found = False
@@ -235,7 +240,6 @@ class Kpoint:
             Instance of `Kpoints` corresponding to the group of states passed. 
             They are shorted by energy-levels.
         """
-
         other = copy.copy(self) # copy of whose class
 
         # Sort energy levels
@@ -317,30 +321,13 @@ class Kpoint:
             result.append([E,] + [np.trace(proj.dot(M)).real for M in matrices])
         return np.array(result)
 
-    def get_rho_spin(self, degen_thresh=1e-4):
-        """ 
-        A getter, made to avoid the repeated evaluation of 
-        self.__eval_rho_spin for the same degen_thresh.
-
-        Parameters
-        ----------
-        degen_thresh : float
-            Bands with energy difference smaller that the threshold will be 
-            considered as one band, and only one total weight will be given for 
-            them.
-        """
-        if not hasattr(self, "rho_spin"):
-            self.rho_spin = {}
-        if degen_thresh not in self.rho_spin:
-            self.rho_spin[degen_thresh] = self.__eval_rho_spin(degen_thresh)
-        return self.rho_spin[degen_thresh]
-
     @property
     def NG(self):
         """Getter for the number of plane-waves in current k-point"""
         return self.ig.shape[1]
 
-    def __eval_rho_spin(self, degen_thresh):
+    @lru_cache
+    def get_rho_spin(self, degen_thresh=1e-4):
         """
         Evaluates the matrix <i|M|j> in every group of degenerate 
         bands labeled by i and j, where M is :math:`\sigma_0`, 
@@ -366,13 +353,13 @@ class Kpoint:
         borders = np.hstack(
             [
                 [0],
-                np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
+                np.where(self.Energy_raw[1:] - self.Energy_raw[:-1] > degen_thresh)[0] + 1,
                 [self.num_bands],
             ]
         )
         result = []
         for b1, b2 in zip(borders, borders[1:]):
-            E = self.Energy[b1:b2].mean()
+            E = self.Energy_raw[b1:b2].mean()
             W = np.array(
                 [
                     [self.WF[i].conj().dot(self.WF[j]) for j in range(b1, b2)]
@@ -474,7 +461,7 @@ class Kpoint:
             W, V = la.eig(S[b1:b2, b1:b2])
             for w, v in zip(W, V.T):
                 eigenvalues.append(w)
-                Eloc.append(self.Energy[istate])
+                Eloc.append(self.Energy_mean[istate])
                 eigenvectors.append(
                     np.hstack((np.zeros(b1), v, np.zeros(self.num_bands - b2)))
                 )
@@ -598,7 +585,7 @@ class Kpoint:
 
         # Take average of energies over degenerate states
         Energy_mean = np.array(
-            [self.Energy[start:end].mean() for start, end in zip(self.borders, self.borders[1:])]
+            [self.Energy_raw[start:end].mean() for start, end in zip(self.borders, self.borders[1:])]
         )
 
         # Transfer traces in calculational cell to refUC
@@ -719,7 +706,7 @@ class Kpoint:
         print(s)
 
         # Print line associated to a set of degenerate states
-        for e, d, ir, ch1, ch2 in zip(self.Energy, self.degeneracies, str_irreps, self.char, self.char_refUC):
+        for e, d, ir, ch1, ch2 in zip(self.Energy_mean, self.degeneracies, str_irreps, self.char, self.char_refUC):
 
             # Traces in DFT unit cell
             right_str1 = []
@@ -764,7 +751,8 @@ class Kpoint:
         json_data ['symmetries'] = list(indices_symmetries)
 
         # Energy levels and degeneracies
-        json_data['energies'] = self.Energy
+        json_data['energies_mean'] = self.Energy_neam
+        json_data['energies_raw'] = self.Energy_raw
         json_data['dimensions'] = self.degeneracies
 
         # Irreps and multiplicities
@@ -798,7 +786,7 @@ class Kpoint:
             File object for the `irreps.dat` file.
         '''
 
-        for energy, irrep_dict in zip(self.Energy, self.irreps):
+        for energy, irrep_dict in zip(self.Energy_mean, self.irreps):
             irrep = ''.join(irrep_dict.keys())
             s = '{:15.7f}    {:15s}\n'.format(energy, irrep)
             file.write(s)
@@ -808,7 +796,7 @@ class Kpoint:
 
         writeimaginary = np.abs(self.character.imag).max() > 1e-4
         s = []
-        for e, dim, char in zip(self.Energy, self.degeneracies, self.character):
+        for e, dim, char in zip(self.Energy_mean, self.degeneracies, self.character):
             s_loc = '{2:8.4f}   {0:8.4f}      {1:5d}   '.format(e-efermi, dim, kpl)
             for tr in char:
                 s_loc += "{0:8.4f}".format(tr.real)
@@ -822,7 +810,7 @@ class Kpoint:
     def write_irrepfile(self, firrep):
 
         file = open(firrep, "a")
-        for e, ir in zip(self.Energy, self.irreps):
+        for e, ir in zip(self.Energy_mean, self.irreps):
             for irrep in ir.split(","):
                 try:
                     weight = abs(compstr(irrep.split("(")[1].strip(")")))
@@ -872,7 +860,7 @@ class Kpoint:
             "\n".join(
                 (" {ib:8d}  {d:8d}   {E:8.4f} ").format(E=e, d=d, ib=ib)
                 + "  ".join("{0:10.6f}   {1:10.6f} ".format(c.real, c.imag) for c in ch)
-                for e, d, ib, ch in zip(self.Energy, self.degeneracies, IB, self.char)
+                for e, d, ib, ch in zip(self.Energy_mean, self.degeneracies, IB, self.char)
             )
             + "\n"
         )

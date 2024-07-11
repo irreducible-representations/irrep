@@ -327,6 +327,7 @@ def cli(
         IBend=ibend,
         kplist=kpoints,
         spinor=spinor,
+        calculate_traces=True,
         code=code,
         EF=ef,
         onlysym=onlysym,
