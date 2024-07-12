@@ -632,7 +632,6 @@ class Kpoint:
         self.onlytraces = irreptable is None
         if self.onlytraces:
             irreps = ["None"] * (len(self.degeneracies) - 1)
-
         else:
 
             # irreps is a list. Each element is a dict corresponding to a 

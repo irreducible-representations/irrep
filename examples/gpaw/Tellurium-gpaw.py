@@ -1,38 +1,78 @@
 #!/usr/bin/env python
 
-from gpaw import GPAW
-import irrep
+import numpy as np
 from irrep.bandstructure import BandStructure
-# from ase import Atoms
-# from ase.dft.wannier import Wannier
+from gpaw import GPAW
+from ase import Atoms
 
+def calc_Te():
 
-if False:
     a = 4.4570000
     c = 5.9581176
     x = 0.274
-
     te = Atoms(symbols='Te3',
                scaled_positions =[( x, 0, 0),
                                   ( 0, x, 1./3),
                                   (-x,-x, 2./3)],
                cell=(a, a, c, 90, 90, 120),
                pbc=True)
-
-
     calc = GPAW(nbands=16,
                 mode="pw",
             kpts = {'size': (3, 3, 4),'gamma':True},
-            symmetry='off',
+            # symmetry='on',
             txt='Te.txt')
 
     te.calc = calc
     te.get_potential_energy()
     calc.write('Te_pw.gpw', mode='all')
+    return calc
 
-calc = GPAW("Te_pw.gpw")
+def calc_Bi():
+    c = 7.46567804
+    a= 4.9620221
+    ca=c/a
+    r3 = np.sqrt(3)
+    lattice = np.array([[r3/2, 1/2, ca],
+                        [-r3/2, 1/2, ca],
+                        [0, -1, ca]])*a
+    #     [[ 4.29723723  2.48101107  7.46567804]
+    #    [-4.29723723  2.48101107  7.46567804]
+    #    [ 0.         -4.96202214  7.46567804]] 
+    x = 0.237
+    Bi2 = Atoms(symbols='Bi2',
+                scaled_positions=[(-x, -x, -x),
+                                  ( x, x, x)],
+                cell=lattice,
+                pbc=True)
+    calc = GPAW(
+                nbands=30,
+                mode="pw",
+                kpts = {'size': (2,2,2),'gamma':True},
+                # symmetry='off',
+                txt='Bi.txt')
+    
+    Bi2.calc = calc
+    Bi2.get_potential_energy()
+    calc.write('Bi.gpw', mode='all')
+    return calc
 
-bandstructure = BandStructure(code="gpaw", calculator_gpaw=calc,Ecut=30)
+
+
+# calc = calc_Te()
+# calc = GPAW("Te_pw.gpw")
+calc = calc_Bi()
+
+print ("Fermi level",calc.get_fermi_level())
+bandstructure = BandStructure(code="gpaw", calculator_gpaw=calc,Ecut=30,degen_thresh=1e-3)
+print ("Bandstructure",bandstructure)
+bandstructure.write_trace()
+print("done")
+
+
+print (calc.get_bz_k_points().shape)
+print (calc.get_ibz_k_points().shape)
+
+
 exit()
 
 print(calc.get_ibz_k_points())

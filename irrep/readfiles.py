@@ -1073,14 +1073,12 @@ class ParserGPAW:
     def __init__(self, calculator):
         from gpaw import GPAW
         if isinstance(calculator, str):
-            print ("reading from file",calculator)	
             calculator = GPAW(calculator)
-            print ("calculator read",calculator)
         self.calculator = calculator
         self.nband = self.calculator.get_number_of_bands()
 
     def parse_header(self):
-        kpred = self.calculator.get_bz_k_points()
+        kpred = self.calculator.get_ibz_k_points()
         Lattice = self.calculator.atoms.cell
         spinor = self.calculator.get_spin_polarized()
         typat = self.calculator.atoms.get_atomic_numbers()
@@ -1091,5 +1089,5 @@ class ParserGPAW:
     def parse_kpoint(self,ik):
         energies = self.calculator.get_eigenvalues(kpt=ik)
         wavefunctions = np.array([
-            self.calculator.get_pseudo_wave_function(kpt=ik,band=ib) for ib in range(self.nband)])
+            self.calculator.get_pseudo_wave_function(kpt=ik,band=ib, periodic=True) for ib in range(self.nband)])
         return energies, wavefunctions

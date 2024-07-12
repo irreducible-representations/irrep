@@ -224,12 +224,6 @@ class BandStructure:
              typat,
              positions,
              EF_in) = parser.parse_header()
-            print ("EF_in",EF_in)
-            print ("NBin",NBin)
-            print ("kpred",kpred)
-            print ("Lattice",self.Lattice)
-            print("positions\n", positions )
-            exit()
             if Ecut is None:
                 raise RuntimeError("Ecut mandatory for GPAW")
             self.Ecut0 = Ecut
@@ -356,7 +350,6 @@ class BandStructure:
                 selectG = tuple(kg[0:3])
                 WF = np.fft.fftn(WF_grid, axes=(1, 2, 3))
                 WF=np.array([wf[selectG] for wf in WF])
-                # print ("WF-shape", WF.shape)
             
             # Pick energy of IBend+1 band to calculate gaps
             try:

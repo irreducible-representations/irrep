@@ -95,8 +95,8 @@ def calc_gvectors(
     memory = np.full(10, True)
     for N in range(nplanemax):
         flag = True
-        if N % 10 == 0:
-            print(N, len(igall))
+        if N>0 and N % 20 == 0:
+            print("finding G-vectors:",N, len(igall))
         if len(igall) >= nplane / 2:    # Only enters if vasp
             if spinor:
                 break
