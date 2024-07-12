@@ -224,12 +224,12 @@ class BandStructure:
              typat,
              positions,
              EF_in) = parser.parse_header()
-            # print ("EF_in",EF_in)
-            # print ("NBin",NBin)
-            # print ("kpred",kpred)
-            # print ("Lattice",self.Lattice)
-            # print("positions\n", positions )
-            # exit()
+            print ("EF_in",EF_in)
+            print ("NBin",NBin)
+            print ("kpred",kpred)
+            print ("Lattice",self.Lattice)
+            print("positions\n", positions )
+            exit()
             if Ecut is None:
                 raise RuntimeError("Ecut mandatory for GPAW")
             self.Ecut0 = Ecut
@@ -345,6 +345,7 @@ class BandStructure:
             elif code == 'gpaw':
                 kpt = kpred[ik]
                 Energy, WF_grid = parser.parse_kpoint(ik)
+                WF_grid = np.array(WF_grid)
                 ngx, ngy, ngz = WF_grid.shape[1:]
                 kg = calc_gvectors(kpt,
                                    self.RecLattice,
