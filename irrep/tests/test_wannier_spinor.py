@@ -53,7 +53,7 @@ def test_wannier_spin_example():
     kp_ref = bs_ref['k points'][0]
     kp_run = bs_run['k points'][0]
     assert np.allclose(kp_ref['symmetries'], kp_run['symmetries'])
-    assert np.allclose(kp_ref['energies'], kp_run['energies'], rtol=0., atol=1e-4)
+    assert np.allclose(kp_ref['energies'], kp_run['energies_mean'], rtol=0., atol=1e-4)
     assert np.allclose(kp_ref['characters'], kp_run['characters'], rtol=0., atol=1e-4)
     assert kp_ref['characters refUC is the same'] == kp_run['characters refUC is the same']
     assert np.allclose(kp_ref['dimensions'], kp_run['dimensions'], rtol=0., atol=1e-4)

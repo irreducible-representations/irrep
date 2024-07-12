@@ -241,10 +241,9 @@ class Kpoint:
             They are shorted by energy-levels.
         """
         other = copy.copy(self) # copy of whose class
-
         # Sort energy levels
         sortE = np.argsort(E)
-        other.Energy = E[sortE]
+        other.Energy_mean = E[sortE]
         other.WF = WF[sortE]
         other.num_bands = len(E)
         inds = inds[sortE]
@@ -751,7 +750,7 @@ class Kpoint:
         json_data ['symmetries'] = list(indices_symmetries)
 
         # Energy levels and degeneracies
-        json_data['energies_mean'] = self.Energy_neam
+        json_data['energies_mean'] = self.Energy_mean
         json_data['energies_raw'] = self.Energy_raw
         json_data['dimensions'] = self.degeneracies
 
