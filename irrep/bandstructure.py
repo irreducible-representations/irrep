@@ -59,7 +59,8 @@ class BandStructure:
         List of indices of k-points to be considered.
     spinor : bool, default=None
         `True` if wave functions are spinors, `False` if they are scalars. 
-        Mandatory for VASP.
+        Mandatory for VASP. 
+        For GPAW, it is False by default. Specify True if spin-orbit coupling is neended (non-self-consistent).
     code : str, default='vasp'
         DFT code used. Set to 'vasp', 'abinit', 'espresso' or 'wannier90'.
     EF : float, default=None
@@ -216,7 +217,8 @@ class BandStructure:
             Energies = parser.parse_energies()
 
         elif code == "gpaw":
-            parser = ParserGPAW(calculator=calculator_gpaw)
+            parser = ParserGPAW(calculator=calculator_gpaw,
+                                spinor=False if spinor is None else spinor)
             (NBin,
              kpred,
              self.Lattice,
@@ -338,18 +340,10 @@ class BandStructure:
                 WF = parser.parse_kpoint(ik+1, selectG)
             elif code == 'gpaw':
                 kpt = kpred[ik]
-                Energy, WF_grid = parser.parse_kpoint(ik)
-                WF_grid = np.array(WF_grid)
-                ngx, ngy, ngz = WF_grid.shape[1:]
-                kg = calc_gvectors(kpt,
-                                   self.RecLattice,
-                                   self.Ecut,
-                                   spinor=self.spinor,
-                                   nplanemax=np.max([ngx, ngy, ngz]) // 2
-                )
-                selectG = tuple(kg[0:3])
-                WF = np.fft.fftn(WF_grid, axes=(1, 2, 3))
-                WF=np.array([wf[selectG] for wf in WF])
+                Energy, WF, kg, kpt= parser.parse_kpoint(ik,
+                                                 RecLattice=self.RecLattice,
+                                                 Ecut=self.Ecut)
+                
             
             # Pick energy of IBend+1 band to calculate gaps
             try:

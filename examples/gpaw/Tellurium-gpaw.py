@@ -19,13 +19,13 @@ def calc_Te():
                pbc=True)
     calc = GPAW(nbands=16,
                 mode="pw",
+                symmetry='off',
             kpts = {'size': (3, 3, 4),'gamma':True},
-            # symmetry='on',
             txt='Te.txt')
 
     te.calc = calc
     te.get_potential_energy()
-    calc.write('Te_pw.gpw', mode='all')
+    calc.write('Te.gpw', mode='all')
     return calc
 
 def calc_Bi():
@@ -35,7 +35,7 @@ def calc_Bi():
     r3 = np.sqrt(3)
     lattice = np.array([[r3/2, 1/2, ca],
                         [-r3/2, 1/2, ca],
-                        [0, -1, ca]])*a
+                        [0, -1, ca]])*a*0.529
     #     [[ 4.29723723  2.48101107  7.46567804]
     #    [-4.29723723  2.48101107  7.46567804]
     #    [ 0.         -4.96202214  7.46567804]] 
@@ -60,13 +60,18 @@ def calc_Bi():
 
 
 # calc = calc_Te()
-# calc = GPAW("Te_pw.gpw")
-calc = calc_Bi()
+# calc = GPAW("Te.gpw")
+# calc = calc_Bi()
+calc = GPAW("Bi.gpw")
+
+# from gpaw.spinorbit import soc_eigenstates
 
 if world.rank == 0:
 
     print ("Fermi level",calc.get_fermi_level())
-    bandstructure = BandStructure(code="gpaw", calculator_gpaw=calc,Ecut=30,degen_thresh=1e-3)
+    bandstructure = BandStructure(code="gpaw", calculator_gpaw=calc,
+                                  spinor=True,
+                                  Ecut=30,degen_thresh=1e-4)
     print ("Bandstructure",bandstructure)
     bandstructure.write_trace()
     print("done")

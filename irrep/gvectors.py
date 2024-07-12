@@ -18,8 +18,8 @@
 
 import numpy as np
 import numpy.linalg as la
-from .readfiles import Hartree_eV
-
+Rydberg_eV = 13.605693  # eV
+Hartree_eV = 2 * Rydberg_eV
 
 class NotSymmetryError(RuntimeError):
     """
