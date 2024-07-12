@@ -4,6 +4,7 @@ import numpy as np
 from irrep.bandstructure import BandStructure
 from gpaw import GPAW
 from ase import Atoms
+from ase.parallel import paropen, world
 
 def calc_Te():
 
@@ -62,15 +63,17 @@ def calc_Bi():
 # calc = GPAW("Te_pw.gpw")
 calc = calc_Bi()
 
-print ("Fermi level",calc.get_fermi_level())
-bandstructure = BandStructure(code="gpaw", calculator_gpaw=calc,Ecut=30,degen_thresh=1e-3)
-print ("Bandstructure",bandstructure)
-bandstructure.write_trace()
-print("done")
+if world.rank == 0:
+
+    print ("Fermi level",calc.get_fermi_level())
+    bandstructure = BandStructure(code="gpaw", calculator_gpaw=calc,Ecut=30,degen_thresh=1e-3)
+    print ("Bandstructure",bandstructure)
+    bandstructure.write_trace()
+    print("done")
 
 
-print (calc.get_bz_k_points().shape)
-print (calc.get_ibz_k_points().shape)
+    print (calc.get_bz_k_points().shape)
+    print (calc.get_ibz_k_points().shape)
 
 
 exit()
