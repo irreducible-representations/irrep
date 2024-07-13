@@ -222,6 +222,29 @@ class Kpoint:
         else:
             self.num_bandinvs = None
 
+    @property
+    def K(self):
+        """Getter for the redfuced coordinates of the k-point
+        needed to keep compatibility with banduppy
+        
+        ACCESSED BY BANDUPPY, AVOID CHANGING UNLESS NECESSARY
+        """
+        return self.k
+    
+    def k_close_mod1(self, kpt, prec=1e-6):
+        """
+        Check if the k-point is close to another k-point modulo 1. (in reduced coordinates)
+        ACCESSED BY BANDUPPY, AVOID CHANGING UNLESS NECESSARY
+
+        Parameters
+        ----------
+        kpt : array
+            Coordinates of the k-point to compare.
+        prec : float, default=1e-6
+            Threshold to consider the k-points as equal.
+        """
+        return is_round(self.k - kpt, prec = 1e-6)
+
     def copy_sub(self, E, WF, inds):
         """
         Create an instance of class `Kpoint` for a restricted set of states.
