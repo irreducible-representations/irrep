@@ -79,6 +79,12 @@ class BandStructure:
         Threshold to compare translational parts of symmetries.
     degen_thresh : float, default=1e-8
         Threshold to determine the degeneracy of energy levels.
+    calculate_traces : bool
+        If `True`, traces of symmetries will be calculated. Useful to icreate 
+        instances of `BandStructure` faster.
+    save_wf : bool
+        Whether wave functions should be kept as attribute after calculating 
+        traces.
 
     Attributes
     ----------
@@ -141,7 +147,8 @@ class BandStructure:
         shiftUC = None,
         search_cell = False,
         trans_thresh=1e-5,
-        degen_thresh=1e-8
+        degen_thresh=1e-8,
+        save_wf=True
     ):
 
         code = code.lower()
@@ -346,9 +353,11 @@ class BandStructure:
                 degen_thresh=degen_thresh,
                 refUC=self.spacegroup.refUC,
                 shiftUC=self.spacegroup.shiftUC,
-                symmetries_tables=self.spacegroup.symmetries_tables
+                symmetries_tables=self.spacegroup.symmetries_tables,
+                save_wf=save_wf
                 )
             self.kpoints.append(kp)
+        del WF
 
     @property
     def num_k(self):

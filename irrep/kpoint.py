@@ -76,6 +76,12 @@ class Kpoint:
         Attribute `symmetries` of class `IrrepTable`. Each component is an 
         instance of class `SymopTable` corresponding to a symmetry operation
         in the "point-group" of the space-group.
+    calculate_traces : bool
+        If `True`, traces of symmetries will be calculated. Useful to create 
+        instances faster.
+    save_wf : bool
+        Whether wave functions should be kept as attribute after calculating 
+        traces.
     
     Attributes
     ----------
@@ -159,7 +165,8 @@ class Kpoint:
         symmetries=None,
         refUC=np.eye(3),
         shiftUC=np.zeros(3),
-        symmetries_tables=None  # calculate_traces needs it
+        symmetries_tables=None,  # calculate_traces needs it
+        save_wf=True
     ):
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
@@ -221,6 +228,9 @@ class Kpoint:
             self.num_bandinvs = int(round(sum(self.degeneracies - self.char[:,i].real) / 2))
         else:
             self.num_bandinvs = None
+
+        if not save_wf:
+            self.WF = None
 
     @property
     def K(self):

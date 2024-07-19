@@ -317,6 +317,11 @@ def cli(
     if kpnames:
         kpnames = kpnames.split(",")
 
+    if isymsep or wcc or zak:
+        save_wf = True
+    else:
+        save_wf = False
+
     bandstr = BandStructure(
         fWAV=fwav,
         fWFK=fwfk,
@@ -334,7 +339,8 @@ def cli(
         refUC = refuc,
         shiftUC = shiftuc,
         search_cell = searchcell,
-        degen_thresh=degenthresh
+        degen_thresh=degenthresh,
+        save_wf=save_wf
     )
 
     bandstr.spacegroup.show()
