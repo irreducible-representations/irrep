@@ -213,21 +213,21 @@ class Kpoint:
         if calculate_traces:
             self.char, self.char_refUC, self.Energy_mean = self.calculate_traces(refUC, shiftUC, symmetries_tables, degen_thresh)
 
-        # Determine number of band inversions based on parity
-        found = False
-        for i,sym in enumerate(self.little_group):
-            if (
-                sum(abs(sym.translation)) < 1e-6
-                and
-                abs(sym.rotation + np.eye(3)).sum() < 1e-6
-            ):
-                found = True
-                break
-        if found:
-            # Number of inversion odd states (not pairs!)
-            self.num_bandinvs = int(round(sum(self.degeneracies - self.char[:,i].real) / 2))
-        else:
-            self.num_bandinvs = None
+            # Determine number of band inversions based on parity
+            found = False
+            for i,sym in enumerate(self.little_group):
+                if (
+                    sum(abs(sym.translation)) < 1e-6
+                    and
+                    abs(sym.rotation + np.eye(3)).sum() < 1e-6
+                ):
+                    found = True
+                    break
+            if found:
+                # Number of inversion odd states (not pairs!)
+                self.num_bandinvs = int(round(sum(self.degeneracies - self.char[:,i].real) / 2))
+            else:
+                self.num_bandinvs = None
 
         if not save_wf:
             self.WF = None
