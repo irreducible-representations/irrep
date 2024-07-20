@@ -16,13 +16,14 @@
 ##################################################################
 
 
+import warnings
 import numpy as np
 from math import pi
 from scipy.linalg import expm
 import spglib
 from irreptables import IrrepTable
 from scipy.optimize import minimize
-from .utility import str_
+from .utility import BOHR, str_
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -375,7 +376,33 @@ class SymmetryOperation():
         S = self.spinor_rotation
         return ("   ".join(" ".join(str(x) for x in r) for r in R) + "     " + " ".join(str_(x) for x in t) + ("      " + \
                 "    ".join("  ".join(str_(x) for x in X) for X in (np.abs(S.reshape(-1)), np.angle(S.reshape(-1)) / np.pi))))
+    
+    def str_sym(self, alat):
+        """
+        Write 4 strings (+1 empty) for the prefix.sym file 
+        for sitesym in wannier90: 
+        The symmetry operations act on a point r as rR − t.
 
+        Parameters
+        ----------
+        alat : float
+            Lattice parameter in angstroms.
+
+        Returns
+        -------
+        str
+            Description to print.
+            1 blank line
+            3 lines: cartesian rotation matrix
+            1 line : cartesian translation in units of alat
+        """
+        Rcart  = self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
+        t = - self.translation @ self.Lattice/alat/BOHR   
+
+        arr = np.vstack((Rcart, [t]))
+        return "\n"+"".join("   ".join(f"{x:20.15f}" for x in r) + "\n" for r in arr  )
+
+        
     def str2(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
         Print matrix of a symmetry operation in the format: 
@@ -522,7 +549,8 @@ class SpaceGroup():
             refUC=None,
             shiftUC=None,
             search_cell=False,
-            trans_thresh=1e-5
+            trans_thresh=1e-5,
+            alat=None
             ):
         self.spinor = spinor
         self.Lattice = cell[0]
@@ -537,7 +565,7 @@ class SpaceGroup():
                                                           3], self.Lattice[(i + 2) %
                                                                            3]) for i in range(3)]) * 2 * np.pi / np.linalg.det(self.Lattice)
         self.order = len(self.symmetries)
-
+        self.alat = alat
         # Determine refUC and shiftUC according to entries in CLI
         self.symmetries_tables = IrrepTable(self.number, self.spinor).symmetries
         self.refUC, self.shiftUC = self.determine_basis_transf(
@@ -725,6 +753,29 @@ class SpaceGroup():
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
                 symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
+
+    def write_sym_file(self, prefix, alat=None):
+        """
+        Write symmetry operations to a file.
+
+        Parameters
+        ----------
+        prefix : str
+            Prefix for the name of the file.
+        alat : float, default=None
+            Lattice parameter in angstroms. If not specified, the lattice 
+            parameter is not written to the file.
+        """
+        if alat is None:
+            if hasattr(self, 'alat'):
+                alat = self.alat
+        if alat is None:
+            warnings.warn("Lattice parameter not specified. Symmetry operations will be written assuming A=1")
+            alat = 1
+        with open(prefix + ".sym", "w") as f:
+            f.write(" {0} \n".format(len(self.symmetries)))
+            for symop in self.symmetries:
+                f.write(symop.str_sym(alat))
 
     def write_trace(self):
         """

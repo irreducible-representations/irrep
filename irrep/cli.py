@@ -192,6 +192,21 @@ do not hesitate to contact the author:
     default=False,
     help="Only calculate the symmetry operations",
 )
+@click.option(
+    "-writesym",
+    flag_value=True,
+    default=False,
+    help="write the prefix.sym file needed for the Wannier90 sitesym calculations",
+)
+@click.option(
+    "-alat",
+    type=float,
+    default=None,
+    help="for writesym - the alat parameter. For QE, it is read from the prefix.save/data-file-schema.xml"
+    "For other codes needs to be provided. (To be honest, the .sym file is useless for other codes for now, but still ..)",
+)
+
+
 @click.option("-ZAK", flag_value=True, default=False, help="Calculate Zak phase")
 @click.option(
     "-WCC", flag_value=True, default=False, help="Calculate Wannier charge centres"
@@ -268,6 +283,8 @@ def cli(
     shiftuc,
     isymsep,
     onlysym,
+    writesym,
+    alat,
     zak,
     wcc,
     plotbands,
@@ -344,6 +361,9 @@ def cli(
     )
 
     bandstr.spacegroup.show()
+    if writesym:
+        bandstr.spacegroup.write_sym_file(prefix=prefix, alat=alat)
+        
 
     if onlysym:
         exit()
