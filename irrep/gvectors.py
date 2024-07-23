@@ -85,6 +85,9 @@ def calc_gvectors(
         the same energy as the plane-wave of the current column.
     
 """
+
+    print('Generating plane waves at k: ({} )'
+          .format(' '.join([f'{x:6.3f}' for x in K])))
     if Ecut1 <= 0:
         Ecut1 = Ecut
     B = RecLattice
@@ -96,7 +99,7 @@ def calc_gvectors(
     for N in range(nplanemax):
         flag = True
         if N % 10 == 0:
-            print(N, len(igall))
+            print(f'Cycle {N:>3d}: number of plane waves = {len(igall):>10d}')
         if len(igall) >= nplane / 2:    # Only enters if vasp
             if spinor:
                 break
