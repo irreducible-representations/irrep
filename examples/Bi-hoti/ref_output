@@ -1,35 +1,6 @@
-'NoneType' object has no attribute 'split'
-
-
- ----------INFORMATION ABOUT THE UNIT CELL----------- 
-
-
-Primitive vectors : 
- [[ 2.274       1.31289451  3.95066667]
- [-2.274       1.31289451  3.95066667]
- [ 0.         -2.62578902  3.95066667]] 
- Atomic positions: 
- [[0.763 0.763 0.763]
- [0.237 0.237 0.237]] 
- Atom type indices: 
- [1, 1]
- Reciprocal lattice:
- [[ 1.38152711  0.79762505  0.53013713]
- [-1.38152711  0.79762505  0.53013713]
- [ 0.         -1.5952501   0.53013713]]
 Reading symmetries from tables
 refUC was specified in CLI, but shiftUC was not. Taking shiftUC=(0,0,0).
-
-The cell transformation is given by: 
-        |   1.0000 -1.0000  0.0000 |
-refUC = |   0.0000  1.0000 -1.0000 |    shiftUC = [0. 0. 0.]
-        |   1.0000  1.0000  1.0000 |
-
-Lattice vectors of DFT (a) and reference (c) cells:
-a(0)=[  2.2740  1.3129  3.9507 ]    c(0)=[  4.5480  0.0000  0.0000 ]
-a(1)=[ -2.2740  1.3129  3.9507 ]    c(1)=[ -2.2740  3.9387  0.0000 ]
-a(2)=[  0.0000 -2.6258  3.9507 ]    c(2)=[  0.0000  0.0000 11.8520 ]
-Efermi = 5.2156 eV
+Efermi: 5.2156 eV
 WAVECAR contains 4 k-points and 24 bands.
  Saving 6 bands starting from 5 in the output
 Energy cutoff in WAVECAR :  520.0
@@ -48,10 +19,34 @@ Energy cutoff reduced to :  50.0
 20 1870
 
 
- ---------- INFORMATION ABOUT THE SPACE GROUP ---------- 
+ ---------- CRYSTAL STRUCTURE ---------- 
 
 
-Space group R-3m (# 166) has 12 symmetry operations  
+Cell vectors in angstroms:
+
+      Vectors of DFT cell       |      Vectors of REF. cell      
+a0 =  2.2740   1.3129   3.9507  |  a0 =  0.9611  -3.5869   2.6258
+a1 = -2.2740   1.3129   3.9507  |  a1 = -2.6378  -2.6378  -6.5765
+a2 =  0.0000  -2.6258   3.9507  |  a2 =  7.5376   2.9896   1.3249
+
+Atomic positions in direct coordinates:
+
+Atom type |   Position in DFT cell    |   Position in REF cell   
+    1     |  0.7630   0.7630   0.7630 | -0.0000   0.0000   0.7630
+    1     |  0.2370   0.2370   0.2370 | -0.0000   0.0000   0.2370
+
+
+ ---------- SPACE GROUP ----------- 
+
+
+Space group: R-3m (# 166)
+Number of symmetries: 12 (mod. lattice translations)
+
+The transformation from the DFT cell to the reference cell of tables is given by: 
+        |   1.0000 -1.0000  0.0000 |
+refUC = |   0.0000  1.0000 -1.0000 |    shiftUC = [0. 0. 0.]
+        |   1.0000  1.0000  1.0000 |
+
 
  ### 1 
 
@@ -293,6 +288,9 @@ translation (refUC) :  [   0.0000   0.0000   0.0000 ]
 axis: [-0.5       0.866025  0.      ] ; angle = 1 pi, inversion : True
 
 Reading symmetries from tables
+Reading symmetries from tables
+Reading symmetries from tables
+Reading symmetries from tables
 
 
  k-point   1 : [0.5 0.5 0.5] (in DFT cell)
@@ -301,14 +299,17 @@ Reading symmetries from tables
  number of states : 6
 
    Energy  |   degeneracy  |       irreps       | sym. operations  
-           |               |                    |     1        2        3        4        5        6        7        8        9       10       11       12    
-  -1.5597  |        2      | -T9(1.0)           |   2.0000   1.0000   1.0000  -0.0000  -0.0000  -0.0000  -2.0000  -1.0000  -1.0000   0.0000   0.0000  -0.0000
-  -1.2220  |        2      | -T8(1.0)           |   2.0000   1.0000   1.0000   0.0000  -0.0000   0.0000   2.0000   1.0000   1.0000   0.0000  -0.0000  -0.0000
+           |               |                    |    1        2        3        4        5        6        7        8        9       10       11       12    
+  -1.5597  |        2      | -T9(1.0)           |   2.0000   1.0000   1.0000   0.0000   0.0000  -0.0000  -2.0000  -1.0000  -1.0000   0.0000  -0.0000   0.0000
+           |               |                    |   2.0000   1.0000   1.0000   0.0000  -0.0000  -0.0000  -2.0000  -1.0000  -1.0000   0.0000   0.0000   0.0000
+  -1.2220  |        2      | -T8(1.0)           |   2.0000   1.0000   1.0000  -0.0000   0.0000   0.0000   2.0000   1.0000   1.0000   0.0000  -0.0000  -0.0000
+           |               |                    |   2.0000   1.0000   1.0000  -0.0000  -0.0000   0.0000   2.0000   1.0000   1.0000   0.0000   0.0000  -0.0000
    0.1460  |        2      | -T6(1.0), -T7(1.0) |   2.0000  -2.0000  -2.0000  -0.0000   0.0000   0.0000  -2.0000   2.0000   2.0000  -0.0000  -0.0000   0.0000
-inversion is # 7
-number of inversions-odd Kramers pairs :  2
-Gap with upper bands :  0.15615105117514538
-Reading symmetries from tables
+           |               |                    |   2.0000  -2.0000  -2.0000  -0.0000  -0.0000   0.0000  -2.0000   2.0000   2.0000  -0.0000   0.0000   0.0000
+
+Invariant under inversion: Yes
+Number of inversions-odd Kramers pairs : 2
+Gap with upper bands:  0.1561511933404347
 
 
  k-point   2 : [0. 0. 0.] (in DFT cell)
@@ -317,14 +318,17 @@ Reading symmetries from tables
  number of states : 6
 
    Energy  |   degeneracy  |        irreps        | sym. operations  
-           |               |                      |     1        2        3        4        5        6        7        8        9       10       11       12    
+           |               |                      |    1        2        3        4        5        6        7        8        9       10       11       12    
   -2.7306  |        2      | -GM8(1.0)            |   2.0000   1.0000   1.0000  -0.0000   0.0000   0.0000   2.0000   1.0000   1.0000   0.0000  -0.0000  -0.0000
+           |               |                      |   2.0000   1.0000   1.0000  -0.0000  -0.0000   0.0000   2.0000   1.0000   1.0000   0.0000   0.0000  -0.0000
   -0.7762  |        2      | -GM8(1.0)            |   2.0000   1.0000   1.0000   0.0000  -0.0000   0.0000   2.0000   1.0000   1.0000  -0.0000  -0.0000  -0.0000
+           |               |                      |   2.0000   1.0000   1.0000   0.0000   0.0000   0.0000   2.0000   1.0000   1.0000  -0.0000   0.0000  -0.0000
   -0.4961  |        2      | -GM4(1.0), -GM5(1.0) |   2.0000  -2.0000  -2.0000  -0.0000   0.0000   0.0000   2.0000  -2.0000  -2.0000  -0.0000  -0.0000  -0.0000
-inversion is # 7
-number of inversions-odd Kramers pairs :  0
-Gap with upper bands :  1.7616216106061593
-Reading symmetries from tables
+           |               |                      |   2.0000  -2.0000  -2.0000  -0.0000  -0.0000   0.0000   2.0000  -2.0000  -2.0000  -0.0000   0.0000  -0.0000
+
+Invariant under inversion: Yes
+Number of inversions-odd Kramers pairs : 0
+Gap with upper bands:  1.7616217490413115
 
 
  k-point   3 : [0.5 0.5 0. ] (in DFT cell)
@@ -333,14 +337,17 @@ Reading symmetries from tables
  number of states : 6
 
    Energy  |   degeneracy  |       irreps       | sym. operations  
-           |               |                    |     1        5        7       11    
+           |               |                    |    1        5        7       11    
   -4.8263  |        2      | -F3(1.0), -F4(1.0) |   2.0000   0.0000   2.0000  -0.0000
+           |               |                    |   2.0000  -0.0000   2.0000   0.0000
   -3.6784  |        2      | -F5(1.0), -F6(1.0) |   2.0000   0.0000  -2.0000  -0.0000
+           |               |                    |   2.0000  -0.0000  -2.0000   0.0000
   -2.4303  |        2      | -F5(1.0), -F6(1.0) |   2.0000  -0.0000  -2.0000  -0.0000
-inversion is # 7
-number of inversions-odd Kramers pairs :  2
-Gap with upper bands :  4.844806150928424
-Reading symmetries from tables
+           |               |                    |   2.0000   0.0000  -2.0000   0.0000
+
+Invariant under inversion: Yes
+Number of inversions-odd Kramers pairs : 2
+Gap with upper bands:  4.844806278974456
 
 
  k-point   4 : [0.  0.5 0. ] (in DFT cell)
@@ -349,13 +356,20 @@ Reading symmetries from tables
  number of states : 6
 
    Energy  |   degeneracy  |       irreps       | sym. operations  
-           |               |                    |     1        4        7       10    
+           |               |                    |    1        4        7       10    
   -1.7054  |        2      | -L5(1.0), -L6(1.0) |   2.0000  -0.0000  -2.0000  -0.0000
+           |               |                    |   2.0000  -0.0000  -2.0000  -0.0000
   -1.6885  |        2      | -L3(1.0), -L4(1.0) |   2.0000   0.0000   2.0000   0.0000
+           |               |                    |   2.0000   0.0000   2.0000   0.0000
   -0.1312  |        2      | -L5(1.0), -L6(1.0) |   2.0000   0.0000  -2.0000   0.0000
-inversion is # 7
-number of inversions-odd Kramers pairs :  2
-Gap with upper bands :  0.08857033154551353
-number of inversion-odd Kramers pairs IN THE LISTED KPOINTS:  6   Z4=  2
-Minimal direct gap: 0.08857033154551353  eV
-indirect  gap: -0.1886089499035215  eV
+           |               |                    |   2.0000   0.0000  -2.0000   0.0000
+
+Invariant under inversion: Yes
+Number of inversions-odd Kramers pairs : 2
+Gap with upper bands:  0.08857045944482511
+
+TOTAL number of inversions-odd Kramers pairs : 6
+Z2 invariant: 0
+Z4 invariant: 2
+Indirect gap: -0.1886088077382322
+Smallest direct gap in the given set of k-points: 0.08857045944482511

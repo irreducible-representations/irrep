@@ -123,10 +123,8 @@ def str2list_space(string):
     Ranges can be generated as part of the output `array`. For example, 
     `str2list('1,3-5,7')` will give as ouput `array([1,3,4,5,7])`.
     """
-    #    print ("str2list  <{0}> ".format(string))
     res = np.hstack([np.arange(*(np.array(s.split("-"), dtype=int) + np.array([0, 1])))
                      if "-" in s else np.array([int(s)]) for s in string.split()])
-#    print ("str2list  <{0}> -> <{1}>".format(string,res))
     return res
 
 
@@ -214,3 +212,41 @@ def short(x, nd=3):
     if abs(x.real) < 10 ** (-nd):
         return fmt.format(x.imag) + "j"
     return short(x.real, nd) + short(1j * x.imag)
+
+
+def split(l):
+    """
+    Determine symbol used for assignment and split accordingly.
+
+    Parameters
+    ---------
+    l : str
+        Part of a line read from .win file.
+    """
+    if "=" in l:
+        return l.split("=")
+    elif ":" in l:
+        return l.split(":")
+    else:
+        return l.split()
+
+
+def format_matrix(A):
+    """
+    Format array to print it.
+
+    Parameters
+    ----------
+    A : array
+        Matrix that should be printed.
+
+    Returns
+    -------
+    str
+        Description of the matrix. Ready to be printed.
+    """
+    return "".join(
+        "   ".join("{0:+5.2f} {1:+5.2f}".format(x.real, x.imag) for x in a)
+        + "\n"
+        for a in A
+    )

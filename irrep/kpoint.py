@@ -16,15 +16,12 @@
 ##################################################################
 
 
+from functools import lru_cache
 import numpy as np
 import numpy.linalg as la
 import copy
-from .gvectors import calc_gvectors, symm_eigenvalues, NotSymmetryError, symm_matrix, sortIG
-from .readfiles import Hartree_eV
-from .readfiles import record_abinit
-from .utility import compstr, is_round
-from scipy.io import FortranFile as FF
-from lazy_property import LazyProperty
+from .gvectors import symm_eigenvalues, symm_matrix
+from .utility import compstr, is_round, format_matrix
 
 class Kpoint:
     """
@@ -33,16 +30,15 @@ class Kpoint:
     traces (and irreps), for the separation of the band structure in terms of a 
     symmetry operation and for the calculation of the Zak phase.
 
+        symmetries=None,
+        symmetries_tables=None  # calculate_traces needs it
+
     Parameters
     ----------
     ik : int
         Index of kpoint, starting count from 0.
     NBin : int
         Number of bands considered at the k-point in the DFT calculation.
-    IBstart : int
-        First band to be considered.
-    IBend : int
-        Last band to be considered.
     Ecut : float
         Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
     Ecut0 : float
@@ -57,37 +53,35 @@ class Kpoint:
         passed is the attribute `symmetries` of class `SpaceGroup`.
     spinor : bool, default=None
         `True` if wave functions are spinors, `False` if they are scalars.
-    code : str, default='vasp'
-        DFT code used. Set to 'vasp', 'abinit', 'espresso' or 'wannier90'.
     kpt : list or array, default=None
         Direct coordinates of the k-point.
-    npw_ : int, default=None
-        Number of plane-waves considered in the expansion of wave-functions. 
-    fWFK : file object, default=None
-        File object corresponding to WFK file of Abinit. Returned by 
-        `FortranFile`.
-    WCF : class, default=None
-        Instance of `class WAVECARFILE`.
-    prefix : str, default=None
-        Prefix used for Quantum Espresso calculations or seedname of Wannier90 
-        files.
-    kptxml : default=None
-        `Element` object (see `ElementTree XML API` ) corresponding to a k-point.
-    flag : int, default=-1
-        When parsing WFK file (Abinit), info for all k-points is read, but 
-        stored only for k-points whose index is matches `flag`.
-    usepaw : int, default=None
-        Only used for Abinit. 1 if pseudopotentials are PAW, 0 otherwise. When 
-        `usepaw` is 0, normalization of wave-functions is checked.
-    eigenval : array, default=None
-        Contains all energy-levels in a particular k-point.
-    spin_channel : str, default=None
-        Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
-        Only applied in the interface to Quantum Espresso.
-    IBstartE : int, default=0
-        Only used with Quantum Espresso. Index of first band in particular spin 
-        channel. If `spin_channel` is 'dw', `IBstartE` is equal to the number of 
-        bands in spin-up channel.
+    Energy : array
+        Energy levels of the states with band indices between `IBstart` and 
+        `IBend`.
+    ig : array
+        Array returned by :func:`~gvectors.sortIG`. It contains data about the 
+        plane waves in the expansion of wave functions.
+    upper : float
+        Energy of the state `IBend`+1. Used to calculate the gap with upper 
+        bands.
+    degen_thresh : float, default=1e-8
+        Threshold to identify degenerate energy levels.
+    refUC : array, default=None
+        3x3 array describing the transformation of vectors defining the 
+        unit cell to the standard setting.
+    shiftUC : array, default=None
+        Translation taking the origin of the unit cell used in the DFT 
+        calculation to that of the standard setting.
+    symmetries_tables : list
+        Attribute `symmetries` of class `IrrepTable`. Each component is an 
+        instance of class `SymopTable` corresponding to a symmetry operation
+        in the "point-group" of the space-group.
+    calculate_traces : bool
+        If `True`, traces of symmetries will be calculated. Useful to create 
+        instances faster.
+    save_wf : bool
+        Whether wave functions should be kept as attribute after calculating 
+        traces.
     
     Attributes
     ----------
@@ -95,7 +89,7 @@ class Kpoint:
         `True` if wave-functions are spinors, `False` if they are scalars.
     ik0 : int
         Index of the k-point, starting the count from 1.
-    Nband : int
+    num_bands : int
         Number of bands whose traces should be calculated.
     RecLattice : array, shape=(3,3)
         Each row contains the cartesian coordinates of a basis vector forming 
@@ -103,7 +97,7 @@ class Kpoint:
     WF : array
         Coefficients of wave-functions in the plane-wave expansion. A row for 
         each wave-function, a column for each plane-wave.
-    igall : array
+    ig : array
         Returned by `sortIG`.
         Every column corresponds to a plane-wave of energy smaller than 
         `Ecut`. The number of rows is 6: the first 3 contain direct 
@@ -112,9 +106,13 @@ class Kpoint:
         (sixth) row contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.
     K : array, shape=(3,)
-        Direct coordinates of the k-point.
-    Energy : array
-        Energy-levels of bands whose traces should be calculated.
+        Direct coordinates of the k point in the DFT cell setting.
+    k_refUC : array, shape=(3,)
+        Direct coordinates of the k point in the reference cell setting.
+    Energy_raw : array
+        energy levels of each state (1 energy for every row in WF)
+    Energy_mean : array
+        Energy-levels of degenerate froups of bands whose traces should be calculated.
     upper : float
         Energy of the first band above the set of bands whose traces should be 
         calculated. It will be set to `numpy.NaN` if the last band matches the 
@@ -123,111 +121,141 @@ class Kpoint:
         Each element is an instance of class `SymmetryOperation` corresponding 
         to a symmetry in the point group of the space-group. The value 
         passed is the attribute `symmetries` of class `SpaceGroup`.
+    symmetries : dict
+        Each key is an instance of `class` `SymmetryOperation` corresponding 
+        to an operation in the little-(co)group and the attached value is an 
+        array with the traces of the operation.
+    char : array
+        Each row corresponds to a set of degenerate states. Each column is the 
+        trace of a symmetry in the little cogroup in the DFT cell setting.
+    char_refUC : array
+        The same as `char`, but in the reference cell setting.
+    degeneracies : array
+        Degeneracies of energy levels between `IBstart` and `IBend`.
+    borders : array
+        Integers representing the band index of the first state in each set of 
+        degenerate states. The bounds can be obtained as 
+        `for ibot, itop in zip(borders[:-1], borders[1:])`.
+    Energy_mean : array
+        Average of energy levels within each set of degenerate states
+    num_bandinvs : int
+        Property getter for the number of inversion-odd states. If the 
+        k point is not inversion symmetric, `None` is returned.
+    NG : int
+        Property getter for the number of plane waves in the expansion of 
+        wave functions.
+    onlytraces : bool
+        `False` if irreps have been identified and have to be written.
     """
-    
-    # creates attribute symmetries, if it was not created before
-    @LazyProperty
-    def symmetries(self):
-        """
-        Sets the attribute `Kpoint.symmetries` to a dictionary. Works as a 
-        lazy-property.
-
-        Returns
-        -------
-        symmetries : dict
-            Each key is an instance of `class` `SymmetryOperation` corresponding 
-            to an operation in the little-(co)group and the attached value is an 
-            array with the traces of the operation.
-    
-        Notes
-        -----
-        For more about `lazy-property`, check the documentation `here <https://pypi.org/project/lazy-property/>`_ .
-        """
-        symmetries = {}
-        #        print ("calculating symmetry eigenvalues for E={0}, WF={1} SG={2}".format(self.Energy,self.WF.shape,symmetries_SG) )
-        if not (self.symmetries_SG is None):
-            for symop in self.symmetries_SG:
-                try:
-                    symmetries[symop] = symm_eigenvalues(
-                        self.K,
-                        self.RecLattice,
-                        self.WF,
-                        self.ig,
-                        symop.rotation,
-                        symop.spinor_rotation,
-                        symop.translation,
-                        self.spinor,
-                    )
-                except NotSymmetryError as err:
-                    pass  # print  ( err )
-        return symmetries
 
     def __init__(
         self,
-        ik,
-        NBin,
-        IBstart,
-        IBend,
-        Ecut,
-        Ecut0,
-        RecLattice,
+        ik=None,
+        num_bands=None,
+        RecLattice=None,  # this was last mandatory argument
         symmetries_SG=None,
+        calculate_traces=False,
         spinor=None,
-        code="vasp",
         kpt=None,
-        npw_=None,
-        fWFK=None,
-        WCF=None,
-        prefix=None,
-        kptxml=None,
-        flag=-1,
-        usepaw=0,
-        eigenval=None,
-        spin_channel=None,
-        IBstartE=0
+        WF=None,  # first arg added for abinit (to be kept at the end)
+        Energy=None,
+        ig=None,
+        upper=None,
+        degen_thresh=1e-8,
+        symmetries=None,
+        refUC=np.eye(3),
+        shiftUC=np.zeros(3),
+        symmetries_tables=None,  # calculate_traces needs it
+        save_wf=True
     ):
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
-        self.Nband = IBend - IBstart
-        #        self.n=np.arange(IBstart,IBend)+1
+        self.num_bands = num_bands
         self.RecLattice = RecLattice
-        self.symmetries_SG = symmetries_SG  # lazy_property needs it
+        self.upper = upper
 
-        if code.lower() == "vasp":
-            self.WF, self.ig = self.__init_vasp(
-                WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0
-            )
-        elif code.lower() == "abinit":
-            self.WF, self.ig = self.__init_abinit(
-                fWFK,
-                ik,
-                NBin,
-                IBstart,
-                IBend,
-                Ecut,
-                Ecut0,
-                kpt=kpt,
-                npw_=npw_,
-                flag=flag,
-                usepaw=usepaw,
-            )
-        elif code.lower() == "espresso":
-            self.WF, self.ig = self.__init_espresso(
-                prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml=kptxml,
-                spin_channel=spin_channel,IBstartE=IBstartE
-            )
-        elif code.lower() == "wannier":
-            self.WF, self.ig = self.__init_wannier(
-                NBin, IBstart, IBend, Ecut, kpt=kpt, eigenval=eigenval
-            )
-        else:
-            raise RuntimeError("unknown code : {}".format(code))
+        self.k = kpt
+        self.WF = WF
+        self.Energy_raw = Energy
+        self.ig = ig
+        self.upper = upper
 
+        self.k_refUC = np.dot(refUC.T, self.k)
         self.WF /= (
             np.sqrt(np.abs(np.einsum("ij,ij->i", self.WF.conj(), self.WF)))
-        ).reshape(self.Nband, 1)
+        ).reshape(self.num_bands, 1)
 
-    def copy_sub(self, E, WF):
+        # Determine little group and keep only passed symmetries
+        if symmetries is None:
+            symmetries = [symop.ind for symop in symmetries_SG]
+        self.little_group = []
+        for symop in symmetries_SG:
+            if symop.ind not in symmetries:
+                continue
+            k_rotated = np.dot(np.linalg.inv(symop.rotation).T, self.k)
+            dkpt = np.array(np.round(k_rotated - self.k), dtype=int)
+            if np.allclose(dkpt, k_rotated - self.k):
+                self.little_group.append(symop)
+
+        # Sort symmetries based on their indices
+        argsort = np.argsort([symop.ind for symop in self.little_group])
+        self.little_group = [self.little_group[ind] for ind in argsort]
+
+        # Determine degeneracies
+        self.borders = np.hstack([
+             [0],
+             np.where(self.Energy_raw[1:] - self.Energy_raw[:-1] > degen_thresh)[0] + 1,
+             [self.num_bands],
+        ])
+        self.degeneracies = self.borders[1:] - self.borders[:-1]
+
+        # Calculate traces
+        if calculate_traces:
+            self.char, self.char_refUC, self.Energy_mean = self.calculate_traces(refUC, shiftUC, symmetries_tables, degen_thresh)
+
+            # Determine number of band inversions based on parity
+            found = False
+            for i,sym in enumerate(self.little_group):
+                if (
+                    sum(abs(sym.translation)) < 1e-6
+                    and
+                    abs(sym.rotation + np.eye(3)).sum() < 1e-6
+                ):
+                    found = True
+                    break
+            if found:
+                # Number of inversion odd states (not pairs!)
+                self.num_bandinvs = int(round(sum(self.degeneracies - self.char[:,i].real) / 2))
+            else:
+                self.num_bandinvs = None
+
+        if not save_wf:
+            self.WF = None
+
+    @property
+    def K(self):
+        """Getter for the redfuced coordinates of the k-point
+        needed to keep compatibility with banduppy
+        
+        ACCESSED BY BANDUPPY, AVOID CHANGING UNLESS NECESSARY
+        """
+        return self.k
+    
+    def k_close_mod1(self, kpt, prec=1e-6):
+        """
+        Check if the k-point is close to another k-point modulo 1. (in reduced coordinates)
+        ACCESSED BY BANDUPPY, AVOID CHANGING UNLESS NECESSARY
+
+        Parameters
+        ----------
+        kpt : array
+            Coordinates of the k-point to compare.
+        prec : float, default=1e-6
+            Threshold to consider the k-points as equal.
+        """
+        return is_round(self.k - kpt, prec = 1e-6)
+
+    def copy_sub(self, E, WF, inds):
         """
         Create an instance of class `Kpoint` for a restricted set of states.
 
@@ -245,17 +273,27 @@ class Kpoint:
             Instance of `Kpoints` corresponding to the group of states passed. 
             They are shorted by energy-levels.
         """
-        #        print ("making a subspace with E={0}\n WF = {1}".format(E,WF.shape))
         other = copy.copy(self) # copy of whose class
+        # Sort energy levels
         sortE = np.argsort(E)
-        other.Energy = E[sortE]
+        other.Energy_mean = E[sortE]
         other.WF = WF[sortE]
-        other.Nband = len(E)
-        # other.__calc_sym_eigenvalues()
-        #        print ( self.Energy,other.Energy)
-        #        print ( self.WF.shape, other.WF.shape)
-        #        other.write_characters()
-        #        print ("self overlap:\n",self.overlap(self))
+        other.num_bands = len(E)
+        inds = inds[sortE]
+
+        # Do not group by degeneracy of energy-levels for printing
+        other.degeneracies = [1] * other.num_bands
+        char = []
+        char_refUC = []
+        for i in inds:
+            char.append(other.char[i])
+            char_refUC.append(other.char_refUC[i])
+        other.char = np.array(char)
+        other.char_refUC = np.array(char_refUC)
+        irreps = []
+        for i in inds:
+            irreps.append(other.irreps[i])
+        other.irreps = irreps
         return other
 
     def unfold(self, supercell, kptPBZ, degen_thresh=1e-4):
@@ -285,13 +323,13 @@ class Kpoint:
             W - weight of the band(s) projected onto the PBZ kpoint.
             Sx, Sy, Sz - Spin components projected onto the PBZ kpoint.
         """
-        if not is_round(kptPBZ.dot(supercell.T) - self.K, prec=1e-5):
+        if not is_round(kptPBZ.dot(supercell.T) - self.k, prec=1e-5):
             raise RuntimeError(
                 "unable to unfold {} to {}, withsupercell={}".format(
-                    self.K, kptPBZ, supercell
+                    self.k, kptPBZ, supercell
                 )
             )
-        g_shift = kptPBZ - self.K.dot(np.linalg.inv(supercell.T))
+        g_shift = kptPBZ - self.k.dot(np.linalg.inv(supercell.T))
         #        print ("g_shift={}".format(g_shift))
         selectG = np.array(
             np.where(
@@ -301,7 +339,6 @@ class Kpoint:
                 ]
             )[0]
         )
-        #        print ("unfolding {} to {}, selecting {} of {} g-vectors \n".format(self.K,kptPBZ,len(selectG),self.ig.shape[1],selectG,self.ig.T))
         if self.spinor:
             selectG = np.hstack((selectG, selectG + self.NG))
         WF = self.WF[:, selectG]
@@ -316,30 +353,13 @@ class Kpoint:
             result.append([E,] + [np.trace(proj.dot(M)).real for M in matrices])
         return np.array(result)
 
-    def get_rho_spin(self, degen_thresh=1e-4):
-        """ 
-        A getter, made to avoid the repeated evaluation of 
-        self.__eval_rho_spin for the same degen_thresh.
-
-        Parameters
-        ----------
-        degen_thresh : float
-            Bands with energy difference smaller that the threshold will be 
-            considered as one band, and only one total weight will be given for 
-            them.
-        """
-        if not hasattr(self, "rho_spin"):
-            self.rho_spin = {}
-        if degen_thresh not in self.rho_spin:
-            self.rho_spin[degen_thresh] = self.__eval_rho_spin(degen_thresh)
-        return self.rho_spin[degen_thresh]
-
     @property
     def NG(self):
         """Getter for the number of plane-waves in current k-point"""
         return self.ig.shape[1]
 
-    def __eval_rho_spin(self, degen_thresh):
+    @lru_cache
+    def get_rho_spin(self, degen_thresh=1e-4):
         """
         Evaluates the matrix <i|M|j> in every group of degenerate 
         bands labeled by i and j, where M is :math:`\sigma_0`, 
@@ -365,13 +385,13 @@ class Kpoint:
         borders = np.hstack(
             [
                 [0],
-                np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
-                [self.Nband],
+                np.where(self.Energy_raw[1:] - self.Energy_raw[:-1] > degen_thresh)[0] + 1,
+                [self.num_bands],
             ]
         )
         result = []
         for b1, b2 in zip(borders, borders[1:]):
-            E = self.Energy[b1:b2].mean()
+            E = self.Energy_raw[b1:b2].mean()
             W = np.array(
                 [
                     [self.WF[i].conj().dot(self.WF[j]) for j in range(b1, b2)]
@@ -405,7 +425,7 @@ class Kpoint:
                 result.append((b1, b2, E, (W,)))
         return result
 
-    def Separate(self, symop, degen_thresh=1e-5, groupKramers=True):
+    def Separate(self, symop, degen_thresh, groupKramers=True):
         """
         Separate the band structure in a particular k-point according to the 
         eigenvalues of a symmetry operation.
@@ -426,15 +446,20 @@ class Kpoint:
             corresponding value is an instance of `class` `Kpoint` for the 
             states with that eigenvalue.
         """
-        borders = np.hstack(
-            [
-                [0],
-                np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
-                [self.Nband],
-            ]
-        )
+
+        # Check orthogonality of wave functions
+        # Rm once tests are fixed
+        norms = self.WF.conj().dot(self.WF.T)
+        check = np.max(abs(norms - np.eye(norms.shape[0])))
+        if check > 1e-5:
+            print(
+                "orthogonality (largest of diag. <psi_nk|psi_mk>): {0:7.5} > 1e-5   \n".format(
+                    check
+                )
+            )
+
         S = symm_matrix(
-            self.K,
+            self.k,
             self.RecLattice,
             self.WF,
             self.ig,
@@ -443,787 +468,396 @@ class Kpoint:
             symop.translation,
             self.spinor,
         )
-        # check orthogonality
-        S1 = self.WF.conj().dot(self.WF.T)
-        check = np.max(abs(S1 - np.eye(S1.shape[0])))
-        if check > 1e-5:
-            print(
-                "orthogonality (largest of diag. <psi_nk|psi_mk>): {0:7.5} > 1e-5   \n".format(
-                    check
-                )
-            )
-        #        print ("symmetry matrix \n",shortS)
-        eigenvalues = []
-        eigenvectors = []
-        Eloc = []
 
-        def short(A):
-            """
-            Format array to print it.            
-            
-            Parameters
-            ----------
-            A : array
-                Matrix that should be printed.
-                
-            Returns
-            -------
-            str
-                Description of the matrix. Ready to be printed.
-            """
-            return "".join(
-                "   ".join("{0:+5.2f} {1:+5.2f}".format(x.real, x.imag) for x in a)
-                + "\n"
-                for a in A
-            )
 
-        # check that S is block-diagonal
+        # Check that S is block-diagonal
         Sblock = np.copy(S)
-        for b1, b2 in zip(borders, borders[1:]):
+        for b1, b2 in zip(self.borders, self.borders[1:]):
             Sblock[b1:b2, b1:b2] = 0
         check = np.max(abs(Sblock))
         if check > 0.1:
-            print("WARNING: off-block:  \n", check)
-            print(short(Sblock))
+            print(("WARNING: matrix of symmetry has non-zero elements between "
+                   "states of different energy:  \n", check))
+            print("Printing matrix of symmetry at k={}".format(self.k))
+            print(format_matrix(Sblock))
 
-        # calculate eigenvalues and eigenvectors in each block
-        for b1, b2 in zip(borders, borders[1:]):
+        # Calculate eigenvalues and eigenvectors in each block
+        eigenvalues = []
+        eigenvectors = []
+        inds_states = []
+        Eloc = []
+        for istate, num_states in  enumerate(self.degeneracies):
+            b1 = self.borders[istate]
+            b2 = self.borders[istate+1]
+            inds_states += [istate] * num_states  # index for set of states
             W, V = la.eig(S[b1:b2, b1:b2])
-            #            print (b1,b2,"symmetry submatrix \n",short(S[b1:b2,b1:b2]))
             for w, v in zip(W, V.T):
                 eigenvalues.append(w)
-                Eloc.append(self.Energy[b1:b2].mean())
+                Eloc.append(self.Energy_mean[istate])
                 eigenvectors.append(
-                    np.hstack((np.zeros(b1), v, np.zeros(self.Nband - b2)))
+                    np.hstack((np.zeros(b1), v, np.zeros(self.num_bands - b2)))
                 )
         w = np.array(eigenvalues)
         v = np.array(eigenvectors).T # each col an eigenvector
         Eloc = np.array(Eloc)
+        inds_states = np.array(inds_states)
 
-        #        print ("eigenvalues:",w)
-        #        print ("eigenvectors:\n",v)
-        #        print ("Eloc:\n",Eloc)
+        # Check unitarity of the symmetry
         if np.abs((np.abs(w) - 1.0)).max() > 1e-4:
             print("WARNING : some eigenvalues are not unitary :{0} ".format(w))
         if np.abs((np.abs(w) - 1.0)).max() > 3e-1:
             raise RuntimeError(" some eigenvalues are not unitary :{0} ".format(w))
         w /= np.abs(w)
-        nb = len(w)
 
         subspaces = {}
 
         if groupKramers:
-            w1 = np.argsort(np.real(w))
-            w = w[w1]
-            v = v[:, w1]
-            Eloc = Eloc[w1]
+
+            # Sort based on real part of eigenvalues
+            arg = np.argsort(np.real(w))
+            w = w[arg]
+            v = v[:, arg]
+            Eloc = Eloc[arg]
+            inds_states = inds_states[arg]
             borders = np.hstack(
-                ([0], np.where((w[1:] - w[:-1]) > 0.05)[0] + 1, [len(w)])
+                ([0], np.where((w[1:] - w[:-1]) > 0.05)[0] + 1, [self.num_bands])
             )
+
+            # Probably this if-else statement can be removed
             if len(borders) > 0:
                 for b1, b2 in zip(borders, borders[1:]):
                     v1 = v[:, b1:b2]
-                    subspaces[w[b1:b2].mean()] = self.copy_sub(
-                        E=Eloc[b1:b2], WF=v1.T.dot(self.WF)
-                    )
+                    print(w[b1:b2].mean())
+                    subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.dot(self.WF), inds=inds_states[b1:b2])
             else:
                 v1 = v
-                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF))
-        else:
+                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF), degen_thresh=degen_thresh, inds_states=inds_states)
+
+        else:  # don't group Kramers pairs
             
-            w1 = np.argsort(np.angle(w))
-            w = w[w1]
-            v = v[:, w1]
-            Eloc = Eloc[w1]
+            # Sort based on the argument of eigenvalues
+            arg = np.argsort(np.angle(w))
+            w = w[arg]
+            v = v[:, arg]
+            Eloc = Eloc[arg]
             borders = np.where(abs(w - np.roll(w, 1)) > 0.1)[0]
+
             if len(borders) > 0:
                 for b1, b2 in zip(borders, np.roll(borders, -1)):
-                    v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % nb]
-                    subspaces[np.roll(w, -b1)[: (b2 - b1) % nb].mean()] = self.copy_sub(
-                        E=np.roll(Eloc, -b1)[: (b2 - b1) % nb], WF=v1.T.dot(self.WF)
+                    v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
+                    subspaces[np.roll(w, -b1)[: (b2 - b1) % self.num_bands].mean()] = self.copy_sub(
+                        E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands], degen_thresh=degen_thresh, WF=v1.T.dot(self.WF)
                     )
+
             else:
                 v1 = v
-                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF))
+                subspaces[w.mean()] = self.copy_sub(E=Eloc, degen_thresh=degen_thresh, WF=v1.T.dot(self.WF))
 
         return subspaces
 
-    def __init_vasp(self, WCF, ik, NBin, IBstart, IBend, Ecut, Ecut0):
-        """
-        Initialization for vasp. Read data and save it in attributes.
+    def calculate_traces(self, refUC, shiftUC, symmetries_tables, degen_thresh=1e-8):
+        '''
+        Calculate traces of symmetry operations
 
         Parameters
         ----------
-        WCF : class
-            Instance of `class` `WAVECARFILE`.
-        ik : int
-            Index of kpoint, starting count from 0.
-        NBin : int
-            Number of bands considered at every k-point in the DFT calculation.
-        IBstart : int
-            First band to be considered.
-        IBend : int
-            Last band to be considered.
-        Ecut : float
-            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
-            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
-            the value of this is negative or larger than `Ecut0`.
-        Ecut0 : float
-            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
-            DFT files. Insignificant if `code`=`wannier90`.
-
-        Returns
-        -------
-        WF : array
-            `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
-            plane-wave in the expansion of the wave-function in :math:`i^{th}`
-            band. Only plane-waves if energy smaller than `Ecut` are kept.
-        ig : array
-            Every column corresponds to a plane-wave of energy smaller than 
-            `Ecut`. The number of rows is 6: the first 3 contain direct 
-            coordinates of the plane-wave, the fourth row stores indices needed
-            to short plane-waves based on energy (ascending order). Fitfth 
-            (sixth) row contains the index of the first (last) groups of 
-            plane-waves of identical energy.
-        """
-        r = WCF.record(2 + ik * (NBin + 1))
-        # get the number of planewave coefficients. It should be even for spinor wavefunctions
-        #    print (r)
-        npw = int(r[0])
-        if self.spinor:
-            if npw != int(npw / 2) * 2:
-                raise RuntimeError(
-                    "odd number of coefs {0} for spinor wavefunctions".format(npw)
-                )
-        self.K = r[1:4]
-        eigen = np.array(r[4 : 4 + NBin * 3]).reshape(NBin, 3)[:, 0]
-        self.Energy = eigen[IBstart:IBend]
-        try:
-            self.upper = eigen[IBend]
-        except BaseException:
-            self.upper = np.NaN
-
-        ig = calc_gvectors(
-            self.K, self.RecLattice, Ecut0, npw, Ecut, spinor=self.spinor
-        )
-        selectG = np.hstack((ig[3], ig[3] + int(npw / 2))) if self.spinor else ig[3]
-        WF = np.array(
-            [
-                WCF.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)[selectG]
-                for ib in range(IBstart, IBend)
-            ]
-        )
-        return WF, ig
-
-    def __init_abinit(
-        self,
-        fWFK,
-        ik,
-        NBin,
-        IBstart,
-        IBend,
-        Ecut,
-        Ecut0,
-        kpt,
-        npw_,
-        flag,
-        usepaw,
-    ):
-        """
-        Initialization for Abinit. Read data and store it in attibutes.
-
-        Parameters
-        ----------
-        fWFK : file object
-            File object corresponding to Abinit's WFK. Returned by `FortranFile`.
-        ik : int
-            Index of kpoint, starting count from 0.
-        NBin : int
-            Number of bands considered at every k-point in the DFT calculation.
-        IBstart : int
-            First band to be considered.
-        IBend : int, default=None
-            Last band to be considered.
-        Ecut : float
-            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
-            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
-            the value of this is negative or larger than `Ecut0`.
-        Ecut0 : float
-            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
-            DFT files. Insignificant if `code`=`wannier90`.
-        kpt : list or array
-            Direct coordinates of the k-point.
-        npw_ : int
-            Number of plane-waves considered in the expansion of wave-functions. 
-        flag : int
-            Index of the k-point, used when parsing WFK file (Abinit). Info is read 
-            for all k-points, but stored only for k-points whose index is passed 
-            through `flag`.
-        usepaw : int
-            Only used for Abinit. 1 if pseudopotentials are PAW, 0 otherwise. When 
-            `usepaw`=0, normalization of wave-functions is checked.
-
-        Returns
-        -------
-        array
-            Contains the coefficients (same row-column formatting as argument 
-            `CG`) of the expansion of wave-functions corresponding to 
-            plane-waves of energy smaller than `Ecut`. Columns (plane-waves) 
-            are shorted based on their energy, from smaller to larger. 
-            Only plane-waves if energy smaller than `Ecut` are kept.
-        array
-            Every column corresponds to a plane-wave of energy smaller than 
-            `Ecut`. The number of rows is 6: the first 3 contain direct 
-            coordinates of the plane-wave, the third row stores indices needed
-            to short plane-waves based on energy (ascending order). Fitfth 
-            (sixth) row contains the index of the first (last) plane-wave with 
-            the same energy as the plane-wave of the current column.
-        """
-        assert not (kpt is None)
-        self.K = kpt
-        nspinor = 2 if self.spinor else 1
-        print("Reading k-point", ik)
-
-        # We need to skip lines in fWFK until we reach the lines of ik
-        while flag < ik:
-
-            # 1st record: npw, nspinor, nband
-            record = record_abinit(fWFK, "i4")  # [0]
-            npw, nspinor_loc, nband_loc = record
-
-            # 2nd record: reciprocal lattice vectors in the expansion
-            kg = record_abinit(fWFK, "i4").reshape(npw, 3)
-
-            # 3rd record: energies and occupations
-            record = record_abinit(fWFK, "f8")
-            eigen, occ = record[:nband_loc], record[nband_loc:]
-
-            # 4th record: coefficients of expansions in plane waves
-            CG = np.zeros((IBend - IBstart, npw * nspinor), dtype=complex)
-            for iband in range(nband_loc):
-                record = record_abinit(fWFK, "f8")
-                if iband >= IBstart and iband < IBend:
-                    CG[iband - IBstart] = record[0::2] + 1.0j * record[1::2]
-            flag += 1
-
-        # Check consistency of WFK file
-        assert npw == npw_, ("Different number of plane waves in header and "
-                             "k-point's block. Probably a bug in Abinit..."
-                             )
-        assert nband_loc == NBin, ("Different number of bands in header and "
-                                   "k-point's block. Probably a bug in "
-                                   "Abinit..."
-                                   )
-
-        assert (
-            (nspinor_loc == 2 and self.spinor)
-            or (nspinor_loc == 1 and not self.spinor)
-        ), ("Different values of nspinor in header and "
-            "k-point's block. Probably a bug in Abinit..."
-            )
-
-        # Check orthonormality for norm-conserving pseudos
-        if usepaw == 0:
-            largest_value = np.max(np.abs(CG.conj().dot(CG.T)
-                                          - np.eye(IBend - IBstart)))
-            assert largest_value < 1e-10, "Wave functions are not orthonormal"
-
-        # Convert energies to eV and pick upper value
-        self.Energy = eigen[IBstart:IBend] * Hartree_eV
-        try:
-            self.upper = eigen[IBend] * Hartree_eV
-        except BaseException:
-            self.upper = np.NaN
-
-        return sortIG(self.ik0, kg, kpt, CG, self.RecLattice, Ecut0, Ecut, self.spinor)
-
-    def __init_wannier(self, NBin, IBstart, IBend, Ecut, kpt, eigenval):
-        """
-        Initialization for wannier90. Read info and store it in attributes.
-       
-        Parameters
-        ----------
-        NBin : int
-            Number of bands considered at every k-point in the DFT calculation.
-        IBstart : int
-            First band to be considered.
-        IBend : int, default=None
-            Last band to be considered.
-        Ecut : float
-            Plane-wave cutoff (in eV) to consider in the expansion of wave-functions.
-            Will be set equal to `Ecut0` if input parameter `Ecut` was not set or 
-            the value of this is negative or larger than `Ecut0`.
-        kpt : list or array
-            Direct coordinates of the k-point.
-        eigenval : array, default=None
-            Contains all energy-levels in a particular k-point.
-
-        Returns
-        -------
-        WF : array
-            `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
-            plane-wave in the expansion of the wave-function in :math:`i^{th}`
-            band. Only plane-waves if energy smaller than `Ecut` are kept.
-        ig : array
-            Every column corresponds to a plane-wave of energy smaller than 
-            `Ecut`. The number of rows is 6: the first 3 contain direct 
-            coordinates of the plane-wave, the fourth row stores indices needed
-            to short plane-waves based on energy (ascending order). Fitfth 
-            (sixth) row contains the index of the first (last) groups of 
-            plane-waves of identical energy.
-        """
-        self.K = np.array(kpt, dtype=float)
-        self.Energy = eigenval[IBstart:IBend]
-        fname = "UNK{:05d}.{}".format(self.ik0, "NC" if self.spinor else "1")
-        fUNK = FF(fname, "r")
-        ngx, ngy, ngz, ik, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
-        ngtot = ngx * ngy * ngz
-        if ik != self.ik0:
-            raise RuntimeError(
-                "file {} contains point number {}, expected {}".format(
-                    fname, ik, self.ik0
-                )
-            )
-        if nbnd != NBin:
-            raise RuntimeError(
-                "file {} contains {} bands , expected {}".format(fname, nbnd, NBin)
-            )
-        nspinor = 2 if self.spinor else 1
-
-        try:
-            self.upper = eigenval[IBend]
-        except BaseException:
-            self.upper = np.NaN
-
-        ig = calc_gvectors(
-            self.K,
-            self.RecLattice,
-            Ecut,
-            spinor=self.spinor,
-            nplanemax=np.max([ngx, ngy, ngz]) // 2,
-        )
-
-        selectG = tuple(ig[0:3])
-
-        def _readWF_1(skip=False):
-            """
-            Parse coefficients of a wave-function corresponding to one element
-            of the spinor.
-
-            Parameters
-            ----------
-            skip : bool, default=False
-                Read coefficients but do not return them.
-            
-            Returns
-            -------
-            array
-                Coefficients of the plane-wave expansion.
-            """
-            cg_tmp = record_abinit(fUNK, "{}f8".format(ngtot * 2))
-            if skip:
-                return np.array([0], dtype=complex)
-            cg_tmp = (cg_tmp[0::2] + 1.0j * cg_tmp[1::2]).reshape(
-                (ngx, ngy, ngz), order="F"
-            )
-            cg_tmp = np.fft.fftn(cg_tmp)
-            return cg_tmp[selectG]
-
-        def _readWF(skip=False):
-            """
-            Read and return the coefficients of the plane-wave expansion of a 
-            wave-function.
-
-            Parameters
-            ----------
-            skip : bool, default=False
-                Read coefficients but do not return them.
-
-            Returns
-            -------
-            array
-                Coefficients of the plane-wave expansion.
-            """
-            return np.hstack([_readWF_1(skip) for i in range(nspinor)])
-
-        for ib in range(IBstart):
-            _readWF(skip=True)
-        WF = np.array([_readWF(skip=False) for ib in range(IBend - IBstart)])
-        return WF, ig
-
-    def __init_espresso(
-        self, prefix, ik, IBstart, IBend, Ecut, Ecut0, kptxml,
-           spin_channel=None,IBstartE=0
-    ):
-        """
-        Initialization QE. Read info and store it in attributes.
-
-        Parameters
-        ----------
-        prefix : str
-            Prefix used for Quantum Espresso calculations or seedname of 
-            Wannier90 files.
-        ik : int
-            Index of kpoint, starting count from 0.
-        IBstart : int, default=None
-            First band to be considered.
-        IBend : int, default=None
-            Last band to be considered.
-        Ecut : float
-            Plane-wave cutoff (in eV) to consider in the expansion of 
-            wave-functions. Will be set equal to `Ecut0` if input parameter 
-            `Ecut` was not set or the value of this is negative or larger than 
-            `Ecut0`.
-        Ecut0 : float
-            Plane-wave cutoff (in eV) used for DFT calulations. Always read from 
-            DFT files. Insignificant if `code`=`wannier90`.
-        kptxml
-            `Element` object (see `ElementTree XML API`) corresponding to a 
-            k-point.
-        spin_channel : str
-            Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down.
-        IBstartE : int
-            Only used with Quantum Espresso. Index of first band in particular 
-            spin channel. If `spin_channel`='dw', `IBstartE` is equal to the 
-            number of bands in spin-up channel.
-        
-        Returns
-        -------
-        array
-            Contains the coefficients (same row-column formatting as argument 
-            `CG`) of the expansion of wave-functions corresponding to 
-            plane-waves of energy smaller than `Ecut`. Columns (plane-waves) 
-            are shorted based on their energy, from smaller to larger. 
-            Only plane-waves if energy smaller than `Ecut` are kept.
-        array
-            Every column corresponds to a plane-wave of energy smaller than 
-            `Ecut`. The number of rows is 6: the first 3 contain direct 
-            coordinates of the plane-wave, the third row stores indices needed
-            to short plane-waves based on energy (ascending order). Fitfth 
-            (sixth) row contains the index of the first (last) plane-wave with 
-            the same energy as the plane-wave of the current column.
-        """
-        self.K = np.array(kptxml.find("k_point").text.split(), dtype=float)
-
-        eigen = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)
-
-        self.Energy=eigen[IBstartE+IBstart:IBstartE+IBend]*Hartree_eV
-        try:
-            self.upper=eigen[IBstartE+IBend]*Hartree_eV
-        except:
-            self.upper = np.NaN
-
-
-        npw = int(kptxml.find("npw").text)
-        #        kg= np.random.randint(100,size=(npw,3))-50
-        npwtot = npw * (2 if self.spinor else 1)
-        CG = np.zeros((IBend - IBstart, npwtot), dtype=complex)
-        wfcname="wfc{}{}".format({None:"","dw":"dw","up":"up"}[spin_channel],ik+1)
-        try:
-            fWFC=FF("{}.save/{}.dat".format(prefix,wfcname.lower()),"r")
-        except FileNotFoundError:
-            fWFC=FF("{}.save/{}.dat".format(prefix,wfcname.upper()),"r")
-
-        rec = record_abinit(fWFC, "i4,3f8,i4,i4,f8")[0]
-        ik, xk, ispin, gamma_only, scalef = rec
-        #        xk/=bohr
-        #        xk=xk.dot(np.linalg.inv(RecLattice))
-
-        rec = record_abinit(fWFC, "4i4")
-        #        print ('rec=',rec)
-        ngw, igwx, npol, nbnd = rec
-
-        rec = record_abinit(fWFC, "(3,3)f8")
-        #        print ('rec=',rec)
-        B = np.array(rec)
-        #        print (np.mean(B/RecLattice))
-        self.K = xk.dot(np.linalg.inv(B))
-
-        rec = record_abinit(fWFC, "({},3)i4".format(igwx))
-        #        print ('rec=',rec)
-        kg = np.array(rec)
-        #        print (np.mean(B/RecLattice))
-        #        print ("k-point {0}: {1}/{2}={3}".format(ik, self.K,xk,self.K/xk))
-        #        print ("k-point {0}: {1}".format(ik,self.K ))
-
-        for ib in range(IBend):
-            cg_tmp = record_abinit(fWFC, "{}f8".format(npwtot * 2))
-            if ib >= IBstart:
-                CG[ib - IBstart] = cg_tmp[0::2] + 1.0j * cg_tmp[1::2]
-
-        return sortIG(self.ik0, kg, self.K, CG, B, Ecut0, Ecut, self.spinor)
-
-    def write_characters(
-        self,
-        degen_thresh=1e-8,
-        irreptable=None,
-        symmetries=None,
-        preline="",
-        efermi=0.0,
-        plotFile=None,
-        kpl="",
-        symmetries_tables=None,
-        refUC=np.eye(3),
-        shiftUC=np.zeros(3)
-    ):
-        """
-        Calculate traces and determine and print irreps in a k-point. Write them 
-        in files passed as `plotFile` (for plotting) and `irreps.dat`. Also 
-        calculates and prints the number of band-inversions.
-
-        Parameters
-        ----------
-        degen_thresh : float, default=1e-8
-            Threshold energy used to decide whether wave-functions are
-            degenerate in energy.
-        irreptable : dict, default=None
-            Returned by method `get_irreps_from_table` of class `SpaceGroup`. 
-            Each key is the label of an irrep, each value another `dict`. Keys 
-            of every secondary `dict` are indices of symmetries (starting from 
-            1 and following order of operations in tables of BCS) and 
-            values are traces of symmetries.
-        symmetries : list, default=None
-            Index of symmetry operations whose traces will be printed. 
-        preline : str, default=''
-            Characters to write before labels of irreps in file `irreps.dat`.
-        efermi : float, default=0.0
-            Fermi-energy. Used as origin for energy-levels.
-        plotFile : file object, default=None
-            File in which energy-levels and corresponding irreps will be written 
-            to later place irreps in a band structure plot.
-        kpl : float, default=''
-            Length accumulated until the k-point. Can be used to locate irreps 
-            in the x-axis of a band structure plot.
-        symmetries_tables : list, default=None
-            Each component is an instance of class `SymopTable` corresponding to a 
-            symmetry operation in the "point-group" of the space-group. Values 
-            passed are attributes `symmetries` of class `IrrepTable`.
-        refUC : array, default=np.eye(3)
+        refUC : array, default=None
             3x3 array describing the transformation of vectors defining the 
             unit cell to the standard setting.
-        shiftUC : array, default=np.zeros(3)
+        shiftUC : array, default=None
             Translation taking the origin of the unit cell used in the DFT 
             calculation to that of the standard setting.
-
+        symmetries : list
+            Indices of symmetries whose traces will be calculated.
+        symmetries_tables : list
+            Attribute `symmetries` of class `IrrepTable`. Each component is an 
+            instance of class `SymopTable` corresponding to a symmetry operation
+            in the "point-group" of the space-group.
+        degen_thresh : float, default=1e-8
+            Threshold to identify degenerate energy levels.
+        
         Returns
         -------
-        int
-            Number of inversion-odd states.
-        float
-            Last energy-level within the considered range of states.
-        float
-            First energy-level above the range of considered bands. If the last 
-            band in the range of considered bands coincides with the last band 
-            calculated by DFT, it will be set to `numpy.NaN`.
-        json_data : `json` object
-            Object with output structured in `json` format.
-        """
-        json_data = {}
-        if symmetries is None:
-            sym = {s.ind: s for s in self.symmetries}
-        else:
-            sym = {s.ind: s for s in self.symmetries if s.ind in symmetries}
-        json_data ["symmetries"] = list(sym.keys())
-    
-        
-        # Generate array char, where each row corresponds to a sym. op
-        # and every column to a wave function
-        char = np.vstack([self.symmetries[sym[i]] for i in sorted(sym)])
-        borders = np.hstack(
-            [
-                [0],
-                np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
-                [self.Nband],
-            ]
-        )
+        char : array
+            Each row corresponds to a set of degenerate states. Each column is the 
+            trace of a symmetry in the little cogroup in the DFT cell setting.
+        char_refUC : array
+            The same as `char`, but in the reference cell setting.
+        Energy_mean : array
+            Average of energy levels within each set of degenerate states
+        '''
+
+        # Put all traces in an array. Rows (cols) correspond to syms (wavefunc)
+        char = []
+        for symop in self.little_group:
+            char.append(
+                    symm_eigenvalues(
+                        self.k,
+                        self.RecLattice,
+                        self.WF,
+                        self.ig,
+                        symop.rotation,
+                        symop.spinor_rotation,
+                        symop.translation,
+                        self.spinor,
+                    ))
+        char = np.array(char)
+
+
+        # Check that number of irreps is int
         Nirrep = np.linalg.norm(char.sum(axis=1)) ** 2 / char.shape[0]
         if abs(Nirrep - round(Nirrep)) > 1e-2:
             print("WARNING - non-integer number of states : {0}".format(Nirrep))
         Nirrep = int(round(Nirrep))
+
+        # Sum traces of degenerate states. Rows (cols) correspond to states (syms)
         char = np.array(
-            [char[:, start:end].sum(axis=1) for start, end in zip(borders, borders[1:])]
-        )  # Every column in char corresponds to a sym. op.
+            [char[:, start:end].sum(axis=1) for start, end in zip(self.borders, self.borders[1:])]
+            )
 
-        #        print(" char ",char.shape,"\n",char)
-        writeimaginary = np.abs(char.imag).max() > 1e-4
-
-        s1 = " " * 4 if writeimaginary else ""
-
-        E = np.array(
-            [self.Energy[start:end].mean() for start, end in zip(borders, borders[1:])]
+        # Take average of energies over degenerate states
+        Energy_mean = np.array(
+            [self.Energy_raw[start:end].mean() for start, end in zip(self.borders, self.borders[1:])]
         )
-        json_data["energies"] = E
-        json_data["characters"] = char
 
-        dim = np.array([end - start for start, end in zip(borders, borders[1:])])
-        if irreptable is None:
-            irreps = ["None"] * (len(borders) - 1)
-            json_data["irreps"] = None 
+        # Transfer traces in calculational cell to refUC
+        char_refUC = char.copy()
+        if (not np.allclose(refUC, np.eye(3, dtype=float)) or
+            not np.allclose(shiftUC, np.zeros(3, dtype=float))):
+            # Calculational and reference cells are not identical
+            for i,sym in enumerate(self.little_group):
+                dt = (symmetries_tables[sym.ind-1].t 
+                      - sym.translation_refUC(refUC, shiftUC))
+                char_refUC[:,i] *= (sym.sign 
+                                     * np.exp(-2j*np.pi*dt.dot(self.k_refUC)))
+
+        return char, char_refUC, Energy_mean
+
+
+    def identify_irreps(self, irreptable=None):
+        '''
+        Identify irreps based on traces. Sets attributes `onlytraces` and  
+        `irreps`.
+
+        Parameters
+        ----------
+        irreptable : dict
+            Each key is the label of an irrep, each value another `dict`. Keys 
+            of every secondary `dict` are indices of symmetries (starting from 
+            1 and following order of operations in tables of BCS) and 
+            values are traces of symmetries.
+        '''
+
+        self.onlytraces = irreptable is None
+        if self.onlytraces:
+            irreps = ["None"] * (len(self.degeneracies) - 1)
+
         else:
+
+            # irreps is a list. Each element is a dict corresponding to a 
+            # group of degen. states. Every key is an irrep and its value 
+            # the multiplicity of the irrep in the rep. of degen. states
             try:
-                # irreps is a list. Each element is a dict corresponding to a 
-                # group of degen. states. Every key is an irrep and its value 
-                # the multiplicity of the irrep in the rep. of degen. states
                 irreps = []
-                for ch in char:
+                for ch in self.char:
                     multiplicities = {}
                     for ir in irreptable:
-                        multipl = np.dot(np.array([irreptable[ir][sym.ind] for sym in self.symmetries]),
+                        multipl = np.dot(np.array([irreptable[ir][sym.ind] for sym in self.little_group]),
                                          ch.conj()
                                          ) / len(ch)
                         if abs(multipl) > 1e-3:
                             multiplicities[ir] = multipl
                     irreps.append(multiplicities)
-                json_data["irreps"] = [{ir:(val.real,val.imag) for ir,val in irr.items()} for irr in irreps]
             except KeyError as ke:
                 print(ke)
                 print("irreptable:", irreptable)
-                print([sym.ind for sym in self.symmetries])
+                print([sym.ind for sym in self.little_group])
                 raise ke
-            # Generate str describing irrep corresponding to sets of states
-            irreps = [
-                ", ".join(
-                    ir
-                    + "({0:.5}".format(irr[ir].real)
-                    + (
-                        "{0:+.5f}i".format(irr[ir].imag)
-                        if abs(irr[ir].imag) > 1e-4
-                        else ""
-                    )
-                    + ")"
-                    for ir in irr  # Irreps of little-group
-                )
-                for irr in irreps  # Group of degen. states
-            ]
-        #            irreps=[ "None" ]*(len(borders)-1)
 
-        # Transfer traces in calculational cell to refUC
-        char_refUC = char.copy()
-        k_refUC = np.dot(refUC.T, self.K)
-        if (not np.allclose(refUC, np.eye(3, dtype=float)) or
-            not np.allclose(shiftUC, np.zeros(3, dtype=float))):
-            # Calculational and reference cells are not identical
-            for i,ind in enumerate(sym):
-                dt = (symmetries_tables[ind-1].t 
-                      - sym[ind].translation_refUC(refUC, shiftUC))
-                char_refUC[:,i] *= (sym[ind].sign 
-                                     * np.exp(-2j*np.pi*dt.dot(k_refUC)))
+        self.irreps = irreps
 
-        json_data["characters_refUC"] = char_refUC
-        if np.allclose(char, char_refUC, rtol=0.0, atol=1e-4):
-            write_refUC = False  # Tr identical in both unit cells
-            json_data["characters_refUC_is_the_same"] = True
-        else:
-            write_refUC = True   # Write traces in refUC
-            json_data["characters_refUC_is_the_same"] = False
-            print(("For each irrep, traces of symmetries in the calculation "
-                   "unit cell will be printed first and traces of symmetries "
-                   "in tables will be printed in the line below")
-                 )
-        json_data["dimensions"] = dim
 
-        irreplen = max(len(irr) for irr in irreps)  # len of largest line
-        if irreplen % 2 == 1:
-            irreplen += 1
-        s2 = " " * int(irreplen / 2 - 3)
+    def write_characters(self):
+        '''
+        Write the block of data of the k point, including energy levels,
+        degeneracies, traces and irreps.
+        '''
 
-        # Header of the block
+        # Print header for k-point
         print(("\n\n k-point {0:3d} : {1} (in DFT cell)\n"
                "               {2} (after cell trasformation)\n\n"
                " number of states : {3}\n"
                .format(self.ik0,
-                       np.round(self.K, 5),
-                       np.round(k_refUC,5),
-                       self.Nband
-                       )
+                       np.round(self.k, 5),
+                       np.round(self.k_refUC, 5),
+                       self.num_bands)
               ))
 
-        print("   Energy  |   degeneracy  |{0} irreps {0}| sym. operations  ".format(s2))
-
-        # Symmetry operations
-        print(
-            "           |               |{0}        {0}| ".format(s2),
-            " ".join(s1 + "{0:4d}    ".format(i) + s1 for i in sorted(sym)),
-        )
-
-        # Energy-levels, irrep's label and traces
-        for e, d, ir, ch, ch2 in zip(E, dim, irreps, char, char_refUC):
-            # Print characters in calculational unit cell
-            left_str = (" {0:8.4f}  |    {1:5d}      | {2:{3}s} |"
-                        .format(e - efermi, d, ir, irreplen)
-                       )
-            right_str = " ".join(
-                        "{0:8.4f}".format(c.real)
-                        + ("{0:+7.4f}j".format(c.imag) if writeimaginary else "")
-                        for c in ch
-                    )
-            print(left_str + " " + right_str)
-            # Print characters in reference unit cell
-            if write_refUC:
-                left_str = ("           |               | {0:{1}s} |"
-                            .format(len(ir)*" ", irreplen)
-                           )
-                right_str = " ".join(
-                            "{0:8.4f}".format(c.real)
-                            + ("{0:+7.4f}j".format(c.imag) if writeimaginary else "")
-                            for c in ch2
-                        )
-                print(left_str + " " + right_str)
-
-        if plotFile is not None:
-            plotFile.write(
-                (
-                    "\n".join(
-                        ("{2:8.4f}   {0:8.4f}      {1:5d}   ").format(
-                            e - efermi, d, kpl
-                        )
-                        + " ".join(
-                            "{0:8.4f}".format(c.real)
-                            + ("{0:+7.4f}j".format(c.imag) if writeimaginary else "")
-                            for c in ch
-                        )
-                        for e, d, ch in zip(E, dim, char)
-                    )
-                )
-                + "\n\n"
-            )
-
-        isyminv = None
-        for s in sym:
-            if (
-                sum(abs(sym[s].translation)) < 1e-6
-                and abs(sym[s].rotation + np.eye(3)).sum() < 1e-6
-            ):
-                isyminv = s
-        if isyminv is None:
-            print("no inversion")
-            NBANDINV = 0
-        else:
-            print("inversion is #", isyminv)
-            NBANDINV = int(round(sum(1 - self.symmetries[sym[isyminv]].real) / 2))
-            if self.spinor:
-                print("number of inversions-odd Kramers pairs : ", int(NBANDINV / 2))
+        # Generate str describing irrep corresponding to sets of states
+        str_irreps = []
+        for irreps in self.irreps:  # set of IRs for a set of degenerate states
+            if self.onlytraces:
+                s = '  None  '
             else:
-                print("number of inversions-odd states : ", NBANDINV)
-            print("Gap with upper bands : ", self.upper - self.Energy[-1])
+                s = ''
+                for ir in irreps:  # label and multiplicity of one irrep
+                    if s != '':
+                        s += ', '  # separation between labels for irreps
+                    s += ir
+                    s += '({0:.5}'.format(irreps[ir].real)
+                    if abs(irreps[ir].imag) > 1e-4:
+                        s += '{0:+.5f}i'.format(irreps[ir].imag)
+                    s += ')'
+            str_irreps.append(s)
 
-        firrep = open("irreps.dat", "a")
-        for e, ir in zip(E, irreps):
+        # Set auxiliary blank strings for formatting
+        writeimaginary = np.abs(self.char.imag).max() > 1e-4
+        if writeimaginary:
+            aux1 = ' ' * 4
+        else:
+            aux1 = ''
+        irreplen = max(len(irr) for irr in str_irreps)
+        #if irreplen % 2 == 1:
+        #    irreplen += 1
+        #aux2 = " " * int(irreplen / 2 - 3)
+        num_spaces = (irreplen-8) / 2
+        aux2 = " " * int(num_spaces)
+        if irreplen % 2 == 0:
+            aux3 = aux2 
+        else:
+            aux3 = aux2 + " "
+
+        print("   Energy  |   degeneracy  | {0} irreps {1} | sym. operations  ".format(aux2, aux3))
+
+        # Print indices of little-group symmetries
+        s = "           |               | {0}        {1} | ".format(aux2, aux3)
+        inds = []
+        for sym in self.little_group:
+            inds.append(aux1 + "{0:4d}    ".format(sym.ind) + aux1)
+        s += " ".join(inds)
+        print(s)
+
+        # Print line associated to a set of degenerate states
+        for e, d, ir, ch1, ch2 in zip(self.Energy_mean, self.degeneracies, str_irreps, self.char, self.char_refUC):
+
+            # Traces in DFT unit cell
+            right_str1 = []
+            right_str2 = []
+            for tr1, tr2 in zip(ch1, ch2):
+                s1 = "{0:8.4f}".format(tr1.real)
+                s2 = "{0:8.4f}".format(tr2.real)
+                if writeimaginary:
+                    s1 += "{0:+7.4f}j".format(tr1.imag)
+                    s2 += "{0:+7.4f}j".format(tr2.imag)
+                right_str1.append(s1)
+                right_str2.append(s2)
+            right_str1 = ' '.join(right_str1)
+            right_str2 = ' '.join(right_str2)
+
+            # Energy, degeneracy, irrep's label and character in DFT cell
+            left_str = (" {0:8.4f}  |    {1:5d}      | {2:{3}s} |"
+                        .format(e, d, ir, irreplen)
+                        )
+            print(left_str + " " + right_str1)
+
+            # Line for character in reference cell
+            left_str = ("           |               | {0:{1}s} |"
+                        .format(len(ir)*" ", irreplen)
+                        )
+            print(left_str + " " + right_str2)  # line for character in DFT
+
+
+    def json(self):
+        '''
+        Prepare the data to save it in JSON format.
+
+        Returns
+        -------
+        json_data : dict
+            Data that will be saved in JSON format.
+        '''
+
+        json_data = {}
+
+        indices_symmetries = [sym.ind for sym in self.little_group]
+        json_data ['symmetries'] = list(indices_symmetries)
+
+        # Energy levels and degeneracies
+        json_data['energies_mean'] = self.Energy_mean
+        json_data['energies_raw'] = self.Energy_raw
+        json_data['dimensions'] = self.degeneracies
+
+        # Irreps and multiplicities
+        if self.onlytraces:
+            json_data['irreps'] = None 
+        else:
+            json_data['irreps'] = []
+            for state in self.irreps:
+                d = {}
+                for irrep, multipl in state.items():
+                    d[irrep] = (multipl.real, multipl.imag)
+                json_data['irreps'].append(d)
+
+        # Traces of symmetries
+        json_data['characters'] = self.char
+        json_data['characters refUC'] = self.char_refUC
+        if np.allclose(self.char, self.char_refUC, rtol=0.0, atol=1e-4):
+            json_data['characters refUC is the same'] = True
+        else:
+            json_data['characters refUC is the same'] = False
+        
+        return json_data
+        
+    def write_irrepsfile(self, file):
+        '''
+        Write the irreps of this k point into `irreps.dat` file.
+
+        Parameters
+        ----------
+        file : File object
+            File object for the `irreps.dat` file.
+        '''
+
+        for energy, irrep_dict in zip(self.Energy_mean, self.irreps):
+            irrep = ''.join(irrep_dict.keys())
+            s = '{:15.7f}    {:15s}\n'.format(energy, irrep)
+            file.write(s)
+
+
+    def write_plotfile(self, kpl, efermi):
+
+        writeimaginary = np.abs(self.character.imag).max() > 1e-4
+        s = []
+        for e, dim, char in zip(self.Energy_mean, self.degeneracies, self.character):
+            s_loc = '{2:8.4f}   {0:8.4f}      {1:5d}   '.format(e-efermi, dim, kpl)
+            for tr in char:
+                s_loc += "{0:8.4f}".format(tr.real)
+                if writeimaginary:
+                    s_loc += "{0:+7.4f}j ".format(tr.imag)
+            s.append(s_loc)
+        s = '\n'.join(s)
+        s += '\n\n'
+
+
+    def write_irrepfile(self, firrep):
+
+        file = open(firrep, "a")
+        for e, ir in zip(self.Energy_mean, self.irreps):
             for irrep in ir.split(","):
                 try:
                     weight = abs(compstr(irrep.split("(")[1].strip(")")))
                     if weight > 0.3:
-                        firrep.write(
-                            preline
-                            + " {0:10s} ".format(irrep.split("(")[0])
-                            + "  {0:10.5f}\n".format(e - efermi)
+                        file.write(
+                            " {0:10s} ".format(irrep.split("(")[0])
+                            + "  {0:10.5f}\n".format(e)
                         )
                 except IndexError:
                     pass
+        file.close()
 
-        return NBANDINV, self.Energy[-1], self.upper , json_data
 
-    def write_trace(self, degen_thresh=1e-8, symmetries=None, efermi=0.0):
+
+    def write_trace(self):
         """
         Write in `trace.txt` the block corresponding to a single k-point.
 
@@ -1243,110 +877,26 @@ class Kpoint:
             Block to write in `trace.txt` with description of traces in a
             single k-point.
         """
-        if symmetries is None:
-            sym = {s.ind: s for s in self.symmetries}
-        else:
-            sym = {s.ind: s for s in self.symmetries if s.ind in symmetries}
 
-        res = (
-            "{0} \n"
-            + " {1} \n"  # Number of symmetry operations of the little co-group of the 1st maximal k-vec. In the next line the position of each element of the point group in the list above.
-            # For each band introduce a row with the followind data: (1) 1+number of bands below, (2) dimension (degeneracy) of the band,
-            # (3) energy and eigenvalues (real part, imaginary part) for each symmetry operation of the little group (listed above).
-        ).format(len(sym.keys()), "  ".join(str(x) for x in sym))
+        # Line 1: order of the little cogroup
+        # Line 2: indices of syms in the little cogroup
+        # Line 3: for each band introduce a row with the followind data:
+        # (1) 1+number of bands below, (2) dimension (degeneracy) of the band,
+        # (3) energy and eigenvalues (real part, imaginary part) for each 
+        # symmetry operation of the little group (listed above).
+        indices = [symop.ind for symop in self.little_group]
+        res = ("{0} \n {1} \n".format(len(self.little_group), "  ".join(str(x) for x in indices)))
 
-        char = np.vstack([self.symmetries[sym[i]] for i in sorted(sym)])
-        borders = np.hstack(
-            [
-                [0],
-                np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
-                [self.Nband],
-            ]
-        )
-        char = np.array(
-            [char[:, start:end].sum(axis=1) for start, end in zip(borders, borders[1:])]
-        )
-
-        E = np.array(
-            [self.Energy[start:end].mean() for start, end in zip(borders, borders[1:])]
-        )
-        dim = np.array([end - start for start, end in zip(borders, borders[1:])])
-        IB = np.cumsum(np.hstack(([0], dim[:-1]))) + 1
+        IB = np.cumsum(np.hstack(([0], self.degeneracies[:-1]))) + 1
         res += (
             "\n".join(
-                (" {ib:8d}  {d:8d}   {E:8.4f} ").format(E=e - efermi, d=d, ib=ib)
+                (" {ib:8d}  {d:8d}   {E:8.4f} ").format(E=e, d=d, ib=ib)
                 + "  ".join("{0:10.6f}   {1:10.6f} ".format(c.real, c.imag) for c in ch)
-                for e, d, ib, ch in zip(E, dim, IB, char)
+                for e, d, ib, ch in zip(self.Energy_mean, self.degeneracies, IB, self.char)
             )
             + "\n"
         )
 
-        return res
-
-    def write_trace_all(self, degen_thresh=1e-8, symmetries=None, efermi=0.0, kpline=0):
-        """
-        Generate a block describing energy-levels and traces in a k-point.
-
-        Parameters
-        ----------
-        degen_thresh : float, default=1e-8
-            Threshold energy used to decide whether wave-functions are
-            degenerate in energy.
-        symmetries : list, default=None
-            Index of symmetry operations whose traces will be printed. 
-        efermi : float, default=0.0
-            Fermi-energy. Used as origin for energy-levels. 
-        kpline : float, default=0
-            Cumulative length of the path up to current k-point.
-
-        Returns
-        -------
-        str
-            Block with the description of energy-levels and traces in a k-point.
-        """
-        preline = "{0:10.6f}     {1:10.6f}  {2:10.6f}  {3:10.6f}  ".format(
-            kpline, *tuple(self.K)
-        )
-        if symmetries is None:
-            sym = {s.ind: s for s in self.symmetries}
-        else:
-            sym = {s.ind: s for s in self.symmetries if s.ind in symmetries}
-
-        char0 = {i: self.symmetries[sym[i]] for i in sym}
-        borders = np.hstack(
-            [
-                [0],
-                np.where(self.Energy[1:] - self.Energy[:-1] > degen_thresh)[0] + 1,
-                [self.Nband],
-            ]
-        )
-        char = {
-            i: np.array(
-                [char0[i][start:end].sum() for start, end in zip(borders, borders[1:])]
-            )
-            for i in char0
-        } # keys are indices of symmetries, values are arrays with traces
-        E = np.array(
-            [self.Energy[start:end].mean() for start, end in zip(borders, borders[1:])]
-        )
-        dim = np.array([end - start for start, end in zip(borders, borders[1:])])
-        IB = np.cumsum(np.hstack(([0], dim[:-1]))) + 1
-        res = (
-            "\n".join(
-                preline
-                + (" {ib:8d}  {d:8d}   {E:8.4f} ").format(E=e - efermi, d=d, ib=ib)
-                + "     ".join(
-                    (
-                        "{0:10.6f} {1:10.6f}".format(char[i][j].real, char[i][j].imag)
-                        if i in char
-                        else (" " * 7 + "X" * 3 + " " * 8 + "X" * 3)
-                    )
-                    for i in range(1, len(self.symmetries_SG) + 1)
-                )
-                for e, d, ib, j in zip(E, dim, IB, np.arange(len(dim)))
-            )
-            + "\n"
-        )
         return res
 
     def overlap(self, other):
@@ -1363,20 +913,20 @@ class Kpoint:
         res : array
             Matrix of `complex` elements  < u_m(k) | u_n(k+g) >.
         """
-        g = np.array((self.K - other.K).round(), dtype=int)
+        g = np.array((self.k - other.k).round(), dtype=int)
         igall = np.hstack((self.ig[:3], other.ig[:3] - g[:, None]))
         igmax = igall.max(axis=1)
         igmin = igall.min(axis=1)
         igsize = igmax - igmin + 1
         #        print (self.ig.T)
         #        print (igsize)
-        res = np.zeros((self.Nband, other.Nband), dtype=complex)
+        res = np.zeros((self.num_bands, other.num_bands), dtype=complex)
         
         # short again coefficients of expansions
         for s in [0, 1] if self.spinor else [0]:
-            WF1 = np.zeros((self.Nband, igsize[0], igsize[1], igsize[2]), dtype=complex)
+            WF1 = np.zeros((self.num_bands, igsize[0], igsize[1], igsize[2]), dtype=complex)
             WF2 = np.zeros(
-                (other.Nband, igsize[0], igsize[1], igsize[2]), dtype=complex
+                (other.num_bands, igsize[0], igsize[1], igsize[2]), dtype=complex
             )
             for i, ig in enumerate(self.ig.T):
                 WF1[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = self.WF[
@@ -1399,17 +949,16 @@ class Kpoint:
             grid[0][:, None, None], grid[1][None, :, None], grid[2][None, None, :]
         )
         print("loc=", loc, "loc_grid=\n", loc_grid)
-        #        FFTgrid=np.zeros( (self.Nband,*(2*gmax+1)),dtype=complex )
-        res = np.zeros(self.Nband)
+        res = np.zeros(self.num_bands)
         for s in [0, 1] if self.spinor else [0]:
-            WF1 = np.zeros((self.Nband, *(2 * gmax + 1)), dtype=complex)
+            WF1 = np.zeros((self.num_bands, *(2 * gmax + 1)), dtype=complex)
             for i, ig in enumerate(self.ig.T):
                 WF1[:, ig[0], ig[1], ig[2]] = self.WF[:, i + s * self.ig.shape[1]]
             #            print ("wfsum",WF1.sum()," shape ",WF1.shape,loc_grid.shape)
             res += np.array(
                 [
                     np.sum(np.abs(np.fft.ifftn(WF1[ib])) ** 2 * loc_grid).real
-                    for ib in range(self.Nband)
+                    for ib in range(self.num_bands)
                 ]
             )
         print("    ", loc_grid.shape)

@@ -1,0 +1,64 @@
+ndtset 3
+pawspnorb 0
+
+#Definition of the unit cell
+acell 3*1.0 angstrom
+rprim     0.0000000000000000    3.1545000000000001    3.1545000000000001
+          3.1545000000000001    0.0000000000000000    3.1545000000000001
+          3.1545000000000001    3.1545000000000001    0.0000000000000000
+
+#Definition of the atom types
+ntypat 2
+znucl 50 52
+natom 2
+typat 1 2
+xred  0.0  0.0  0.0
+      0.5  0.5  0.5
+
+ecut 350 eV
+pawecutdg 30 Ha
+nstep 1000      
+diemac 12.0
+istwfk *1
+enunit  1       
+
+#Dataset 1 : usual self-consistent calculation
+kptopt1 4
+ngkpt1  7 7 7
+shiftk1  0.5 0.5 0.5
+         0.5 0.0 0.0
+         0.0 0.5 0.0
+         0.0 0.0 0.5
+nshiftk1 4
+prtden1  1         
+toldfe1  1.0d-5    
+prtwf1 0
+
+# Dataset 2: calculate wave functions
+getden2 -1
+iscf2 -2
+kptopt2  0
+nkpt2 4
+kpt2 0.00000000    0.00000000    0.00000000
+     0.50000000    0.00000000    0.50000000
+     0.50000000    0.50000000    0.50000000
+     0.50000000    0.25000000    0.75000000
+prtwf2 1
+tolwfr2  1.0d-6
+nband2 26
+nbdbuf2 2
+
+#Dataset 3 : the band structure
+iscf3    -2
+getden3 1 
+nband3   30
+kptopt3  -4
+ndivk3 40 40 40 40
+kptbounds3  0.500000  0.000000  0.500000   # X
+            0.500000  0.250000  0.750000   # W
+            0.500000  0.500000  0.500000   # L
+            0.000000  0.000000  0.000000   # Gamma
+            0.500000  0.000000  0.500000   # X
+nbdbuf3 4
+tolwfr3  1.0d-6
+prtwf3 0

@@ -1,9 +1,7 @@
-import setuptools, sys
+import setuptools
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
-
-import irrep
 
 setuptools.setup(
     name="irrep",
@@ -16,7 +14,6 @@ setuptools.setup(
         "numpy",
         "scipy>=1.0",
         "spglib>=1.14",
-        "lazy_property",
         "Click",
         "monty",
         "ruamel.yaml",

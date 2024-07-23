@@ -1,0 +1,47 @@
+&CONTROL
+   calculation     =  'bands',
+   prefix          =  'Bi',
+   pseudo_dir = 'pseudo',
+   outdir='out',
+   restart_mode    =  'from_scratch',
+   disk_io         = 'medium'
+ /
+
+ &SYSTEM
+   ibrav           =  0,
+   A               =  1.0,
+   degauss         =  0.0001,
+   ecutwfc         =  10,
+   nat             =  2,
+   ntyp            =  1,
+   occupations     =  'smearing',
+   smearing        =  'mv',
+   lspinorb        = .TRUE.
+   noncolin        = .TRUE.
+ /
+
+ &ELECTRONS
+   startingpot = file
+   mixing_beta = 0.3,
+   conv_thr    = 1e-8,
+ /
+CELL_PARAMETERS alat
+ 3.4264999999999999   -3.1105000000000000    0.0000000000000000
+ 3.4264999999999999    3.1105000000000000    0.0000000000000000
+-1.2715305697963124    0.0000000000000000    3.0094017694673911
+
+ATOMIC_SPECIES
+  Bi 209  Bi.upf
+
+ATOMIC_POSITIONS crystal
+Bi  0.2492999999999998  0.2492999999999999  0.1323000000000000
+Bi  0.7507000000000001  0.7507000000000001  0.8677000000000000
+
+K_POINTS crystal
+6
+    0.00000000    0.00000000    0.50000000     1.0
+    0.00000000    0.00000000    0.00000000     1.0
+   -0.50000000    0.50000000    0.50000000     1.0
+   -0.50000000    0.50000000    0.00000000     1.0
+    0.00000000    0.50000000    0.50000000     1.0
+    0.00000000    0.50000000    0.00000000     1.0

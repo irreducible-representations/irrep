@@ -1,52 +1,43 @@
-['O_DS2_WFK']
 Using fortio to read
 Long records not found in  O_DS2_WFK
-
-
- ----------INFORMATION ABOUT THE UNIT CELL----------- 
-
-
-Primitive vectors : 
- [[ 4.29723723  2.48101107  7.46567804]
- [-4.29723723  2.48101107  7.46567804]
- [ 0.         -4.96202214  7.46567804]] 
- Atomic positions: 
- [[0.763 0.763 0.763]
- [0.237 0.237 0.237]] 
- Atom type indices: 
- [1 1]
- Reciprocal lattice:
- [[ 0.73107266  0.422085    0.28053649]
- [-0.73107266  0.422085    0.28053649]
- [ 0.         -0.84417     0.28053649]]
 Reading symmetries from tables
+Efermi: 0.0000 eV
+WAVECAR contains 1 k-points and 90 bands.
+ Saving 12 bands starting from 21 in the output
+Energy cutoff in WAVECAR :  500.0000393217782
+Energy cutoff reduced to :  50.0
+Reading k-point 0
+Found cutoff:   500.000039 eV   Largest plane wave energy in K-point    0:   496.181248 eV
 
-The cell transformation is given by: 
+
+ ---------- CRYSTAL STRUCTURE ---------- 
+
+
+Cell vectors in angstroms:
+
+      Vectors of DFT cell       |      Vectors of REF. cell      
+a0 =  4.2972   2.4810   7.4657  |  a0 =  1.8162  -6.7782   4.9620
+a1 = -4.2972   2.4810   7.4657  |  a1 = -4.9847  -4.9847  -12.4277
+a2 =  0.0000  -4.9620   7.4657  |  a2 = 14.2439   5.6495   2.5037
+
+Atomic positions in direct coordinates:
+
+Atom type |   Position in DFT cell    |   Position in REF cell   
+    1     |  0.7630   0.7630   0.7630 |  0.0000  -0.0000   0.7630
+    1     |  0.2370   0.2370   0.2370 |  0.0000  -0.0000   0.2370
+
+
+ ---------- SPACE GROUP ----------- 
+
+
+Space group: R-3m (# 166)
+Number of symmetries: 12 (mod. lattice translations)
+
+The transformation from the DFT cell to the reference cell of tables is given by: 
         |   1.0000 -1.0000 -0.0000 |
 refUC = |  -0.0000  1.0000 -1.0000 |    shiftUC = [ 0. -0. -0.]
         |   1.0000  1.0000  1.0000 |
 
-Lattice vectors of DFT (a) and reference (c) cells:
-a(0)=[  4.2972  2.4810  7.4657 ]    c(0)=[  8.5945  0.0000 -0.0000 ]
-a(1)=[ -4.2972  2.4810  7.4657 ]    c(1)=[ -4.2972  7.4430 -0.0000 ]
-a(2)=[  0.0000 -4.9620  7.4657 ]    c(2)=[ -0.0000 -0.0000 22.3970 ]
-Efermi: 0.0000 eV
-lattice vectors:
- [[ 4.29723723  2.48101107  7.46567804]
- [-4.29723723  2.48101107  7.46567804]
- [ 0.         -4.96202214  7.46567804]]
-WFK contains 1 k-points and 90 bands.
- Saving 12 bands starting from 21 in the output
-Energy cutoff in WFK file :  500.0000393217782
-Energy cutoff reduced to :  50.0
-Reading k-point 0
-Found cutoff:   500.000039 eV   Largest plane wave energy in K-point    1:   496.181248 eV
-
-
- ---------- INFORMATION ABOUT THE SPACE GROUP ---------- 
-
-
-Space group R-3m (# 166) has 12 symmetry operations  
 
  ### 1 
 
@@ -288,7 +279,6 @@ translation (refUC) :  [   0.0000   0.0000   0.0000 ]
 axis: [ 0.5      -0.866025 -0.      ] ; angle = 1 pi, inversion : True
 
 Reading symmetries from tables
-For each irrep, traces of symmetries in the calculation unit cell will be printed first and traces of symmetries in tables will be printed in the line below
 
 
  k-point   1 : [0. 0. 0.] (in DFT cell)
@@ -297,7 +287,7 @@ For each irrep, traces of symmetries in the calculation unit cell will be printe
  number of states : 12
 
    Energy  |   degeneracy  |          irreps          | sym. operations  
-           |               |                          |         1                2                3                4                5                6                7                8                9               10               11               12        
+           |               |                          |        1                2                3                4                5                6                7                8                9               10               11               12        
   -6.6789  |        2      | -GM8(1.0)                |   2.0000+0.0000j   1.0000+0.0000j   1.0000-0.0000j  -0.0000-0.0000j   0.0000-0.0000j  -0.0000-0.0000j   2.0000+0.0000j   1.0000+0.0000j   1.0000-0.0000j  -0.0000+0.0000j   0.0000-0.0000j  -0.0000+0.0000j
            |               |                          |   2.0000+0.0000j   1.0000+0.0000j   1.0000-0.0000j  -0.0000-0.0000j   0.0000-0.0000j   0.0000+0.0000j   2.0000+0.0000j   1.0000+0.0000j   1.0000-0.0000j   0.0000-0.0000j   0.0000-0.0000j  -0.0000+0.0000j
   -1.1629  |        2      | -GM9(1.0)                |   2.0000-0.0000j   1.0000-0.0001j   1.0000+0.0001j   0.0000-0.0002j  -0.0000-0.0002j   0.0000-0.0001j  -2.0000+0.0000j  -1.0000+0.0001j  -1.0000-0.0001j  -0.0000-0.0002j   0.0000+0.0002j  -0.0000-0.0001j
@@ -310,9 +300,13 @@ For each irrep, traces of symmetries in the calculation unit cell will be printe
            |               |                          |   2.0000+0.0000j  -2.0000+0.0000j  -2.0000-0.0000j  -0.0000+0.0000j   0.0000-0.0000j  -0.0000+0.0000j   2.0000+0.0000j  -2.0000+0.0000j  -2.0000-0.0000j  -0.0000+0.0000j  -0.0000-0.0000j  -0.0000+0.0000j
    7.3442  |        2      | -GM9(1.0)                |   2.0000+0.0000j   1.0000+0.0000j   1.0000-0.0000j   0.0000+0.0001j  -0.0000+0.0000j   0.0000+0.0001j  -2.0000-0.0000j  -1.0000-0.0000j  -1.0000+0.0000j  -0.0000+0.0001j   0.0000-0.0000j  -0.0000+0.0001j
            |               |                          |   2.0000+0.0000j   1.0000+0.0000j   1.0000-0.0000j   0.0000+0.0001j  -0.0000+0.0000j  -0.0000-0.0001j  -2.0000-0.0000j  -1.0000-0.0000j  -1.0000+0.0000j   0.0000-0.0001j   0.0000-0.0000j  -0.0000+0.0001j
-inversion is # 7
-number of inversions-odd Kramers pairs :  2
-Gap with upper bands :  2.393987488930864
-number of inversion-odd Kramers pairs IN THE LISTED KPOINTS:  2   Z4=  2
-Minimal direct gap: 2.393987488930864  eV
-indirect  gap: 2.393987488930864  eV
+
+Invariant under inversion: Yes
+Number of inversions-odd Kramers pairs : 2
+Gap with upper bands:  2.393993801589521
+
+TOTAL number of inversions-odd Kramers pairs : 2
+Z2 invariant: 0
+Z4 invariant: 2
+Indirect gap: 2.393993801589521
+Smallest direct gap in the given set of k-points: 2.393993801589521
