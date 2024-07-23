@@ -253,7 +253,7 @@ class Kpoint:
         prec : float, default=1e-6
             Threshold to consider the k-points as equal.
         """
-        return is_round(self.k - kpt, prec = 1e-6)
+        return is_round(self.k - kpt, prec = prec)
 
     def copy_sub(self, E, WF, inds):
         """
@@ -323,7 +323,7 @@ class Kpoint:
             W - weight of the band(s) projected onto the PBZ kpoint.
             Sx, Sy, Sz - Spin components projected onto the PBZ kpoint.
         """
-        if not is_round(kptPBZ.dot(supercell.T) - self.k, prec=1e-5):
+        if not self.k_close_mod1(kptPBZ.dot(supercell.T), prec=1e-5):
             raise RuntimeError(
                 "unable to unfold {} to {}, withsupercell={}".format(
                     self.k, kptPBZ, supercell
