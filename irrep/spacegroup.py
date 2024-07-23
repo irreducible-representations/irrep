@@ -487,9 +487,6 @@ class SpaceGroup():
     Lattice : array, shape=(3,3) 
         Each row contains cartesian coordinates of a basis vector forming the 
         unit-cell in real space.
-    RecLattice : array, shape=(3,3)
-        Each row contains the cartesian coordinates of a basis vector forming 
-        the unit-cell in reciprocal space.
     positions : array
         Direct coordinate of sites in the DFT cell setting.
     typat : list
@@ -533,9 +530,6 @@ class SpaceGroup():
          self.number, 
          refUC_tmp, 
          shiftUC_tmp) = self._findsym(cell)
-        self.RecLattice = np.array([np.cross(self.Lattice[(i + 1) %
-                                                          3], self.Lattice[(i + 2) %
-                                                                           3]) for i in range(3)]) * 2 * np.pi / np.linalg.det(self.Lattice)
         self.order = len(self.symmetries)
 
         # Determine refUC and shiftUC according to entries in CLI
