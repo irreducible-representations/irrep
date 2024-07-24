@@ -22,7 +22,7 @@ from scipy.linalg import expm
 import spglib
 from irreptables import IrrepTable
 from scipy.optimize import minimize
-from .utility import str_
+from .utility import str_, log_message
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -519,7 +519,8 @@ class SpaceGroup():
             refUC=None,
             shiftUC=None,
             search_cell=False,
-            trans_thresh=1e-5
+            trans_thresh=1e-5,
+            v=0
             ):
         self.spinor = spinor
         self.Lattice = cell[0]
@@ -540,7 +541,8 @@ class SpaceGroup():
                                             refUC_lib=refUC_tmp, 
                                             shiftUC_lib=shiftUC_tmp,
                                             search_cell=search_cell,
-                                            trans_thresh=trans_thresh
+                                            trans_thresh=trans_thresh,
+                                            v=v
                                             )
 
         # Check matching of symmetries in refUC. If user set transf.
@@ -569,10 +571,11 @@ class SpaceGroup():
                 # User specified refUC or shiftUC in CLI. He/She may
                 # want the traces in a cell that is not neither the
                 # one in tables nor the DFT one
-                print(("WARNING: refUC and shiftUC don't transform the cell to "
+                msg = ("WARNING: refUC and shiftUC don't transform the cell to "
                        "one where symmetries are identical to those read from "
                        "tables. If you want to achieve the same cell as in "
-                       "tables, try not specifying refUC and shiftUC."))
+                       "tables, try not specifying refUC and shiftUC.")
+                log_message(msg, v, 1)
                 pass
 
     def _findsym(self, cell):
@@ -929,7 +932,8 @@ class SpaceGroup():
             refUC_lib,
             shiftUC_lib,
             search_cell,
-            trans_thresh
+            trans_thresh,
+            v=0
             ):
         """ 
         Determine basis transformation to conventional cell. Priority
@@ -955,6 +959,8 @@ class SpaceGroup():
             It is `True` if kpnames was specified in CLI.
         trans_thresh : float, default=1e-5
             Threshold to compare translational parts of symmetries.
+        v : int, default=0
+            Verbosity level. Default set to minimalistic printing
 
         Returns
         -------
@@ -980,31 +986,34 @@ class SpaceGroup():
         if refUC_cli_bool and shiftUC_cli_bool:  # Both specified in CLI.
             refUC = refUC_cli.T  # User sets refUC as if it was acting on column
             shiftUC = shiftUC_cli
-            print('refUC and shiftUC read from CLI')
+            log_message('refUC and shiftUC read from CLI', v, 1)
             return refUC, shiftUC
         elif refUC_cli_bool and not shiftUC_cli_bool:  # shiftUC not given in CLI.
             refUC = refUC_cli.T  # User sets refUC as if it was acting on column
             shiftUC = np.zeros(3, dtype=float)
-            print(('refUC was specified in CLI, but shiftUC was not. Taking '
-                   'shiftUC=(0,0,0).'))
+            msg = ('refUC was specified in CLI, but shiftUC was not. Taking '
+                   'shiftUC=(0,0,0)')
+            log_message(msg, v, 1)
             return refUC, shiftUC
         elif not refUC_cli_bool and shiftUC_cli_bool:  # refUC not given in CLI.
             refUC = np.eye(3, dtype=float)
             shiftUC = shiftUC_cli
-            print(('shitfUC was specified in CLI, but refUC was not. Taking '
-                   '3x3 identity matrix as refUC.'))
+            msg = ('shitfUC was specified in CLI, but refUC was not. Taking '
+                   '3x3 identity matrix as refUC.')
+            log_message(msg, v, 1)
             return refUC, shiftUC
         elif not search_cell:
             refUC = np.eye(3, dtype=float)
             shiftUC = np.zeros(3, dtype=float)
-            print(('Neither refUC nor shiftUC were specified in CLI '
-                   'and searchcell was False. Taking 3x3 identity '
-                   'matrix as refUC and shiftUC=(0,0,0). If you want '
-                   'to calculate the transformation to conventional '
-                   'cell, run IrRep with -searchcell'
-                   ))
+            msg = ('Taking 3x3 identity matrix as refUC and shiftUC=(0,0,0). '
+                   'If you want to calculate the transformation to '
+                   'conventional cell, run IrRep with -searchcell')
+            log_message(msg, v, 1)
             return refUC, shiftUC
         else:  # Neither specifiend in CLI.
+            msg = ('Determining transformation to conventional setting '
+                   '(refUC and shiftUC)')
+            log_message(msg, v, 1)
             refUC = np.linalg.inv(refUC_lib)  # from DFT to convenctional cell
 
             # Check if the shift given by spglib works
@@ -1034,9 +1043,8 @@ class SpaceGroup():
                                             shiftUC,
                                             trans_thresh=trans_thresh
                                             )
-                        print(('ShiftUC achieved with the centering: {}'
-                                   .format(r_center))
-                              )
+                        msg = (f'ShiftUC achieved with the centering: {r_center}')
+                        log_message(msg, v, 1)
                         return refUC, shiftUC
                     except RuntimeError:
                         pass
@@ -1053,14 +1061,13 @@ class SpaceGroup():
                                             shiftUC,
                                             trans_thresh=trans_thresh
                                             )
-                        print(('ShiftUC achieved in 2 steps:\n'
+                        msg = ('ShiftUC achieved in 2 steps:\n'
                                '  (1) Place origin of primitive cell on '
                                'inversion center: {}\n'
                                '  (2) Move origin of convenctional cell to the '
                                'inversion-center: {}'
-                               .format(0.5 * inv.translation, r_center)
-                               )
-                              )
+                               .format(0.5 * inv.translation, r_center))
+                        log_message(msg, v, 1)
                         return refUC, shiftUC
                     except RuntimeError:
                         pass
@@ -1069,7 +1076,6 @@ class SpaceGroup():
                                     "to the expressions for the symmetries "
                                     "found in the tables. Enter refUC and "
                                     "shiftUC in command line"))
-
 
 
     def match_symmetries(

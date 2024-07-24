@@ -26,6 +26,7 @@ from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .gvectors import sortIG, calc_gvectors
+from .utility import log_message
 
 
 class BandStructure:
@@ -85,6 +86,9 @@ class BandStructure:
     save_wf : bool
         Whether wave functions should be kept as attribute after calculating 
         traces.
+    v : int, default=1
+        Number controlling the verbosity. 2: CLI case, detailed report; 1: 
+        recommended if the code is run in a Jupyter notebook.
 
     Attributes
     ----------
@@ -113,7 +117,9 @@ class BandStructure:
     kpoints : list
         Each element is an instance of `class Kpoint` corresponding to a 
         k-point specified in input parameter `kpoints`. If this input was not 
-        set, all k-points found in DFT files will be considered.
+        set, all k-points found in DFT files will be considered. ACCESSED 
+        DIRECTLY BY BANDUPPY>=0.3.4. DO NOT CHANGE UNLESS NECESSARY. NOTIFY 
+        THE DEVELOPERS IF ANY CHANGES ARE MADE.
     num_bandinvs : int
         Property that returns the number of inversion odd states in the 
         given TRIM.
@@ -148,7 +154,8 @@ class BandStructure:
         search_cell = False,
         trans_thresh=1e-5,
         degen_thresh=1e-8,
-        save_wf=True
+        save_wf=True,
+        v=0
     ):
 
         code = code.lower()
@@ -165,7 +172,7 @@ class BandStructure:
                 )
             self.spinor = spinor
             parser = ParserVasp(fPOS, fWAV, onlysym)
-            self.Lattice, positions, typat = parser.parse_poscar()
+            self.Lattice, positions, typat = parser.parse_poscar(v)
             if not onlysym:
                 NK, NBin, self.Ecut0, lattice = parser.parse_header()
                 if not np.allclose(self.Lattice, lattice):
@@ -182,7 +189,7 @@ class BandStructure:
              self.spinor,
              typat,
              positions,
-             EF_in) = parser.parse_header()
+             EF_in) = parser.parse_header(v=v)
             NBin = max(nband)
 
         elif code == "espresso":
@@ -228,15 +235,17 @@ class BandStructure:
                               refUC=refUC,
                               shiftUC=shiftUC,
                               search_cell=search_cell,
-                              trans_thresh=trans_thresh)
+                              trans_thresh=trans_thresh,
+                              v=v)
         if onlysym:
             return
 
         # Set Fermi energy
         if EF.lower() == "auto":
             if EF_in is None:
-                print("WARNING : fermi-energy not found. Setting it as zero")
                 self.efermi = 0.0
+                msg = "WARNING : fermi-energy not found. Setting it as 0 eV"
+                log_message(msg, v, 1)
             else:
                 self.efermi = EF_in
         else:
@@ -271,13 +280,14 @@ class BandStructure:
         self.RecLattice *= (2.0*np.pi/np.linalg.det(self.Lattice))
 
         # To do: create writer of description for this class
-        print(
-            "WAVECAR contains {0} k-points and {1} bands.\n Saving {2} bands starting from {3} in the output".format(
-                NK, NBin, NBout, IBstart + 1
-            )
-        )
-        print("Energy cutoff in WAVECAR : ", self.Ecut0)
-        print("Energy cutoff reduced to : ", self.Ecut)
+        msg = ("WAVECAR contains {} k-points and {} bands.\n"
+               "Saving {} bands starting from {} in the output"
+               .format(NK, NBin, NBout, IBstart + 1))
+        log_message(msg, v, 1)
+        msg = f"Energy cutoff in WAVECAR : {self.Ecut0}"
+        log_message(msg, v, 1)
+        msg = f"Energy cutoff reduced to : {self.Ecut}"
+        log_message(msg, v, 1)
 
         # Create list of indices for k-points
         if kplist is None:
@@ -291,13 +301,16 @@ class BandStructure:
         for ik in kplist:
 
             if code == 'vasp':
+                msg = f'Parsing wave functions at k-point #{ik:>3d}'
+                log_message(msg, v, 2)
                 WF, Energy, kpt, npw = parser.parse_kpoint(ik, NBin, self.spinor)
                 kg = calc_gvectors(kpt,
                                    self.RecLattice,
                                    self.Ecut0,
                                    npw,
                                    self.Ecut,
-                                   spinor=self.spinor
+                                   spinor=self.spinor,
+                                   v=v
                                    )
                 if not self.spinor:
                     selectG = kg[3]
@@ -308,11 +321,15 @@ class BandStructure:
             elif code == 'abinit':
                 NBin = parser.nband[ik]
                 kpt = parser.kpt[ik]
+                msg = f'Parsing wave functions at k-point #{ik:>3d}: {kpt}'
+                log_message(msg, v, 2)
                 WF, Energy, kg = parser.parse_kpoint(ik)
                 WF, kg = sortIG(ik, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, self.spinor)
 
             elif code == 'espresso':
-                WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel)
+                msg = f'Parsing wave functions at k-point #{ik:>3d}'
+                log_message(msg, v, 2)
+                WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel, v=v)
                 WF, kg = sortIG(ik+1, kg, kpt, WF, self.RecLattice/2.0, self.Ecut0, self.Ecut, self.spinor)
 
             elif code == 'wannier90':
@@ -323,9 +340,12 @@ class BandStructure:
                                    self.RecLattice,
                                    self.Ecut,
                                    spinor=self.spinor,
-                                   nplanemax=np.max([ngx, ngy, ngz]) // 2
+                                   nplanemax=np.max([ngx, ngy, ngz]) // 2,
+                                   v=v
                                    )
                 selectG = tuple(kg[0:3])
+                msg = f'Parsing wave functions at k-point #{ik:>3d}: {kpt}'
+                log_message(msg, v, 2)
                 WF = parser.parse_kpoint(ik+1, selectG)
 
             # Pick energy of IBend+1 band to calculate gaps
@@ -354,7 +374,8 @@ class BandStructure:
                 refUC=self.spacegroup.refUC,
                 shiftUC=self.spacegroup.shiftUC,
                 symmetries_tables=self.spacegroup.symmetries_tables,
-                save_wf=save_wf
+                save_wf=save_wf,
+                v=v
                 )
             self.kpoints.append(kp)
         del WF
@@ -594,7 +615,7 @@ class BandStructure:
                 KP.write_trace()
             )
 
-    def Separate(self, isymop, degen_thresh=1e-5, groupKramers=True):
+    def Separate(self, isymop, degen_thresh=1e-5, groupKramers=True, v=0):
         """
         Separate band structure according to the eigenvalues of a symmetry 
         operation.
@@ -607,6 +628,8 @@ class BandStructure:
             Energy threshold used to determine degeneracy of energy-levels.
         groupKramers : bool, default=True
             If `True`, states will be coupled by Kramers' pairs.
+        v : int, default=0
+            Verbosity level. Default is set to minimalistic printing
 
         Returns
         -------
@@ -663,7 +686,7 @@ class BandStructure:
                 return dict({allvalues.mean(): self})
         else:
             allvalues = allvalues[np.argsort(np.angle(allvalues))]
-            print("allvalues:", allvalues)
+            log_message(f'allvalues: {allvalues}', v, 1)
             borders = np.where(abs(allvalues - np.roll(allvalues, 1)) > 0.01)[0]
             nv = len(allvalues)
             if len(borders) > 0:
@@ -673,7 +696,7 @@ class BandStructure:
                         for b1, b2 in zip(borders, np.roll(borders, -1))
                     ]
                 )
-                print("distinct values:", allvalues)
+                log_message(f'Distinct values: {allvalues}', v, 1)
                 subspaces = {}
                 for v in allvalues:
                     other = copy.copy(self)
@@ -681,8 +704,6 @@ class BandStructure:
                     for K in kpseparated:
                         vk = list(K.keys())
                         vk0 = vk[np.argmin(np.abs(v - vk))]
-                        #                    print ("v,vk",v,vk)
-                        #                    print ("v,vk",v,vk[np.argmin(np.abs(v-vk))])
                         if abs(vk0 - v) < 0.05:
                             other.kpoints.append(K[vk0])
                         subspaces[v] = other
@@ -795,22 +816,29 @@ class BandStructure:
                 file.write(s)
         file.close()
 
-    def KPOINTSline(self, kpred=None, breakTHRESH=0.1):
+    def KPOINTSline(self, kpred=None, supercell=None, breakTHRESH=0.1):
         """
-        Calculate cumulative length along a path in reciprocal space.
+        Calculate cumulative length along a k-path in cartesian coordinates.
+        ACCESSED DIRECTLY BY BANDUPPY>=0.3.4. DO NOT CHANGE UNLESS NECESSARY. 
+        NOTIFY THE DEVELOPERS IF ANY CHANGE IS MADE.
 
         Parameters
         ----------
         kpred : list, default=None
             Each element contains the direct coordinates of a k-point in the
             attribute `kpoints`.
+        supercell : array, shape=(3,3), default=None
+                Describes how the lattice vectors of the (super)cell used in the 
+                calculation are expressed in the basis vectors of the primitive 
+                cell. 
         breakTHRESH : float, default=0.1
             If the distance between two neighboring k-points in the path is 
-            larger than `breakTHRESH`, it is taken to be 0.
+            larger than `breakTHRESH`, it is taken to be 0. Set `breakTHRESH` 
+            to a large value if the unforlded kpoints line is continuous.
 
         Returns
         -------
-        array
+        K : array
             Each element is the cumulative distance along the path up to a 
             k-point. The first element is 0, so that the number of elements
             matches the number of k-points in the path.
@@ -818,6 +846,10 @@ class BandStructure:
         if kpred is None:
             kpred = [k.k for k in self.kpoints]
         KPcart = np.array(kpred).dot(self.RecLattice)
+        if supercell is None:
+            reciprocal_lattice = self.RecLattice
+        else:
+            reciprocal_lattice = supercell.T @ self.RecLattice 
         K = np.zeros(KPcart.shape[0])
         k = np.linalg.norm(KPcart[1:, :] - KPcart[:-1, :], axis=1)
         k[k > breakTHRESH] = 0.0

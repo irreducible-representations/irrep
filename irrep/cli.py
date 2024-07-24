@@ -25,7 +25,7 @@ import click
 from monty.serialization import dumpfn, loadfn
 
 from .bandstructure import BandStructure
-from .utility import str2list, short
+from .utility import str2list, short, log_message
 from . import __version__ as version
 
 
@@ -252,6 +252,16 @@ do not hesitate to contact the author:
           "Default: 1e-5"
           )
 )
+@click.option("-v",
+              count=True,
+              default=1,
+              help=("Verbosity flag. -vv: very detailed info, recommended "
+                    "when you get an error. -v (default for CLI): info about "
+                    "some decissions taken internaly through the code's "
+                    "execution, recommended when the code runs without "
+                    "errors, but the result is not what you expected. If you "
+                    "don't set this tag, you will get the basic info.")
+)
 def cli(
     ecut,
     fwav,
@@ -279,7 +289,8 @@ def cli(
     config,
     searchcell,
     correct_ecut0,
-    trans_thresh
+    trans_thresh,
+    v
 ):
     """
     Defines the "irrep" command-line tool interface.
@@ -295,17 +306,20 @@ def cli(
     # Warning about kpnames
     if kpnames is not None:
         searchcell = True
+
     elif not searchcell:
-        print(("Warning: transformation to the convenctional unit "
+        msg = ("Warning: transformation to the convenctional unit "
                "cell will not be calculated, nor its validity checked "
                "(if given). See the description of flag -searchcell "
                "on:\n"
                "irrep --help"
-               ))
-        print(("Warning: -kpnames not specified. Only traces of "
+               )
+        log_message(msg, v, 1)
+        msg = ("Warning: -kpnames not specified. Only traces of "
                "symmetry operations will be calculated. Remember that "
                "-kpnames must be specified to identify irreps"
-               ))
+               )
+        log_message(msg, v, 1)
 
     # parse input arguments into lists if supplied
     if symmetries:
@@ -340,7 +354,8 @@ def cli(
         shiftUC = shiftuc,
         search_cell = searchcell,
         degen_thresh=degenthresh,
-        save_wf=save_wf
+        save_wf=save_wf,
+        v=v
     )
 
     bandstr.spacegroup.show()
@@ -382,7 +397,7 @@ def cli(
         for isym in isymsep:
             print("\n-------- SEPARATING BY SYMMETRY # {} --------".format(isym))
             for s_old, bs in subbands.items():
-                separated = bs.Separate(isym, degen_thresh=degenthresh, groupKramers=groupkramers)
+                separated = bs.Separate(isym, degen_thresh=degenthresh, groupKramers=groupkramers, v=v)
                 for s_new, bs_separated in separated.items():
                     tmp_subbands[tuple(list(s_old) + [s_new])] = bs_separated
             subbands = tmp_subbands
