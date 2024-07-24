@@ -86,9 +86,12 @@ class BandStructure:
     save_wf : bool
         Whether wave functions should be kept as attribute after calculating 
         traces.
-    v : int, default=1
-        Number controlling the verbosity. 2: CLI case, detailed report; 1: 
-        recommended if the code is run in a Jupyter notebook.
+    v : int, default=0
+        Number controlling the verbosity. 
+        0: minimalistic printing. 
+        1: print info about decisions taken internally by the code, recommended 
+        when the code runs without errors but the result is not the expected.
+        2: print detailed info, recommended when the code stops with an error
 
     Attributes
     ----------

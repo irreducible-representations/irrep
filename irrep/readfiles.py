@@ -133,8 +133,8 @@ class ParserAbinit():
 
         Parameters
         ----------
-        v : int
-            Verbosity level
+        v : int, default=0
+            Verbosity level. Default set to minimal printing
 
         Returns
         -------
@@ -402,8 +402,8 @@ class ParserVasp:
 
         Parameters
         ----------
-        v : int
-            Verbosity level
+        v : int, default=0
+            Verbosity level. Default set to minimal printing
 
         Returns
         ------
