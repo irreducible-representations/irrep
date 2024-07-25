@@ -615,22 +615,22 @@ class SpaceGroup():
             centrosymmetric groups they adopt origin choice 1 of ITA, rather 
             than choice 2 (BCS).
         """
-        dataset = spglib.get_symmetry_dataset(cell)
+        dataset: spglib.SpglibDataset | None = spglib.get_symmetry_dataset(cell)
         symmetries = [
             SymmetryOperation(
                 rot,
-                dataset['translations'][i],
+                dataset.translations[i],
                 cell[0],
                 ind=i + 1,
                 spinor=self.spinor) for i,
             rot in enumerate(
-                dataset['rotations'])]
+                dataset.rotations)]
 
         return (symmetries, 
-                dataset['international'],
-                dataset['number'], 
-                dataset['transformation_matrix'],
-                dataset['origin_shift']
+                dataset.international,
+                dataset.number,
+                dataset.transformation_matrix,
+                dataset.origin_shift
                 )
 
     def json(self, symmetries=None):
