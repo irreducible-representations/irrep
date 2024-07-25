@@ -149,7 +149,8 @@ class BandStructure:
         trans_thresh=1e-5,
         degen_thresh=1e-8,
         save_wf=True,
-        alat=None
+        alat=None,
+        from_sym_file=None,
     ):
 
         code = code.lower()
@@ -233,7 +234,7 @@ class BandStructure:
                               shiftUC=shiftUC,
                               search_cell=search_cell,
                               trans_thresh=trans_thresh,
-                              alat=alat)
+                              alat=alat, from_sym_file=from_sym_file)
         if onlysym:
             return
 

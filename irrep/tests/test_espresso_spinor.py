@@ -76,7 +76,7 @@ def test_espresso_spinor_example():
     ):
         os.remove(test_output_file)
 
-def test_espresso_write_sym_cli():
+def test_espresso_write_sym():
 
     os.chdir(TEST_FILES_PATH / "espresso_spinor")
 
@@ -94,10 +94,39 @@ def test_espresso_write_sym_cli():
 
     compare_sym_files("Bi.sym", "Bi.sym.ref")
 
+
+
+def test_espresso_read_sym():
+
+    os.chdir(TEST_FILES_PATH / "espresso_spinor")
+
+    command = [
+        "irrep",
+        "-onlysym",
+        "-code=espresso",
+        "-prefix=Bi",
+        "-writesym",
+        "-from_sym_file=Bi.sym.reordered"
+    ]
+
+    output = subprocess.run(command, capture_output=True, text=True)
+    return_code = output.returncode
+    assert return_code == 0, output.stderr
+
+    compare_sym_files("Bi.sym", "Bi.sym.reordered")
+
+def readfile(filename):
+    with open(filename, "r") as f:
+        lines = f.readlines()
+    lines = [line.strip() for line in lines]
+    lines = [line for line in lines if len(line)>0 and line[0] != "#"]
+    return lines
+
 def compare_sym_files(frun,fref):
     # Load generated and reference output data
-    data_ref = open(fref, "r").readlines()
-    data_run = open(frun, "r").readlines()
+    data_ref = readfile(fref)
+    data_run = readfile(frun)
+
 
     # in future the order of symmetries might change so the test may break..
     for line_ref, line_run in zip(data_ref, data_run):
@@ -106,14 +135,3 @@ def compare_sym_files(frun,fref):
         assert len(a1) == len(a2), f"Reference: {line_ref}, Run: {line_run}"
         assert np.allclose(a1, a2), f"Reference: {line_ref}, Run: {line_run}"
 
-def test_espresso_write_sym_py():
-
-    prefix = os.path.join(TEST_FILES_PATH, "espresso_spinor/Bi")
-    bandstructure  = irrep.bandstructure.BandStructure(prefix=prefix,
-                                                       code="espresso",
-                                                       onlysym=True,
-                                                       calculate_traces=False,
-                                                       search_cell=False,
-                                                       )
-    # bandstructure.spacegroup.write_sym_file(prefix+"1.sym")
-    # compare_sym_files(prefix+"1.sym", prefix+".sym.ref")

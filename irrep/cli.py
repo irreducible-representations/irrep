@@ -128,6 +128,12 @@ do not hesitate to contact the author:
     help="Prefix used for Quantum Espresso calculations (data should be in prefix.save) or seedname of Wannier90 files. ",
 )
 @click.option(
+    "-from_sym_file",
+    type=str,
+    help="if present, the symmetry operations will be read from this file, instead of those computed by spglib",
+)
+
+@click.option(
     "-IBstart",
     type=int,
     default=0,
@@ -283,6 +289,7 @@ def cli(
     onlysym,
     writesym,
     alat,
+    from_sym_file,
     zak,
     wcc,
     plotbands,
@@ -355,7 +362,8 @@ def cli(
         shiftUC = shiftuc,
         search_cell = searchcell,
         degen_thresh=degenthresh,
-        save_wf=save_wf
+        save_wf=save_wf,
+        from_sym_file=from_sym_file,
     )
 
     bandstr.spacegroup.show()
