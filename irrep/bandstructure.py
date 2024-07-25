@@ -257,7 +257,8 @@ class BandStructure:
             except:
                 raise RuntimeError("Invalid value for keyword EF. It must be "
                                    "a number or 'auto'")
-        print("Efermi: {:.4f} eV".format(self.efermi))
+
+        log_message(f"Efermi: {self.efermi:.4f} eV", v, 1)
 
         # Fix indices of bands to be considered
         if IBstart is None or IBstart <= 0:
@@ -833,7 +834,7 @@ class BandStructure:
         supercell : array, shape=(3,3), default=None
                 Describes how the lattice vectors of the (super)cell used in the 
                 calculation are expressed in the basis vectors of the primitive 
-                cell. 
+                cell. USED IN BANDUPPY. DO NOT CHANGE UNLESS NECESSARY.
         breakTHRESH : float, default=0.1
             If the distance between two neighboring k-points in the path is 
             larger than `breakTHRESH`, it is taken to be 0. Set `breakTHRESH` 
@@ -848,11 +849,11 @@ class BandStructure:
         """
         if kpred is None:
             kpred = [k.k for k in self.kpoints]
-        KPcart = np.array(kpred).dot(self.RecLattice)
         if supercell is None:
             reciprocal_lattice = self.RecLattice
         else:
             reciprocal_lattice = supercell.T @ self.RecLattice 
+        KPcart = np.dot(kpred, reciprocal_lattice)
         K = np.zeros(KPcart.shape[0])
         k = np.linalg.norm(KPcart[1:, :] - KPcart[:-1, :], axis=1)
         k[k > breakTHRESH] = 0.0
