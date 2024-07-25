@@ -251,7 +251,7 @@ class Irrep:
                 * np.array(line[2 + self.nsym : 2 + 2 * self.nsym], dtype=float)
             )
         self.characters = {k_point.isym[i]: ch[i] for i in range(self.nsym)}
-        log_message(f"the irrep {self.name}  ch= {self.characters}", v, 2)
+        log_message(f"## Irrep {self.name}\nCharacter:\n{self.characters}", v, 2)
         assert len(self.characters) == self.nsym
 
     def show(self):
@@ -329,12 +329,13 @@ class IrrepTable:
                 spinor="spin" if self.spinor else "scal",
                 root=os.path.dirname(__file__),
             )
-            msg = f"reading from a standard irrep table <{name}>"
+            msg = f"Reading standard irrep table <{name}>"
             log_message(msg, v, 2)
         else:
-            msg = f"reading from a user-defined irrep table <{name}>"
+            msg = f"Reading a user-defined irrep table <{name}>"
             log_message(msg, v, 2)
 
+        log_message("\n---------- DATA FROM THE TABLE ----------\n", v, 2)
         lines = open(name).readlines()[-1::-1]
         while len(lines) > 0:
             l = lines.pop().strip().split("=")
@@ -360,7 +361,7 @@ class IrrepTable:
                         pass
                 break
 
-        msg = "symmetries are:\n" + "\n".join(s.str() for s in self.symmetries)
+        msg = "Symmetries are:\n" + "\n".join(s.str() for s in self.symmetries)
         log_message(msg, v, 2)
 
         self.irreps = []
@@ -368,14 +369,19 @@ class IrrepTable:
             l = lines.pop().strip()
             try:
                 kp = KPoint(line=l)
-                logger.debug("kpoint successfully read:", kp.str())
+                msg = f"k-point successfully read:\n{kp.str()}"
+                log_message(msg, v, 2)
             except Exception as err:
-                logger.debug("error while reading k-point <{0}>".format(l), err)
                 try:
                     self.irreps.append(Irrep(line=l, k_point=kp, v=v))
                 except Exception as err:
-                    log_message(f"Error while reading irrep <{l}>: {err}", v, 2)
-                    pass
+                    if len(l.split()) > 0:
+                        msg = ("WARNING: could not parse k-point nor irrep from the "
+                               "following line <\n{}>"
+                               .format(l))
+                        log_message(msg, v, 2)
+                    else:
+                        pass
 
     def show(self):
         '''

@@ -369,7 +369,7 @@ def cli(
                 )
 
     # Identify irreps. If kpnames wasn't set, all will be labelled as None
-    bandstr.identify_irreps(kpnames)
+    bandstr.identify_irreps(kpnames, v=v)
 
     # Temporary, until we make it valid for isymsep
     bandstr.write_characters()

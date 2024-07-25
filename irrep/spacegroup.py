@@ -468,6 +468,8 @@ class SpaceGroup():
         It is `True` if kpnames was specified in CLI.
     trans_thresh : float, default=1e-5
         Threshold used to compare translational parts of symmetries.
+    v : int, default=0
+        Verbosity level. Default set to minimalistic printing
 
     Attributes
     ----------
@@ -534,7 +536,7 @@ class SpaceGroup():
         self.order = len(self.symmetries)
 
         # Determine refUC and shiftUC according to entries in CLI
-        self.symmetries_tables = IrrepTable(self.number, self.spinor).symmetries
+        self.symmetries_tables = IrrepTable(self.number, self.spinor, v=v).symmetries
         self.refUC, self.shiftUC = self.determine_basis_transf(
                                             refUC_cli=refUC, 
                                             shiftUC_cli=shiftUC,
@@ -856,7 +858,7 @@ class SpaceGroup():
         return np.array([R1.dot(b).dot(R1.T.conj()).dot(np.linalg.inv(
             a)).diagonal().mean().real.round() for a, b in zip(S1, S2)], dtype=int)
 
-    def get_irreps_from_table(self, kpname, K):
+    def get_irreps_from_table(self, kpname, K, v=0):
         """
         Read irreps of the little-group of a maximal k-point. 
         
@@ -866,6 +868,8 @@ class SpaceGroup():
             Label of the maximal k-point.
         K : array, shape=(3,)
             Direct coordinates of the k-point.
+        v : int, default=0
+            Verbosity level. Default set to minimalistic printing
 
         Returns
         -------
@@ -892,7 +896,7 @@ class SpaceGroup():
             given in parameter `kpname`.
         """
 
-        table = IrrepTable(self.number, self.spinor)
+        table = IrrepTable(self.number, self.spinor, v=v)
         tab = {}
         for irr in table.irreps:
             if irr.kpname == kpname:

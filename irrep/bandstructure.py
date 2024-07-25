@@ -389,7 +389,7 @@ class BandStructure:
         '''Getter for the number of k points'''
         return len(self.kpoints)
 
-    def identify_irreps(self, kpnames):
+    def identify_irreps(self, kpnames, v=0):
         '''
         Identifies the irreducible representations of wave functions based on 
         the traces of symmetries of the little co-group. Each element of 
@@ -400,12 +400,14 @@ class BandStructure:
         ----------
         kpnames : list
             List of labels of the maximal k points.
+        v : int, default=0
+            Verbosity level. Default set to minimalistic printing
         '''
 
         for ik, KP in enumerate(self.kpoints):
             
             if kpnames is not None:
-                irreps = self.spacegroup.get_irreps_from_table(kpnames[ik], KP.k)
+                irreps = self.spacegroup.get_irreps_from_table(kpnames[ik], KP.k, v=v)
             else:
                 irreps = None
             KP.identify_irreps(irreptable=irreps)
