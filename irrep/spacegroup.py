@@ -565,7 +565,11 @@ class SpaceGroup():
                                                           3], self.Lattice[(i + 2) %
                                                                            3]) for i in range(3)]) * 2 * np.pi / np.linalg.det(self.Lattice)
         self.order = len(self.symmetries)
+<<<<<<< HEAD
         self.alat = alat
+=======
+
+>>>>>>> master
         # Determine refUC and shiftUC according to entries in CLI
         self.symmetries_tables = IrrepTable(self.number, self.spinor).symmetries
         self.refUC, self.shiftUC = self.determine_basis_transf(
@@ -753,6 +757,7 @@ class SpaceGroup():
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
                 symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
+<<<<<<< HEAD
 
     def write_sym_file(self, prefix, alat=None):
         """
@@ -776,6 +781,8 @@ class SpaceGroup():
             f.write(" {0} \n".format(len(self.symmetries)))
             for symop in self.symmetries:
                 f.write(symop.str_sym(alat))
+=======
+>>>>>>> master
 
     def write_trace(self):
         """
