@@ -4,6 +4,9 @@ from pathlib import Path
 from monty.serialization import loadfn
 import numpy as np
 
+import irrep
+import irrep.bandstructure
+
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 
 def test_espresso_spinor_example():
@@ -72,3 +75,45 @@ def test_espresso_spinor_example():
             "irrep-output.json"
     ):
         os.remove(test_output_file)
+
+def test_espresso_write_sym_cli():
+
+    os.chdir(TEST_FILES_PATH / "espresso_spinor")
+
+    command = [
+        "irrep",
+        "-onlysym",
+        "-code=espresso",
+        "-prefix=Bi",
+        "-writesym",
+    ]
+
+    output = subprocess.run(command, capture_output=True, text=True)
+    return_code = output.returncode
+    assert return_code == 0, output.stderr
+
+    compare_sym_files("Bi.sym", "Bi.sym.ref")
+
+def compare_sym_files(frun,fref):
+    # Load generated and reference output data
+    data_ref = open(fref, "r").readlines()
+    data_run = open(frun, "r").readlines()
+
+    # in future the order of symmetries might change so the test may break..
+    for line_ref, line_run in zip(data_ref, data_run):
+        a1 = np.array(line_ref.split(), dtype=float)
+        a2 = np.array(line_run.split(), dtype=float)
+        assert len(a1) == len(a2), f"Reference: {line_ref}, Run: {line_run}"
+        assert np.allclose(a1, a2), f"Reference: {line_ref}, Run: {line_run}"
+
+def test_espresso_write_sym_py():
+
+    prefix = os.path.join(TEST_FILES_PATH, "espresso_spinor/Bi")
+    bandstructure  = irrep.bandstructure.BandStructure(prefix=prefix,
+                                                       code="espresso",
+                                                       onlysym=True,
+                                                       calculate_traces=False,
+                                                       search_cell=False,
+                                                       )
+    # bandstructure.spacegroup.write_sym_file(prefix+"1.sym")
+    # compare_sym_files(prefix+"1.sym", prefix+".sym.ref")

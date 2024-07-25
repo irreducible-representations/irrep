@@ -148,7 +148,8 @@ class BandStructure:
         search_cell = False,
         trans_thresh=1e-5,
         degen_thresh=1e-8,
-        save_wf=True
+        save_wf=True,
+        alat=None
     ):
 
         code = code.lower()
@@ -189,7 +190,10 @@ class BandStructure:
 
             parser = ParserEspresso(prefix)
             self.spinor = parser.spinor
-            self.Lattice, positions, typat = parser.parse_lattice()
+            # alat is saved to be used to write the prefix.sym file
+            self.Lattice, positions, typat, _alat = parser.parse_lattice()
+            if alat is None:
+                alat = _alat
             spinpol, self.Ecut0, EF_in, NK, NBin_list = parser.parse_header()
 
             # Set NBin
@@ -228,7 +232,8 @@ class BandStructure:
                               refUC=refUC,
                               shiftUC=shiftUC,
                               search_cell=search_cell,
-                              trans_thresh=trans_thresh)
+                              trans_thresh=trans_thresh,
+                              alat=alat)
         if onlysym:
             return
 
