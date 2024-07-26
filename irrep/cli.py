@@ -128,6 +128,12 @@ do not hesitate to contact the author:
     help="Prefix used for Quantum Espresso calculations (data should be in prefix.save) or seedname of Wannier90 files. ",
 )
 @click.option(
+    "-from_sym_file",
+    type=str,
+    help="if present, the symmetry operations will be read from this file, instead of those computed by spglib",
+)
+
+@click.option(
     "-IBstart",
     type=int,
     default=0,
@@ -191,6 +197,19 @@ do not hesitate to contact the author:
     flag_value=True,
     default=False,
     help="Only calculate the symmetry operations",
+)
+@click.option(
+    "-writesym",
+    flag_value=True,
+    default=False,
+    help="write the prefix.sym file needed for the Wannier90 sitesym calculations",
+)
+@click.option(
+    "-alat",
+    type=float,
+    default=None,
+    help="for writesym - the alat parameter. For QE, it is read from the prefix.save/data-file-schema.xml"
+    "For other codes needs to be provided. (To be honest, the .sym file is useless for other codes for now, but still ..)",
 )
 @click.option("-ZAK", flag_value=True, default=False, help="Calculate Zak phase")
 @click.option(
@@ -278,6 +297,9 @@ def cli(
     shiftuc,
     isymsep,
     onlysym,
+    writesym,
+    alat,
+    from_sym_file,
     zak,
     wcc,
     plotbands,
@@ -355,10 +377,14 @@ def cli(
         search_cell = searchcell,
         degen_thresh=degenthresh,
         save_wf=save_wf,
-        v=v
+        v=v,
+        from_sym_file=from_sym_file
     )
 
     bandstr.spacegroup.show()
+
+    if writesym:
+        bandstr.spacegroup.write_sym_file(filename=prefix+".sym", alat=alat)
 
     if onlysym:
         exit()

@@ -16,13 +16,14 @@
 ##################################################################
 
 
+import warnings
 import numpy as np
 from math import pi
 from scipy.linalg import expm
 import spglib
 from irreptables import IrrepTable
 from scipy.optimize import minimize
-from .utility import str_, log_message
+from .utility import str_, log_message, BOHR
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -412,6 +413,32 @@ class SymmetryOperation():
         return ("   ".join(" ".join("{0:2d}".format(x) for x in r) for r in R) + "     " + " ".join("{0:10.6f}".format(x) for x in t) + (
             ("      " + "    ".join("  ".join("{0:10.6f}".format(x) for x in (X.real, X.imag)) for X in S.reshape(-1))) if S is not None else "") + "\n")
 
+    def str_sym(self, alat):
+        """
+        Write 4 strings (+1 empty) for the prefix.sym file 
+        for sitesym in wannier90: 
+        The symmetry operations act on a point r as rR − t.
+
+        Parameters
+        ----------
+        alat : float
+            Lattice parameter in angstroms.
+
+        Returns
+        -------
+        str
+            Description to print.
+            1 blank line
+            3 lines: cartesian rotation matrix
+            1 line : cartesian translation in units of alat
+        """
+
+        Rcart  = self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
+        t = - self.translation @ self.Lattice/alat/BOHR   
+
+        arr = np.vstack((Rcart, [t]))
+        return "\n"+"".join("   ".join(f"{x:20.15f}" for x in r) + "\n" for r in arr  )
+
     def json_dict(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         '''
         Prepare dictionary with info of symmetry to save in JSON
@@ -468,6 +495,11 @@ class SpaceGroup():
         It is `True` if kpnames was specified in CLI.
     trans_thresh : float, default=1e-5
         Threshold used to compare translational parts of symmetries.
+    alat : float, default=None
+        Lattice parameter in angstroms (quantum espresso convention).
+    from_sym_file : str, default=None
+        If provided, the symmetry operations are read from this file.
+        (format of pw2wannier90 prefix.sym  file)
     v : int, default=0
         Verbosity level. Default set to minimalistic printing
 
@@ -503,6 +535,11 @@ class SpaceGroup():
     shiftUC : array, default=None
         Translation taking the origin of the unit cell used in the DFT 
         calculation to that of the standard setting.
+    alat : float
+        Lattice parameter in angstroms (quantum espresso convention).
+    from_sym_file : str, default=None
+        if provided, the symmetry operations are read from this file.
+        (format of pw2wannier90 prefix.sym  file)
 
     Notes
     -----
@@ -522,6 +559,8 @@ class SpaceGroup():
             shiftUC=None,
             search_cell=False,
             trans_thresh=1e-5,
+            alat=None,
+            from_sym_file=None,
             v=0
             ):
         self.spinor = spinor
@@ -532,8 +571,9 @@ class SpaceGroup():
          self.name, 
          self.number, 
          refUC_tmp, 
-         shiftUC_tmp) = self._findsym(cell)
+         shiftUC_tmp) = self._findsym(cell, from_sym_file, alat)
         self.order = len(self.symmetries)
+        self.alat=alat
 
         # Determine refUC and shiftUC according to entries in CLI
         self.symmetries_tables = IrrepTable(self.number, self.spinor, v=v).symmetries
@@ -580,7 +620,7 @@ class SpaceGroup():
                 log_message(msg, v, 1)
                 pass
 
-    def _findsym(self, cell):
+    def _findsym(self, cell, from_sym_file, alat):
         """
         Finds the space-group and constructs a list of symmetry operations
         
@@ -594,6 +634,11 @@ class SpaceGroup():
             atomic species of an ion. See `cell` parameter of function 
             `get_symmetry` in 
             `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
+        from_sym_file : str, default=None
+            if provided, the symmetry operations are read from this file.
+            (format of pw2wannier90 prefix.sym  file)
+        alat : float
+            Lattice parameter in angstroms. (quantum espresso convention)
         
         Returns
         -------
@@ -618,15 +663,23 @@ class SpaceGroup():
             than choice 2 (BCS).
         """
         dataset: spglib.SpglibDataset | None = spglib.get_symmetry_dataset(cell)
+        lattice = cell[0]
+        if from_sym_file is not None:
+            assert alat is not None, "Lattice parameter must be provided to read symmetries from file"
+            rot_cart, trans_cart = read_sym_file(from_sym_file)
+            rotations, translations = cart_to_crystal(rot_cart, trans_cart, lattice, alat )
+        else:
+            rotations = dataset.rotations
+            translations = dataset.translations
         symmetries = [
             SymmetryOperation(
                 rot,
-                dataset.translations[i],
+                translations[i],
                 cell[0],
                 ind=i + 1,
                 spinor=self.spinor) for i,
             rot in enumerate(
-                dataset.rotations)]
+                rotations)]
 
         return (symmetries, 
                 dataset.international,
@@ -724,6 +777,32 @@ class SpaceGroup():
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
                 symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
+
+
+    def write_sym_file(self, filename, alat=None):
+        """
+        Write symmetry operations to a file.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file.
+        alat : float, default=None
+            Lattice parameter in angstroms. If not specified, the lattice 
+            parameter is not written to the file.
+        """
+
+        if alat is None:
+            if hasattr(self, 'alat'):
+                alat = self.alat
+        if alat is None:
+            warnings.warn("Lattice parameter not specified. Symmetry operations will be written assuming A=1")
+            alat = 1
+        with open(filename, "w") as f:
+            f.write(" {0} \n".format(len(self.symmetries)))
+            for symop in self.symmetries:
+                f.write(symop.str_sym(alat))
+
 
     def write_trace(self):
         """
@@ -1259,3 +1338,68 @@ class SpaceGroup():
                         )
         vecs = np.vstack([vecs + r for r in self.vecs_centering()])
         return vecs
+
+
+def read_sym_file(fname):
+    """
+    Read symmetry operations from a file.
+
+    Parameters
+    ----------
+    fname : str
+        Name of the file.
+
+    Returns
+    -------
+    np.array(Nsym, 3, 3)
+        Each element is a 3x3 array describing a rotation matrix in cartesian coordinates
+    np.array(Nsym, 3)
+        Each element is a 3D vector describing a translation in units of alat.
+    """
+
+    with open(fname, "r") as f:
+        lines = f.readlines()
+    lines = [line.split() for line in lines]
+    lines = [line for line in lines if len(line) > 0]
+    nsym = int(lines[0][0])
+    assert len(lines) == 1 + 4 * nsym
+    RT = np.array(lines[1:], dtype=float).reshape(nsym, 4, 3)
+    rotations = RT[:, 0:3]
+    translations = RT[:, 3] 
+    return rotations, translations
+
+def cart_to_crystal(rot_cart, trans_cart, lattice, alat):
+    """
+    Convert rotation and translation matrices from cartesian to crystal 
+    coordinates.
+
+    Parameters
+    ----------
+    rot_cart : array, shape=(Nsym, 3, 3)
+        Each element is a 3x3 array describing a rotation matrix in cartesian
+        coordinates
+    trans_cart : array, shape=(Nsym, 3)
+        Each element is a 3D vector describing a translation in cartesian
+        coordinates
+    lattice : array, shape=(3, 3)
+        Each row contains cartesian coordinates of a basis vector forming the 
+        unit-cell in real space.
+    alat : float, default=1
+        Lattice parameter in angstroms (quantum espresso convention).
+
+    Returns
+    -------
+    array, shape=(Nsym, 3, 3)
+        Each element is a 3x3 array describing a rotation matrix in crystal 
+        coordinates (should be integers)
+    array, shape=(Nsym, 3)
+        Each element is a 3D vector describing a translation in crystal 
+        coordinates
+    """
+
+    lat_inv = np.linalg.inv(lattice)
+    rot_crystal = np.array([(lat_inv.T @ rot @  lattice.T) for rot in rot_cart])
+    assert np.allclose(rot_crystal, np.round(rot_crystal)), f"rotations are not integers in crystal coordinates : {rot_crystal}"
+    rot_crystal = np.round(rot_crystal).astype(int)
+    trans_crystal = trans_cart @ lat_inv * alat * BOHR
+    return rot_crystal , trans_crystal 
