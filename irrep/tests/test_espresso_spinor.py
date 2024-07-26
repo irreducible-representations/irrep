@@ -4,9 +4,6 @@ from pathlib import Path
 from monty.serialization import loadfn
 import numpy as np
 
-import irrep
-import irrep.bandstructure
-
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 
 def test_espresso_spinor_example():

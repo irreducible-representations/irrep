@@ -19,6 +19,7 @@
 import numpy as np
 import numpy.linalg as la
 from .readfiles import Hartree_eV
+from .utility import log_message
 
 
 class NotSymmetryError(RuntimeError):
@@ -45,6 +46,7 @@ def calc_gvectors(
     thresh=1e-3,
     spinor=True,
     nplanemax=10000,
+    v=0
 ):
     """ 
     Generates G-vectors taking part in the plane-wave expansion of 
@@ -85,6 +87,10 @@ def calc_gvectors(
         the same energy as the plane-wave of the current column.
     
 """
+
+    msg = ('Generating plane waves at k: ({} )'
+           .format(' '.join([f'{x:6.3f}' for x in K])))
+    log_message(msg, v, 2)
     if Ecut1 <= 0:
         Ecut1 = Ecut
     B = RecLattice
@@ -96,7 +102,8 @@ def calc_gvectors(
     for N in range(nplanemax):
         flag = True
         if N % 10 == 0:
-            print(N, len(igall))
+            msg = f'Cycle {N:>3d}: number of plane waves = {len(igall):>10d}'
+            log_message(msg, v, 2)
         if len(igall) >= nplane / 2:    # Only enters if vasp
             if spinor:
                 break

@@ -21,7 +21,7 @@ import scipy
 from scipy.io import FortranFile as FF
 from sys import stdout
 from .utility import FortranFileR as FFR
-from .utility import str2bool, BOHR, split
+from .utility import str2bool, BOHR, split, log_message
 import xml.etree.ElementTree as ET
 
 Rydberg_eV = 13.605693  # eV
@@ -126,10 +126,15 @@ class ParserAbinit():
         self.fWFK = FFR(filename)  # temporary
         self.kpt_count = 0  # index of the next k-point to be read
 
-    def parse_header(self):
+    def parse_header(self, v=0):
         '''
         Parse header of WFK file and save as attributes quantities that 
         will be used in the rest of methods
+
+        Parameters
+        ----------
+        v : int, default=0
+            Verbosity level. Default set to minimal printing
 
         Returns
         -------
@@ -165,10 +170,10 @@ class ParserAbinit():
         headform, fform = record[0][1]
         defversion = ['8.6.3', '9.6.2', '8.4.4', '8.10.3']
         if codsvn not in defversion:
-            print(("WARNING, the version {0} of abinit is not in {1} "
+            msg = ("WARNING, the version {0} of abinit is not in {1} "
                    "and may not be fully tested"
                    .format(codsvn, defversion))
-                  )
+            log_message(msg, v, 1)
         if headform < 80:
             raise ValueError(
                 "Head form {0}<80 is not supported".format(headform)
@@ -312,7 +317,6 @@ class ParserAbinit():
             used in the expansion of wave functions
         '''
 
-        print("Reading k-point", ik)
         nspinor = 2 if self.spinor else 1
 
         # We need to skip lines in fWFK until we reach the lines of ik
@@ -392,9 +396,14 @@ class ParserVasp:
         if not onlysym:
             self.fWAV = WAVECARFILE(fWAV)
 
-    def parse_poscar(self):
+    def parse_poscar(self, v=0):
         """
         Parses POSCAR.
+
+        Parameters
+        ----------
+        v : int, default=0
+            Verbosity level. Default set to minimal printing
 
         Returns
         ------
@@ -407,6 +416,8 @@ class ParserVasp:
             Each element is a number identifying the atomic species of an ion.
         """
 
+        msg = f'Reading POSCAR: {self.fPOS}'
+        log_message(msg, v, 1)
         fpos = (l.strip() for l in open(self.fPOS))
         title = next(fpos)  # title
         del title
@@ -437,7 +448,7 @@ class ParserVasp:
                 positions[i] = np.array(l.split()[:3])
                 i += 1
             except Exception as err:
-                print(err)
+                log_message(err, msg, 1)
                 pass
         if sum(nat) != i:
             raise RuntimeError(
@@ -576,7 +587,8 @@ class ParserEspresso:
             NBin_dw=int(self.bandstr.find('nbnd_dw').text)
             NBin_up=int(self.bandstr.find('nbnd_up').text)
             spinpol=True
-            print ("spin-polarised bandstructure composed of {} up and {} dw states".format(NBin_dw,NBin_up))
+            print("spin-polarised bandstructure composed of {} up and {} dw "
+                  "states".format(NBin_up,NBin_dw))
             NBin_dw+NBin_up
         except AttributeError:
             spinpol=False
@@ -646,7 +658,7 @@ class ParserEspresso:
         return lattice, positions, typat, alat
 
 
-    def parse_kpoint(self, ik, NBin, spin_channel):
+    def parse_kpoint(self, ik, NBin, spin_channel, v=0):
         '''
         Parse block of a particular k-point from `data-file-schema.xml` file
 
@@ -671,6 +683,8 @@ class ParserEspresso:
             reciprocal lattice vector
         kpt : array
             Direct coords of the k-point w.r.t. DFT cell vectors
+        v : int, default=0
+            Verbosity level. Default set to minimalistic printing
         '''
 
         kptxml = self.bandstr.findall("ks_energies")[ik]
@@ -703,7 +717,8 @@ class ParserEspresso:
         # Parse coefficients of wave functions
         npw = int(kptxml.find("npw").text)
         npwtot = npw * (2 if self.spinor else 1)
-        print('npwtot: {}, igwx: {}'.format(npwtot, igwx))
+        msg = 'npwtot: {}, igwx: {}'.format(npwtot, igwx)
+        log_message(msg, v, 2)
         WF = np.zeros((NBin, npwtot), dtype=complex)
         for ib in range(NBin):
             rec = record_abinit(fWFC, "{}f8".format(npwtot * 2))

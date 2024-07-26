@@ -250,3 +250,21 @@ def format_matrix(A):
         + "\n"
         for a in A
     )
+
+
+def log_message(msg, verbosity, level):
+    '''
+    Logger to decide if a message is printed or not
+
+    Parameters
+    ----------
+    msg : str
+        Message to print
+    verbosity : int
+        Verbosity set for the current run of the code
+    level : int
+        If `verbosity >= level`, the message will be printed
+    '''
+
+    if verbosity >= level:
+        print(msg)
