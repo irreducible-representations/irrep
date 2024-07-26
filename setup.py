@@ -18,10 +18,11 @@ setuptools.setup(
         "monty",
         "ruamel.yaml",
         "irreptables",
-        "fortio"
+        "fortio",
+        "packaging"
     ],
     include_package_data=False,
-    url="https://github.com/stepan-tsirkin/irrep",
+    url="https://github.com/irreducible-representations/irrep.git",
     packages=["irrep"],
     classifiers=[
         "Programming Language :: Python :: 3",
