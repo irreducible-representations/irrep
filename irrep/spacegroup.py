@@ -418,10 +418,12 @@ class SymmetryOperation():
         Write 4 strings (+1 empty) for the prefix.sym file 
         for sitesym in wannier90: 
         The symmetry operations act on a point r as rR − t.
+
         Parameters
         ----------
         alat : float
             Lattice parameter in angstroms.
+
         Returns
         -------
         str
@@ -430,13 +432,12 @@ class SymmetryOperation():
             3 lines: cartesian rotation matrix
             1 line : cartesian translation in units of alat
         """
+
         Rcart  = self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
         t = - self.translation @ self.Lattice/alat/BOHR   
 
         arr = np.vstack((Rcart, [t]))
         return "\n"+"".join("   ".join(f"{x:20.15f}" for x in r) + "\n" for r in arr  )
-
-
 
     def json_dict(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         '''
@@ -494,6 +495,11 @@ class SpaceGroup():
         It is `True` if kpnames was specified in CLI.
     trans_thresh : float, default=1e-5
         Threshold used to compare translational parts of symmetries.
+    alat : float, default=None
+        Lattice parameter in angstroms (quantum espresso convention).
+    from_sym_file : str, default=None
+        If provided, the symmetry operations are read from this file.
+        (format of pw2wannier90 prefix.sym  file)
 
     Attributes
     ----------
@@ -775,14 +781,16 @@ class SpaceGroup():
     def write_sym_file(self, filename, alat=None):
         """
         Write symmetry operations to a file.
+
         Parameters
         ----------
-        prefix : str
-            Prefix for the name of the file.
+        filename : str
+            Name of the file.
         alat : float, default=None
             Lattice parameter in angstroms. If not specified, the lattice 
             parameter is not written to the file.
         """
+
         if alat is None:
             if hasattr(self, 'alat'):
                 alat = self.alat
@@ -1356,7 +1364,8 @@ def read_sym_file(fname):
 
 def cart_to_crystal(rot_cart, trans_cart, lattice, alat):
     """
-    Convert rotation and translation matrices from cartesian to crystal coordinates.
+    Convert rotation and translation matrices from cartesian to crystal 
+    coordinates.
 
     Parameters
     ----------
@@ -1375,10 +1384,13 @@ def cart_to_crystal(rot_cart, trans_cart, lattice, alat):
     Returns
     -------
     array, shape=(Nsym, 3, 3)
-        Each element is a 3x3 array describing a rotation matrix in crystal coordinates (should be integers)
+        Each element is a 3x3 array describing a rotation matrix in crystal 
+        coordinates (should be integers)
     array, shape=(Nsym, 3)
-        Each element is a 3D vector describing a translation in crystal coordinates
+        Each element is a 3D vector describing a translation in crystal 
+        coordinates
     """
+
     lat_inv = np.linalg.inv(lattice)
     rot_crystal = np.array([(lat_inv.T @ rot @  lattice.T) for rot in rot_cart])
     assert np.allclose(rot_crystal, np.round(rot_crystal)), f"rotations are not integers in crystal coordinates : {rot_crystal}"
