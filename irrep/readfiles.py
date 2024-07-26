@@ -607,6 +607,8 @@ class ParserEspresso:
         typat : list
             Indices that describe the type of element at each position. 
             All ions of the same type share the same index.
+        alat : float
+            Lattice parameter in Quantum Espresso's convention
         '''
 
         ntyp = int(self.input.find("atomic_species").attrib["ntyp"])
