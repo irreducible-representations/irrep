@@ -607,11 +607,14 @@ class ParserEspresso:
         typat : list
             Indices that describe the type of element at each position. 
             All ions of the same type share the same index.
+        alat : float
+            Lattice parameter in Quantum Espresso's convention
         '''
 
         ntyp = int(self.input.find("atomic_species").attrib["ntyp"])
         struct = self.input.find("atomic_structure")
         nat = int(struct.attrib["nat"])
+        alat = float(struct.attrib["alat"])
         del nat
 
         # Parse lattice vectors
@@ -640,7 +643,7 @@ class ParserEspresso:
         for at in struct.find("atomic_positions").findall("atom"):
             typat.append(atnumbers[at.attrib["name"]])
 
-        return lattice, positions, typat
+        return lattice, positions, typat, alat
 
 
     def parse_kpoint(self, ik, NBin, spin_channel):
