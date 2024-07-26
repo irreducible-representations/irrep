@@ -24,6 +24,7 @@ import spglib
 from irreptables import IrrepTable
 from scipy.optimize import minimize
 from .utility import str_, log_message, BOHR
+from packaging import version
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -662,31 +663,42 @@ class SpaceGroup():
             centrosymmetric groups they adopt origin choice 1 of ITA, rather 
             than choice 2 (BCS).
         """
-        dataset: spglib.SpglibDataset | None = spglib.get_symmetry_dataset(cell)
+
         lattice = cell[0]
+        dataset = spglib.get_symmetry_dataset(cell)
+        if version.parse(spglib.__version__) < version.parse('2.5.0'):
+            symbol = dataset['international']
+            number = dataset['number']
+            transformation_matrix = dataset['transformation_matrix']
+            origin_shift = dataset['origin_shift']
+            rotations = dataset['rotations']
+            translations = dataset['translations']
+        else:
+            symbol = dataset.international
+            number = dataset.number
+            transformation_matrix = dataset.transformation_matrix
+            origin_shift = dataset.origin_shift
+            rotations = dataset.rotations
+            translations = dataset.translations
+
         if from_sym_file is not None:
             assert alat is not None, "Lattice parameter must be provided to read symmetries from file"
             rot_cart, trans_cart = read_sym_file(from_sym_file)
             rotations, translations = cart_to_crystal(rot_cart, trans_cart, lattice, alat )
-        else:
-            rotations = dataset.rotations
-            translations = dataset.translations
-        symmetries = [
-            SymmetryOperation(
-                rot,
-                translations[i],
-                cell[0],
-                ind=i + 1,
-                spinor=self.spinor) for i,
-            rot in enumerate(
-                rotations)]
+
+        symmetries = []
+        for i, rot in enumerate(rotations):
+            symmetries.append(SymmetryOperation(rot,
+                                                translations[i],
+                                                cell[0],
+                                                ind=i+1,
+                                                spinor=self.spinor))
 
         return (symmetries, 
-                dataset.international,
-                dataset.number,
-                dataset.transformation_matrix,
-                dataset.origin_shift
-                )
+                symbol,
+                number,
+                transformation_matrix,
+                origin_shift)
 
     def json(self, symmetries=None):
         '''
