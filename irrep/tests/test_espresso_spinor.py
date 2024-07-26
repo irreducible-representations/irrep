@@ -93,7 +93,7 @@ def test_espresso_write_sym():
     assert return_code == 0, output.stderr
 
     compare_sym_files("Bi.sym", "Bi.sym.ref")
-
+    os.remove("Bi.sym")
 
 
 def test_espresso_read_sym():
@@ -106,14 +106,15 @@ def test_espresso_read_sym():
         "-code=espresso",
         "-prefix=Bi",
         "-writesym",
-        "-from_sym_file=Bi.sym.reordered"
+        "-from_sym_file=Bi.sym.reordered.ref"
     ]
 
     output = subprocess.run(command, capture_output=True, text=True)
     return_code = output.returncode
     assert return_code == 0, output.stderr
 
-    compare_sym_files("Bi.sym", "Bi.sym.reordered")
+    compare_sym_files("Bi.sym", "Bi.sym.reordered.ref")
+    os.remove("Bi.sym")
 
 def readfile(filename):
     with open(filename, "r") as f:
