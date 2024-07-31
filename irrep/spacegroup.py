@@ -16,6 +16,7 @@
 ##################################################################
 
 
+from functools import cached_property
 import warnings
 import numpy as np
 from math import pi
@@ -434,7 +435,7 @@ class SymmetryOperation():
         """
 
         Rcart  = self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
-        t = - self.translation @ self.Lattice/alat/BOHR   
+        t =  - self.translation @ self.Lattice/alat/BOHR   
 
         arr = np.vstack((Rcart, [t]))
         return "\n"+"".join("   ".join(f"{x:20.15f}" for x in r) + "\n" for r in arr  )
@@ -465,6 +466,61 @@ class SymmetryOperation():
         d["translation refUC"]= t
 
         return d
+    
+    def transform_r(self, vector, inverse =False):
+        """
+        Transform a real-space vector (in lattice coordinates) under the symmetry operation.
+
+        Parameters
+        ----------
+        vector : array((...,3), dtype=float) 
+            Vector to transform. (or array of vectors)
+        
+        Returns
+        -------
+        array
+            Transformed vector.
+        """
+        if inverse:
+            return (vector-self.translation[...,:]).dot(self.rotation_inv.T)
+        else:
+            return vector.dot(self.rotation.T) + self.translation[...,:]
+        
+    @cached_property
+    def rotation_cart(self):
+        return self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
+    
+    @cached_property
+    def reciprocal_lattice(self):
+        return np.linalg.inv(self.Lattice).T
+
+    @cached_property
+    def rotation_inv(self):
+        return np.linalg.inv(self.rotation)
+        
+    def transform_k(self, vector, inverse=False):
+        """
+        Transform a k-space vector under the symmetry operation.
+
+        Parameters
+        ----------
+        vector : array((...,3), dtype=float) 
+            Vector to transform. (or array of vectors)
+        
+        Returns
+        -------
+        array
+            Transformed vector.
+        """
+        # print (f"rotation = {self.rotation}")
+        # print (f"transforming {vector} ({vector.dot(self.reciprocal_lattice)})")
+        # print (f"by {self.rotation_inv}")
+        if inverse:
+            res = vector.dot(self.rotation)
+        else:
+            res = vector.dot(self.rotation_inv)
+        # print (f"got {res} ({res.dot(self.reciprocal_lattice)})")
+        return res
 
 
 class SpaceGroup():
@@ -628,7 +684,8 @@ class SpaceGroup():
         ----------
         cell : list
             `cell[0]` is a 3x3 array where cartesian coordinates of basis 
-            vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array
+            vectors **a**, **b** and **c** are given in rows. 
+            `cell[1]` is an array
             where each row contains the direct coordinates of an ion's position. 
             `cell[2]` is an array where each element is a number identifying the 
             atomic species of an ion. See `cell` parameter of function 
@@ -687,6 +744,13 @@ class SpaceGroup():
                 dataset.transformation_matrix,
                 dataset.origin_shift
                 )
+
+    @property
+    def size(self):
+        """
+        Number of symmetry operations in the space-group.
+        """
+        return len(self.symmetries)
 
     def json(self, symmetries=None):
         '''
@@ -1364,8 +1428,8 @@ def read_sym_file(fname):
     nsym = int(lines[0][0])
     assert len(lines) == 1 + 4 * nsym
     RT = np.array(lines[1:], dtype=float).reshape(nsym, 4, 3)
-    rotations = RT[:, 0:3]
-    translations = RT[:, 3] 
+    rotations = RT[:, 0:3]#.swapaxes(1, 2)
+    translations = RT[:, 3]
     return rotations, translations
 
 def cart_to_crystal(rot_cart, trans_cart, lattice, alat):
@@ -1401,5 +1465,5 @@ def cart_to_crystal(rot_cart, trans_cart, lattice, alat):
     rot_crystal = np.array([(lat_inv.T @ rot @  lattice.T) for rot in rot_cart])
     assert np.allclose(rot_crystal, np.round(rot_crystal)), f"rotations are not integers in crystal coordinates : {rot_crystal}"
     rot_crystal = np.round(rot_crystal).astype(int)
-    trans_crystal = trans_cart @ lat_inv * alat * BOHR
+    trans_crystal = - trans_cart @ lat_inv * alat * BOHR
     return rot_crystal , trans_crystal 
