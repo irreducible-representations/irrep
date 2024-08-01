@@ -376,7 +376,7 @@ def symm_eigenvalues(
 
 def symm_matrix(
     K, RecLattice, WF, igall, A, S, T, spinor,
-    method = "new"
+    symsep_old=False
 ):
     """
     Computes the matrix S_mn = <Psi_m|{A|T}|Psi_n>
@@ -420,7 +420,7 @@ def symm_matrix(
     npw1 = igall.shape[1]
     multZ = np.exp(-1.0j * (2 * np.pi * A.dot(T).dot(igall[:3, :] + K[:, None])))
     igrot = transformed_g(K, igall, RecLattice, A)
-    if method == "new":
+    if not symsep_old:
         if spinor:
             WFrot_up = WF[:, igrot]*(multZ[None, :].conj())
             WFrot_down = WF[:, igrot + npw1]*(multZ[None, :].conj())
@@ -430,16 +430,15 @@ def symm_matrix(
         else:
             WFrot = WF[:, igrot]*multZ[None,:].conj()
         WFinv = right_inverse(WF)
-        SM =  WFrot @ WFinv
+        return  WFrot @ WFinv
     else:
         if spinor:
             WF1 = np.stack([WF[:, igrot], WF[:, igrot + npw1]], axis=2).conj()
             WF2 = np.stack([WF[:, :npw1], WF[:, npw1:]], axis=2)
-            SM = np.einsum("mgs,ngt,g,st->mn", WF1, WF2, multZ, S)
+            return np.einsum("mgs,ngt,g,st->mn", WF1, WF2, multZ, S)
         else:
-            SM = np.einsum("mg,ng,g->mn", WF[:, igrot].conj(), WF, multZ)
-    return SM
-
+            return np.einsum("mg,ng,g->mn", WF[:, igrot].conj(), WF, multZ)
+    
 
 def right_inverse(A):
     """

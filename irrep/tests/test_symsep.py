@@ -22,7 +22,6 @@ def test_bi_hoti():
         "-IBstart=5",
         "-IBend=10",
         "-isymsep=3",
-        "-symsep_method=old"
         "-groupKramers"
     ]
     output = subprocess.run(command, capture_output=True, text=True)

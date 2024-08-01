@@ -64,26 +64,10 @@ class Kpoint:
     upper : float
         Energy of the state `IBend`+1. Used to calculate the gap with upper 
         bands.
-    degen_thresh : float, default=1e-8
-        Threshold to identify degenerate energy levels.
-    refUC : array, default=None
-        3x3 array describing the transformation of vectors defining the 
-        unit cell to the standard setting.
-    shiftUC : array, default=None
-        Translation taking the origin of the unit cell used in the DFT 
-        calculation to that of the standard setting.
-    symmetries_tables : list
-        Attribute `symmetries` of class `IrrepTable`. Each component is an 
-        instance of class `SymopTable` corresponding to a symmetry operation
-        in the "point-group" of the space-group.
-    calculate_traces : bool
-        If `True`, traces of symmetries will be calculated. Useful to create 
-        instances faster.
-    save_wf : bool
-        Whether wave functions should be kept as attribute after calculating 
-        traces.
-    verbosity : int
-        Verbosity level. Default set to minimalistic printing
+    kwargs_kpoint : dict, default={}
+        Additional arguments to be passed to the method `__init__traces`.
+    
+
     
     Attributes
     ----------
@@ -160,21 +144,15 @@ class Kpoint:
         num_bands=None,
         RecLattice=None,  # this was last mandatory argument
         symmetries_SG=None,
-        calculate_traces=False,
         spinor=None,
         kpt=None,
         WF=None,  # first arg added for abinit (to be kept at the end)
         Energy=None,
         ig=None,
         upper=None,
-        degen_thresh=1e-8,
         symmetries=None,
-        refUC=np.eye(3),
-        shiftUC=np.zeros(3),
-        symmetries_tables=None,  # calculate_traces needs it
-        save_wf=True,
-        verbosity=0
-    ):
+        kwargs_kpoint={},
+        ):
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
         self.num_bands = num_bands
@@ -187,7 +165,6 @@ class Kpoint:
         self.ig = ig
         self.upper = upper
 
-        self.k_refUC = np.dot(refUC.T, self.k)
         self.WF /= (
             np.sqrt(np.abs(np.einsum("ij,ij->i", self.WF.conj(), self.WF)))
         ).reshape(self.num_bands, 1)
@@ -203,7 +180,42 @@ class Kpoint:
             dkpt = np.array(np.round(k_rotated - self.k), dtype=int)
             if np.allclose(dkpt, k_rotated - self.k):
                 self.little_group.append(symop)
+        
+        self.__init__traces(**kwargs_kpoint)
 
+    def __init__traces(self, degen_thresh=1e-8, verbosity=0, calculate_traces=True, refUC=np.eye(3), shiftUC=np.zeros(3), 
+                       symmetries_tables=None, save_wf=True):
+        """
+        Continuation of __init__ method. Calculates traces of symmetry eigenvalues and irreps, when asked. 
+        Separated because it is used in the `copy_sub` method.
+
+
+        Parameters
+        ----------
+        degen_thresh : float, default=1e-8
+            Threshold to identify degenerate energy levels.
+        refUC : array, default=None
+            3x3 array describing the transformation of vectors defining the 
+            unit cell to the standard setting.
+        shiftUC : array, default=None
+            Translation taking the origin of the unit cell used in the DFT 
+            calculation to that of the standard setting.
+        symmetries_tables : list
+            Attribute `symmetries` of class `IrrepTable`. Each component is an 
+            instance of class `SymopTable` corresponding to a symmetry operation
+            in the "point-group" of the space-group.
+        calculate_traces : bool
+            If `True`, traces of symmetries will be calculated. Useful to create 
+            instances faster.
+        save_wf : bool
+            Whether wave functions should be kept as attribute after calculating 
+            traces.
+        verbosity : int
+            Verbosity level. Default set to minimalistic printing
+        """
+        
+        self.k_refUC = np.dot(refUC.T, self.k)
+        
         # Sort symmetries based on their indices
         argsort = np.argsort([symop.ind for symop in self.little_group])
         self.little_group = [self.little_group[ind] for ind in argsort]
@@ -266,7 +278,7 @@ class Kpoint:
         """
         return is_round(self.k - kpt, prec = prec)
 
-    def copy_sub(self, E, WF, inds):
+    def copy_sub(self, E, WF, kwargs_kpoint={}):
         """
         Create an instance of class `Kpoint` for a restricted set of states.
 
@@ -276,7 +288,9 @@ class Kpoint:
             Energy-levels of states.
         WF : array
             Coefficients of the plane-wave expansion of wave-functions. Each row 
-            corresponds to a wave-function, each row to a plane-wave.
+            corresponds to a wave-function, each column to a plane-wave.
+        inds : array(int)
+            Indices of the states in the parent kpoint object. Used to keep the irrep labels
 
         Returns
         -------
@@ -287,25 +301,12 @@ class Kpoint:
         other = copy.copy(self) # copy of whose class
         # Sort energy levels
         sortE = np.argsort(E)
-        other.Energy_mean = E[sortE]
+        other.Energy_raw = E[sortE]
         other.WF = WF[sortE]
         other.num_bands = len(E)
-        inds = inds[sortE]
-
-        # Do not group by degeneracy of energy-levels for printing
-        other.degeneracies = [1] * other.num_bands
-        char = []
-        char_refUC = []
-        for i in inds:
-            char.append(other.char[i])
-            char_refUC.append(other.char_refUC[i])
-        other.char = np.array(char)
-        other.char_refUC = np.array(char_refUC)
-        irreps = []
-        for i in inds:
-            irreps.append(other.irreps[i])
-        other.irreps = irreps
+        other.__init__traces(**kwargs_kpoint)
         return other
+
 
     def unfold(self, supercell, kptPBZ, degen_thresh=1e-4):
         """
@@ -436,7 +437,8 @@ class Kpoint:
                 result.append((b1, b2, E, (W,)))
         return result
 
-    def Separate(self, symop, degen_thresh, groupKramers=True, method="old", verbosity=0):
+    def Separate(self, symop, groupKramers=True, symsep_old=False, verbosity=0,
+                 kwargs_kpoint={}):
         """
         Separate the band structure in a particular k-point according to the 
         eigenvalues of a symmetry operation.
@@ -445,8 +447,6 @@ class Kpoint:
         ----------
         isymop : int
             Index of symmetry used for the separation.
-        degen_thresh : float, default=1e-5
-            Energy threshold used to determine degeneracy of energy-levels.
         groupKramers : bool, default=True
             If `True`, states will be coupled by pairs of Kramers.
         verbosity : int, default=0
@@ -478,7 +478,7 @@ class Kpoint:
             symop.spinor_rotation,
             symop.translation,
             self.spinor,
-            method=method,
+            symsep_old=symsep_old,
         )
 
 
@@ -487,36 +487,36 @@ class Kpoint:
         for b1, b2 in zip(self.borders, self.borders[1:]):
             Sblock[b1:b2, b1:b2] = 0
         check = np.max(abs(Sblock))
-        if check > 0.1:
+        if check > 0.001:
             msg = ("WARNING: matrix of symmetry has non-zero elements between "
                    "states of different energy:  \n", check)
             log_message(msg, verbosity      , 1)
             msg = (f"Printing matrix of symmetry at k={self.k}")
             log_message(msg, verbosity      , 1)
             log_message(format_matrix(Sblock), verbosity      , 1)
+            log_message("The diagonal blocks", verbosity      , 1)
+            msg = ", ".join([f"{b1}:{b2} \n: {format_matrix(S[b1:b2,b1:b2])}" for b1, b2 in zip(self.borders, self.borders[1:])])
+            log_message(msg, verbosity      , 1)
+            
 
         # Calculate eigenvalues and eigenvectors in each block
         eigenvalues = []
         eigenvectors = []
-        inds_states = []
         Eloc = []
         print ("self.degeneracies", self.degeneracies)
         for istate, num_states in  enumerate(self.degeneracies):
             b1 = self.borders[istate]
             b2 = self.borders[istate+1]
-            inds_states += [istate] * num_states  # index for set of states
             W, V = la.eig(S[b1:b2, b1:b2])
-            for w, vv in zip(W, V.T):
+            for w, v in zip(W, V.T):
                 eigenvalues.append(w)
                 Eloc.append(self.Energy_mean[istate])
                 eigenvectors.append(
-                    np.hstack((np.zeros(b1), vv, np.zeros(self.num_bands - b2)))
+                    np.hstack((np.zeros(b1), v, np.zeros(self.num_bands - b2)))
                 )
         w = np.array(eigenvalues)
-        vv = np.array(eigenvectors).T # each col an eigenvector
+        v = np.array(eigenvectors).T # each col an eigenvector
         Eloc = np.array(Eloc)
-        inds_states = np.array(inds_states)
-        print (f"inds_states={inds_states}" )
 
         # Check unitarity of the symmetry
         if np.abs((np.abs(w) - 1.0)).max() > 1e-4:
@@ -532,9 +532,8 @@ class Kpoint:
             # Sort based on real part of eigenvalues
             arg = np.argsort(np.real(w))
             w = w[arg]
-            vv = vv[:, arg]
+            v = v[:, arg]
             Eloc = Eloc[arg]
-            inds_states = inds_states[arg]
             borders = np.hstack(
                 ([0], np.where((w[1:] - w[:-1]) > 0.05)[0] + 1, [self.num_bands])
             )
@@ -542,35 +541,34 @@ class Kpoint:
             # Probably this if-else statement can be removed
             if len(borders) > 0:
                 for b1, b2 in zip(borders, borders[1:]):
-                    v1 = vv[:, b1:b2]
+                    v1 = v[:, b1:b2]
                     print (f"b1={b1}, b2={b2}")
-                    subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.dot(self.WF), inds=inds_states[b1:b2])
+                    subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.dot(self.WF), kwargs_kpoint=kwargs_kpoint)
             else:
-                v1 = vv
-                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF), degen_thresh=degen_thresh, inds_states=inds_states)
+                v1 = v
+                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF), kwargs_kpoint=kwargs_kpoint)
 
         else:  # don't group Kramers pairs
             
             # Sort based on the argument of eigenvalues
             arg = np.argsort(np.angle(w))
-            inds_states = inds_states[arg]
             w = w[arg]
-            vv = vv[:, arg]
+            v = v[:, arg]
             Eloc = Eloc[arg]
-            borders = np.where(abs(w - np.roll(w, 1)) > 0.1)[0]
+            borders = np.where(abs(w - np.roll(w, 1)) > 0.05)[0]
 
             if len(borders) > 0:
                 for b1, b2 in zip(borders, np.roll(borders, -1)):
                     print (f"b1={b1}, b2={b2}")
-                    v1 = np.roll(vv, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
+                    v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
                     subspaces[np.roll(w, -b1)[: (b2 - b1) % self.num_bands].mean()] = self.copy_sub(
-                        E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands],  WF=v1.T.dot(self.WF),  
-                        inds=np.roll(inds_states,-b1)[: (b2 - b1) % self.num_bands]
+                        E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands],  WF=v1.T.conj().dot(self.WF),  
+                        kwargs_kpoint=kwargs_kpoint
                     )
 
             else:
-                v1 = vv
-                subspaces[w.mean()] = self.copy_sub(E=Eloc, degen_thresh=degen_thresh, WF=v1.T.dot(self.WF))
+                v1 = v
+                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF), kwargs_kpoint=kwargs_kpoint)
 
         return subspaces
 

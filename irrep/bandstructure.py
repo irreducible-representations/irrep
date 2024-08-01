@@ -369,6 +369,17 @@ class BandStructure:
             WF = WF[IBstart:IBend]
             Energy = Energy[IBstart:IBend] - self.efermi
 
+            # saved to further use in Separate()
+            self.kwargs_kpoint=dict(
+                degen_thresh=degen_thresh,
+                refUC=self.spacegroup.refUC,
+                shiftUC=self.spacegroup.shiftUC,
+                symmetries_tables=self.spacegroup.symmetries_tables,
+                save_wf=save_wf,
+                verbosity=verbosity,
+                calculate_traces=calculate_traces,
+                )
+
             kp = Kpoint(
                 ik=ik,
                 kpt=kpt,
@@ -378,15 +389,9 @@ class BandStructure:
                 upper=upper,
                 num_bands=NBout,
                 RecLattice=self.RecLattice,
-                calculate_traces=calculate_traces,
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
-                degen_thresh=degen_thresh,
-                refUC=self.spacegroup.refUC,
-                shiftUC=self.spacegroup.shiftUC,
-                symmetries_tables=self.spacegroup.symmetries_tables,
-                save_wf=save_wf,
-                verbosity=verbosity
+                kwargs_kpoint=self.kwargs_kpoint,
                 )
             self.kpoints.append(kp)
         del WF
@@ -628,8 +633,8 @@ class BandStructure:
                 KP.write_trace()
             )
 
-    def Separate(self, isymop, degen_thresh=1e-5, groupKramers=True, 
-                 method="old", verbosity=0):
+    def Separate(self, isymop, groupKramers=True, 
+                 symsep_old=False, verbosity=0):
         """
         Separate band structure according to the eigenvalues of a symmetry 
         operation.
@@ -662,7 +667,7 @@ class BandStructure:
 
         # Separate each k-point
         kpseparated = [
-            kp.Separate(symop, degen_thresh=degen_thresh, groupKramers=groupKramers, method=method, verbosity=verbosity)
+            kp.Separate(symop, groupKramers=groupKramers, symsep_old=symsep_old, verbosity=verbosity, kwargs_kpoint=self.kwargs_kpoint)
             for kp in self.kpoints
         ] # each element is a dict with separated bandstructure of a k-point
 
