@@ -82,7 +82,7 @@ class Kpoint:
     save_wf : bool
         Whether wave functions should be kept as attribute after calculating 
         traces.
-    v : int
+    verbosity : int
         Verbosity level. Default set to minimalistic printing
     
     Attributes
@@ -173,7 +173,7 @@ class Kpoint:
         shiftUC=np.zeros(3),
         symmetries_tables=None,  # calculate_traces needs it
         save_wf=True,
-        v=0
+        verbosity=0
     ):
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
@@ -218,7 +218,7 @@ class Kpoint:
 
         # Calculate traces
         if calculate_traces:
-            self.char, self.char_refUC, self.Energy_mean = self.calculate_traces(refUC, shiftUC, symmetries_tables, v)
+            self.char, self.char_refUC, self.Energy_mean = self.calculate_traces(refUC, shiftUC, symmetries_tables, verbosity)
 
             # Determine number of band inversions based on parity
             found = False
@@ -436,7 +436,7 @@ class Kpoint:
                 result.append((b1, b2, E, (W,)))
         return result
 
-    def Separate(self, symop, degen_thresh, groupKramers=True, v=0):
+    def Separate(self, symop, degen_thresh, groupKramers=True, method="old", verbosity=0):
         """
         Separate the band structure in a particular k-point according to the 
         eigenvalues of a symmetry operation.
@@ -449,7 +449,7 @@ class Kpoint:
             Energy threshold used to determine degeneracy of energy-levels.
         groupKramers : bool, default=True
             If `True`, states will be coupled by pairs of Kramers.
-        v : int, default=0
+        verbosity : int, default=0
             Verbosity level. Default set to minimalistic printing
 
         Returns
@@ -467,7 +467,7 @@ class Kpoint:
         if check > 1e-5:
             msg = ("orthogonality (largest of diag. <psi_nk|psi_mk>): "
                    "{0:7.5} > 1e-5   \n".format(check))
-            log_message(msg, v, 1)
+            log_message(msg, verbosity      , 1)
 
         S = symm_matrix(
             self.k,
@@ -478,6 +478,7 @@ class Kpoint:
             symop.spinor_rotation,
             symop.translation,
             self.spinor,
+            method=method,
         )
 
 
@@ -489,35 +490,37 @@ class Kpoint:
         if check > 0.1:
             msg = ("WARNING: matrix of symmetry has non-zero elements between "
                    "states of different energy:  \n", check)
-            log_message(msg, v, 1)
+            log_message(msg, verbosity      , 1)
             msg = (f"Printing matrix of symmetry at k={self.k}")
-            log_message(msg, v, 1)
-            log_message(format_matrix(Sblock), v, 1)
+            log_message(msg, verbosity      , 1)
+            log_message(format_matrix(Sblock), verbosity      , 1)
 
         # Calculate eigenvalues and eigenvectors in each block
         eigenvalues = []
         eigenvectors = []
         inds_states = []
         Eloc = []
+        print ("self.degeneracies", self.degeneracies)
         for istate, num_states in  enumerate(self.degeneracies):
             b1 = self.borders[istate]
             b2 = self.borders[istate+1]
             inds_states += [istate] * num_states  # index for set of states
             W, V = la.eig(S[b1:b2, b1:b2])
-            for w, v in zip(W, V.T):
+            for w, vv in zip(W, V.T):
                 eigenvalues.append(w)
                 Eloc.append(self.Energy_mean[istate])
                 eigenvectors.append(
-                    np.hstack((np.zeros(b1), v, np.zeros(self.num_bands - b2)))
+                    np.hstack((np.zeros(b1), vv, np.zeros(self.num_bands - b2)))
                 )
         w = np.array(eigenvalues)
-        v = np.array(eigenvectors).T # each col an eigenvector
+        vv = np.array(eigenvectors).T # each col an eigenvector
         Eloc = np.array(Eloc)
         inds_states = np.array(inds_states)
+        print (f"inds_states={inds_states}" )
 
         # Check unitarity of the symmetry
         if np.abs((np.abs(w) - 1.0)).max() > 1e-4:
-            log_message(f"WARNING: some eigenvalues are not unitary: {w}",v,1)
+            log_message(f"WARNING: some eigenvalues are not unitary: {w}",verbosity      ,1)
         if np.abs((np.abs(w) - 1.0)).max() > 3e-1:
             raise RuntimeError(" some eigenvalues are not unitary :{0} ".format(w))
         w /= np.abs(w)
@@ -529,7 +532,7 @@ class Kpoint:
             # Sort based on real part of eigenvalues
             arg = np.argsort(np.real(w))
             w = w[arg]
-            v = v[:, arg]
+            vv = vv[:, arg]
             Eloc = Eloc[arg]
             inds_states = inds_states[arg]
             borders = np.hstack(
@@ -539,35 +542,39 @@ class Kpoint:
             # Probably this if-else statement can be removed
             if len(borders) > 0:
                 for b1, b2 in zip(borders, borders[1:]):
-                    v1 = v[:, b1:b2]
+                    v1 = vv[:, b1:b2]
+                    print (f"b1={b1}, b2={b2}")
                     subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.dot(self.WF), inds=inds_states[b1:b2])
             else:
-                v1 = v
+                v1 = vv
                 subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF), degen_thresh=degen_thresh, inds_states=inds_states)
 
         else:  # don't group Kramers pairs
             
             # Sort based on the argument of eigenvalues
             arg = np.argsort(np.angle(w))
+            inds_states = inds_states[arg]
             w = w[arg]
-            v = v[:, arg]
+            vv = vv[:, arg]
             Eloc = Eloc[arg]
             borders = np.where(abs(w - np.roll(w, 1)) > 0.1)[0]
 
             if len(borders) > 0:
                 for b1, b2 in zip(borders, np.roll(borders, -1)):
-                    v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
+                    print (f"b1={b1}, b2={b2}")
+                    v1 = np.roll(vv, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
                     subspaces[np.roll(w, -b1)[: (b2 - b1) % self.num_bands].mean()] = self.copy_sub(
-                        E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands], degen_thresh=degen_thresh, WF=v1.T.dot(self.WF)
+                        E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands],  WF=v1.T.dot(self.WF),  
+                        inds=np.roll(inds_states,-b1)[: (b2 - b1) % self.num_bands]
                     )
 
             else:
-                v1 = v
+                v1 = vv
                 subspaces[w.mean()] = self.copy_sub(E=Eloc, degen_thresh=degen_thresh, WF=v1.T.dot(self.WF))
 
         return subspaces
 
-    def calculate_traces(self, refUC, shiftUC, symmetries_tables, v=0):
+    def calculate_traces(self, refUC, shiftUC, symmetries_tables, verbosity=0):
         '''
         Calculate traces of symmetry operations
 
@@ -620,7 +627,7 @@ class Kpoint:
         Nirrep = np.linalg.norm(char.sum(axis=1)) ** 2 / char.shape[0]
         if abs(Nirrep - round(Nirrep)) > 1e-2:
             msg = f"WARNING - non-integer number of states : {Nirrep}"
-            log_message(msg, v, 2)
+            log_message(msg, verbosity, 2)
         Nirrep = int(round(Nirrep))
 
         # Sum traces of degenerate states. Rows (cols) correspond to states (syms)
@@ -663,7 +670,8 @@ class Kpoint:
 
         self.onlytraces = irreptable is None
         if self.onlytraces:
-            irreps = ["None"] * (len(self.degeneracies) - 1)
+            # irreps = ["None"] * (len(self.degeneracies) - 1)  # here was a -1, IDK why
+            irreps = ["None"] * (len(self.degeneracies) )  # removed the -1
 
         else:
 

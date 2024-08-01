@@ -86,7 +86,7 @@ class BandStructure:
     save_wf : bool
         Whether wave functions should be kept as attribute after calculating 
         traces.
-    v : int, default=0
+    verbosity : int, default=0
         Number controlling the verbosity. 
         0: minimalistic printing. 
         1: print info about decisions taken internally by the code, recommended 
@@ -158,7 +158,7 @@ class BandStructure:
         trans_thresh=1e-5,
         degen_thresh=1e-8,
         save_wf=True,
-        v=0,
+        verbosity=0,
         alat=None,
         from_sym_file=None,
     ):
@@ -177,7 +177,7 @@ class BandStructure:
                 )
             self.spinor = spinor
             parser = ParserVasp(fPOS, fWAV, onlysym)
-            self.Lattice, positions, typat = parser.parse_poscar(v)
+            self.Lattice, positions, typat = parser.parse_poscar(verbosity)
             if not onlysym:
                 NK, NBin, self.Ecut0, lattice = parser.parse_header()
                 if not np.allclose(self.Lattice, lattice):
@@ -194,7 +194,7 @@ class BandStructure:
              self.spinor,
              typat,
              positions,
-             EF_in) = parser.parse_header(v=v)
+             EF_in) = parser.parse_header(verbosity=verbosity)
             NBin = max(nband)
 
         elif code == "espresso":
@@ -244,7 +244,7 @@ class BandStructure:
                               shiftUC=shiftUC,
                               search_cell=search_cell,
                               trans_thresh=trans_thresh,
-                              v=v,
+                              verbosity=verbosity,
                               alat=alat,
                               from_sym_file=from_sym_file)
         if onlysym:
@@ -255,7 +255,7 @@ class BandStructure:
             if EF_in is None:
                 self.efermi = 0.0
                 msg = "WARNING : fermi-energy not found. Setting it as 0 eV"
-                log_message(msg, v, 1)
+                log_message(msg, verbosity, 1)
             else:
                 self.efermi = EF_in
         else:
@@ -265,7 +265,7 @@ class BandStructure:
                 raise RuntimeError("Invalid value for keyword EF. It must be "
                                    "a number or 'auto'")
 
-        log_message(f"Efermi: {self.efermi:.4f} eV", v, 1)
+        log_message(f"Efermi: {self.efermi:.4f} eV", verbosity, 1)
 
         # Fix indices of bands to be considered
         if IBstart is None or IBstart <= 0:
@@ -294,11 +294,11 @@ class BandStructure:
         msg = ("WAVECAR contains {} k-points and {} bands.\n"
                "Saving {} bands starting from {} in the output"
                .format(NK, NBin, NBout, IBstart + 1))
-        log_message(msg, v, 1)
+        log_message(msg, verbosity, 1)
         msg = f"Energy cutoff in WAVECAR : {self.Ecut0}"
-        log_message(msg, v, 1)
+        log_message(msg, verbosity, 1)
         msg = f"Energy cutoff reduced to : {self.Ecut}"
-        log_message(msg, v, 1)
+        log_message(msg, verbosity, 1)
 
         # Create list of indices for k-points
         if kplist is None:
@@ -313,7 +313,7 @@ class BandStructure:
 
             if code == 'vasp':
                 msg = f'Parsing wave functions at k-point #{ik:>3d}'
-                log_message(msg, v, 2)
+                log_message(msg, verbosity, 2)
                 WF, Energy, kpt, npw = parser.parse_kpoint(ik, NBin, self.spinor)
                 kg = calc_gvectors(kpt,
                                    self.RecLattice,
@@ -321,7 +321,7 @@ class BandStructure:
                                    npw,
                                    self.Ecut,
                                    spinor=self.spinor,
-                                   v=v
+                                   verbosity=verbosity
                                    )
                 if not self.spinor:
                     selectG = kg[3]
@@ -333,14 +333,14 @@ class BandStructure:
                 NBin = parser.nband[ik]
                 kpt = parser.kpt[ik]
                 msg = f'Parsing wave functions at k-point #{ik:>3d}: {kpt}'
-                log_message(msg, v, 2)
+                log_message(msg, verbosity, 2)
                 WF, Energy, kg = parser.parse_kpoint(ik)
                 WF, kg = sortIG(ik, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, self.spinor)
 
             elif code == 'espresso':
                 msg = f'Parsing wave functions at k-point #{ik:>3d}'
-                log_message(msg, v, 2)
-                WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel, v=v)
+                log_message(msg, verbosity, 2)
+                WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel, verbosity=verbosity)
                 WF, kg = sortIG(ik+1, kg, kpt, WF, self.RecLattice/2.0, self.Ecut0, self.Ecut, self.spinor)
 
             elif code == 'wannier90':
@@ -352,11 +352,11 @@ class BandStructure:
                                    self.Ecut,
                                    spinor=self.spinor,
                                    nplanemax=np.max([ngx, ngy, ngz]) // 2,
-                                   v=v
+                                   verbosity=verbosity
                                    )
                 selectG = tuple(kg[0:3])
                 msg = f'Parsing wave functions at k-point #{ik:>3d}: {kpt}'
-                log_message(msg, v, 2)
+                log_message(msg, verbosity, 2)
                 WF = parser.parse_kpoint(ik+1, selectG)
 
             # Pick energy of IBend+1 band to calculate gaps
@@ -386,7 +386,7 @@ class BandStructure:
                 shiftUC=self.spacegroup.shiftUC,
                 symmetries_tables=self.spacegroup.symmetries_tables,
                 save_wf=save_wf,
-                v=v
+                verbosity=verbosity
                 )
             self.kpoints.append(kp)
         del WF
@@ -396,7 +396,7 @@ class BandStructure:
         '''Getter for the number of k points'''
         return len(self.kpoints)
 
-    def identify_irreps(self, kpnames, v=0):
+    def identify_irreps(self, kpnames, verbosity=0):
         '''
         Identifies the irreducible representations of wave functions based on 
         the traces of symmetries of the little co-group. Each element of 
@@ -407,14 +407,14 @@ class BandStructure:
         ----------
         kpnames : list
             List of labels of the maximal k points.
-        v : int, default=0
+        verbosity : int, default=0
             Verbosity level. Default set to minimalistic printing
         '''
 
         for ik, KP in enumerate(self.kpoints):
             
             if kpnames is not None:
-                irreps = self.spacegroup.get_irreps_from_table(kpnames[ik], KP.k, v=v)
+                irreps = self.spacegroup.get_irreps_from_table(kpnames[ik], KP.k, verbosity=verbosity)
             else:
                 irreps = None
             KP.identify_irreps(irreptable=irreps)
@@ -628,7 +628,8 @@ class BandStructure:
                 KP.write_trace()
             )
 
-    def Separate(self, isymop, degen_thresh=1e-5, groupKramers=True, v=0):
+    def Separate(self, isymop, degen_thresh=1e-5, groupKramers=True, 
+                 method="old", verbosity=0):
         """
         Separate band structure according to the eigenvalues of a symmetry 
         operation.
@@ -641,7 +642,7 @@ class BandStructure:
             Energy threshold used to determine degeneracy of energy-levels.
         groupKramers : bool, default=True
             If `True`, states will be coupled by Kramers' pairs.
-        v : int, default=0
+        verbosity : int, default=0
             Verbosity level. Default is set to minimalistic printing
 
         Returns
@@ -661,15 +662,11 @@ class BandStructure:
 
         # Separate each k-point
         kpseparated = [
-            kp.Separate(symop, degen_thresh=degen_thresh, groupKramers=groupKramers)
+            kp.Separate(symop, degen_thresh=degen_thresh, groupKramers=groupKramers, method=method, verbosity=verbosity)
             for kp in self.kpoints
         ] # each element is a dict with separated bandstructure of a k-point
 
         allvalues = np.array(sum((list(kps.keys()) for kps in kpseparated), []))
-        #        print (allvalues)
-        #        for kps in kpseparated :
-        #            allvalues=allvalues | set( kps.keys())
-        #        allvalues=np.array(allavalues)
         if groupKramers:
             allvalues = allvalues[np.argsort(np.real(allvalues))].real
             borders = np.hstack(
@@ -679,27 +676,26 @@ class BandStructure:
                     [len(allvalues)],
                 )
             )
-            #            nv=len(allvalues)
             if len(borders) > 2:
                 allvalues = set(
                     [allvalues[b1:b2].mean() for b1, b2 in zip(borders, borders[1:])]
                 ) # unrepeated Re parts of all eigenvalues
                 subspaces = {}
-                for v in allvalues:
+                for vv in allvalues:
                     other = copy.copy(self)
                     other.kpoints = []
                     for K in kpseparated:
                         vk = list(K.keys())
-                        vk0 = vk[np.argmin(np.abs(v - vk))]
-                        if abs(vk0 - v) < 0.05:
+                        vk0 = vk[np.argmin(np.abs(vv - vk))]
+                        if abs(vk0 - vv) < 0.05:
                             other.kpoints.append(K[vk0])
-                    subspaces[v] = other # unnecessary indent ?
+                    subspaces[vv] = other # unnecessary indent ?
                 return subspaces
             else:
                 return dict({allvalues.mean(): self})
         else:
             allvalues = allvalues[np.argsort(np.angle(allvalues))]
-            log_message(f'allvalues: {allvalues}', v, 1)
+            log_message(f'allvalues: {allvalues}', verbosity, 1)
             borders = np.where(abs(allvalues - np.roll(allvalues, 1)) > 0.01)[0]
             nv = len(allvalues)
             if len(borders) > 0:
@@ -709,17 +705,17 @@ class BandStructure:
                         for b1, b2 in zip(borders, np.roll(borders, -1))
                     ]
                 )
-                log_message(f'Distinct values: {allvalues}', v, 1)
+                log_message(f'Distinct values: {allvalues}', verbosity, 1)
                 subspaces = {}
-                for v in allvalues:
+                for vv in allvalues:
                     other = copy.copy(self)
                     other.kpoints = []
                     for K in kpseparated:
                         vk = list(K.keys())
-                        vk0 = vk[np.argmin(np.abs(v - vk))]
-                        if abs(vk0 - v) < 0.05:
+                        vk0 = vk[np.argmin(np.abs(vv - vk))]
+                        if abs(vk0 - vv) < 0.05:
                             other.kpoints.append(K[vk0])
-                        subspaces[v] = other
+                        subspaces[vv] = other
                 return subspaces
             else:
                 return dict({allvalues.mean(): self})

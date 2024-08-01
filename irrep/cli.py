@@ -193,6 +193,12 @@ do not hesitate to contact the author:
     "potentials as in ABINIT.",
 )
 @click.option(
+    "-symsep_method",
+    type=str,
+    default="new",
+    help=" 'old' or 'new'. temporarym fir testing, further remove the old one",
+)
+@click.option(
     "-onlysym",
     flag_value=True,
     default=False,
@@ -238,7 +244,7 @@ do not hesitate to contact the author:
 @click.option(
     "-groupKramers", 
     flag_value=True, 
-    default=True, 
+    default=False, 
     help="Group wave-functions in pairs of Kramers. Default: True."
 )
 @click.option(
@@ -296,6 +302,7 @@ def cli(
     refuc,
     shiftuc,
     isymsep,
+    symsep_method,
     onlysym,
     writesym,
     alat,
@@ -324,10 +331,14 @@ def cli(
         refuc = np.array(refuc.split(","), dtype=float).reshape((3, 3))
     if shiftuc:
         shiftuc = np.array(shiftuc.split(","), dtype=float).reshape(3)
-    
+
+    # rename the v flag to verbosity, to avoid overlap with local variables
+    verbosity = v    
     # Warning about kpnames
     if kpnames is not None:
         searchcell = True
+
+
 
     elif not searchcell:
         msg = ("Warning: transformation to the convenctional unit "
@@ -336,12 +347,12 @@ def cli(
                "on:\n"
                "irrep --help"
                )
-        log_message(msg, v, 1)
+        log_message(msg, verbosity, 1)
         msg = ("Warning: -kpnames not specified. Only traces of "
                "symmetry operations will be calculated. Remember that "
                "-kpnames must be specified to identify irreps"
                )
-        log_message(msg, v, 1)
+        log_message(msg, verbosity, 1)
 
     # parse input arguments into lists if supplied
     if symmetries:
@@ -377,7 +388,7 @@ def cli(
         search_cell = searchcell,
         degen_thresh=degenthresh,
         save_wf=save_wf,
-        v=v,
+        verbosity=verbosity,
         from_sym_file=from_sym_file
     )
 
@@ -395,7 +406,7 @@ def cli(
                 )
 
     # Identify irreps. If kpnames wasn't set, all will be labelled as None
-    bandstr.identify_irreps(kpnames, v=v)
+    bandstr.identify_irreps(kpnames, verbosity=verbosity)
 
     # Temporary, until we make it valid for isymsep
     bandstr.write_characters()
@@ -423,7 +434,7 @@ def cli(
         for isym in isymsep:
             print("\n-------- SEPARATING BY SYMMETRY # {} --------".format(isym))
             for s_old, bs in subbands.items():
-                separated = bs.Separate(isym, degen_thresh=degenthresh, groupKramers=groupkramers, v=v)
+                separated = bs.Separate(isym, degen_thresh=degenthresh, groupKramers=groupkramers, method=symsep_method, verbosity=verbosity)
                 for s_new, bs_separated in separated.items():
                     tmp_subbands[tuple(list(s_old) + [s_new])] = bs_separated
             subbands = tmp_subbands
@@ -437,7 +448,7 @@ def cli(
                     ),
                 )
                 sub.write_characters()
-                json_data["characters and irreps"].append({"symmetry eigenvalues":k , "subspace": sub.json(symmetries)})
+                json_data["characters and irreps"].append({"symmetry eigenvalues": np.array([np.abs(k),np.angle(k)]) , "subspace": sub.json(symmetries)})
     else :
         json_data["separated by symmetry"]=False
         
