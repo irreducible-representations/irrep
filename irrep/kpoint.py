@@ -21,7 +21,7 @@ import numpy as np
 import numpy.linalg as la
 import copy
 from .gvectors import symm_eigenvalues, symm_matrix
-from .utility import compstr, is_round, format_matrix, log_message
+from .utility import compstr, is_round, format_matrix, log_message, orthogonolize
 
 class Kpoint:
     """
@@ -503,11 +503,11 @@ class Kpoint:
         eigenvalues = []
         eigenvectors = []
         Eloc = []
-        print ("self.degeneracies", self.degeneracies)
         for istate, num_states in  enumerate(self.degeneracies):
             b1 = self.borders[istate]
             b2 = self.borders[istate+1]
-            W, V = la.eig(S[b1:b2, b1:b2])
+            S_loc = orthogonolize(S[b1:b2, b1:b2], verbosity=verbosity, error_threshold=1e-2, warning_threshold=1e-3)
+            W, V = la.eig(S_loc)
             for w, v in zip(W, V.T):
                 eigenvalues.append(w)
                 Eloc.append(self.Energy_mean[istate])
@@ -542,8 +542,7 @@ class Kpoint:
             if len(borders) > 0:
                 for b1, b2 in zip(borders, borders[1:]):
                     v1 = v[:, b1:b2]
-                    print (f"b1={b1}, b2={b2}")
-                    subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.dot(self.WF), kwargs_kpoint=kwargs_kpoint)
+                    subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.conj().dot(self.WF), kwargs_kpoint=kwargs_kpoint)
             else:
                 v1 = v
                 subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF), kwargs_kpoint=kwargs_kpoint)
@@ -551,7 +550,8 @@ class Kpoint:
         else:  # don't group Kramers pairs
             
             # Sort based on the argument of eigenvalues
-            arg = np.argsort(np.angle(w))
+            # arg = np.argsort( (np.angle(w)/(2*np.pi)+0.01)%1 ) # to make sure that we start from the +1 and go anti-clockwise
+            arg = np.argsort( np.angle(w)) 
             w = w[arg]
             v = v[:, arg]
             Eloc = Eloc[arg]
@@ -559,7 +559,6 @@ class Kpoint:
 
             if len(borders) > 0:
                 for b1, b2 in zip(borders, np.roll(borders, -1)):
-                    print (f"b1={b1}, b2={b2}")
                     v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
                     subspaces[np.roll(w, -b1)[: (b2 - b1) % self.num_bands].mean()] = self.copy_sub(
                         E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands],  WF=v1.T.conj().dot(self.WF),  

@@ -700,7 +700,7 @@ class BandStructure:
                 return dict({allvalues.mean(): self})
         else:
             allvalues = allvalues[np.argsort(np.angle(allvalues))]
-            log_message(f'allvalues: {allvalues}', verbosity, 1)
+            log_message(f'allvalues: {allvalues}', verbosity, 2)
             borders = np.where(abs(allvalues - np.roll(allvalues, 1)) > 0.01)[0]
             nv = len(allvalues)
             if len(borders) > 0:
@@ -710,7 +710,7 @@ class BandStructure:
                         for b1, b2 in zip(borders, np.roll(borders, -1))
                     ]
                 )
-                log_message(f'Distinct values: {allvalues}', verbosity, 1)
+                log_message(f'Distinct values: {allvalues}', verbosity, 2)
                 subspaces = {}
                 for vv in allvalues:
                     other = copy.copy(self)

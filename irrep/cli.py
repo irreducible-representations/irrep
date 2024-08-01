@@ -25,7 +25,7 @@ import click
 from monty.serialization import dumpfn, loadfn
 
 from .bandstructure import BandStructure
-from .utility import str2list, short, log_message
+from .utility import sort_vectors, str2list, short, log_message
 from . import __version__ as version
 
 
@@ -440,7 +440,10 @@ def cli(
                     tmp_subbands[tuple(list(s_old) + [s_new])] = bs_separated
             subbands = tmp_subbands
         json_data["characters and irreps"]=[]
-        for k, sub in subbands.items():
+        
+        # sort to have consistency between runs
+        for k in sort_vectors(subbands.keys()):
+            sub = subbands[k]
             if isymsep is not None:
                 print(
                     "\n\n\n\n ################################################ \n\n\n NEXT SUBSPACE:  ",
