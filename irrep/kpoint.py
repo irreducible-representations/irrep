@@ -305,6 +305,7 @@ class Kpoint:
         other.WF = WF[sortE]
         other.num_bands = len(E)
         other.__init__traces(**kwargs_kpoint)
+        other.identify_irreps()	
         return other
 
 
@@ -589,8 +590,6 @@ class Kpoint:
             Attribute `symmetries` of class `IrrepTable`. Each component is an 
             instance of class `SymopTable` corresponding to a symmetry operation
             in the "point-group" of the space-group.
-        degen_thresh : float, default=1e-8
-            Threshold to identify degenerate energy levels.
         
         Returns
         -------
@@ -664,6 +663,10 @@ class Kpoint:
             1 and following order of operations in tables of BCS) and 
             values are traces of symmetries.
         '''
+        if irreptable is None:
+            if hasattr(self, 'irreptable'):
+                irreptable = self.irreptable
+        self.irreptable = irreptable
 
         self.onlytraces = irreptable is None
         if self.onlytraces:

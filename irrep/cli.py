@@ -189,8 +189,9 @@ do not hesitate to contact the author:
 )
 @click.option(
     "-isymsep",
-    help="Index of the symmetry to separate the eigenstates. Works well only for norm-conserving "
-    "potentials as in ABINIT.",
+    help="Index of the symmetry to separate the eigenstates. "
+    "with new method works with any code/pseudopotential"
+    "Previously worked well only for norm-conserving potentials.",
 )
 @click.option(
     "-symsep_old",
