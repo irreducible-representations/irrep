@@ -246,7 +246,7 @@ def format_matrix(A):
         Description of the matrix. Ready to be printed.
     """
     return "".join(
-        "   ".join("{0:+5.2f} {1:+5.2f}".format(x.real, x.imag) for x in a)
+        "   ".join("{0:+5.2f} {1:+5.2f}j".format(x.real, x.imag) for x in a)
         + "\n"
         for a in A
     )
@@ -268,3 +268,57 @@ def log_message(msg, verbosity, level):
 
     if verbosity >= level:
         print(msg)
+
+
+def orthogonolize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosity=1):
+    """
+    Orthogonalize a square matrix, using SVD
+    
+    Parameters
+    ----------
+    A : array( (M,M), dtype=complex)
+        Matrix to orthogonalize.
+    warning_threshold : float, default=np.inf
+        Threshold for warning message. Is someeigenvalues are far from 1
+    error_threshold : float, default=np.inf
+        Threshold for error message. Is someeigenvalues are far from 1
+
+    Returns
+    -------
+    array( (M,M), dtype=complex)
+        Orthogonalized matrix
+    """
+    u, s, vh = np.linalg.svd(A)
+    if np.any(np.abs(s - 1) > error_threshold):
+        raise ValueError("Matrix is not orthogonal")
+    elif np.any(np.abs(s - 1) > warning_threshold):
+        log_message("Warning: Matrix is not orthogonal", verbosity, 1)
+    return u @ vh
+
+def sort_vectors(list_of_vectors):
+    list_of_vectors = list(list_of_vectors)
+    srt = arg_sort_vectors(list_of_vectors)
+    return [list_of_vectors[i] for i in srt]
+
+def arg_sort_vectors(list_of_vectors):
+    """
+    Compare two vectors, 
+    First, the longer vector is "larger"
+    second, we go element-by-element to compare
+    first compare the angle of the complex number (clockwise from the x-axis), then the absolute value
+    
+    Returns
+    -------
+    bool
+        True if v1>v2, False otherwise
+    """
+    def keys(x):
+        return [(np.angle(x)/(2*np.pi)+0.0)%1, abs(x)]
+    def serialize(x):
+        a = list(np.array( [keys(x) for x in x]).flatten())
+        return [len(a)]+a
+    sort_key = [serialize(x) for x in list_of_vectors]
+    lenmax = max([len(x) for x in sort_key])
+    sort_key = [x+[0]*(lenmax-len(x)) for x in sort_key]
+    srt = np.lexsort(np.array(sort_key))
+    return srt

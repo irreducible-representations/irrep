@@ -46,7 +46,7 @@ def calc_gvectors(
     thresh=1e-3,
     spinor=True,
     nplanemax=10000,
-    v=0
+    verbosity=0
 ):
     """ 
     Generates G-vectors taking part in the plane-wave expansion of 
@@ -75,6 +75,9 @@ def calc_gvectors(
         will be read from DFT files. Mandatory for `vasp`.
     nplanemax : int, default=10000
         Sets the maximun number of iterations when calculating vectors.
+    verbosity : int, default=0
+        Level of verbosity. If 0, no output is printed. If 1, only the most 
+        important messages are printed. If 2, all messages are printed.
 
     Returns
     -------
@@ -90,7 +93,7 @@ def calc_gvectors(
 
     msg = ('Generating plane waves at k: ({} )'
            .format(' '.join([f'{x:6.3f}' for x in K])))
-    log_message(msg, v, 2)
+    log_message(msg, verbosity, 2)
     if Ecut1 <= 0:
         Ecut1 = Ecut
     B = RecLattice
@@ -103,7 +106,7 @@ def calc_gvectors(
         flag = True
         if N % 10 == 0:
             msg = f'Cycle {N:>3d}: number of plane waves = {len(igall):>10d}'
-            log_message(msg, v, 2)
+            log_message(msg, verbosity, 2)
         if len(igall) >= nplane / 2:    # Only enters if vasp
             if spinor:
                 break
@@ -372,7 +375,8 @@ def symm_eigenvalues(
 
 
 def symm_matrix(
-    K, RecLattice, WF, igall, A, S, T, spinor
+    K, RecLattice, WF, igall, A, S, T, spinor,
+    symsep_old=False
 ):
     """
     Computes the matrix S_mn = <Psi_m|{A|T}|Psi_n>
@@ -416,9 +420,40 @@ def symm_matrix(
     npw1 = igall.shape[1]
     multZ = np.exp(-1.0j * (2 * np.pi * A.dot(T).dot(igall[:3, :] + K[:, None])))
     igrot = transformed_g(K, igall, RecLattice, A)
-    if spinor:
-        WF1 = np.stack([WF[:, igrot], WF[:, igrot + npw1]], axis=2).conj()
-        WF2 = np.stack([WF[:, :npw1], WF[:, npw1:]], axis=2)
-        return np.einsum("mgs,ngt,g,st->mn", WF1, WF2, multZ, S)
+    if not symsep_old:
+        if spinor:
+            WFrot_up = WF[:, igrot]*(multZ[None, :].conj())
+            WFrot_down = WF[:, igrot + npw1]*(multZ[None, :].conj())
+            WFrot = np.stack([WFrot_up, WFrot_down], axis=2)
+            WFrot = np.einsum("mgs,st->mgt", WFrot,S.conj())
+            WFrot = WFrot.reshape((WFrot.shape[0], -1),order='F')
+        else:
+            WFrot = WF[:, igrot]*multZ[None,:].conj()
+        WFinv = right_inverse(WF)
+        return  WFrot @ WFinv
     else:
-        return np.einsum("mg,ng,g->mn", WF[:, igrot].conj(), WF, multZ)
+        if spinor:
+            WF1 = np.stack([WF[:, igrot], WF[:, igrot + npw1]], axis=2).conj()
+            WF2 = np.stack([WF[:, :npw1], WF[:, npw1:]], axis=2)
+            return np.einsum("mgs,ngt,g,st->mn", WF1, WF2, multZ, S)
+        else:
+            return np.einsum("mg,ng,g->mn", WF[:, igrot].conj(), WF, multZ)
+    
+
+def right_inverse(A):
+    """
+    Compute the right inverse of a rectangular matrix A (m x n) where m < n.
+    
+    Parameters:
+    A (numpy.ndarray): The input matrix of shape (m, n).
+    
+    Returns:
+    numpy.ndarray: The right inverse of A of shape (n, m).
+    """
+    # Check if A has full row rank
+    if np.linalg.matrix_rank(A) != A.shape[0]:
+        raise ValueError("Matrix A does not have full row rank and thus does not have a right inverse.")
+    
+    # Compute the right inverse
+    A_T = A.T
+    return A_T @ np.linalg.inv(A @ A_T)
