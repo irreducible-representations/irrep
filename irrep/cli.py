@@ -282,6 +282,12 @@ do not hesitate to contact the author:
                     "errors, but the result is not what you expected. If you "
                     "don't set this tag, you will get the basic info.")
 )
+@click.option("-json_file",
+                 type=str,
+                    default="irrep-output.json",
+                    help="File to save the output in JSON format. (without "
+                    "extension, the '.json' will be added automatically)"
+)
 def cli(
     ecut,
     fwav,
@@ -313,7 +319,8 @@ def cli(
     searchcell,
     correct_ecut0,
     trans_thresh,
-    v
+    v,
+    json_file
 ):
     """
     Defines the "irrep" command-line tool interface.
@@ -450,7 +457,7 @@ def cli(
         json_data["separated by symmetry"]=False
         
 
-    dumpfn(json_data,"irrep-output.json",indent=4)
+    dumpfn(json_data, json_file, indent=4)
 
     if zak:
         for k in subbands:

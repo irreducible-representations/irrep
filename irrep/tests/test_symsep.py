@@ -3,13 +3,17 @@ import subprocess
 from pathlib import Path
 from monty.serialization import loadfn
 import numpy as np
+import pytest
 
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 
+
+
+
+
 def test_bi_hoti():
 
-    os.chdir(TEST_FILES_PATH / "Bi-hoti")
-
+    
     # Test specifying refUC in CLI
     command = [
         "irrep",
@@ -23,13 +27,38 @@ def test_bi_hoti():
         "-IBend=10",
         "-isymsep=3",
     ]
+    example_dir = "Bi-hoti"
+    ref_file = "ref_output_isymsep.json"
+    check_isymsep(example_dir, command, ref_file)
+
+@pytest.mark.parametrize("isym", [5,11])
+def test_vasp_scalar(isym):
+    # Test specifying refUC in CLI
+    output_file = f"irrep-output_isymsep-{isym}.json"
+    command = [
+        "irrep",
+        "-code=vasp",
+        "-kpoints=3",
+        "-Ecut=50",
+        "-IBend=10",
+        f"-isymsep={isym}",
+        f"-json_file={output_file}",
+    ]
+    example_dir = "vasp_scalar"
+    ref_file = f"ref_output_isymsep-{isym}.json"
+    output_file = f"irrep-output_isymsep-{isym}.json"
+    check_isymsep(example_dir, command, ref_file, output_file, check_irreps=False)
+
+def check_isymsep(example_dir, command, ref_file, output_file="irrep-output.json", check_irreps=True):
+    os.chdir(TEST_FILES_PATH / example_dir)
+
     output = subprocess.run(command, capture_output=True, text=True)
     return_code = output.returncode
     assert return_code == 0, output.stderr
 
     # Load generated and reference output data
-    data_ref = loadfn("ref_output_isymsep.json")
-    data_run = loadfn("irrep-output.json")
+    data_ref = loadfn(ref_file)
+    data_run = loadfn(output_file)
 
     # Check SpaceGroup
     sg_ref = data_ref['spacegroup']
@@ -78,11 +107,12 @@ def test_bi_hoti():
         assert np.allclose(kp_ref['characters'], kp_run['characters'], rtol=0., atol=1e-4)
         assert kp_ref['characters refUC is the same'] == kp_run['characters refUC is the same']
         assert np.allclose(kp_ref['dimensions'], kp_run['dimensions'], rtol=0., atol=1e-4)
-        for irrep_ref, irrep_run in zip(kp_ref['irreps'], kp_run['irreps']):
-            assert len(irrep_ref) == len(irrep_run)
-            for irrepname_ref, irrepname_run in zip(irrep_ref.keys(), irrep_run.keys()):
-                assert irrepname_ref == irrepname_run  # compare strings of irreps
-                assert np.allclose(irrep_ref[irrepname_ref], irrep_run[irrepname_run], rtol=0, atol=1e-4)  # compare multiplicities
+        if check_irreps:
+            for irrep_ref, irrep_run in zip(kp_ref['irreps'], kp_run['irreps']):
+                assert len(irrep_ref) == len(irrep_run)
+                for irrepname_ref, irrepname_run in zip(irrep_ref.keys(), irrep_run.keys()):
+                    assert irrepname_ref == irrepname_run  # compare strings of irreps
+                    assert np.allclose(irrep_ref[irrepname_ref], irrep_run[irrepname_run], rtol=0, atol=1e-4)  # compare multiplicities
 
     # Remove output files created during run
     for test_output_file in (
@@ -91,4 +121,5 @@ def test_bi_hoti():
             "trace.txt",
             "irrep-output.json"
     ):
-        os.remove(test_output_file)
+        if os.path.exists(test_output_file):
+            os.remove(test_output_file)
