@@ -194,13 +194,6 @@ do not hesitate to contact the author:
     "Previously worked well only for norm-conserving potentials.",
 )
 @click.option(
-    "-symsep_old",
-    flag_value=True,
-    default=False,
-    help="Old method of symmetry separation, which worked only for norm-conserving pseudopotentials."
-        "Remains here just for comparison, will be eventually removed. not recommended for use.",
-)
-@click.option(
     "-onlysym",
     flag_value=True,
     default=False,
@@ -304,7 +297,6 @@ def cli(
     refuc,
     shiftuc,
     isymsep,
-    symsep_old,
     onlysym,
     writesym,
     alat,
@@ -436,7 +428,7 @@ def cli(
         for isym in isymsep:
             print("\n-------- SEPARATING BY SYMMETRY # {} --------".format(isym))
             for s_old, bs in subbands.items():
-                separated = bs.Separate(isym, groupKramers=groupkramers, symsep_old=symsep_old, verbosity=verbosity)
+                separated = bs.Separate(isym, groupKramers=groupkramers, verbosity=verbosity)
                 for s_new, bs_separated in separated.items():
                     tmp_subbands[tuple(list(s_old) + [s_new])] = bs_separated
             subbands = tmp_subbands

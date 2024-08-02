@@ -374,10 +374,7 @@ def symm_eigenvalues(
         return np.dot(WF[:, igrot].conj() * WF[:, :], multZ)
 
 
-def symm_matrix(
-    K, RecLattice, WF, igall, A, S, T, spinor,
-    symsep_old=False
-):
+def symm_matrix(K, RecLattice, WF, igall, A, S, T, spinor):
     """
     Computes the matrix S_mn = <Psi_m|{A|T}|Psi_n>
 
@@ -421,26 +418,18 @@ def symm_matrix(
     multZ = np.exp(-2j * np.pi * np.linalg.inv(A).dot(T).dot(igall[:3, :] + K[:, None])) [None,:].conj()
     igrot = transformed_g(K, igall, RecLattice, A)
     
-    if not symsep_old:
-        if spinor:
-            WFrot_up = WF[:, igrot]*multZ
-            WFrot_down = WF[:, igrot + npw1]*multZ 
-            WFrot = np.stack([WFrot_up, WFrot_down], axis=2)
-            WFrot = np.einsum("mgs,st->mgt", WFrot,S.conj())
-            WFrot = WFrot.reshape((WFrot.shape[0], -1),order='F')
-        else:
-            # WFrot = WF[:, igrot]*multZ[None,:].conj()
-            WFrot = WF[:, igrot]*multZ
-        WFinv = right_inverse(WF)
-        return  (WFrot @ WFinv).T.conj()
-    # I do not fully understand why we need transpose and conjugate here, but it seems to work
+    if spinor:
+        WFrot_up = WF[:, igrot]*multZ
+        WFrot_down = WF[:, igrot + npw1]*multZ 
+        WFrot = np.stack([WFrot_up, WFrot_down], axis=2)
+        WFrot = np.einsum("mgs,st->mgt", WFrot,S.conj())
+        WFrot = WFrot.reshape((WFrot.shape[0], -1),order='F')
     else:
-        if spinor:
-            WF1 = np.stack([WF[:, igrot], WF[:, igrot + npw1]], axis=2).conj()
-            WF2 = np.stack([WF[:, :npw1], WF[:, npw1:]], axis=2)
-            return np.einsum("mgs,ngt,g,st->mn", WF1, WF2, multZ, S).T
-        else:
-            return np.einsum("mg,ng,g->mn", WF[:, igrot].conj(), WF, multZ).T
+        # WFrot = WF[:, igrot]*multZ[None,:].conj()
+        WFrot = WF[:, igrot]*multZ
+    WFinv = right_inverse(WF)
+    return  (WFrot @ WFinv).T.conj()
+    # I do not fully understand why we need transpose and conjugate here, but it seems to work
     
 
 def right_inverse(A):
