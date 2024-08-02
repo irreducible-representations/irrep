@@ -171,7 +171,7 @@ def calc_gvectors(
     #    print ("K={0}\n E={1}\nigall=\n{2}".format(K,Eg,igall.T))
     return igall
 
-def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor):
+def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
     """
     Apply plane-wave cutoff specified in CLI to the expansion of 
     wave-functions and sort the coefficients and plane-waves in ascending 
@@ -223,11 +223,10 @@ def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor):
     KG = (kg + kpt).dot(RecLattice)
     npw = kg.shape[0]
     eKG = Hartree_eV * (la.norm(KG, axis=1) ** 2) / 2
-    print(
-        "Found cutoff: {0:12.6f} eV   Largest plane wave energy in K-point {1:4d}: {2:12.6f} eV".format(
-            Ecut0, ik, np.max(eKG)
+    log_message(
+        f"Found cutoff: {Ecut0:12.6f} eV   Largest plane wave energy in K-point {ik:4d}: {np.max(eKG):12.6f} eV",
+        verbosity=verbosity, level=2
         )
-    )
     assert Ecut0 * 1.000000001 > np.max(eKG)
     sel = np.where(eKG < Ecut)[0]
 
@@ -253,7 +252,7 @@ def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor):
 
     return CG, igall
 
-def transformed_g(kpt, ig, RecLattice, A):
+def transformed_g(kpt, ig, RecLattice, A, kpt_other=None, ig_other=None):
     """
     Determines how the transformation matrix `A` reorders the reciprocal
     lattice vectors taking part in the plane-wave expansion of wave-functions.
@@ -269,6 +268,9 @@ def transformed_g(kpt, ig, RecLattice, A):
         to short plane-waves based on energy (ascending order). Fitfth 
         (sixth) row contains the index of the first (last) groups of 
         plane-waves of identical energy.
+    ig_other : array, default=None
+        If `ig` is not the same as `ig_other` the order of the rotates g-vectors 
+        is determined by `ig_other`. (for transformations between different k-points)
     RecLattice : array, shape=(3,3)
         Each row contains the cartesian coordinates of a basis vector forming 
         the unit-cell in reciprocal space.
@@ -280,15 +282,19 @@ def transformed_g(kpt, ig, RecLattice, A):
     -------
     rotind : array
         `rotind[i]`=`j` if `A`*`ig[:,i]`==`ig[:,j]`.
-"""
+""" 
+    assert (ig_other is None) == (kpt_other is None), "ig_other and kpt_other must be provided (or not) together"
+    if ig_other is None:
+        ig_other = ig
+        kpt_other = kpt
     B = np.linalg.inv(A).T
     kpt_ = B.dot(kpt)
-    dkpt = np.array(np.round(kpt_ - kpt), dtype=int)
-    if not np.isclose(dkpt, kpt_ - kpt).all():
+    dkpt = np.array(np.round(kpt_ - kpt_other), dtype=int)
+
+    if not np.isclose(dkpt, kpt_ - kpt_other).all():
         raise NotSymmetryError(
-            "The k-point {0} is transformed to non-equivalent point {1}  under transformation\n {2}".format(
-                kpt, kpt_, A
-            )
+            f"The k-point {kpt} is transformed point {kpt_}  that is non-equivalent to the final point {kpt_other} "
+            f"under transformation\n {A}"
         )
 
     igTr = B.dot(ig[:3, :]) + dkpt[:, None]  # the transformed
@@ -297,7 +303,7 @@ def transformed_g(kpt, ig, RecLattice, A):
     rotind = -np.ones(ng, dtype=int)
     for i in range(ng):
         for j in range(ig[4, i], ig[5, i]):
-            if (igTr[:, i] == ig[:3, j]).all():
+            if (igTr[:, i] == ig_other[:3, j]).all():
                 rotind[i] = j
                 break
         if rotind[i] == -1:
@@ -307,7 +313,7 @@ def transformed_g(kpt, ig, RecLattice, A):
                     "Not pair found for the g-vector igTr[{i}]={igtr}"
                     .format(i=i, igtr=igTr[:,i]) +
                     "obtained when transforming the g-vector ig[{i}]={ig} "
-                    .format(i=i, ig=ig[:3,i] +
+                    .format(i=i, ig=ig_other[:3,i] +
                     "with the matrix {B}, where B=inv(A).T with A={A}"
                     .format(B=B, A=A)
                 )
@@ -376,7 +382,7 @@ def symm_eigenvalues(
 
 def symm_matrix(
     K, RecLattice, WF, igall, A, S, T, spinor,
-    symsep_old=False
+    symsep_old=False, WF_other=None, igall_other=None, K_other=None
 ):
     """
     Computes the matrix S_mn = <Psi_m|{A|T}|Psi_n>
@@ -400,6 +406,8 @@ def symm_matrix(
         to short plane-waves based on energy (ascending order). Fitfth 
         (sixth) row contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.
+    WF_other, igall_other : array, default=None
+        if provided, transformation to a different point is calculated.
     A : array, shape=(3,3)
         Matrix describing the tranformation of basis vectors of the unit cell 
         under the symmetry operation.
@@ -417,9 +425,16 @@ def symm_matrix(
         Matrix of the symmetry operation in the basis of eigenstates of the 
         Bloch Hamiltonian :math:`H(k)`.
     """
+    assert (WF_other is None) == (igall_other is None) == (K_other is None), "WF_other and igall_other must be provided (or not) together"
+    if WF_other is None:
+        WF_other = WF
+        igall_other = igall
+        K_other = K
+
     npw1 = igall.shape[1]
+
     multZ = np.exp(-1.0j * (2 * np.pi * A.dot(T).dot(igall[:3, :] + K[:, None])))
-    igrot = transformed_g(K, igall, RecLattice, A)
+    igrot = transformed_g(K, igall, RecLattice, A, ig_other=igall_other, kpt_other=K_other)
     if not symsep_old:
         if spinor:
             WFrot_up = WF[:, igrot]*(multZ[None, :].conj())
@@ -428,8 +443,9 @@ def symm_matrix(
             WFrot = np.einsum("mgs,st->mgt", WFrot,S.conj())
             WFrot = WFrot.reshape((WFrot.shape[0], -1),order='F')
         else:
-            WFrot = WF[:, igrot]*multZ[None,:].conj()
+            WFrot = WF_other[:, igrot]*multZ[None,:].conj()
         WFinv = right_inverse(WF)
+        print ("WF ", WF, "WFinv", WFinv, "WFrot", WFrot, "multz", multZ)
         return  WFrot @ WFinv
     else:
         if spinor:

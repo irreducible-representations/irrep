@@ -161,6 +161,7 @@ class BandStructure:
         verbosity=0,
         alat=None,
         from_sym_file=None,
+        normalize=True,
     ):
 
         code = code.lower()
@@ -335,13 +336,13 @@ class BandStructure:
                 msg = f'Parsing wave functions at k-point #{ik:>3d}: {kpt}'
                 log_message(msg, verbosity, 2)
                 WF, Energy, kg = parser.parse_kpoint(ik)
-                WF, kg = sortIG(ik, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, self.spinor)
+                WF, kg = sortIG(ik, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, self.spinor, verbosity=verbosity)
 
             elif code == 'espresso':
                 msg = f'Parsing wave functions at k-point #{ik:>3d}'
                 log_message(msg, verbosity, 2)
                 WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel, verbosity=verbosity)
-                WF, kg = sortIG(ik+1, kg, kpt, WF, self.RecLattice/2.0, self.Ecut0, self.Ecut, self.spinor)
+                WF, kg = sortIG(ik+1, kg, kpt, WF, self.RecLattice/2.0, self.Ecut0, self.Ecut, self.spinor, verbosity=verbosity)
 
             elif code == 'wannier90':
                 kpt = kpred[ik]
@@ -392,6 +393,7 @@ class BandStructure:
                 symmetries_SG=self.spacegroup.symmetries,
                 spinor=self.spinor,
                 kwargs_kpoint=self.kwargs_kpoint,
+                normalize=normalize,
                 )
             self.kpoints.append(kp)
         del WF

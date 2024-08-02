@@ -152,6 +152,7 @@ class Kpoint:
         upper=None,
         symmetries=None,
         kwargs_kpoint={},
+        normalize=True,
         ):
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
@@ -165,9 +166,10 @@ class Kpoint:
         self.ig = ig
         self.upper = upper
 
-        self.WF /= (
-            np.sqrt(np.abs(np.einsum("ij,ij->i", self.WF.conj(), self.WF)))
-        ).reshape(self.num_bands, 1)
+        if normalize:
+            self.WF /= (
+                np.sqrt(np.abs(np.einsum("ij,ij->i", self.WF.conj(), self.WF)))
+            ).reshape(self.num_bands, 1)
 
         # Determine little group and keep only passed symmetries
         if symmetries is None:
