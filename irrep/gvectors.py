@@ -418,26 +418,29 @@ def symm_matrix(
         Bloch Hamiltonian :math:`H(k)`.
     """
     npw1 = igall.shape[1]
-    multZ = np.exp(-1.0j * (2 * np.pi * A.dot(T).dot(igall[:3, :] + K[:, None])))
+    multZ = np.exp(-2j * np.pi * np.linalg.inv(A).dot(T).dot(igall[:3, :] + K[:, None])) [None,:].conj()
     igrot = transformed_g(K, igall, RecLattice, A)
+    
     if not symsep_old:
         if spinor:
-            WFrot_up = WF[:, igrot]*(multZ[None, :].conj())
-            WFrot_down = WF[:, igrot + npw1]*(multZ[None, :].conj())
+            WFrot_up = WF[:, igrot]*multZ
+            WFrot_down = WF[:, igrot + npw1]*multZ 
             WFrot = np.stack([WFrot_up, WFrot_down], axis=2)
             WFrot = np.einsum("mgs,st->mgt", WFrot,S.conj())
             WFrot = WFrot.reshape((WFrot.shape[0], -1),order='F')
         else:
-            WFrot = WF[:, igrot]*multZ[None,:].conj()
+            # WFrot = WF[:, igrot]*multZ[None,:].conj()
+            WFrot = WF[:, igrot]*multZ
         WFinv = right_inverse(WF)
-        return  WFrot @ WFinv
+        return  (WFrot @ WFinv).T.conj()
+    # I do not fully understand why we need transpose and conjugate here, but it seems to work
     else:
         if spinor:
             WF1 = np.stack([WF[:, igrot], WF[:, igrot + npw1]], axis=2).conj()
             WF2 = np.stack([WF[:, :npw1], WF[:, npw1:]], axis=2)
-            return np.einsum("mgs,ngt,g,st->mn", WF1, WF2, multZ, S)
+            return np.einsum("mgs,ngt,g,st->mn", WF1, WF2, multZ, S).T
         else:
-            return np.einsum("mg,ng,g->mn", WF[:, igrot].conj(), WF, multZ)
+            return np.einsum("mg,ng,g->mn", WF[:, igrot].conj(), WF, multZ).T
     
 
 def right_inverse(A):
