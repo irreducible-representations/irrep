@@ -194,13 +194,6 @@ do not hesitate to contact the author:
     "Previously worked well only for norm-conserving potentials.",
 )
 @click.option(
-    "-symsep_old",
-    flag_value=True,
-    default=False,
-    help="Old method of symmetry separation, which worked only for norm-conserving pseudopotentials."
-        "Remains here just for comparison, will be eventually removed. not recommended for use.",
-)
-@click.option(
     "-onlysym",
     flag_value=True,
     default=False,
@@ -289,6 +282,12 @@ do not hesitate to contact the author:
                     "errors, but the result is not what you expected. If you "
                     "don't set this tag, you will get the basic info.")
 )
+@click.option("-json_file",
+                 type=str,
+                    default="irrep-output.json",
+                    help="File to save the output in JSON format. (without "
+                    "extension, the '.json' will be added automatically)"
+)
 def cli(
     ecut,
     fwav,
@@ -304,7 +303,6 @@ def cli(
     refuc,
     shiftuc,
     isymsep,
-    symsep_old,
     onlysym,
     writesym,
     alat,
@@ -321,7 +319,8 @@ def cli(
     searchcell,
     correct_ecut0,
     trans_thresh,
-    v
+    v,
+    json_file
 ):
     """
     Defines the "irrep" command-line tool interface.
@@ -436,7 +435,7 @@ def cli(
         for isym in isymsep:
             print("\n-------- SEPARATING BY SYMMETRY # {} --------".format(isym))
             for s_old, bs in subbands.items():
-                separated = bs.Separate(isym, groupKramers=groupkramers, symsep_old=symsep_old, verbosity=verbosity)
+                separated = bs.Separate(isym, groupKramers=groupkramers, verbosity=verbosity)
                 for s_new, bs_separated in separated.items():
                     tmp_subbands[tuple(list(s_old) + [s_new])] = bs_separated
             subbands = tmp_subbands
@@ -458,7 +457,7 @@ def cli(
         json_data["separated by symmetry"]=False
         
 
-    dumpfn(json_data,"irrep-output.json",indent=4)
+    dumpfn(json_data, json_file, indent=4)
 
     if zak:
         for k in subbands:

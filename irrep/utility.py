@@ -297,7 +297,9 @@ def orthogonolize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosit
 
 def sort_vectors(list_of_vectors):
     list_of_vectors = list(list_of_vectors)
+    print (list_of_vectors)
     srt = arg_sort_vectors(list_of_vectors)
+    print (list_of_vectors, srt)
     return [list_of_vectors[i] for i in srt]
 
 def arg_sort_vectors(list_of_vectors):
@@ -312,13 +314,15 @@ def arg_sort_vectors(list_of_vectors):
     bool
         True if v1>v2, False otherwise
     """
-    def keys(x):
-        return [(np.angle(x)/(2*np.pi)+0.0)%1, abs(x)]
-    def serialize(x):
-        a = list(np.array( [keys(x) for x in x]).flatten())
-        return [len(a)]+a
-    sort_key = [serialize(x) for x in list_of_vectors]
-    lenmax = max([len(x) for x in sort_key])
-    sort_key = [x+[0]*(lenmax-len(x)) for x in sort_key]
-    srt = np.lexsort(np.array(sort_key))
+    if all( np.all(abs(np.array(key).imag)<1e-4) for key in list_of_vectors):
+        def key(x):
+            return np.real(x)
+    else:
+        def key(x):
+            return (np.angle(x)/(2*np.pi)+0.01)%1
+    def serialize(x, lenmax):
+        return [len(x)]+ [key(y) for y in x] + [0]*(lenmax-len(x))
+    lenmax = max([len(x) for x in list_of_vectors])
+    sort_key = [serialize(x, lenmax) for x in list_of_vectors]
+    srt = np.lexsort(np.array(sort_key).T, axis=0)
     return srt

@@ -440,7 +440,7 @@ class Kpoint:
                 result.append((b1, b2, E, (W,)))
         return result
 
-    def Separate(self, symop, groupKramers=True, symsep_old=False, verbosity=0,
+    def Separate(self, symop, groupKramers=True, verbosity=0, 
                  kwargs_kpoint={}):
         """
         Separate the band structure in a particular k-point according to the 
@@ -481,7 +481,6 @@ class Kpoint:
             symop.spinor_rotation,
             symop.translation,
             self.spinor,
-            symsep_old=symsep_old,
         )
 
 

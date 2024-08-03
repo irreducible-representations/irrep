@@ -635,8 +635,7 @@ class BandStructure:
                 KP.write_trace()
             )
 
-    def Separate(self, isymop, groupKramers=True, 
-                 symsep_old=False, verbosity=0):
+    def Separate(self, isymop, groupKramers=True, verbosity=0):
         """
         Separate band structure according to the eigenvalues of a symmetry 
         operation.
@@ -645,8 +644,6 @@ class BandStructure:
         ----------
         isymop : int
             Index of symmetry used for the separation.
-        degen_thresh : float, default=1e-5
-            Energy threshold used to determine degeneracy of energy-levels.
         groupKramers : bool, default=True
             If `True`, states will be coupled by Kramers' pairs.
         verbosity : int, default=0
@@ -669,7 +666,7 @@ class BandStructure:
 
         # Separate each k-point
         kpseparated = [
-            kp.Separate(symop, groupKramers=groupKramers, symsep_old=symsep_old, verbosity=verbosity, kwargs_kpoint=self.kwargs_kpoint)
+            kp.Separate(symop, groupKramers=groupKramers, verbosity=verbosity, kwargs_kpoint=self.kwargs_kpoint)
             for kp in self.kpoints
         ] # each element is a dict with separated bandstructure of a k-point
 
