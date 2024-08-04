@@ -1,14 +1,18 @@
 import os
 import subprocess
 from pathlib import Path
+from irrep.bandstructure import BandStructure
+from irrep.gvectors import symm_matrix
+from irrep.utility import is_round
 from monty.serialization import loadfn
 import numpy as np
 import pytest
 
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
-
-
-
+REF_DATA_PATH = Path(__file__).parents[0] / "ref_data"
+TMP_DATA_PATH = Path(__file__).parents[0] / "tmp_data"
+if not os.path.exists(TMP_DATA_PATH):
+    os.makedirs(TMP_DATA_PATH)
 
 
 def test_bi_hoti():
@@ -123,3 +127,40 @@ def check_isymsep(example_dir, command, ref_file, output_file="irrep-output.json
     ):
         if os.path.exists(test_output_file):
             os.remove(test_output_file)
+
+
+def test_differetnt_k():
+    path = os.path.join(TEST_FILES_PATH , 'Bi-hoti')
+    bandstructure = BandStructure(code='vasp', 
+                                  fPOS=os.path.join(path, 'POSCAR'),
+                                  fWAV=os.path.join(path, 'WAVECAR'),
+                                  Ecut=100, 
+                                  spinor=True, normalize=False)
+    points = []
+    matrices=[]
+    for k1,K1 in enumerate(bandstructure.kpoints):
+        for k2,K2 in enumerate(bandstructure.kpoints):
+            for isym, symop in enumerate(bandstructure.spacegroup.symmetries):
+                if is_round(symop.transform_k(K1.k)-K2.k, prec=1e-5):
+                    points.append((k1,k2,isym))
+                    matrices.append(symm_matrix(
+                                        K=K1.k,
+                                        K_other=K2.k,
+                                        WF=K1.WF,
+                                        WF_other=K2.WF,
+                                        igall=K1.ig,
+                                        igall_other=K2.ig,
+                                        A=symop.rotation,
+                                        S=symop.spinor_rotation,
+                                        T=symop.translation,
+                                        spinor = K1.spinor,
+                                    ) )
+    tmp_file = TMP_DATA_PATH /  "tmp_symm_matrices.npz"
+    np.savez_compressed(tmp_file, points=points, matrices=matrices)
+    reference = np.load(REF_DATA_PATH / "ref_symm_matrices.npz")
+    assert np.allclose(reference['points'], points)
+    assert np.allclose(reference['matrices'], matrices, atol=1e-5)
+    os.remove(tmp_file)
+            
+
+    
