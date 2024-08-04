@@ -252,7 +252,7 @@ def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
 
     return CG, igall
 
-def transformed_g(kpt, ig, RecLattice, A, kpt_other=None, ig_other=None):
+def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
     """
     Determines how the transformation matrix `A` reorders the reciprocal
     lattice vectors taking part in the plane-wave expansion of wave-functions.
@@ -271,9 +271,6 @@ def transformed_g(kpt, ig, RecLattice, A, kpt_other=None, ig_other=None):
     ig_other : array, default=None
         If `ig` is not the same as `ig_other` the order of the rotates g-vectors 
         is determined by `ig_other`. (for transformations between different k-points)
-    RecLattice : array, shape=(3,3)
-        Each row contains the cartesian coordinates of a basis vector forming 
-        the unit-cell in reciprocal space.
     A : array, shape=(3,3)
         Matrix describing the tranformation of basis vectors of the unit cell 
         under the symmetry operation.
@@ -281,7 +278,10 @@ def transformed_g(kpt, ig, RecLattice, A, kpt_other=None, ig_other=None):
     Returns
     -------
     rotind : array
-        `rotind[i]`=`j` if `A`*`ig[:,i]`==`ig[:,j]`.
+        `rotind[i] = j` if `B @ ig[:,i] == ig_other[:,j]`. if inverse is `False`,
+        'rotind[j] = i' if `B @ ig[:,i] == ig_other[:,j]`. if inverse is `True`.
+
+        where `B = np.linalg.inv(A).T`
 """ 
     assert (ig_other is None) == (kpt_other is None), "ig_other and kpt_other must be provided (or not) together"
     if ig_other is None:
@@ -304,8 +304,13 @@ def transformed_g(kpt, ig, RecLattice, A, kpt_other=None, ig_other=None):
     for i in range(ng):
         for j in range(ig[4, i], ig[5, i]):
             if (igTr[:, i] == ig_other[:3, j]).all():
-                rotind[i] = j
+                if inverse:
+                    rotind[j] = i
+                else:
+                    rotind[i] = j
                 break
+
+    for i in range(ng):
         if rotind[i] == -1:
             raise RuntimeError(
                     "Error in the transformation of plane-waves in k-point={}: "
@@ -322,7 +327,7 @@ def transformed_g(kpt, ig, RecLattice, A, kpt_other=None, ig_other=None):
 
 
 def symm_eigenvalues(
-    K, RecLattice, WF, igall, A, S, T, spinor
+    K, WF, igall, A, S, T, spinor
 ):
     """
     Calculate the traces of a symmetry operation for the wave-functions in a 
@@ -332,9 +337,6 @@ def symm_eigenvalues(
     ----------
     K : array, shape=(3,)
         Direct coordinates of the k-point.
-    RecLattice : array, shape=(3,3)
-        Each row contains the cartesian coordinates of a basis vector forming 
-        the unit-cell in reciprocal space.
     WF : array
         `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
         plane-wave in the expansion of the wave-function in :math:`i^{th}`
@@ -367,7 +369,7 @@ def symm_eigenvalues(
     multZ = np.exp(
         -1.0j * (2 * np.pi * np.linalg.inv(A).dot(T).dot(igall[:3, :] + K[:, None]))
     )
-    igrot = transformed_g(K, igall, RecLattice, A)
+    igrot = transformed_g(kpt=K, ig=igall, A=A)
     if spinor:
         part1 = WF[:, igrot].conj() * WF[:, :npw1] * S[0, 0]
         part2 = (
@@ -381,19 +383,17 @@ def symm_eigenvalues(
 
 
 def symm_matrix(
-    K, RecLattice, WF, igall, A, S, T, spinor,
+    K, WF, igall, A, S, T, spinor,
     WF_other=None, igall_other=None, K_other=None
 ):
     """
-    Computes the matrix S_mn = <Psi_m|{A|T}|Psi_n>
+    Computes the matrix S_mn such that
+    {A|T} |Psi_mk> = sum_n S_mn * |Psi_nk'>
 
     Parameters
     ----------
     K : array, shape=(3,)
         Direct coordinates of the k-point.
-    RecLattice : array, shape=(3,3)
-        Each row contains the cartesian coordinates of a basis vector forming 
-        the unit-cell in reciprocal space.
     WF : array
         `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
         plane-wave in the expansion of the wave-function in :math:`i^{th}`
@@ -432,19 +432,19 @@ def symm_matrix(
         K_other = K
 
     npw1 = igall.shape[1]
-    multZ = np.exp(-2j * np.pi * np.linalg.inv(A).dot(T).dot(igall[:3, :] + K[:, None])) [None,:].conj()
-    igrot = transformed_g(K, igall, RecLattice, A, ig_other=igall_other, kpt_other=K_other)
+    multZ = np.exp(-2j * np.pi * T.dot(igall_other[:3, :] + K_other[:, None])) [None,:]
+    igrot = transformed_g(kpt=K, ig=igall, A=A, ig_other=igall_other, kpt_other=K_other, inverse=True)
     if spinor:
-        WFrot_up = WF_other[:, igrot]*multZ
-        WFrot_down = WF_other[:, igrot + npw1]*multZ 
+        WFrot_up   = WF[:, igrot]*multZ
+        WFrot_down = WF[:, igrot + npw1]*multZ 
         WFrot = np.stack([WFrot_up, WFrot_down], axis=2)
-        WFrot = np.einsum("mgs,st->mgt", WFrot,S.conj())
+        WFrot = np.einsum("ts,mgs->mgt", S,WFrot)
         WFrot = WFrot.reshape((WFrot.shape[0], -1),order='F')
     else:
-        WFrot = WF_other[:, igrot]*multZ
-    WFinv = right_inverse(WF)
-    return  (WFrot @ WFinv).T.conj()
-    # I do not fully understand why we need transpose and conjugate here, but it seems to work
+        WFrot = WF[:, igrot]*multZ
+    WFinv = right_inverse(WF_other)
+    return  (WFrot @ WFinv)
+
     
 
 def right_inverse(A):

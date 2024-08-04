@@ -474,7 +474,6 @@ class Kpoint:
 
         S = symm_matrix(
             self.k,
-            self.RecLattice,
             self.WF,
             self.ig,
             symop.rotation,
@@ -609,7 +608,6 @@ class Kpoint:
             char.append(
                     symm_eigenvalues(
                         self.k,
-                        self.RecLattice,
                         self.WF,
                         self.ig,
                         symop.rotation,
