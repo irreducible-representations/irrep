@@ -20,7 +20,7 @@ import warnings
 import numpy as np
 import numpy.linalg as la
 from .readfiles import Hartree_eV
-from .utility import log_message
+from .utility import log_message, orthogonolize
 
 
 class NotSymmetryError(RuntimeError):
@@ -387,7 +387,8 @@ def symm_matrix(
     K, WF, igall, A, S, T, spinor,
     WF_other=None, igall_other=None, K_other=None,
     block_ind=None,
-    return_blocks=False
+    return_blocks=False,
+    ortogonalize=True
 ):
     """
     Computes the matrix S_mn such that
@@ -428,6 +429,9 @@ def symm_matrix(
     return_blocks : bool, default=False
         If `True`, returns the diagonal blocks as a list. Otherwise, returns the
         matrix composed of those blocks.
+    ortogonalize : bool, default=True
+        If `True`, the matrix is orthogonalized. Set to `False` for speedup. 
+        (in general it is not needed, but just in case)
     Returns
     -------
     array
@@ -457,6 +461,8 @@ def symm_matrix(
     for b1,b2 in block_ind:
         WFinv = right_inverse(WF_other[b1:b2])
         block = np.dot(WFrot[b1:b2,:], WFinv)
+        if ortogonalize:
+            block = orthogonolize(block)
         block_list.append(block)
     if return_blocks:
         return block_list
