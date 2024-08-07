@@ -21,7 +21,7 @@ import numpy as np
 import numpy.linalg as la
 import copy
 from .gvectors import symm_eigenvalues, symm_matrix
-from .utility import compstr, is_round, format_matrix, log_message, orthogonolize
+from .utility import compstr, get_block_indices, is_round, format_matrix, log_message, orthogonolize
 
 class Kpoint:
     """
@@ -122,10 +122,10 @@ class Kpoint:
         The same as `char`, but in the reference cell setting.
     degeneracies : array
         Degeneracies of energy levels between `IBstart` and `IBend`.
-    borders : array
-        Integers representing the band index of the first state in each set of 
+    block_indices : array((N,2), dtype=int)
+        Integers representing the band index of the first and last+1  state in each set of 
         degenerate states. The bounds can be obtained as 
-        `for ibot, itop in zip(borders[:-1], borders[1:])`.
+        `for ibot, itop in block_indices: Emean=Energy[ibot:itop].mean()`
     Energy_mean : array
         Average of energy levels within each set of degenerate states
     num_bandinvs : int
@@ -223,12 +223,8 @@ class Kpoint:
         self.little_group = [self.little_group[ind] for ind in argsort]
 
         # Determine degeneracies
-        self.borders = np.hstack([
-             [0],
-             np.where(self.Energy_raw[1:] - self.Energy_raw[:-1] > degen_thresh)[0] + 1,
-             [self.num_bands],
-        ])
-        self.degeneracies = self.borders[1:] - self.borders[:-1]
+        self.block_indices = get_block_indices(self.Energy_raw, thresh=degen_thresh, cyclic=False)
+        self.degeneracies = self.block_indices[:, 1] - self.block_indices[:, 0]
 
         # Calculate traces
         if calculate_traces:
@@ -397,15 +393,9 @@ class Kpoint:
             M -  <i|j>
             Sx, Sy, Sz - <i|sigma|j> 
         """
-        borders = np.hstack(
-            [
-                [0],
-                np.where(self.Energy_raw[1:] - self.Energy_raw[:-1] > degen_thresh)[0] + 1,
-                [self.num_bands],
-            ]
-        )
+        block_indices = get_block_indices(self.Energy_raw, thresh=degen_thresh)
         result = []
-        for b1, b2 in zip(borders, borders[1:]):
+        for b1, b2 in block_indices:
             E = self.Energy_raw[b1:b2].mean()
             W = np.array(
                 [
@@ -485,7 +475,7 @@ class Kpoint:
 
         # Check that S is block-diagonal
         Sblock = np.copy(S)
-        for b1, b2 in zip(self.borders, self.borders[1:]):
+        for b1, b2 in self.block_indices:
             Sblock[b1:b2, b1:b2] = 0
         check = np.max(abs(Sblock))
         if check > 0.001:
@@ -496,7 +486,7 @@ class Kpoint:
             log_message(msg, verbosity      , 1)
             log_message(format_matrix(Sblock), verbosity      , 1)
             log_message("The diagonal blocks", verbosity      , 1)
-            msg = ", ".join([f"{b1}:{b2} \n: {format_matrix(S[b1:b2,b1:b2])}" for b1, b2 in zip(self.borders, self.borders[1:])])
+            msg = ", ".join([f"{b1}:{b2} \n: {format_matrix(S[b1:b2,b1:b2])}" for b1, b2 in self.block_indices])
             log_message(msg, verbosity      , 1)
             
 
@@ -504,9 +494,7 @@ class Kpoint:
         eigenvalues = []
         eigenvectors = []
         Eloc = []
-        for istate, num_states in  enumerate(self.degeneracies):
-            b1 = self.borders[istate]
-            b2 = self.borders[istate+1]
+        for istate, (b1,b2) in  enumerate(self.block_indices):
             S_loc = orthogonolize(S[b1:b2, b1:b2], verbosity=verbosity, error_threshold=1e-2, warning_threshold=1e-3)
             W, V = la.eig(S_loc)
             for w, v in zip(W, V.T):
@@ -535,19 +523,12 @@ class Kpoint:
             w = w[arg]
             v = v[:, arg]
             Eloc = Eloc[arg]
-            borders = np.hstack(
-                ([0], np.where((w[1:] - w[:-1]) > 0.05)[0] + 1, [self.num_bands])
-            )
+            block_indices = get_block_indices(w, thresh=0.05, cyclic=False)
 
-            # Probably this if-else statement can be removed
-            if len(borders) > 0:
-                for b1, b2 in zip(borders, borders[1:]):
-                    v1 = v[:, b1:b2]
-                    subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.conj().dot(self.WF), kwargs_kpoint=kwargs_kpoint)
-            else:
-                v1 = v
-                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF), kwargs_kpoint=kwargs_kpoint)
-
+            for b1, b2 in block_indices:
+                v1 = v[:, b1:b2]
+                subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.conj().dot(self.WF), kwargs_kpoint=kwargs_kpoint)
+            
         else:  # don't group Kramers pairs
             
             # Sort based on the argument of eigenvalues
@@ -556,19 +537,14 @@ class Kpoint:
             w = w[arg]
             v = v[:, arg]
             Eloc = Eloc[arg]
-            borders = np.where(abs(w - np.roll(w, 1)) > 0.05)[0]
+            block_indices = get_block_indices(w, thresh=0.05, cyclic=True)
 
-            if len(borders) > 0:
-                for b1, b2 in zip(borders, np.roll(borders, -1)):
-                    v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
-                    subspaces[np.roll(w, -b1)[: (b2 - b1) % self.num_bands].mean()] = self.copy_sub(
-                        E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands],  WF=v1.T.conj().dot(self.WF),  
-                        kwargs_kpoint=kwargs_kpoint
-                    )
-
-            else:
-                v1 = v
-                subspaces[w.mean()] = self.copy_sub(E=Eloc, WF=v1.T.dot(self.WF), kwargs_kpoint=kwargs_kpoint)
+            for b1, b2 in block_indices:
+                v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
+                subspaces[np.roll(w, -b1)[: (b2 - b1) % self.num_bands].mean()] = self.copy_sub(
+                    E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands],  WF=v1.T.conj().dot(self.WF),  
+                    kwargs_kpoint=kwargs_kpoint
+                )
 
         return subspaces
 
@@ -627,12 +603,12 @@ class Kpoint:
 
         # Sum traces of degenerate states. Rows (cols) correspond to states (syms)
         char = np.array(
-            [char[:, start:end].sum(axis=1) for start, end in zip(self.borders, self.borders[1:])]
+            [char[:, start:end].sum(axis=1) for start, end in self.block_indices]
             )
 
         # Take average of energies over degenerate states
         Energy_mean = np.array(
-            [self.Energy_raw[start:end].mean() for start, end in zip(self.borders, self.borders[1:])]
+            [self.Energy_raw[start:end].mean() for start, end in self.block_indices]
         )
 
         # Transfer traces in calculational cell to refUC

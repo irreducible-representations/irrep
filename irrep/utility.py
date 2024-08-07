@@ -326,3 +326,57 @@ def arg_sort_vectors(list_of_vectors):
     sort_key = [serialize(x, lenmax) for x in list_of_vectors]
     srt = np.lexsort(np.array(sort_key).T, axis=0)
     return srt
+
+def get_borders(E, thresh=1e-5, cyclic=False):
+    """
+    Get the borders of the blocks of degenerate eigenvalues.
+
+    Parameters
+    ----------
+    E : array
+        Eigenvalues.
+    thresh : float, default=1e-5
+        Threshold for the difference between eigenvalues.
+    cyclic : bool, default=False
+        If `True`, the first and last eigenvalues are considered to be close. 
+        (e.g. complex eigenvalues on the unit circle).
+
+    Returns
+    -------
+    array(int)
+        Borders of the blocks of degenerate eigenvalues.
+    """
+    if cyclic:
+        return np.where(abs(E - np.roll(E, 1)) > thresh)[0]
+    else:
+        return np.hstack([
+                [0],
+                np.where(abs(E[1:] - E[:-1]) > thresh)[0] + 1,
+                [len(E)],
+            ])
+
+def get_block_indices(E, thresh=1e-5, cyclic=False):
+    """
+    Get the indices of the blocks of degenerate eigenvalues.
+
+    Parameters
+    ----------
+    E : array
+        Eigenvalues.
+    thresh : float, default=1e-5
+        Threshold for the difference between eigenvalues.
+    cyclic : bool, default=False
+        If `True`, the first and last eigenvalues are considered to be close. 
+        (e.g. complex eigenvalues on the unit circle).
+
+    Returns
+    -------
+    array((N,2), dtype=int)
+        Indices of the blocks of degenerate eigenvalues.
+    """
+    borders = get_borders(E, thresh=thresh, cyclic=cyclic)
+    if cyclic:
+        return np.array([borders, np.roll(borders, -1)]).T
+    else:
+        return np.array([borders[:-1], borders[1:]]).T
+       

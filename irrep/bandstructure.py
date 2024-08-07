@@ -26,7 +26,7 @@ from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .gvectors import sortIG, calc_gvectors
-from .utility import log_message
+from .utility import get_block_indices, log_message
 
 
 class BandStructure:
@@ -673,16 +673,10 @@ class BandStructure:
         allvalues = np.array(sum((list(kps.keys()) for kps in kpseparated), []))
         if groupKramers:
             allvalues = allvalues[np.argsort(np.real(allvalues))].real
-            borders = np.hstack(
-                (
-                    [0],
-                    np.where(abs(allvalues[1:] - allvalues[:-1]) > 0.01)[0] + 1,
-                    [len(allvalues)],
-                )
-            )
-            if len(borders) > 2:
+            block_indices = get_block_indices(allvalues, thresh=0.01, cyclic=False)
+            if len(block_indices) > 1:
                 allvalues = set(
-                    [allvalues[b1:b2].mean() for b1, b2 in zip(borders, borders[1:])]
+                    [allvalues[b1:b2].mean() for b1, b2 in block_indices]
                 ) # unrepeated Re parts of all eigenvalues
                 subspaces = {}
                 for vv in allvalues:
@@ -700,15 +694,11 @@ class BandStructure:
         else:
             allvalues = allvalues[np.argsort(np.angle(allvalues))]
             log_message(f'allvalues: {allvalues}', verbosity, 2)
-            borders = np.where(abs(allvalues - np.roll(allvalues, 1)) > 0.01)[0]
+            block_indices = get_block_indices(allvalues, thresh=0.01, cyclic=True)
             nv = len(allvalues)
-            if len(borders) > 0:
-                allvalues = set(
-                    [
-                        np.roll(allvalues, -b1)[: (b2 - b1) % nv].mean()
-                        for b1, b2 in zip(borders, np.roll(borders, -1))
-                    ]
-                )
+            if len(block_indices) > 1:
+                allvalues = set( [ np.roll(allvalues, -b1)[: (b2 - b1) % nv].mean()
+                                    for b1, b2 in block_indices ])
                 log_message(f'Distinct values: {allvalues}', verbosity, 2)
                 subspaces = {}
                 for vv in allvalues:

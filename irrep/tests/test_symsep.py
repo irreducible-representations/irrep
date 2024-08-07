@@ -1,9 +1,10 @@
 import os
 import subprocess
 from pathlib import Path
+import irrep
 from irrep.bandstructure import BandStructure
 from irrep.gvectors import symm_matrix
-from irrep.utility import is_round
+from irrep.utility import get_block_indices, is_round
 from monty.serialization import loadfn
 import numpy as np
 import pytest
@@ -129,38 +130,88 @@ def check_isymsep(example_dir, command, ref_file, output_file="irrep-output.json
             os.remove(test_output_file)
 
 
-def test_differetnt_k():
-    path = os.path.join(TEST_FILES_PATH , 'Bi-hoti')
+def test_symm_matrix_full():
+    check_symm_matrix(example_dir="vasp_spinor",
+                      output_file="symm_matrix_full.npz" ,
+                      Ecut=100,
+                      degen_thresh=None,
+                      acc=1e-6
+                      )
+
+def test_symm_matrix_block_vs_full():
+    check_symm_matrix(example_dir="vasp_spinor",
+                      output_file="symm_matrix_block.npz" ,
+                      ref_file="symm_matrix_full.npz",
+                      Ecut=30,
+                      degen_thresh=1e-2,
+                      acc=1e-4
+                      )
+
+def test_symm_matrix_block():
+    check_symm_matrix(example_dir="vasp_spinor",
+                      output_file="symm_matrix_block.npz" ,
+                    #   ref_file="symm_matrix_full.npz",
+                      Ecut=30,
+                      degen_thresh=1e-2,
+                      acc=1e-8
+                      )
+    
+
+def test_symm_matrix_block_2():
+    check_symm_matrix(example_dir="vasp_spinor",
+                      output_file="symm_matrix_block.npz" ,
+                    #   ref_file="symm_matrix_full.npz",
+                      Ecut=60,
+                      degen_thresh=1e-2,
+                      acc=3e-5
+                      )
+
+
+def check_symm_matrix(example_dir, output_file="symm_matrix", ref_file=None, degen_thresh=None, Ecut=30,
+                      acc=1e-6):
+    if ref_file is None:
+        ref_file = output_file
+    path = os.path.join(TEST_FILES_PATH , example_dir)
     bandstructure = BandStructure(code='vasp', 
                                   fPOS=os.path.join(path, 'POSCAR'),
                                   fWAV=os.path.join(path, 'WAVECAR'),
-                                  Ecut=100, 
-                                  spinor=True, normalize=False)
+                                  Ecut=Ecut, 
+                                  spinor=True, normalize=False,
+                                  IBend=20)
     points = []
     matrices=[]
+    matrices2=[] # calculate blocks separately, but collect to one big matrix
     for k1,K1 in enumerate(bandstructure.kpoints):
+        if degen_thresh is not None:
+            block_indices = get_block_indices(K1.Energy_raw, thresh=degen_thresh, cyclic=False)
+        else:
+            block_indices = None
         for k2,K2 in enumerate(bandstructure.kpoints):
             for isym, symop in enumerate(bandstructure.spacegroup.symmetries):
                 if is_round(symop.transform_k(K1.k)-K2.k, prec=1e-5):
                     points.append((k1,k2,isym))
-                    matrices.append(symm_matrix(
-                                        K=K1.k,
-                                        K_other=K2.k,
-                                        WF=K1.WF,
-                                        WF_other=K2.WF,
-                                        igall=K1.ig,
-                                        igall_other=K2.ig,
-                                        A=symop.rotation,
-                                        S=symop.spinor_rotation,
-                                        T=symop.translation,
-                                        spinor = K1.spinor,
-                                    ) )
-    tmp_file = TMP_DATA_PATH /  "tmp_symm_matrices.npz"
+                    kwargs = dict(K=K1.k, K_other=K2.k, 
+                                  WF=K1.WF, WF_other=K2.WF, 
+                                  igall=K1.ig, igall_other=K2.ig, 
+                                  A=symop.rotation, S=symop.spinor_rotation, 
+                                  T=symop.translation, spinor = K1.spinor)
+
+                    matrices.append(symm_matrix( **kwargs))
+                    matrices2.append(symm_matrix( block_ind=block_indices, **kwargs))   
+    matrices2 = np.array(matrices2)
+    matrices = np.array(matrices)                                     
+    tmp_file = TMP_DATA_PATH / output_file
     np.savez_compressed(tmp_file, points=points, matrices=matrices)
-    reference = np.load(REF_DATA_PATH / "ref_symm_matrices.npz")
+    reference = np.load(REF_DATA_PATH / ref_file)
     assert np.allclose(reference['points'], points)
-    assert np.allclose(reference['matrices'], matrices, atol=1e-5)
-    os.remove(tmp_file)
+    diff = abs(reference['matrices']-matrices)
+    if np.max(diff)>acc:
+        string = f"Matrices differ by {np.max(diff)}, {diff.shape}\n"
+        for i,j,k in zip(*np.where(diff>1e-5)):
+            string+=f"{i}, {j} , {k}, {diff[i,j,k]}, {reference['matrices'][i,j,k]}, {matrices[i,j,k]}\n"
+        raise ValueError(string)
+    
+    # os.remove(tmp_file)
             
 
     

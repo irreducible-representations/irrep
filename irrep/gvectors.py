@@ -16,6 +16,7 @@
 ##################################################################
 
 
+import warnings
 import numpy as np
 import numpy.linalg as la
 from .readfiles import Hartree_eV
@@ -384,7 +385,9 @@ def symm_eigenvalues(
 
 def symm_matrix(
     K, WF, igall, A, S, T, spinor,
-    WF_other=None, igall_other=None, K_other=None
+    WF_other=None, igall_other=None, K_other=None,
+    block_ind=None,
+    return_blocks=False
 ):
     """
     Computes the matrix S_mn such that
@@ -418,7 +421,13 @@ def symm_matrix(
         vectors of the unit cell.
     spinor : bool
         `True` if wave functions are spinors, `False` if they are scalars.
-
+    block_ind : list( tuple(int,int) ), default=None
+        If provided, only the diagonal blocks specified in the list are computed 
+        The list contains tuples of the form (m,n) where m and n are the indices
+        of the blocks to be computed.. i.e. S[m:n,m:n] is computed.
+    return_blocks : bool, default=False
+        If `True`, returns the diagonal blocks as a list. Otherwise, returns the
+        matrix composed of those blocks.
     Returns
     -------
     array
@@ -430,6 +439,8 @@ def symm_matrix(
         WF_other = WF
         igall_other = igall
         K_other = K
+    if block_ind is None:
+        block_ind = np.array([(0, WF.shape[0])])
 
     npw1 = igall.shape[1]
     multZ = np.exp(-2j * np.pi * T.dot(igall_other[:3, :] + K_other[:, None])) [None,:]
@@ -442,9 +453,23 @@ def symm_matrix(
         WFrot = WFrot.reshape((WFrot.shape[0], -1),order='F')
     else:
         WFrot = WF[:, igrot]*multZ
-    WFinv = right_inverse(WF_other)
-    return  (WFrot @ WFinv)
-
+    block_list = []
+    for b1,b2 in block_ind:
+        WFinv = right_inverse(WF_other[b1:b2])
+        block = np.dot(WFrot[b1:b2,:], WFinv)
+        block_list.append(block)
+    if return_blocks:
+        return block_list
+    else:
+        nwfout = sum(b2-b1 for b1,b2 in block_ind)
+        M = np.zeros( (nwfout, nwfout), dtype=complex)
+        i=0
+        for (b1,b2),block in zip(block_ind, block_list):
+            b = b2-b1
+            M[i:i+b,i:i+b] = block
+            i+=b
+        return M
+    
     
 
 def right_inverse(A):
@@ -457,10 +482,6 @@ def right_inverse(A):
     Returns:
     numpy.ndarray: The right inverse of A of shape (n, m).
     """
-    # Check if A has full row rank
-    if np.linalg.matrix_rank(A) != A.shape[0]:
-        raise ValueError("Matrix A does not have full row rank and thus does not have a right inverse.")
-    
-    # Compute the right inverse
-    A_T = A.T
+    assert A.shape[0] <= A.shape[1], "Matrix must be rectangular, and m <= n."
+    A_T = A.T.conj()
     return A_T @ np.linalg.inv(A @ A_T)
