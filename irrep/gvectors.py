@@ -19,7 +19,8 @@
 import warnings
 import numpy as np
 import numpy.linalg as la
-from .readfiles import Hartree_eV
+Rydberg_eV = 13.605693  # eV
+Hartree_eV = 2 * Rydberg_eV
 from .utility import log_message, orthogonolize
 
 
@@ -328,7 +329,7 @@ def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
 
 
 def symm_eigenvalues(
-    K, WF, igall, A, S, T, spinor
+    K, WF, igall, A, S, T, spinor, block_ind=None
 ):
     """
     Calculate the traces of a symmetry operation for the wave-functions in a 
@@ -366,6 +367,8 @@ def symm_eigenvalues(
     array
         Each element is the trace of the symmetry operation in a wave-function.
     """
+    if block_ind is not None:
+        return symm_eigenvalues_blocks(K, WF, igall, A, S, T, spinor, block_ind)
     npw1 = igall.shape[1]
     multZ = np.exp(
         -1.0j * (2 * np.pi * np.linalg.inv(A).dot(T).dot(igall[:3, :] + K[:, None]))
@@ -381,6 +384,18 @@ def symm_eigenvalues(
         return np.dot(part1 + part2, multZ)
     else:
         return np.dot(WF[:, igrot].conj() * WF[:, :], multZ)
+
+
+def symm_eigenvalues_blocks(K, WF, igall, A, S, T, spinor, block_ind):
+    """	
+    same as symm_eigenvalues, but uses symm_matrix to calculate the traces	
+    """
+    matrix_blocks = symm_matrix(K, WF, igall, A, S, T, spinor, return_blocks=True, block_ind=block_ind)
+    traces = []
+    for block in matrix_blocks:
+        n=block.shape[0]    
+        traces+= [np.trace(block)/n]*n
+    return np.array(traces)
 
 
 def symm_matrix(

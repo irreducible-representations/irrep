@@ -228,7 +228,7 @@ class Kpoint:
 
         # Calculate traces
         if calculate_traces:
-            self.char, self.char_refUC, self.Energy_mean = self.calculate_traces(refUC, shiftUC, symmetries_tables, verbosity)
+            self.char, self.char_refUC, self.Energy_mean = self.calculate_traces(refUC, shiftUC, symmetries_tables, verbosity, use_blocks=False)
 
             # Determine number of band inversions based on parity
             found = False
@@ -548,7 +548,7 @@ class Kpoint:
 
         return subspaces
 
-    def calculate_traces(self, refUC, shiftUC, symmetries_tables, verbosity=0):
+    def calculate_traces(self, refUC, shiftUC, symmetries_tables, verbosity=0, use_blocks=True):
         '''
         Calculate traces of symmetry operations
 
@@ -590,9 +590,9 @@ class Kpoint:
                         symop.spinor_rotation,
                         symop.translation,
                         self.spinor,
+                        block_ind=self.block_indices if use_blocks else None
                     ))
         char = np.array(char)
-
 
         # Check that number of irreps is int
         Nirrep = np.linalg.norm(char.sum(axis=1)) ** 2 / char.shape[0]

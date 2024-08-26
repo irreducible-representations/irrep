@@ -22,7 +22,7 @@ import functools
 import numpy as np
 import numpy.linalg as la
 
-from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90
+from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .gvectors import sortIG, calc_gvectors
@@ -45,10 +45,13 @@ class BandStructure:
     prefix : str, default=None
         Prefix used for Quantum Espresso calculations or seedname of Wannier90 
         files.
+    calculator_gpaw : GPAW, default=None
+        Instance of GPAW calculator. Mandatory for GPAW.
     fPOS : str, default=None
         Name of file containing the crystal structure in VASP (POSCAR format).
     Ecut : float, default=None
         Plane-wave cutoff in eV to consider in the expansion of wave-functions.
+        mandatory for GPAW and Wannier90.
     IBstart : int, default=None
         First band to be considered.
     IBend : int, default=None
@@ -59,7 +62,7 @@ class BandStructure:
         `True` if wave functions are spinors, `False` if they are scalars. 
         Mandatory for VASP.
     code : str, default='vasp'
-        DFT code used. Set to 'vasp', 'abinit', 'espresso' or 'wannier90'.
+        DFT code used. Set to 'vasp', 'abinit', 'espresso' or 'wannier90' or 'gpaw'.
     EF : float, default=None
         Fermi-energy.
     onlysym : bool, default=False
@@ -141,6 +144,7 @@ class BandStructure:
         fWAV=None,
         fWFK=None,
         prefix=None,
+        calculator_gpaw=None,
         fPOS=None,
         Ecut=None,
         IBstart=None,
@@ -234,7 +238,20 @@ class BandStructure:
             NK, NBin, self.spinor, EF_in = parser.parse_header()
             self.Lattice, positions, typat, kpred = parser.parse_lattice()
             Energies = parser.parse_energies()
-
+        elif code == "gpaw":
+            parser = ParserGPAW(calculator=calculator_gpaw,
+                                spinor=False if spinor is None else spinor)
+            (NBin,
+             kpred,
+             self.Lattice,
+             self.spinor,
+             typat,
+             positions,
+             EF_in) = parser.parse_header()
+            if Ecut is None:
+                raise RuntimeError("Ecut mandatory for GPAW")
+            self.Ecut0 = Ecut
+            NK = kpred.shape[0]
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
 
@@ -359,6 +376,12 @@ class BandStructure:
                 msg = f'Parsing wave functions at k-point #{ik:>3d}: {kpt}'
                 log_message(msg, verbosity, 2)
                 WF = parser.parse_kpoint(ik+1, selectG)
+            elif code == 'gpaw':
+                kpt = kpred[ik]
+                Energy, WF, kg, kpt= parser.parse_kpoint(ik,
+                                                 RecLattice=self.RecLattice,
+                                                 Ecut=self.Ecut)
+            
 
             # Pick energy of IBend+1 band to calculate gaps
             try:

@@ -123,6 +123,12 @@ do not hesitate to contact the author:
     'Only used if code is "abinit".',
 )
 @click.option(
+    "-gpaw_calc",
+    type=str,
+    help="Filename for gpaw calculator. "
+    'Only used if code is "gpaw".',
+)
+@click.option(
     "-prefix",
     type=str,
     help="Prefix used for Quantum Espresso calculations (data should be in prefix.save) or seedname of Wannier90 files. ",
@@ -149,7 +155,7 @@ do not hesitate to contact the author:
 )
 @click.option(
     "-code",
-    type=click.Choice(["vasp", "abinit", "espresso", "wannier90"]),
+    type=click.Choice(["vasp", "abinit", "espresso", "wannier90", "gpaw"]),
     default="vasp",
     help="Set which electronic structure code to interface with. If using ABINIT, always use "
     '"istwfk=1".',
@@ -293,6 +299,7 @@ def cli(
     fwav,
     fpos,
     fwfk,
+    gpaw_calc,
     prefix,
     ibstart,
     ibend,
@@ -373,6 +380,7 @@ def cli(
     bandstr = BandStructure(
         fWAV=fwav,
         fWFK=fwfk,
+        calculator_gpaw=gpaw_calc,
         prefix=prefix,
         fPOS=fpos,
         Ecut=ecut,

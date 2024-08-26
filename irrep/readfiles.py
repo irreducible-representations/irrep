@@ -20,12 +20,11 @@ import numpy as np
 import scipy
 from scipy.io import FortranFile as FF
 from sys import stdout
+
+from .gvectors import calc_gvectors, Hartree_eV
 from .utility import FortranFileR as FFR
 from .utility import str2bool, BOHR, split, log_message
 import xml.etree.ElementTree as ET
-
-Rydberg_eV = 13.605693  # eV
-Hartree_eV = 2 * Rydberg_eV
 
 
 class WAVECARFILE:
@@ -1077,3 +1076,60 @@ class ParserW90:
         else:
             x = self.fwin[i[0]][1]
         return tp(x)
+    
+class ParserGPAW:
+
+    """
+    Parser for GPAW interface
+
+    Parameters
+    ----------
+    calculator : str or GPAW
+        instance of GPAW class or the name of the file containing it
+    """
+
+    def __init__(self, calculator,spinor=False):
+        from gpaw import GPAW
+        if isinstance(calculator, str):
+            calculator = GPAW(calculator)
+        self.calculator = calculator
+        self.nband = self.calculator.get_number_of_bands()
+        print ("spinor",spinor)
+        self.spinor = spinor
+        if self.spinor:
+            from gpaw import spinorbit
+            self.soc = spinorbit.soc_eigenstates(self.calculator)
+            self.nband
+
+    def parse_header(self, spinor=False):
+        kpred = self.calculator.get_ibz_k_points()
+        Lattice = self.calculator.atoms.cell
+        typat = self.calculator.atoms.get_atomic_numbers()
+        positions = self.calculator.atoms.get_scaled_positions()
+        EF_in = self.calculator.get_fermi_level() 
+        return (self.nband*(1+int(self.spinor)), kpred, Lattice, self.spinor, typat, positions, EF_in)
+
+    def parse_kpoint(self,ik, RecLattice, Ecut):
+        WF = np.array([
+            self.calculator.get_pseudo_wave_function(kpt=ik,band=ib, periodic=True) for ib in range(self.nband)])
+        ngx, ngy, ngz = WF.shape[1:]
+        WF = np.fft.fftn(WF, axes=(1, 2, 3))
+        kpt = self.calculator.get_ibz_k_points()[ik]
+        kg = calc_gvectors(kpt,
+                           RecLattice,
+                            Ecut,
+                            spinor=False,
+                            nplanemax=np.max([ngx, ngy, ngz]) // 2
+                            )
+        selectG = tuple(kg[0:3])
+        WF=np.array([wf[selectG] for wf in WF])
+        if self.spinor:
+            v_kmn = self.soc.eigenvectors() 
+            psit0_mG = v_kmn[ik, :,  ::2] @ WF
+            psit1_mG = v_kmn[ik, :, 1::2] @ WF
+            WF = np.hstack([psit0_mG, psit1_mG])
+            energies = self.soc.eigenvalues()[ik]
+        else:
+            energies = self.calculator.get_eigenvalues(kpt=ik)
+
+        return energies, WF, kg, kpt
