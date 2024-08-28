@@ -6,27 +6,6 @@ from gpaw import GPAW, PW
 from ase import Atoms
 from ase.parallel import paropen, world
 
-def calc_Te():
-
-    a = 4.4570000
-    c = 5.9581176
-    x = 0.274
-    te = Atoms(symbols='Te3',
-               scaled_positions =[( x, 0, 0),
-                                  ( 0, x, 1./3),
-                                  (-x,-x, 2./3)],
-               cell=(a, a, c, 90, 90, 120),
-               pbc=True)
-    calc = GPAW(nbands=16,
-                mode="pw",
-                symmetry='off',
-            kpts = {'size': (3, 3, 4),'gamma':True},
-            txt='Te.txt')
-
-    te.calc = calc
-    te.get_potential_energy()
-    calc.write('Te.gpw', mode='all')
-    return calc
 
 def calc_Bi():
     c = 7.46567804
@@ -57,12 +36,10 @@ def calc_Bi():
     calc.write('Bi.gpw', mode='all')
     return calc
 
-
-
-# calc = calc_Te()
-#  calc = GPAW("Te.gpw")
-calc = calc_Bi()
-# calc = GPAW("Bi.gpw")
+try:
+    calc = GPAW("Bi.gpw")
+except:
+    calc = calc_Bi()
 
 # from gpaw.spinorbit import soc_eigenstates
 
