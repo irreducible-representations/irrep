@@ -716,12 +716,12 @@ class ParserEspresso:
                         _gamma_only, _igwx, ik, _ispin, _nbnd, _ngw, _npol, _scale_factor, xk = attributes
                         kpt = np.array(xk)
                         Miller_Indices =  fWFC['MillerIndices']
-                        B = np.array([Miller_Indices.attrs[f'bg{i}'] for i in range(3)])
+                        B = np.array([Miller_Indices.attrs[f'bg{i}'] for i in range(1,4)])
                         kg = np.array(Miller_Indices[::])
                         kpt = kpt.dot(np.linalg.inv(B))
                         # Parse coefficients of wave functions
                         evc = np.array(fWFC['evc'],dtype=float)
-                        WF = evc[:,0::2] + 1.0j * evc['evc'][:,1::2]
+                        WF = evc[:,0::2] + 1.0j * evc[:,1::2]
                         return WF, Energy, kg, kpt
                     else:
                         fWFC=FF(filename,"r")
