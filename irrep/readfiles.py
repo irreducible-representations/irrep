@@ -16,8 +16,10 @@
 ##################################################################
 
 
+import os
 import numpy as np
 import scipy
+import h5py
 from scipy.io import FortranFile as FF
 from sys import stdout
 
@@ -692,40 +694,59 @@ class ParserEspresso:
         # Parse energy levels
         Energy = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)
         Energy *= Hartree_eV
+        npw = int(kptxml.find("npw").text)
+        npwtot = npw * (2 if self.spinor else 1)
 
         # Open file with the wave functions
         wfcname="wfc{}{}".format({None:"","dw":"dw","up":"up"}[spin_channel], ik+1)
-        try:
-            fWFC=FF("{}.save/{}.dat".format(self.prefix,wfcname.lower()),"r")
-        except FileNotFoundError:
-            fWFC=FF("{}.save/{}.dat".format(self.prefix,wfcname.upper()),"r")
+        fWFC = None
+        checked_files = []
+        for extension in ["hdf5","dat"]:
+            for strcase in [str.lower,str.upper]:
+                filename = f"{self.prefix}.save/{strcase(wfcname)}.{extension}"
+                if os.path.exists(filename):
+                    if extension=="hdf5":
+                        fWFC = h5py.File(filename,'r')
+                        attrnames = ['gamma_only', 'igwx', 'ik', 'ispin', 'nbnd', 'ngw', 'npol', 'scale_factor', 'xk']
+                        attributes =  []
+                        for atr in attrnames:
+                            attributes.append(fWFC.attrs[atr])
 
-        rec = record_abinit(fWFC, "i4,3f8,i4,i4,f8")[0]
-        kpt = rec[1]  # cartesian coords of k-point
+                        _gamma_only, _igwx, ik, _ispin, _nbnd, _ngw, _npol, _scale_factor, xk = attributes
+                        kpt = np.array(xk)
+                        Miller_Indices =  fWFC['MillerIndices']
+                        B = np.array([Miller_Indices.attrs[f'bg{i}'] for i in range(1,4)])
+                        kg = np.array(Miller_Indices[::])
+                        kpt = kpt.dot(np.linalg.inv(B))
+                        # Parse coefficients of wave functions
+                        evc = np.array(fWFC['evc'],dtype=float)
+                        WF = evc[:,0::2] + 1.0j * evc[:,1::2]
+                        return WF, Energy, kg, kpt
+                    else:
+                        fWFC=FF(filename,"r")
+                        rec = record_abinit(fWFC, "i4,3f8,i4,i4,f8")[0]
+                        kpt = rec[1]  # cartesian coords of k-point
 
-        rec = record_abinit(fWFC, "4i4")
-        igwx = rec[1]
+                        rec = record_abinit(fWFC, "4i4")
+                        igwx = rec[1]
 
-        # Determine direct coords of k-point
-        rec = record_abinit(fWFC, "(3,3)f8")
-        B = np.array(rec)
-        kpt = kpt.dot(np.linalg.inv(B))
-
-        rec = record_abinit(fWFC, "({},3)i4".format(igwx))
-        kg = np.array(rec)
-
-        # Parse coefficients of wave functions
-        npw = int(kptxml.find("npw").text)
-        npwtot = npw * (2 if self.spinor else 1)
-        msg = 'npwtot: {}, igwx: {}'.format(npwtot, igwx)
-        log_message(msg, verbosity, 2)
-        WF = np.zeros((NBin, npwtot), dtype=complex)
-        for ib in range(NBin):
-            rec = record_abinit(fWFC, "{}f8".format(npwtot * 2))
-            WF[ib] = rec[0::2] + 1.0j * rec[1::2]
-
-        return WF, Energy, kg, kpt
-
+                        # Determine direct coords of k-point
+                        rec = record_abinit(fWFC, "(3,3)f8")
+                        B = np.array(rec)
+                        rec = record_abinit(fWFC, "({},3)i4".format(igwx))
+                        kg = np.array(rec)
+                        msg = 'npwtot: {}, igwx: {}'.format(npwtot, igwx)
+                        log_message(msg, verbosity, 2)
+                        kpt = kpt.dot(np.linalg.inv(B))
+                        # Parse coefficients of wave functions
+                        WF = np.zeros((NBin, npwtot), dtype=complex)
+                        for ib in range(NBin):
+                            rec = record_abinit(fWFC, "{}f8".format(npwtot * 2))
+                            WF[ib] = rec[0::2] + 1.0j * rec[1::2]
+                        return WF, Energy, kg, kpt
+                checked_files.append(filename)
+        raise RuntimeError(f"Wavefunction file not found. Tried files: {checked_files}")
+        
 
 class ParserW90:
     '''
