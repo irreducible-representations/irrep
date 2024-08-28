@@ -19,7 +19,8 @@ setuptools.setup(
         "ruamel.yaml",
         "irreptables>=1.1.0",
         "fortio",
-        "packaging"
+        "packaging",
+        "h5py",
     ],
     include_package_data=False,
     url="https://github.com/irreducible-representations/irrep.git",
