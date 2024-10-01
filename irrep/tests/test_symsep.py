@@ -124,7 +124,8 @@ def check_isymsep(example_dir, command, ref_file, output_file="irrep-output.json
             "irreps.dat",
             "irreptable-template",
             "trace.txt",
-            "irrep-output.json"
+            "irrep-output.json",
+            output_file
     ):
         if os.path.exists(test_output_file):
             os.remove(test_output_file)
@@ -211,7 +212,4 @@ def check_symm_matrix(example_dir, output_file="symm_matrix", ref_file=None, deg
             string+=f"{i}, {j} , {k}, {diff[i,j,k]}, {reference['matrices'][i,j,k]}, {matrices[i,j,k]}\n"
         raise ValueError(string)
     
-    # os.remove(tmp_file)
-            
-
-    
+    os.remove(tmp_file)
