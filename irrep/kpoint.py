@@ -21,7 +21,7 @@ import numpy as np
 import numpy.linalg as la
 import copy
 from .gvectors import symm_eigenvalues, symm_matrix
-from .utility import compstr, get_block_indices, is_round, format_matrix, log_message, orthogonolize
+from .utility import compstr, get_block_indices, is_round, format_matrix, log_message, orthogonalize
 
 class Kpoint:
     """
@@ -495,7 +495,7 @@ class Kpoint:
         eigenvectors = []
         Eloc = []
         for istate, (b1,b2) in  enumerate(self.block_indices):
-            S_loc = orthogonolize(S[b1:b2, b1:b2], verbosity=verbosity, error_threshold=1e-2, warning_threshold=1e-3)
+            S_loc = orthogonalize(S[b1:b2, b1:b2], verbosity=verbosity, error_threshold=1e-2, warning_threshold=1e-3)
             W, V = la.eig(S_loc)
             for w, v in zip(W, V.T):
                 eigenvalues.append(w)

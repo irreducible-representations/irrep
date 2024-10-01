@@ -687,7 +687,7 @@ class ParserEspresso:
             reciprocal lattice vector
         kpt : array
             Direct coords of the k-point w.r.t. DFT cell vectors
-         '''
+        '''
 
         kptxml = self.bandstr.findall("ks_energies")[ik]
 
