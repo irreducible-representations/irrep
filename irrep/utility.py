@@ -270,7 +270,7 @@ def log_message(msg, verbosity, level):
         print(msg)
 
 
-def orthogonolize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosity=1):
+def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosity=1):
     """
     Orthogonalize a square matrix, using SVD
     

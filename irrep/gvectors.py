@@ -21,7 +21,7 @@ import numpy as np
 import numpy.linalg as la
 Rydberg_eV = 13.605693  # eV
 Hartree_eV = 2 * Rydberg_eV
-from .utility import log_message, orthogonolize
+from .utility import log_message, orthogonalize
 
 
 class NotSymmetryError(RuntimeError):
@@ -477,7 +477,7 @@ def symm_matrix(
         WFinv = right_inverse(WF_other[b1:b2])
         block = np.dot(WFrot[b1:b2,:], WFinv)
         if ortogonalize:
-            block = orthogonolize(block)
+            block = orthogonalize(block)
         block_list.append(block)
     if return_blocks:
         return block_list

@@ -246,7 +246,7 @@ do not hesitate to contact the author:
     "-groupKramers", 
     flag_value=True, 
     default=False, 
-    help="Group wave-functions in pairs of Kramers. Default: True."
+    help="Group wave-functions in pairs of Kramers. Default: False."
 )
 @click.option(
     "-symmetries", 
@@ -345,8 +345,6 @@ def cli(
     # Warning about kpnames
     if kpnames is not None:
         searchcell = True
-
-
 
     elif not searchcell:
         msg = ("Warning: transformation to the convenctional unit "
