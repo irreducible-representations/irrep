@@ -669,6 +669,11 @@ class SpaceGroup():
             self.alat = alat  # not used for FPLO
             self.spinor = spinor  # will be corrected after parsing +groupreps
 
+            # Determine space group from symmetries
+            #spgtype = spglib.get_spacegroup_type_from_symmetry(rotations,
+            #                                                   translations,
+            #                                                   Lattice) 
+
 
         else:  # vasp, espresso, abinit, w90 and gpaw
 

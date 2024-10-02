@@ -264,8 +264,12 @@ class BandStructure:
             NK = kpred.shape[0]
 
         elif code == 'fplo':
+
             parser = ParserFPLO(fGROUP, fREP)
             Lattice, centering, order, spin_repr, translations, parities = parser.parse_group()
+
+            # Write translations in direct coords wrt DFT cell vectors
+            translations = translations @ np.linalg.inv(Lattice)
 
 
 
