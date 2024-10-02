@@ -547,14 +547,18 @@ class SpaceGroup():
 
     Parameters
     ----------
-    cell : tuple, default=None
-        `cell[0]` is a 3x3 array where cartesian coordinates of basis 
-        vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array
-        where each row contains the direct coordinates of an ion's position. 
-        `cell[2]` is an array where each element is a number identifying the 
-        atomic species of an ion. See `cell` parameter of function 
-        `get_symmetry` in 
+    Lattice : array, shape=(3,3)
+        Cartesian coordinates of basis vectors **a**, **b** and **c** are 
+        given as rows.
+    positions : array, default=None
+        Each row contains the direct coordinates of an ion's position.
+    typat : list, default=None
+        Each element is a number identifying the atomic species of an ion. See 
+        `cell` parameter of function `get_symmetry` in 
         `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
+    spin_repr : 
+    translations : 
+    parities : 
     spinor : bool, default=True
         `True` if wave-functions are spinors (SOC), `False` if they are scalars.
     refUC : array, default=None
@@ -626,7 +630,12 @@ class SpaceGroup():
 
     def __init__(
             self,
-            cell,
+            Lattice,
+            positions=None,
+            typat=None,
+            spin_repr=None,
+            translations=None,
+            parities=None,
             spinor=True,
             refUC=None,
             shiftUC=None,
@@ -637,66 +646,95 @@ class SpaceGroup():
             no_match_symmetries=False,
             verbosity=0
             ):
-        self.spinor = spinor
-        self.Lattice = cell[0]
-        self.positions = cell[1]
-        self.typat = cell[2]
-        (self.symmetries, 
-         self.name, 
-         self.number, 
-         refUC_tmp, 
-         shiftUC_tmp) = self._findsym(cell, from_sym_file, alat)
-        self.order = len(self.symmetries)
-        self.alat=alat
-        if from_sym_file is not None:
-            no_match_symmetries = True
 
-        # Determine refUC and shiftUC according to entries in CLI
-        self.symmetries_tables = IrrepTable(self.number, self.spinor, v=verbosity).symmetries
-        self.refUC, self.shiftUC = self.determine_basis_transf(
-                                            refUC_cli=refUC, 
-                                            shiftUC_cli=shiftUC,
-                                            refUC_lib=refUC_tmp, 
-                                            shiftUC_lib=shiftUC_tmp,
-                                            search_cell=search_cell,
-                                            trans_thresh=trans_thresh,
-                                            verbosity=verbosity
-                                            )
+        if positions is None or typat is None:  # FPLO, determine space group from spin repr.
+
+            if spin_repr is None or parities is None:
+                raise RuntimeError(
+                    'If the identification of the space group is not carried'
+                    'out from the argument cell (crystal structure), '
+                    'spin_repr and parities must be passed to SpaceGroup')
+
+            self.order = int(len(spin_repr)/2)  # no +2pi rotations
+
+            if translations is None:
+                translations = np.array((self.order, 3), dtype=float)
+                msg = ('translational parts not provided. They will be set to'
+                       '(0,0,0)')
+                log_message(msg, verbosity, 1)
+
+            self.Lattice = Lattice
+            self.positions = positions  # None
+            self.typat = typat  # None
+            self.alat = alat  # not used for FPLO
+            self.spinor = spinor  # will be corrected after parsing +groupreps
 
 
-        # Check matching of symmetries in refUC. If user set transf.
-        # in the CLI and symmetries don't match, raise a warning.
-        # Otherwise, transf. was calculated automatically and 
-        # matching of symmetries was checked in determine_basis_transf
-        if not no_match_symmetries:
-            try:
-                ind, dt, signs = self.match_symmetries(signs=self.spinor,
-                                                    trans_thresh=trans_thresh
-                                                    )
-                # Sort symmetries like in tables
-                args = np.argsort(ind)
-                for i,i_ind in enumerate(args):
-                    self.symmetries[i_ind].ind = i+1
-                    self.symmetries[i_ind].sign = signs[i_ind]
-                    self.symmetries.append(self.symmetries[i_ind])
-                self.symmetries = self.symmetries[i+1:]
-            except RuntimeError:
-                if search_cell:  # symmetries must match to identify irreps
-                    raise RuntimeError((
-                        "refUC and shiftUC don't transform the cellto one where "
-                        "symmetries are identical to those read from tables. "
-                        "Try without specifying refUC and shiftUC."
-                        ))
-                elif refUC is not None or shiftUC is not None:
-                    # User specified refUC or shiftUC in CLI. He/She may
-                    # want the traces in a cell that is not neither the
-                    # one in tables nor the DFT one
-                    msg = ("WARNING: refUC and shiftUC don't transform the cell to "
-                        "one where symmetries are identical to those read from "
-                        "tables. If you want to achieve the same cell as in "
-                        "tables, try not specifying refUC and shiftUC.")
-                    log_message(msg, verbosity, 1)
-                    pass
+        else:  # vasp, espresso, abinit, w90 and gpaw
+
+            self.spinor = spinor
+            self.Lattice = Lattice
+            self.positions = positions
+            self.typat = typat
+            cell = (self.Lattice, self.positions, self.typat)
+            (self.symmetries, 
+             self.name, 
+             self.number, 
+             refUC_tmp, 
+             shiftUC_tmp) = self._findsym(cell, from_sym_file, alat)
+            self.order = len(self.symmetries)
+            self.alat=alat
+            if from_sym_file is not None:
+                no_match_symmetries = True
+
+            # Determine refUC and shiftUC according to entries in CLI
+            self.symmetries_tables = IrrepTable(self.number, self.spinor, v=verbosity).symmetries
+            self.refUC, self.shiftUC = self.determine_basis_transf(
+                                                refUC_cli=refUC, 
+                                                shiftUC_cli=shiftUC,
+                                                refUC_lib=refUC_tmp, 
+                                                shiftUC_lib=shiftUC_tmp,
+                                                search_cell=search_cell,
+                                                trans_thresh=trans_thresh,
+                                                verbosity=verbosity
+                                                )
+
+
+            # Check matching of symmetries in refUC. If user set transf.
+            # in the CLI and symmetries don't match, raise a warning.
+            # Otherwise, transf. was calculated automatically and 
+            # matching of symmetries was checked in determine_basis_transf
+            if not no_match_symmetries:
+                try:
+                    ind, dt, signs = self.match_symmetries(signs=self.spinor,
+                                                        trans_thresh=trans_thresh
+                                                        )
+                    # Sort symmetries like in tables
+                    args = np.argsort(ind)
+                    for i,i_ind in enumerate(args):
+                        self.symmetries[i_ind].ind = i+1
+                        self.symmetries[i_ind].sign = signs[i_ind]
+                        self.symmetries.append(self.symmetries[i_ind])
+                    self.symmetries = self.symmetries[i+1:]
+                except RuntimeError:
+                    if search_cell:  # symmetries must match to identify irreps
+                        raise RuntimeError((
+                            "refUC and shiftUC don't transform the cellto one where "
+                            "symmetries are identical to those read from tables. "
+                            "Try without specifying refUC and shiftUC."
+                            ))
+                    elif refUC is not None or shiftUC is not None:
+                        # User specified refUC or shiftUC in CLI. He/She may
+                        # want the traces in a cell that is not neither the
+                        # one in tables nor the DFT one
+                        msg = ("WARNING: refUC and shiftUC don't transform the cell to "
+                            "one where symmetries are identical to those read from "
+                            "tables. If you want to achieve the same cell as in "
+                            "tables, try not specifying refUC and shiftUC.")
+                        log_message(msg, verbosity, 1)
+                        pass
+
+
 
     def _findsym(self, cell, from_sym_file, alat):
         """

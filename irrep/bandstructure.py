@@ -22,7 +22,8 @@ import functools
 import numpy as np
 import numpy.linalg as la
 
-from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
+from .readfiles import (ParserAbinit, ParserVasp, ParserEspresso, ParserW90, 
+                        ParserGPAW, ParserFPLO)
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .gvectors import sortIG, calc_gvectors
@@ -49,6 +50,12 @@ class BandStructure:
         Instance of GPAW calculator. Mandatory for GPAW.
     fPOS : str, default=None
         Name of file containing the crystal structure in VASP (POSCAR format).
+    fGROUP : str, default=None
+        Name of file containing the space group in FPLO 
+        (by default generated as +groupinfo).
+    fREP : str, default=None
+        Name of file containing the representations in FPLO 
+        (by default generated as +groupreps).
     Ecut : float, default=None
         Plane-wave cutoff in eV to consider in the expansion of wave-functions.
         mandatory for GPAW and Wannier90.
@@ -62,7 +69,8 @@ class BandStructure:
         `True` if wave functions are spinors, `False` if they are scalars. 
         Mandatory for VASP.
     code : str, default='vasp'
-        DFT code used. Set to 'vasp', 'abinit', 'espresso' or 'wannier90' or 'gpaw'.
+        DFT code used. Set to 'vasp', 'abinit', 'espresso' or 'wannier90', 
+        'gpaw' or 'fplo'.
     EF : float, default=None
         Fermi-energy.
     onlysym : bool, default=False
@@ -143,6 +151,8 @@ class BandStructure:
         self,
         fWAV=None,
         fWFK=None,
+        fGROUP=None,
+        fREP=None,
         prefix=None,
         calculator_gpaw=None,
         fPOS=None,
@@ -252,11 +262,20 @@ class BandStructure:
                 raise RuntimeError("Ecut mandatory for GPAW")
             self.Ecut0 = Ecut
             NK = kpred.shape[0]
+
+        elif code == 'fplo':
+            parser = ParserFPLO(fGROUP, fREP)
+            Lattice, centering, order, spin_repr, translations, parities = parser.parse_group()
+
+
+
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
 
         self.spacegroup = SpaceGroup(
-                              cell=(self.Lattice, positions, typat),
+                              Lattice=self.Lattice,
+                              positions=positions,
+                              typat=typat,
                               spinor=self.spinor,
                               refUC=refUC,
                               shiftUC=shiftUC,

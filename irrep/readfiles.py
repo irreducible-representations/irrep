@@ -1154,3 +1154,101 @@ class ParserGPAW:
             energies = self.calculator.get_eigenvalues(kpt=ik)
 
         return energies, WF, kg, kpt
+
+
+class ParserFPLO:
+
+    def __init__(self, file_group='+groupinfo', file_reps='+groupreps'):
+
+        self.file_group = file_group
+        self.file_reps = file_reps
+
+    def parse_group(self):
+        '''
+        Function to parse the FPLO file +groupinfo, which contains info 
+        about the space group
+
+        Returns
+        -------
+        Lattice : array, shape=(3,3)
+            Basis vectors of the DFT unit cell. Each vector in a row.
+        centering : array, shape=(3,3)
+            Centering matrix to convert the DFT cell into the FPLO's standard 
+            cell (nobody sure if it coincides with the convencional cell in 
+            tables)
+        order : int
+            Order of the space group, taking into accound +2pi rotations
+        spin_repr : array, shape=(order,2,2)
+            Matrices of the spin representation written by FPLO
+        translations : array, shape=(order,3)
+            Translation vectors in FPLO's Cartesian frame
+        parities : list
+            Each element is a boolean for a symmetry, `True` if it is an 
+            improper symmetry.
+
+        Notes
+        -----
+        Symmetries are assumed to be sorted identically in `spin_repr`, 
+        `translations` and `parities`.
+        '''
+
+        f = open(self.file_group, 'r')
+
+        spin_repr = []
+        parities = []  # True if improper operation, False if proper
+        translations = []
+
+        for line in f:
+
+            if self._record(line, 'primitive lattice'):
+                Lattice = np.zeros((3,3), dtype=float)
+                for i in range(3):
+                    Lattice[i] = np.array(f.readline().split(), dtype=float)
+
+            if self._record(line, 'centering vectors'):
+                centering = np.zeros((3,3), dtype=float)
+                for i in range(3):
+                    centering[i] = np.array(f.readline().split(), dtype=float)
+
+            if self._record(line, 'number of operations'):
+                order = int(f.readline())
+
+            if self._record(line, 'improper operation'):
+                parities.append(int(f.readline()) == 1)
+
+            if self._record(line, 'D1o2-matrix'):
+                S = np.zeros((2,2), dtype=complex)
+                for i in range(2):
+                    line = list(map(float, f.readline().split()))
+                    S[i] = np.array(line[::2]) + 1.0j*np.array(line[1::2])
+                spin_repr.append(S)
+
+            if self._record(line, 'translational part'):
+                translations.append(f.readline().split())
+
+        spin_repr = np.array(spin_repr)
+        translations = np.array(translations, dtype=float)
+
+        # Check consistency
+        if spin_repr.shape[0] != order:
+            raise RuntimeError(
+                f'Number of symmetries should be {order}', 
+                f'but {len(spin_repr)} spin matrices were found')
+        if translations.shape[0] != order:
+            raise RuntimeError(
+                f'Number of symmetries should be {order}', 
+                f'but {len(translations)} translations were found')
+        if parities.shape[0] != order:
+            raise RuntimeError(
+                f'Number of symmetries should be {order}', 
+                f'but {len(parities)} translations were found')
+
+        return Lattice, centering, order, spin_repr, translations, parities
+
+
+    def _record(self, line, label):
+
+        if line[0] != '#':
+            return False
+        line = line.strip('#').strip()
+        return line.startswith(label)
