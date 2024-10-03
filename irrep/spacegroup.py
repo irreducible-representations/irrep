@@ -88,23 +88,45 @@ class SymmetryOperation():
         to that in tables.
     """
 
-    def __init__(self, rot, trans, Lattice, ind=-1, spinor=True, 
-                 translation_mod1=True):
-        self.ind = ind
-        self.rotation = rot
-        self.Lattice = Lattice
-        self.translation_mod1 = translation_mod1
-        self.translation = self.get_transl_mod1(trans)
-        self.axis, self.angle, self.inversion = self._get_operation_type()
-        iangle = (round(self.angle / pi * 6) + 6) % 12 - 6
-        if iangle == -6:
-            iangle = 6
-        self.angle = iangle * pi / 6
-        self.angle_str = self.get_angle_str()
-        self.spinor = spinor
-        self.spinor_rotation = expm(-0.5j * self.angle *
-                                    np.einsum('i,ijk->jk', self.axis, pauli_sigma))
-        self.sign = 1  # May be changed later externally
+    def __init__(self,
+                 trans=None, Lattice=None, ind=-1, spinor=True, translation_mod1=True,  # arg all code
+                 rot=None,  # args for Vasp, Abinit, QE, W90, gpaw
+                 angle=None, axis=None, is_inv=None, d=None  # arfs for FPLO
+                 ):
+
+        if rot is not None:  # Vasp, Abinit, Espresso, W90, gpaw
+            self.ind = ind
+            self.rotation = rot
+            self.Lattice = Lattice
+            self.translation_mod1 = translation_mod1
+            self.translation = self.get_transl_mod1(trans)
+            self.axis, self.angle, self.inversion = self._get_operation_type()
+            iangle = (round(self.angle / pi * 6) + 6) % 12 - 6
+            if iangle == -6:
+                iangle = 6
+            self.angle = iangle * pi / 6
+            self.angle_str = self.get_angle_str()
+            self.spinor = spinor
+            self.spinor_rotation = expm(-0.5j * self.angle *
+                                        np.einsum('i,ijk->jk', self.axis, pauli_sigma))  # use matrix_spinrep at some point
+            self.sign = 1  # May be changed later externally
+
+        else:  # FPLO
+            self.angle = angle
+            self.axis = axis
+            self.ind = ind
+            self.d = d  # it might change in the future
+            self.is_inv = is_inv  # rm after creating vector repr matrix
+            self.spinor = spinor  # it might change in the future
+            self.spinor_rotation = self.matrix_spinrep()
+
+
+    def matrix_spinrep(self):
+        sigma_n = np.einsum('ijk,i->jk', pauli_sigma, self.axis)
+        S = expm(-0.5j*np.pi*self.angle*sigma_n)
+        if self.d:
+            S *= -1.0
+        return S
 
     def get_transl_mod1(self, t):
         """
@@ -655,7 +677,7 @@ class SpaceGroup():
                     'out from the argument cell (crystal structure), '
                     'spin_repr and parities must be passed to SpaceGroup')
 
-            self.order = int(len(spin_repr)/2)  # no +2pi rotations
+            self.order = len(spin_repr)  # also +2pi rotations. Will be removed later
 
             if translations is None:
                 translations = np.array((self.order, 3), dtype=float)
@@ -668,6 +690,16 @@ class SpaceGroup():
             self.typat = typat  # None
             self.alat = alat  # not used for FPLO
             self.spinor = spinor  # will be corrected after parsing +groupreps
+            self.symmetries = []
+
+            for isym in range(self.order):
+                
+                angle, axis, d = self.identify_from_spinrep(spin_repr[isym])
+                self.symmetries.append(SymmetryOperation(angle=angle,
+                                                         axis=axis,
+                                                         is_inv=parities[isym],
+                                                         trans=translations[isym]))
+
 
             # Determine space group from symmetries
             #spgtype = spglib.get_spacegroup_type_from_symmetry(rotations,
@@ -825,6 +857,65 @@ class SpaceGroup():
                 number,
                 transformation_matrix,
                 origin_shift)
+
+    def identify_from_spinrep(self, S):
+        '''
+        Identify angle and axis or rotation from spin-representation 
+        matrix.
+        '''
+
+        # Identify angle
+        c = 0.5 * np.trace(S)
+        if np.abs(c) < 1e-2:  # C2
+            angle = np.pi
+        elif c < -1e-2:  # +2pi operation
+            d = True
+            S = -S
+            c = 0.5 * np.trace(S)
+            angle = 2.0 * np.arccos(c)
+        else:  # E, C3, C4 or C6
+            d = False
+            angle = 2.0 * np.arccos(c)
+
+        # Identify axis and reverse it if the reverse angle was found
+        axis = 0.5j * np.einsum('jk,ikj->i', S, pauli_sigma)
+        if np.abs(angle) > 1e-2:  # axis is zero for E
+            axis /= np.linalg.norm(axis)
+        is_inverse_in = np.any(np.all(np.isclose(self.axes, -axis), axis=1))
+        if is_inverse_in:
+            axis *= -1
+            if np.abs(angle - np.pi) < 1e-2:  # pi + 2pi operation
+                d = True
+            else:
+                angle *= -1
+        elif np.abs(angle - np.pi) < 1e-2:
+            d = False
+
+        # Check angle and axis are real
+        if np.abs(np.imag(angle)) > 1e-5:
+            raise RuntimeError("Complex angle detected: {}".format(angle))
+        if np.max(np.abs(np.imag(axis))) > 1e-5:
+            raise RuntimeError("Complex axis detected: {}".format(axis))
+
+        return angle/np.pi, axis, d
+
+    @property
+    def angles(self):
+        if len(self.symmetries) == 0:
+            angles_list = np.zeros(self.order, dtype=float)
+        else:
+            angles_list = [sym.angle for sym in self.symmetries]
+            angles_list = np.array(angles_list)
+        return angles_list
+
+    @property
+    def axes(self):
+        if len(self.symmetries) == 0:
+            axes_list = np.zeros((self.order, 3), dtype=float)
+        else:
+            axes_list = [sym.axis for sym in self.symmetries]
+            axes_list = np.array(axes_list)
+        return axes_list
 
     @property
     def size(self):
