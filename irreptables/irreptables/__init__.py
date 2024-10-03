@@ -24,7 +24,7 @@ from irrep.utility import str2bool, str2list_space, str_, log_message
 # using a logger to print useful information during debugging,
 # set to logging.INFO to disable debug messages
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 
 
 class SymopTable:
