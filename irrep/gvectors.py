@@ -400,6 +400,7 @@ def symm_eigenvalues_blocks(K, WF, igall, A, S, T, spinor, block_ind):
 
 def symm_matrix(
     K, WF, igall, A, S, T, spinor,
+    time_reversal=False,
     WF_other=None, igall_other=None, K_other=None,
     block_ind=None,
     return_blocks=False,
@@ -435,6 +436,8 @@ def symm_matrix(
     T : array, shape=(3,)
         Translational part of the symmetry operation, in terms of the basis 
         vectors of the unit cell.
+    time_reversal : bool, default=False
+        If `True`, the time-reversal symmetry is applied.
     spinor : bool
         `True` if wave functions are spinors, `False` if they are scalars.
     block_ind : list( tuple(int,int) ), default=None
@@ -460,9 +463,17 @@ def symm_matrix(
         K_other = K
     if block_ind is None:
         block_ind = np.array([(0, WF.shape[0])])
-
+    
     npw1 = igall.shape[1]
+    
     multZ = np.exp(-2j * np.pi * T.dot(igall_other[:3, :] + K_other[:, None])) [None,:]
+    if time_reversal:
+        A = -A
+        WF = WF.conj()
+        # multZ = multZ.conj() # this is not needed because igall_other and K_other are alreade reversed (because A=0A)
+        if spinor:
+            S =  np.array([[0,1],[-1,0]]) @ S.conj()
+        
     igrot = transformed_g(kpt=K, ig=igall, A=A, ig_other=igall_other, kpt_other=K_other, inverse=True)
     if spinor:
         WFrot_up   = WF[:, igrot]*multZ
@@ -485,7 +496,7 @@ def symm_matrix(
         nwfout = sum(b2-b1 for b1,b2 in block_ind)
         M = np.zeros( (nwfout, nwfout), dtype=complex)
         i=0
-        for (b1,b2),block in zip(block_ind, block_list):
+        for (b1,b2), block in zip(block_ind, block_list):
             b = b2-b1
             M[i:i+b,i:i+b] = block
             i+=b

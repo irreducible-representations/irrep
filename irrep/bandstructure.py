@@ -137,6 +137,8 @@ class BandStructure:
         Property that returns the number of k points in the attribute `kpoints`
     num_bands : int
         Property that returns the number of bands. Used to write trace.txt.
+    magmom : array, default=None
+        Magnetic moments of atoms in the unit cell. 
     """
 
     def __init__(
@@ -166,6 +168,8 @@ class BandStructure:
         alat=None,
         from_sym_file=None,
         normalize=True,
+        magmom=None,
+        magnetic=False,
     ):
 
         code = code.lower()
@@ -254,9 +258,20 @@ class BandStructure:
             NK = kpred.shape[0]
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
+        
+        
+        if magmom is not None:
+            magnetic = True
+        if magnetic:
+            if magmom is None:
+                magmom = np.zeros( (len(typat),3) )
+            cell = (self.Lattice, positions, typat, magmom)
+        else:
+            cell = (self.Lattice, positions, typat)
+            
 
         self.spacegroup = SpaceGroup(
-                              cell=(self.Lattice, positions, typat),
+                              cell=cell,
                               spinor=self.spinor,
                               refUC=refUC,
                               shiftUC=shiftUC,
@@ -264,7 +279,9 @@ class BandStructure:
                               trans_thresh=trans_thresh,
                               verbosity=verbosity,
                               alat=alat,
-                              from_sym_file=from_sym_file)
+                              from_sym_file=from_sym_file,
+                              magnetic=magnetic
+                              )
         if onlysym:
             return
 
