@@ -137,8 +137,11 @@ class BandStructure:
         Property that returns the number of k points in the attribute `kpoints`
     num_bands : int
         Property that returns the number of bands. Used to write trace.txt.
-    magmom : array, default=None
+    magmom : array(num_atoms, 3)
         Magnetic moments of atoms in the unit cell. 
+    include_TR : bool
+        If `True`, the symmetries involving time-reversal will be included in the spacegroup.
+        if magmom is None and include_TR is True, the magnetic moments will be set to zero (non-magnetic calculation with TR)
     """
 
     def __init__(
@@ -169,7 +172,7 @@ class BandStructure:
         from_sym_file=None,
         normalize=True,
         magmom=None,
-        magnetic=False,
+        include_TR=False,
     ):
 
         code = code.lower()
@@ -259,17 +262,9 @@ class BandStructure:
         else:
             raise RuntimeError("Unknown/unsupported code :{}".format(code))
         
-        
-        if magmom is not None:
-            magnetic = True
-        if magnetic:
-            if magmom is None:
-                magmom = np.zeros( (len(typat),3) )
-            cell = (self.Lattice, positions, typat, magmom)
-        else:
-            cell = (self.Lattice, positions, typat)
+                
+        cell = (self.Lattice, positions, typat)
             
-
         self.spacegroup = SpaceGroup(
                               cell=cell,
                               spinor=self.spinor,
@@ -280,7 +275,8 @@ class BandStructure:
                               verbosity=verbosity,
                               alat=alat,
                               from_sym_file=from_sym_file,
-                              magnetic=magnetic
+                              magmom = magmom,
+                              include_TR=include_TR
                               )
         if onlysym:
             return

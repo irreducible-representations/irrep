@@ -625,6 +625,12 @@ class SpaceGroup():
     from_sym_file : str, default=None
         if provided, the symmetry operations are read from this file.
         (format of pw2wannier90 prefix.sym  file)
+    magmom : array(num_atoms, 3)
+        Magnetic moments of atoms in the unit cell. 
+    include_TR : bool
+        If `True`, the symmetries involving time-reversal will be included in the spacegroup.
+        if magmom is None and include_TR is True, the magnetic moments will be set to zero (non-magnetic calculation with TR)
+    
 
     Notes
     -----
@@ -648,19 +654,20 @@ class SpaceGroup():
             from_sym_file=None,
             no_match_symmetries=False,
             verbosity=0,
-            magnetic=False
+            magmom=None,
+            include_TR=False,
             ):
         self.spinor = spinor
         self.Lattice = cell[0]
         self.positions = cell[1]
         self.typat = cell[2]
-        if len(cell>3):
-            self.magmom = cell[3]
+
+        self.magmom = magmom
         (self.symmetries, 
          self.name, 
          self.number, 
          refUC_tmp, 
-         shiftUC_tmp) = self._findsym(cell, from_sym_file, alat, magnetic=magnetic)
+         shiftUC_tmp) = self._findsym(cell, from_sym_file, alat, magmom=magmom, include_TR=include_TR)
         self.order = len(self.symmetries)
         self.alat=alat
         if from_sym_file is not None:
@@ -713,7 +720,7 @@ class SpaceGroup():
                     log_message(msg, verbosity, 1)
                     pass
 
-    def _findsym(self, cell, from_sym_file, alat, magnetic=False):
+    def _findsym(self, cell, from_sym_file, alat, magmom=None, include_TR=False):
         """
         Finds the space-group and constructs a list of symmetry operations
         
@@ -733,6 +740,12 @@ class SpaceGroup():
             (format of pw2wannier90 prefix.sym  file)
         alat : float
             Lattice parameter in angstroms. (quantum espresso convention)
+        magmom : array(num_atoms, 3)
+            Magnetic moments of atoms in the unit cell. 
+        include_TR : bool
+            If `True`, the symmetries involving time-reversal will be included in the spacegroup.
+            if magmom is None and include_TR is True, the magnetic moments will be set to zero (non-magnetic calculation with TR)
+    
         
         Returns
         -------
@@ -757,9 +770,14 @@ class SpaceGroup():
             than choice 2 (BCS).
         """
 
+        if include_TR and (magmom is None):
+            magmom = np.zeros( (len(self.typat),3) )
+            
+        magnetic = magmom is not None
+
         lattice = cell[0]
         if magnetic:
-            dataset = spglib.get_magnetic_symmetry_dataset(cell,mag_symprec=1e-3)
+            dataset = spglib.get_magnetic_symmetry_dataset(cell + (magmom, ),mag_symprec=1e-3)
         else:
             dataset = spglib.get_symmetry_dataset(cell)
         if version.parse(spglib.__version__) < version.parse('2.5.0'):
@@ -794,14 +812,16 @@ class SpaceGroup():
 
         symmetries = []
         for i, rot in enumerate(rotations):
-            symmetries.append(SymmetryOperation(rot,
-                                                translations[i],
-                                                cell[0],
-                                                ind=i+1,
-                                                spinor=self.spinor,
-                                                translation_mod1=translation_mod_1,
-                                                time_reversal = time_reversals[i]
-                                ))
+            if include_TR or not time_reversals[i]:
+                symmetries.append(
+                    SymmetryOperation(rot,
+                                      translations[i],
+                                      cell[0],
+                                      ind=i+1,
+                                      spinor=self.spinor,
+                                      translation_mod1=translation_mod_1,
+                                      time_reversal = time_reversals[i]
+                                    ))
 
         return (symmetries, 
                 symbol,
