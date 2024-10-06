@@ -16,6 +16,8 @@
 ##################################################################
 
 
+from fractions import Fraction
+import warnings
 import numpy as np
 from scipy import constants
 import fortio
@@ -380,3 +382,48 @@ def get_block_indices(E, thresh=1e-5, cyclic=False):
     else:
         return np.array([borders[:-1], borders[1:]]).T
        
+def grid_from_kpoints(kpoints, grid=None):
+    """
+    Given a list of kpoints in fractional coordinates, return a the size of the grid in each direction
+    if some k-points are repeated, they are counted only once
+    if some k-points are missing, an error is raised
+
+    Parameters
+    ----------
+    kpoints : np.array((nk, ndim), dtype=float)
+        list of kpoints in fractional coordinates
+
+    Returns
+    -------
+    grid : tuple(int)
+        size of the grid in each
+    selected_kpoints : list of int
+        indices of the selected kpoints
+
+    Raises
+    ------
+    ValueError
+        if some k-points are missing
+    """
+    from wannierberri.__utility import UniqueListMod1
+
+    if grid is None:
+        grid = tuple(np.lcm.reduce([Fraction(k).limit_denominator(100).denominator for k in kp]) for kp in kpoints.T)
+    npgrid = np.array(grid)
+    print(f"mpgrid = {npgrid}, {len(kpoints)}")
+    kpoints_unique = UniqueListMod1()
+    selected_kpoints = []
+    for i, k in enumerate(kpoints):
+        if is_round(k * npgrid, prec=1e-5):
+            if k not in kpoints_unique:
+                kpoints_unique.append(k)
+                selected_kpoints.append(i)
+            else:
+                warnings.warn(f"k-point {k} is repeated")
+    if len(kpoints_unique) < np.prod(grid):
+        raise ValueError(f"Some k-points are missing {len(kpoints_unique)}< {np.prod(grid)}")
+    if len(kpoints_unique) > np.prod(grid):
+        raise RuntimeError("Some k-points are taken twice - this must be a bug")
+    if len(kpoints_unique) < len(kpoints):
+        warnings.warn("Some k-points are not on the grid or are repeated")
+    return grid, selected_kpoints
