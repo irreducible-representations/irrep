@@ -184,110 +184,127 @@ class BandStructure:
         if spin_channel=='down':
             spin_channel='dw'
         
-        if code == "vasp":
-
-            if spinor is None:
-                raise RuntimeError(
-                    "spinor should be specified in the command line for VASP bandstructure"
-                )
-            self.spinor = spinor
-            parser = ParserVasp(fPOS, fWAV, onlysym)
-            self.Lattice, positions, typat = parser.parse_poscar(verbosity)
-            if not onlysym:
-                NK, NBin, self.Ecut0, lattice = parser.parse_header()
-                if not np.allclose(self.Lattice, lattice):
-                    raise RuntimeError("POSCAR and WAVECAR contain different lattices")
-                EF_in = None  # not written in WAVECAR
-
-        elif code == "abinit":
-
-            parser = ParserAbinit(fWFK)
-            (nband,
-             NK,
-             self.Lattice,
-             self.Ecut0,
-             self.spinor,
-             typat,
-             positions,
-             EF_in) = parser.parse_header(verbosity=verbosity)
-            NBin = max(nband)
-
-        elif code == "espresso":
-
-            parser = ParserEspresso(prefix)
-            self.spinor = parser.spinor
-            # alat is saved to be used to write the prefix.sym file
-            self.Lattice, positions, typat, _alat = parser.parse_lattice()
-            if alat is None:
-                alat = _alat
-            spinpol, self.Ecut0, EF_in, NK, NBin_list = parser.parse_header()
-
-            # Set NBin
-            if self.spinor and spinpol:
-                raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
-            elif spinpol:
-                if spin_channel is None:
-                    raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
-                assert (spin_channel in ['dw','up'])
-                if spin_channel == 'dw':
-                    NBin = NBin_list[1]
-                else:
-                    NBin = NBin_list[0]
-            else:
-                NBin = NBin_list[0]
-                if spin_channel is not None:
-                    raise ValueError("Found a non-polarized bandstructure, but spin channel is set to {}".format(spin_channel))
-
-        elif code == "wannier90":
-
-            if Ecut is None:
-                raise RuntimeError("Ecut mandatory for Wannier90")
-
-            self.Ecut0 = Ecut
-            parser = ParserW90(prefix)
-            NK, NBin, self.spinor, EF_in = parser.parse_header()
-            self.Lattice, positions, typat, kpred = parser.parse_lattice()
-            Energies = parser.parse_energies()
-        elif code == "gpaw":
-            parser = ParserGPAW(calculator=calculator_gpaw,
-                                spinor=False if spinor is None else spinor)
-            (NBin,
-             kpred,
-             self.Lattice,
-             self.spinor,
-             typat,
-             positions,
-             EF_in) = parser.parse_header()
-            if Ecut is None:
-                raise RuntimeError("Ecut mandatory for GPAW")
-            self.Ecut0 = Ecut
-            NK = kpred.shape[0]
-
-        elif code == 'fplo':
+        if code == 'fplo':
 
             parser = ParserFPLO(fGROUP, fREP)
-            Lattice, centering, order, spin_repr, translations, parities = parser.parse_group()
+            self.Lattice, centering, order, spin_repr, translations, parities = parser.parse_group()
 
             # Write translations in direct coords wrt DFT cell vectors
-            translations = translations @ np.linalg.inv(Lattice)
+            translations = translations @ np.linalg.inv(self.Lattice)
 
-
+            self.spacegroup = SpaceGroup(
+                                  Lattice=self.Lattice,
+                                  spin_repr=spin_repr,
+                                  translations=translations,
+                                  parities=parities,
+                                  spinor=spinor,
+                                  refUC=refUC,
+                                  shiftUC=shiftUC,
+                                  search_cell=search_cell,
+                                  trans_thresh=trans_thresh,
+                                  verbosity=verbosity,
+                                  )
 
         else:
-            raise RuntimeError("Unknown/unsupported code :{}".format(code))
 
-        self.spacegroup = SpaceGroup(
-                              Lattice=self.Lattice,
-                              positions=positions,
-                              typat=typat,
-                              spinor=self.spinor,
-                              refUC=refUC,
-                              shiftUC=shiftUC,
-                              search_cell=search_cell,
-                              trans_thresh=trans_thresh,
-                              verbosity=verbosity,
-                              alat=alat,
-                              from_sym_file=from_sym_file)
+            if code == "vasp":
+
+                if spinor is None:
+                    raise RuntimeError(
+                        "spinor should be specified in the command line for VASP bandstructure"
+                    )
+                self.spinor = spinor
+                parser = ParserVasp(fPOS, fWAV, onlysym)
+                self.Lattice, positions, typat = parser.parse_poscar(verbosity)
+                if not onlysym:
+                    NK, NBin, self.Ecut0, lattice = parser.parse_header()
+                    if not np.allclose(self.Lattice, lattice):
+                        raise RuntimeError("POSCAR and WAVECAR contain different lattices")
+                    EF_in = None  # not written in WAVECAR
+
+            elif code == "abinit":
+
+                parser = ParserAbinit(fWFK)
+                (nband,
+                 NK,
+                 self.Lattice,
+                 self.Ecut0,
+                 self.spinor,
+                 typat,
+                 positions,
+                 EF_in) = parser.parse_header(verbosity=verbosity)
+                NBin = max(nband)
+
+            elif code == "espresso":
+
+                parser = ParserEspresso(prefix)
+                self.spinor = parser.spinor
+                # alat is saved to be used to write the prefix.sym file
+                self.Lattice, positions, typat, _alat = parser.parse_lattice()
+                if alat is None:
+                    alat = _alat
+                spinpol, self.Ecut0, EF_in, NK, NBin_list = parser.parse_header()
+
+                # Set NBin
+                if self.spinor and spinpol:
+                    raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
+                elif spinpol:
+                    if spin_channel is None:
+                        raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
+                    assert (spin_channel in ['dw','up'])
+                    if spin_channel == 'dw':
+                        NBin = NBin_list[1]
+                    else:
+                        NBin = NBin_list[0]
+                else:
+                    NBin = NBin_list[0]
+                    if spin_channel is not None:
+                        raise ValueError("Found a non-polarized bandstructure, but spin channel is set to {}".format(spin_channel))
+
+            elif code == "wannier90":
+
+                if Ecut is None:
+                    raise RuntimeError("Ecut mandatory for Wannier90")
+
+                self.Ecut0 = Ecut
+                parser = ParserW90(prefix)
+                NK, NBin, self.spinor, EF_in = parser.parse_header()
+                self.Lattice, positions, typat, kpred = parser.parse_lattice()
+                Energies = parser.parse_energies()
+
+            elif code == "gpaw":
+                parser = ParserGPAW(calculator=calculator_gpaw,
+                                    spinor=False if spinor is None else spinor)
+                (NBin,
+                 kpred,
+                 self.Lattice,
+                 self.spinor,
+                 typat,
+                 positions,
+                 EF_in) = parser.parse_header()
+                if Ecut is None:
+                    raise RuntimeError("Ecut mandatory for GPAW")
+                self.Ecut0 = Ecut
+                NK = kpred.shape[0]
+
+
+
+
+            else:
+                raise RuntimeError("Unknown/unsupported code :{}".format(code))
+
+            self.spacegroup = SpaceGroup(
+                                  Lattice=self.Lattice,
+                                  positions=positions,
+                                  typat=typat,
+                                  spinor=self.spinor,
+                                  refUC=refUC,
+                                  shiftUC=shiftUC,
+                                  search_cell=search_cell,
+                                  trans_thresh=trans_thresh,
+                                  verbosity=verbosity,
+                                  alat=alat,
+                                  from_sym_file=from_sym_file)
         if onlysym:
             return
 

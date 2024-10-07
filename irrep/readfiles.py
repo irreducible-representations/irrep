@@ -1238,7 +1238,7 @@ class ParserFPLO:
             raise RuntimeError(
                 f'Number of symmetries should be {order}', 
                 f'but {len(translations)} translations were found')
-        if parities.shape[0] != order:
+        if len(parities) != order:
             raise RuntimeError(
                 f'Number of symmetries should be {order}', 
                 f'but {len(parities)} translations were found')

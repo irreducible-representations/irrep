@@ -94,39 +94,68 @@ class SymmetryOperation():
                  angle=None, axis=None, is_inv=None, d=None  # arfs for FPLO
                  ):
 
+        self.Lattice = Lattice
+        self.ind = ind
+        self.translation_mod1 = translation_mod1
+        self.translation = self.get_transl_mod1(trans)
+        self.spinor = spinor
+        self.sign = 1  # May be changed later externally
+
         if rot is not None:  # Vasp, Abinit, Espresso, W90, gpaw
-            self.ind = ind
+
             self.rotation = rot
-            self.Lattice = Lattice
-            self.translation_mod1 = translation_mod1
-            self.translation = self.get_transl_mod1(trans)
             self.axis, self.angle, self.inversion = self._get_operation_type()
             iangle = (round(self.angle / pi * 6) + 6) % 12 - 6
             if iangle == -6:
                 iangle = 6
             self.angle = iangle * pi / 6
-            self.angle_str = self.get_angle_str()
-            self.spinor = spinor
             self.spinor_rotation = expm(-0.5j * self.angle *
                                         np.einsum('i,ijk->jk', self.axis, pauli_sigma))  # use matrix_spinrep at some point
-            self.sign = 1  # May be changed later externally
 
         else:  # FPLO
+
             self.angle = angle
             self.axis = axis
-            self.ind = ind
             self.d = d  # it might change in the future
-            self.is_inv = is_inv  # rm after creating vector repr matrix
-            self.spinor = spinor  # it might change in the future
+            self.inversion = is_inv  # rm after creating vector repr matrix
             self.spinor_rotation = self.matrix_spinrep()
 
+            # Construct vector repr matrix in basis of DFT cell vectors
+            self.rotation = self.matrix_vecrep
+
+        self.angle_str = self.get_angle_str()
 
     def matrix_spinrep(self):
-        sigma_n = np.einsum('ijk,i->jk', pauli_sigma, self.axis)
+        '''
+        Construct matrix for the spin representation based on the formula
+
+        .. math::
+            S(\phi, \hat{n}) = e^{-i \sigma \cdot \hat{n}/2}
+        '''
+
+        sigma_n = np.einsum('i,ijk->jk', self.axis, pauli_sigma)
         S = expm(-0.5j*np.pi*self.angle*sigma_n)
         if self.d:
             S *= -1.0
         return S
+
+    def matrix_vecrep(self):
+        '''
+        Generate matrix in the representation of DFT cell's basis vectors 
+        from the rotation angle and axis
+        '''
+
+        # Eq. (2.22) in Heegert's book for matrix in Cartesian basis
+        nx, ny, nz = self.axis
+        Z = np.array([[0, -nz, ny],
+                      [nz, 0, -nx],
+                      [-ny, nx, 0]])
+        V_cartesian = expm(self.angle * Z)
+        if self.inversion:
+            V_cartesian *= -1
+
+        # Transform into DFT cell's basis
+        return np.linalg.inv(self.Lattice.T) @ V_cartesian @ self.Lattice.T
 
     def get_transl_mod1(self, t):
         """
@@ -524,6 +553,38 @@ class SymmetryOperation():
             return (vector-self.translation[...,:]).dot(self.rotation_inv.T)
         else:
             return vector.dot(self.rotation.T) + self.translation[...,:]
+
+    @property
+    def spinrep_matrices(self):
+        matrices = [sym.spinor_rotation for sym in self.symmetries]
+        return np.array(matrices)
+
+    @property
+    def angles(self):
+        if len(self.symmetries) == 0:
+            angles_list = np.zeros(self.order, dtype=float)
+        else:
+            angles_list = [sym.angle for sym in self.symmetries]
+            angles_list = np.array(angles_list)
+        return angles_list
+
+    @property
+    def axes(self):
+        if len(self.symmetries) == 0:
+            axes_list = np.zeros((self.order, 3), dtype=float)
+        else:
+            axes_list = [sym.axis for sym in self.symmetries]
+            axes_list = np.array(axes_list)
+        return axes_list
+
+    @property
+    def d_list(self):
+        if len(self.symmetries) == 0:
+            d_list = np.full(self.order, True, dtype=bool)
+        else:
+            d_list = [sym.d for sym in self.symmetries]
+            d_list = np.array(d_list, dtype=bool)
+        return d_list
         
     @cached_property
     def rotation_cart(self):
@@ -673,7 +734,7 @@ class SpaceGroup():
 
             if spin_repr is None or parities is None:
                 raise RuntimeError(
-                    'If the identification of the space group is not carried'
+                    'If the identification of the space group is not carried '
                     'out from the argument cell (crystal structure), '
                     'spin_repr and parities must be passed to SpaceGroup')
 
@@ -697,8 +758,11 @@ class SpaceGroup():
                 angle, axis, d = self.identify_from_spinrep(spin_repr[isym])
                 self.symmetries.append(SymmetryOperation(angle=angle,
                                                          axis=axis,
+                                                         ind=isym,
                                                          is_inv=parities[isym],
-                                                         trans=translations[isym]))
+                                                         trans=translations[isym],
+                                                         Lattice=self.Lattice,
+                                                         d=d))
 
 
             # Determine space group from symmetries
@@ -845,9 +909,9 @@ class SpaceGroup():
 
         symmetries = []
         for i, rot in enumerate(rotations):
-            symmetries.append(SymmetryOperation(rot,
-                                                translations[i],
-                                                cell[0],
+            symmetries.append(SymmetryOperation(rot=rot,
+                                                trans=translations[i],
+                                                Lattice=cell[0],
                                                 ind=i+1,
                                                 spinor=self.spinor,
                                                 translation_mod1=translation_mod_1))
@@ -858,10 +922,27 @@ class SpaceGroup():
                 transformation_matrix,
                 origin_shift)
 
-    def identify_from_spinrep(self, S):
+    def identify_from_spinrep(self, S, verbosity=0):
         '''
         Identify angle and axis or rotation from spin-representation 
         matrix.
+
+        Parameters
+        ----------
+        S : array, shape=(2,2)
+            Matrix in the spin representation
+        verbosity : int
+            Verbosity level
+
+        Returns
+        -------
+        angle : float
+            Rotation angle, restricted to -pi and pi.
+        axis : array
+            Rotation axis in Cartesian coordinates
+        d : bool
+            Whether the symmetry has a +2pi rotation or not.
+
         '''
 
         # Identify angle
@@ -892,12 +973,21 @@ class SpaceGroup():
             d = False
 
         # Check angle and axis are real
-        if np.abs(np.imag(angle)) > 1e-5:
+        if np.abs(np.imag(angle)) > 1e-3:
             raise RuntimeError("Complex angle detected: {}".format(angle))
-        if np.max(np.abs(np.imag(axis))) > 1e-5:
+        elif np.abs(np.imag(angle)) > 1e-5:
+            msg = f"WARNING: complex angle {angle} found. Taking real part."
+            log_message(msg, verbosity, 2)
+        if np.max(np.abs(np.imag(axis))) > 1e-3:
             raise RuntimeError("Complex axis detected: {}".format(axis))
+        elif np.max(np.abs(np.imag(axis))) > 1e-5:
+            msg = f"WARNING: complex axis {axis} found. Taking real part."
+            log_message(msg, verbosity, 2)
 
-        return angle/np.pi, axis, d
+        angle = float(angle)
+        axis = axis.real
+
+        return angle, axis, d
 
     @property
     def angles(self):
