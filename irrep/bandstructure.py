@@ -21,13 +21,12 @@ import functools
 
 import numpy as np
 import numpy.linalg as la
-from wannierberri.__utility import UniqueListMod1
 
 from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .gvectors import sortIG, calc_gvectors, symm_matrix
-from .utility import get_block_indices, grid_from_kpoints, log_message
+from .utility import get_block_indices, grid_from_kpoints, log_message, UniqueListMod1
 
 
 class BandStructure:
@@ -908,23 +907,24 @@ class BandStructure:
 
         Returns
         -------
-        grid : tuple(int)
-            the grid of kpoints (3 integers - number of kpoints in each direction)
-        kpoints : np.array((NK,3))
-            the list of kpoints
-        kptirr : list of int
-            kptirr[i] is the index of the i-th irreducible kpoint in the list of kpoints
-        kptirr2kpt : array of int
-            kptirr2kpt[i,isym]=j means that the i-th irreducible kpoint
-        kpt2kptirr : array of int
-            kpt2kptirr[j]=i means that the j-th kpoint is the i-th irreducible kpoint
-        d_band_blocks : list of list of list of array
-            d_band_blocks[i][isym] is a list of transformation matrices 
-            between (almost degenerate) bands at the i-th irreducible kpoint
-            under the isym-th symmetry operation
-        d_band_block_indices : list of list of int
-            d_band_block_indices[i] is a list of indices of the bands that are almost degenerate
-            at the i-th irreducible kpoint        
+        dict with the following keys:
+            grid : tuple(int)
+                the grid of kpoints (3 integers - number of kpoints in each direction)
+            kpoints : np.array((NK,3))
+                the list of kpoints
+            kptirr : list of int
+                kptirr[i] is the index of the i-th irreducible kpoint in the list of kpoints
+            kptirr2kpt : array of int
+                kptirr2kpt[i,isym]=j means that the i-th irreducible kpoint
+            kpt2kptirr : array of int
+                kpt2kptirr[j]=i means that the j-th kpoint is the i-th irreducible kpoint
+            d_band_blocks : list of list of list of array
+                d_band_blocks[i][isym] is a list of transformation matrices 
+                between (almost degenerate) bands at the i-th irreducible kpoint
+                under the isym-th symmetry operation
+            d_band_block_indices : list of list of int
+                d_band_block_indices[i] is a list of indices of the bands that are almost degenerate
+                at the i-th irreducible kpoint        
         """
 
         kpoints = np.array([KP.K  for KP in self.kpoints])
@@ -1008,9 +1008,17 @@ class BandStructure:
                     time_reversal=symop.time_reversal,
                     spinor=K1.spinor,
                     block_ind=block_indices,
-                    return_blocks=True
+                    return_blocks=True,
+                    orthogonalize=False,
+                    antiorthogonalize=False,
                 )
                 d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
                 # transposed because in irrep WF is row vector, while in dmn it is column vector
-        return grid, kpoints, kptirr, kptirr2kpt, kpt2kptirr, d_band_blocks, d_band_block_indices
+        return dict(grid=grid, 
+                    kpoints=kpoints,
+                    kptirr=kptirr, 
+                    kptirr2kpt=kptirr2kpt,
+                    kpt2kptirr=kpt2kptirr, 
+                    d_band_blocks=d_band_blocks, 
+                    d_band_block_indices=d_band_block_indices)
             

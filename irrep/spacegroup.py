@@ -96,7 +96,7 @@ class SymmetryOperation():
                  translation_mod1=True):
         self.ind = ind
         self.rotation = rot
-        self.time_reversal = time_reversal
+        self.time_reversal = bool(time_reversal)
         self.Lattice = Lattice
         self.translation_mod1 = translation_mod1
         self.translation = self.get_transl_mod1(trans)
@@ -373,6 +373,7 @@ class SymmetryOperation():
 
         print("\naxis: {0} ; angle = {1}, inversion : {2}\n".format(
             self.axis.round(6), self.angle_str, self.inversion))
+        print ("time-reversal : {0}".format(self.time_reversal))
 
     def str(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
         """
@@ -673,6 +674,13 @@ class SpaceGroup():
         if from_sym_file is not None:
             no_match_symmetries = True
 
+        if self.number is None:
+            self.refUC = np.eye(3, dtype=int)
+            self.shiftUC = np.zeros(3, dtype=float)
+            self.symmetries_tables = None
+            return
+
+
         # Determine refUC and shiftUC according to entries in CLI
         self.symmetries_tables = IrrepTable(self.number, self.spinor, v=verbosity).symmetries
         self.refUC, self.shiftUC = self.determine_basis_transf(
@@ -684,6 +692,7 @@ class SpaceGroup():
                                             trans_thresh=trans_thresh,
                                             verbosity=verbosity
                                             )
+
 
 
         # Check matching of symmetries in refUC. If user set transf.
@@ -778,11 +787,14 @@ class SpaceGroup():
         lattice = cell[0]
         if magnetic:
             dataset = spglib.get_magnetic_symmetry_dataset(cell + (magmom, ),mag_symprec=1e-3)
+            symbol = "magnetic-unknown"
+            number = None
         else:
             dataset = spglib.get_symmetry_dataset(cell)
         if version.parse(spglib.__version__) < version.parse('2.5.0'):
-            symbol = dataset['international']
-            number = dataset['number']
+            if not magnetic:
+                symbol = dataset['international']
+                number = dataset['number']
             transformation_matrix = dataset['transformation_matrix']
             origin_shift = dataset['origin_shift']
             rotations = dataset['rotations']
@@ -790,8 +802,9 @@ class SpaceGroup():
             if magnetic:
                 time_reversals = dataset['time_reversals']
         else:
-            symbol = dataset.international
-            number = dataset.number
+            if not magnetic:
+                symbol = dataset.international
+                number = dataset.number
             transformation_matrix = dataset.transformation_matrix
             origin_shift = dataset.origin_shift
             rotations = dataset.rotations
