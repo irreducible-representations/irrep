@@ -404,8 +404,8 @@ def symm_matrix(
     WF_other=None, igall_other=None, K_other=None,
     block_ind=None,
     return_blocks=False,
-    orthogonalize=True,
-    antiorthogonalize=False
+    unitary=True,
+    antiunitary=False
 ):
     """
     Computes the matrix S_mn such that
@@ -448,10 +448,10 @@ def symm_matrix(
     return_blocks : bool, default=False
         If `True`, returns the diagonal blocks as a list. Otherwise, returns the
         matrix composed of those blocks.
-    orthogonalize : bool, default=True
+    unitary : bool, default=True
         If `True`, the matrix is orthogonalized (made unitary). Set to `False` for speedup. 
         (in general it is not needed, but just in case)
-    antiorthogonalize : bool, default=False
+    antiunitary : bool, default=False
         If `True`, the matrix is antiorthogonalized (made anti-unitary). Set to `False` for speedup. 
         (in general it is not needed, but just in case)
     Returns
@@ -461,7 +461,7 @@ def symm_matrix(
         Bloch Hamiltonian :math:`H(k)`.
     """
     assert (WF_other is None) == (igall_other is None) == (K_other is None), "WF_other and igall_other must be provided (or not) together"
-    assert not (orthogonalize and antiorthogonalize), "ortogonalize and antiortogonalize cannot be both True"
+    assert not (unitary and antiunitary), "ortogonalize and antiortogonalize cannot be both True"
     if WF_other is None:
         WF_other = WF
         igall_other = igall
@@ -492,9 +492,9 @@ def symm_matrix(
     for b1,b2 in block_ind:
         WFinv = right_inverse(WF_other[b1:b2])
         block = np.dot(WFrot[b1:b2,:], WFinv)
-        if orthogonalize:
+        if unitary:
             block = orthogonalize(block)
-        elif antiorthogonalize:
+        elif antiunitary:
             block = orthogonalize(block, anti=True)
         block_list.append(block)
     if return_blocks:

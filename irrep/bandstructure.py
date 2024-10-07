@@ -1009,8 +1009,8 @@ class BandStructure:
                     spinor=K1.spinor,
                     block_ind=block_indices,
                     return_blocks=True,
-                    orthogonalize=False,
-                    antiorthogonalize=False,
+                    unitary=False,
+                    antiunitary=False,
                 )
                 d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
                 # transposed because in irrep WF is row vector, while in dmn it is column vector
