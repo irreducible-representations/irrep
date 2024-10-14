@@ -1013,8 +1013,8 @@ class BandStructure:
                     spinor=K1.spinor,
                     block_ind=block_indices,
                     return_blocks=True,
-                    unitary=False,
-                    antiunitary=False,
+                    # unitary=False,
+                    # antiunitary=False,
                 )
                 d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
                 # transposed because in irrep WF is row vector, while in dmn it is column vector
@@ -1025,4 +1025,11 @@ class BandStructure:
                     kpt2kptirr=kpt2kptirr, 
                     d_band_blocks=d_band_blocks, 
                     d_band_block_indices=d_band_block_indices)
+        # return     (grid, 
+        #             kpoints,
+        #             kptirr, 
+        #             kptirr2kpt,
+        #             kpt2kptirr, 
+        #             d_band_blocks, 
+        #             d_band_block_indices)
             

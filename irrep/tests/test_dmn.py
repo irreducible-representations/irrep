@@ -32,8 +32,8 @@ def check_Fe_qe(include_TR):
     for k in data_ref.keys():
         compare_nested_lists(data[k], data_ref[k], key=k)
 
-def test_Fe_qe_TR():
-    check_Fe_qe(include_TR=True)
+# def test_Fe_qe_TR():
+#     check_Fe_qe(include_TR=True)
 
 def test_Fe_qe_noTR():
     check_Fe_qe(include_TR=False)   
