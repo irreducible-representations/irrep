@@ -142,6 +142,7 @@ class BandStructure:
     include_TR : bool
         If `True`, the symmetries involving time-reversal will be included in the spacegroup.
         if magmom is None and include_TR is True, the magnetic moments will be set to zero (non-magnetic calculation with TR)
+        (WARNING: not implemented yet)
     """
 
     def __init__(
@@ -174,6 +175,9 @@ class BandStructure:
         magmom=None,
         include_TR=False,
     ):
+        
+        if include_TR:
+            raise NotImplementedError("include_TR is not implemented yet")
 
         code = code.lower()
         if spin_channel is not None:
