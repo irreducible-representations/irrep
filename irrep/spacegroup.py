@@ -121,7 +121,7 @@ class SymmetryOperation():
             self.spinor_rotation = self.matrix_spinrep()
 
             # Construct vector repr matrix in basis of DFT cell vectors
-            self.rotation = self.matrix_vecrep
+            self.rotation = self.matrix_vecrep()
 
         self.angle_str = self.get_angle_str()
 
@@ -765,12 +765,6 @@ class SpaceGroup():
                                                          d=d))
 
 
-            # Determine space group from symmetries
-            #spgtype = spglib.get_spacegroup_type_from_symmetry(rotations,
-            #                                                   translations,
-            #                                                   Lattice) 
-
-
         else:  # vasp, espresso, abinit, w90 and gpaw
 
             self.spinor = spinor
@@ -984,7 +978,7 @@ class SpaceGroup():
             msg = f"WARNING: complex axis {axis} found. Taking real part."
             log_message(msg, verbosity, 2)
 
-        angle = float(angle)
+        angle = angle.real
         axis = axis.real
 
         return angle, axis, d
@@ -1013,6 +1007,20 @@ class SpaceGroup():
         Number of symmetry operations in the space-group.
         """
         return len(self.symmetries)
+
+    @property
+    def rotations(self):
+        '''
+        Get an array of rotational parts of coset representatives
+        '''
+        return np.array([sym.rotation for sym in self.symmetries if not sym.d])
+
+    @property
+    def translations(self):
+        '''
+        Get an array of translational parts of coset representatives
+        '''
+        return np.array([sym.translation for sym in self.symmetries if not sym.d])
 
     def json(self, symmetries=None):
         '''
