@@ -95,7 +95,12 @@ class BandStructure:
         1: print info about decisions taken internally by the code, recommended 
         when the code runs without errors but the result is not the expected.
         2: print detailed info, recommended when the code stops with an error
-
+    magmom : array(num_atoms, 3)
+        Magnetic moments of atoms in the unit cell. 
+    include_TR : bool
+        If `True`, the symmetries involving time-reversal will be included in the spacegroup.
+        if magmom is None and include_TR is True, the magnetic moments will be set to zero (non-magnetic calculation with TR)
+    
     Attributes
     ----------
     spacegroup : class
@@ -137,12 +142,6 @@ class BandStructure:
         Property that returns the number of k points in the attribute `kpoints`
     num_bands : int
         Property that returns the number of bands. Used to write trace.txt.
-    magmom : array(num_atoms, 3)
-        Magnetic moments of atoms in the unit cell. 
-    include_TR : bool
-        If `True`, the symmetries involving time-reversal will be included in the spacegroup.
-        if magmom is None and include_TR is True, the magnetic moments will be set to zero (non-magnetic calculation with TR)
-        (WARNING: not implemented yet)
     """
 
     def __init__(
@@ -176,8 +175,8 @@ class BandStructure:
         include_TR=False,
     ):
         
-        if include_TR:
-            raise NotImplementedError("include_TR is not implemented yet")
+        # if include_TR:
+        #     raise NotImplementedError("include_TR is not implemented yet")
 
         code = code.lower()
         if spin_channel is not None:
@@ -900,7 +899,7 @@ class BandStructure:
         return K
 
 
-    def get_dmn(self, grid=None, degen_thresh=1e-2):
+    def get_dmn(self, grid=None, degen_thresh=1e-2, unitary=True):
         """
         grid : tuple(int), optional
             the grid of kpoints (3 integers), if None, the grid is determined from the kpoints
@@ -908,6 +907,8 @@ class BandStructure:
         degen_thresh : float, optional
             the threshold for the degeneracy of the bands. Only transformations between bands
              with energy difference smaller than this value are considered
+        unitary : bool, optional
+            if True, the transformation matrices are made unitary explicitly
 
         Returns
         -------
@@ -990,7 +991,6 @@ class BandStructure:
         assert np.all(kptirr2kpt >= 0)
         assert np.all(kpt2kptirr >= 0)
 
-        NB = self.num_bands
         d_band_blocks = [[[] for _ in range(Nsym)] for _ in range(NKirr)]
         d_band_block_indices = []
         for i, ikirr in enumerate(kptirr):
@@ -1013,8 +1013,7 @@ class BandStructure:
                     spinor=K1.spinor,
                     block_ind=block_indices,
                     return_blocks=True,
-                    # unitary=False,
-                    # antiunitary=False,
+                    unitary=unitary
                 )
                 d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
                 # transposed because in irrep WF is row vector, while in dmn it is column vector

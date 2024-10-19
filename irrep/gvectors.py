@@ -16,7 +16,7 @@
 ##################################################################
 
 
-import warnings
+# import warnings
 import numpy as np
 import numpy.linalg as la
 Rydberg_eV = 13.605693  # eV
@@ -405,7 +405,6 @@ def symm_matrix(
     block_ind=None,
     return_blocks=False,
     unitary=True,
-    antiunitary=False
 ):
     """
     Computes the matrix S_mn such that
@@ -451,9 +450,6 @@ def symm_matrix(
     unitary : bool, default=True
         If `True`, the matrix is orthogonalized (made unitary). Set to `False` for speedup. 
         (in general it is not needed, but just in case)
-    antiunitary : bool, default=False
-        If `True`, the matrix is antiorthogonalized (made anti-unitary). Set to `False` for speedup. 
-        (in general it is not needed, but just in case)
     Returns
     -------
     array
@@ -461,21 +457,19 @@ def symm_matrix(
         Bloch Hamiltonian :math:`H(k)`.
     """
     assert (WF_other is None) == (igall_other is None) == (K_other is None), "WF_other and igall_other must be provided (or not) together"
-    assert not (unitary and antiunitary), "ortogonalize and antiortogonalize cannot be both True"
     if WF_other is None:
         WF_other = WF
         igall_other = igall
         K_other = K
     if block_ind is None:
         block_ind = np.array([(0, WF.shape[0])])
-    # print (f"symm_matrix: time_reversal={time_reversal}, spinor={spinor}, orthogonalize={orthogonalize}, antiorthogonalize={antiorthogonalize}")
     npw1 = igall.shape[1]
     
     multZ = np.exp(-2j * np.pi * T.dot(igall_other[:3, :] + K_other[:, None])) [None,:]
     if time_reversal:
         A = -A
         WF = WF.conj()
-        # multZ = multZ.conj() # this is not needed because igall_other and K_other are alreade reversed (because A=0A)
+        # multZ = multZ.conj() # this is not needed because igall_other and K_other are alreade reversed (because A=-A)
         if spinor:
             S =  np.array([[0,1],[-1,0]]) @ S.conj()
         
@@ -492,10 +486,9 @@ def symm_matrix(
     for b1,b2 in block_ind:
         WFinv = right_inverse(WF_other[b1:b2])
         block = np.dot(WFrot[b1:b2,:], WFinv)
+        e = np.linalg.eigvals(block)
         if unitary:
-            block = orthogonalize(block)
-        elif antiunitary:
-            block = orthogonalize(block, anti=True)
+            block = orthogonalize(block, warning_threshold=1e-3, error_threshold=1e-2)
         block_list.append(block)
     if return_blocks:
         return block_list

@@ -273,7 +273,7 @@ def log_message(msg, verbosity, level):
         print(msg)
 
 
-def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosity=1, anti=False):
+def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosity=1):
     """
     Orthogonalize a square matrix, using SVD
     
@@ -282,19 +282,15 @@ def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosit
     A : array( (M,M), dtype=complex)
         Matrix to orthogonalize.
     warning_threshold : float, default=np.inf
-        Threshold for warning message. Is someeigenvalues are far from 1
+        Threshold for warning message. Is some singular values are far from 1
     error_threshold : float, default=np.inf
-        Threshold for error message. Is someeigenvalues are far from 1
-    anti : bool, default=False
-        If `True`, the matrix is anti-unitary.
-
+        Threshold for error message. Is some singular values are far from 1
+ 
     Returns
     -------
     array( (M,M), dtype=complex)
         Orthogonalized matrix
     """
-    if anti:
-        return -1j*orthogonalize(1j*A, warning_threshold=warning_threshold, error_threshold=error_threshold, verbosity=verbosity, anti=False)
     u, s, vh = np.linalg.svd(A)
     if np.any(np.abs(s - 1) > error_threshold):
         raise ValueError("Matrix is not orthogonal", A)
