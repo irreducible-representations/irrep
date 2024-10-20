@@ -406,8 +406,6 @@ def grid_from_kpoints(kpoints, grid=None):
     ValueError
         if some k-points are missing
     """
-    from wannierberri.__utility import UniqueListMod1
-
     if grid is None:
         grid = tuple(np.lcm.reduce([Fraction(k).limit_denominator(100).denominator for k in kp]) for kp in kpoints.T)
     npgrid = np.array(grid)

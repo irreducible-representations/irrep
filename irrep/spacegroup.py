@@ -148,6 +148,13 @@ class SymmetryOperation():
                     round(api * n), "" if n == 1 else "/" + str(n))
         raise RuntimeError(
             "{0} pi rotation cannot be in the space group".format(api))
+    
+    @cached_property
+    def rotation_cart(self):
+        """
+        Calculate the rotation matrix in cartesian coordinates.
+        """
+        return self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
 
     def _get_operation_type(self):
         """
@@ -162,10 +169,7 @@ class SymmetryOperation():
             boolean, `True` if the symmetry preserves handedness 
             (determinant -1).
         """
-        rotxyz = self.Lattice.T.dot(
-            self.rotation).dot(
-            np.linalg.inv(
-                self.Lattice).T)
+        rotxyz = self.rotation_cart
 #        print ("rotation in real space:\n",rotxyz)
         E, V = np.linalg.eig(rotxyz)
         if not np.isclose(abs(E), 1).all():
