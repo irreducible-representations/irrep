@@ -405,6 +405,7 @@ def symm_matrix(
     block_ind=None,
     return_blocks=False,
     unitary=True,
+    unitary_params={}
 ):
     """
     Computes the matrix S_mn such that
@@ -465,6 +466,13 @@ def symm_matrix(
         block_ind = np.array([(0, WF.shape[0])])
     npw1 = igall.shape[1]
     
+    unitary_params_loc = {
+        "warning_threshold": 1e-3,
+        "error_threshold": 1e-2,
+        "check_upper" : False,
+    }
+    unitary_params_loc.update(unitary_params)
+
     multZ = np.exp(-2j * np.pi * T.dot(igall_other[:3, :] + K_other[:, None])) [None,:]
     if time_reversal:
         A = -A
@@ -483,12 +491,20 @@ def symm_matrix(
     else:
         WFrot = WF[:, igrot]*multZ
     block_list = []
+    NB = WF.shape[0]
     for b1,b2 in block_ind:
         WFinv = right_inverse(WF_other[b1:b2])
         block = np.dot(WFrot[b1:b2,:], WFinv)
-        e = np.linalg.eigvals(block)
+        # e = np.linalg.eigvals(block)
         if unitary:
-            block = orthogonalize(block, warning_threshold=1e-3, error_threshold=1e-2)
+            if not unitary_params_loc["check_upper"] and b2==NB:
+                error_threshold = 10
+            else:
+                error_threshold = unitary_params_loc["error_threshold"]
+            block = orthogonalize(block, 
+                                  warning_threshold=unitary_params_loc["warning_threshold"],
+                                  error_threshold=error_threshold,
+                                  debug_msg=f"symm_matrix: block {b1}:{b2} of {WF.shape[0]}")
         block_list.append(block)
     if return_blocks:
         return block_list

@@ -18,7 +18,10 @@ def check_Fe_qe(include_TR):
                                    include_TR=include_TR)
     # bandstructure.spacegroup.show()
                                    
-    data = bandstructure.get_dmn(degen_thresh=1e-3)
+    data = bandstructure.get_dmn(degen_thresh=1e-3, unitary=True, 
+                                 unitary_params={"check_upper": False,
+                                                 "waring_threshold":1e-3,
+                                                 "error_threshold":1e-2}, )
     print (f"number of symmetries: {bandstructure.spacegroup.order}")
     for a in data["d_band_blocks"][:1]:
         for b in a:
