@@ -899,7 +899,7 @@ class BandStructure:
         return K
 
 
-    def get_dmn(self, grid=None, degen_thresh=1e-2, unitary=True):
+    def get_dmn(self, grid=None, degen_thresh=1e-2, unitary=True, unitary_params={}):
         """
         grid : tuple(int), optional
             the grid of kpoints (3 integers), if None, the grid is determined from the kpoints
@@ -909,6 +909,8 @@ class BandStructure:
              with energy difference smaller than this value are considered
         unitary : bool, optional
             if True, the transformation matrices are made unitary explicitly
+        unitary_params : dict, optional
+            parameters to be passed to :func:`~irrep.utility.orthogonalize`
 
         Returns
         -------
@@ -1013,7 +1015,8 @@ class BandStructure:
                     spinor=K1.spinor,
                     block_ind=block_indices,
                     return_blocks=True,
-                    unitary=unitary
+                    unitary=unitary,
+                    unitary_params=unitary_params,
                 )
                 d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
                 # transposed because in irrep WF is row vector, while in dmn it is column vector

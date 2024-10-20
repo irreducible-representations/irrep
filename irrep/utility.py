@@ -273,7 +273,8 @@ def log_message(msg, verbosity, level):
         print(msg)
 
 
-def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosity=1):
+def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosity=1,
+                  debug_msg=""):
     """
     Orthogonalize a square matrix, using SVD
     
@@ -293,9 +294,9 @@ def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosit
     """
     u, s, vh = np.linalg.svd(A)
     if np.any(np.abs(s - 1) > error_threshold):
-        raise ValueError("Matrix is not orthogonal", A)
+        raise ValueError(f"Matrix is not orthogonal \n {A} \n {debug_msg}")	
     elif np.any(np.abs(s - 1) > warning_threshold):
-        log_message(f"Warning: Matrix is not orthogonal {A}", verbosity, 1)
+        log_message(f"Warning: Matrix is not orthogonal \n {A} \n {debug_msg}", verbosity, 1)
     return u @ vh
 
 def sort_vectors(list_of_vectors):
