@@ -273,12 +273,8 @@ def log_message(msg, verbosity, level):
         print(msg)
 
 
-<<<<<<< HEAD
-def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosity=1):
-=======
 def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosity=1,
                   debug_msg=""):
->>>>>>> master
     """
     Orthogonalize a square matrix, using SVD
     
@@ -290,7 +286,7 @@ def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosit
         Threshold for warning message. Is some singular values are far from 1
     error_threshold : float, default=np.inf
         Threshold for error message. Is some singular values are far from 1
- 
+
     Returns
     -------
     array( (M,M), dtype=complex)
@@ -298,9 +294,9 @@ def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosit
     """
     u, s, vh = np.linalg.svd(A)
     if np.any(np.abs(s - 1) > error_threshold):
-        raise ValueError(f"Matrix is not orthogonal \n {A} \n {debug_msg}")	
+        raise ValueError(f"Matrix is not orthogonal \n {A} \n {debug_msg}")
     elif np.any(np.abs(s - 1) > warning_threshold):
-        log_message(f"Warning: Matrix is not orthogonal \n {A} \n {debug_msg}", verbosity, 1)
+        log_message(f"Warning: Matrix is not orthogonal \n {A} \n {debug_msg}", 1)
     return u @ vh
 
 def sort_vectors(list_of_vectors):
@@ -387,7 +383,7 @@ def get_block_indices(E, thresh=1e-5, cyclic=False):
         return np.array([borders, np.roll(borders, -1)]).T
     else:
         return np.array([borders[:-1], borders[1:]]).T
-       
+
 def grid_from_kpoints(kpoints, grid=None):
     """
     Given a list of kpoints in fractional coordinates, return a the size of the grid in each direction
@@ -522,3 +518,26 @@ def all_close_mod1(a, b, tol=1e-5):
         return False
     diff = a - b
     return np.allclose(np.round(diff), diff, atol=tol)
+
+def vector_pprint(vector, fmt=None):
+    """
+    Format an homogeneous list or array as a vector for printing
+
+    Parameters
+    ---------
+    vector : array or list
+        Vector to format
+    fmt : str, default None
+        Format of the elements. Numeric types are always sign-padded
+
+    Returns
+    -------
+    str
+        formatted vector string
+    """
+    if fmt is None:
+        fmt = " .5f"
+    elif "s" not in fmt:
+        fmt = " " + fmt if fmt[0] != " " else fmt
+
+    return ("[" + ("{:{fmt}} " * len(vector)) + "]").format(*vector, fmt=fmt)
