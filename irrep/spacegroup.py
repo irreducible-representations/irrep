@@ -1583,6 +1583,69 @@ class SpaceGroup():
                         )
         vecs = np.vstack([vecs + r for r in self.vecs_centering()])
         return vecs
+    
+    def print_hs_kpoints(self):
+        """
+        Give the kpoint coordinates of the symmetry tables transformed to 
+        the DFT calculation cell.
+
+        """
+
+        table = IrrepTable(self.number, self.spinor, magnetic=self.magnetic)
+        refUC_kspace = np.linalg.inv(self.refUC.T)
+
+        matrix_format = ("\t\t| {: .2f} {: .2f} {: .2f} |\n" 
+                        "\t\t| {: .2f} {: .2f} {: .2f} |\n" 
+                        "\t\t| {: .2f} {: .2f} {: .2f} |\n\n")
+
+        print("\n---------- HS-KPOINTS FOR IRREP IDENTIFICATION ----------\n")
+
+        print("\nChange of coordinates from conventional to DFT cell:\n")
+        print(matrix_format.format(*refUC_kspace.ravel()))
+
+        print("\nChange of coordinates from DFT to conventional cell:\n")
+        print(matrix_format.format(*np.linalg.inv(refUC_kspace).ravel()))
+
+        _, kp_index = np.unique([irr.kpname for irr in table.irreps], return_index=True)
+        print("Coordinates in symmetry tables:\n")
+        for i in kp_index:
+            name = table.irreps[i].kpname
+            coords = table.irreps[i].k
+            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *coords))
+        print("\nCoordinates for DFT calculation:\n")
+        for i in kp_index:
+            name = table.irreps[i].kpname
+            coords = table.irreps[i].k
+            k_dft = np.round(refUC_kspace.dot(coords), 5) % 1
+            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *k_dft))
+
+    def kpoints_to_calculation_cell(self, kpoints):
+        """Transforms kpoints form standard cell to calculation cell
+
+        Parameters
+        ----------
+        kpoints : np.NDArray
+            kpoints in standard cell
+        """
+        refUC_kspace = np.linalg.inv(self.refUC.T)
+
+        kpoints = np.array([refUC_kspace.dot(k) for k in kpoints]) % 1
+
+        return kpoints
+
+    def kpoints_to_standard_cell(self, kpoints):
+        """Transforms kpoints form standard cell to calculation cell
+
+        Parameters
+        ----------
+        kpoints : np.NDArray
+            kpoints in standard cell
+        """
+        refUC_kspace = self.refUC.T
+
+        kpoints = np.array([refUC_kspace.dot(k) for k in kpoints]) % 1
+
+        return kpoints
 
 
 def read_sym_file(fname):
@@ -1648,3 +1711,4 @@ def cart_to_crystal(rot_cart, trans_cart, lattice, alat):
     rot_crystal = np.round(rot_crystal).astype(int)
     trans_crystal = - trans_cart @ lat_inv * alat * BOHR
     return rot_crystal , trans_crystal 
+

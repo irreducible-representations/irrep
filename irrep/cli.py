@@ -295,10 +295,15 @@ do not hesitate to contact the author:
                     "don't set this tag, you will get the basic info.")
 )
 @click.option("-json_file",
-                 type=str,
-                    default="irrep-output.json",
-                    help="File to save the output in JSON format. (without "
+                type=str,
+                default="irrep-output.json",
+                help="File to save the output in JSON format. (without "
                     "extension, the '.json' will be added automatically)"
+)
+@click.option("--print-hs-kpoints",
+                flag_value=True,
+                default=False,
+                help="Print high-symmetry k-points in the calculation and reference cell."
 )
 def cli(
     ecut,
@@ -334,7 +339,8 @@ def cli(
     trans_thresh,
     magmom,
     v,
-    json_file
+    json_file,
+    print_hs_kpoints
 ):
     """
     Defines the "irrep" command-line tool interface.
@@ -433,6 +439,9 @@ def cli(
     )
 
     bandstr.spacegroup.show()
+
+    if print_hs_kpoints:
+        bandstr.spacegroup.print_hs_kpoints()
 
     if writesym:
         bandstr.spacegroup.write_sym_file(filename=prefix+".sym", alat=alat)
