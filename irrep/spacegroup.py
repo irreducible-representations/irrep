@@ -772,7 +772,7 @@ class SpaceGroup():
 
             uni_number = dataset.uni_number
             root = os.path.dirname(__file__)                                    
-            with open(root + "/msg_numbers.data", 'r') as f:                    
+            with open(root + "/data/msg_numbers.data", 'r') as f:                    
                 self.number, self.name = f.readlines()[uni_number].strip().split(" ") 
 
         # Read syms from .sym file (useful for Wannier interface)
