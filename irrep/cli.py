@@ -393,16 +393,6 @@ def cli(
     if magmom is not None:
         try:
             magnetic_moments = np.loadtxt(magmom)
-        except FileNotFoundError:
-            print("The magnetic moments' file was not found: {}".format(magmom))
-        except ValueError:
-            print("Error reading magnetic moments' file: {}".format(magmom))
-    else:
-        magnetic_moments = None
-
-    if magmom is not None:
-        try:
-            magnetic_moments = np.loadtxt(magmom)
         except FileNotFoundError as e:
             print(f"The magnetic moments file was not found: {magmom}")
             raise e
