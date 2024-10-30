@@ -20,12 +20,12 @@ from functools import cached_property
 import warnings
 import numpy as np
 from math import pi
-from scipy.linalg import expm
+# from scipy.linalg import expm
 import spglib
 from irreptables import IrrepTable
 from scipy.optimize import minimize
 from .utility import str_, log_message, BOHR
-from packaging import version
+# from packaging import version
 import os
 
 pauli_sigma = np.array(
@@ -109,9 +109,10 @@ class SymmetryOperation():
         self.angle = iangle * pi / 6
         self.angle_str = self.get_angle_str()
         self.spinor = spinor
-        self.spinor_rotation = expm(-0.5j * self.angle *
-                                    np.einsum('i,ijk->jk', self.axis, pauli_sigma))
-        self.sign = 1  # May be changed later externally
+        # self.spinor_rotation = expm(-0.5j * self.angle *
+        #                             np.einsum('i,ijk->jk', self.axis, pauli_sigma))
+        self.spinor_rotation = None # To be matched with tables
+        self.sign = 1  # To be matched with tables
 
     def get_transl_mod1(self, t):
         """
@@ -151,12 +152,6 @@ class SymmetryOperation():
         raise RuntimeError(
             "{0} pi rotation cannot be in the space group".format(api))
 
-    @cached_property
-    def rotation_cart(self):
-        """
-        Calculate the rotation matrix in cartesian coordinates.
-        """
-        return self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
 
     def _get_operation_type(self):
         """
@@ -481,33 +476,6 @@ class SymmetryOperation():
            return ("   ".join(" ".join("{0:2d}".format(x) for x in r) for r in R) + "     " + " ".join("{0:10.6f}".format(x) for x in t) + (
                 ("      " + "    ".join("  ".join("{0:10.6f}".format(x) for x in (X.real, X.imag)) for X in S.reshape(-1))) if S is not None else "") + "\n")
 
-    def json_dict(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
-        '''
-        Prepare dictionary with info of symmetry to save in JSON
-
-        Returns
-        -------
-        d : dict
-            Dictionary with info about symmetry
-        '''
-
-        d = {}
-        d["axis"]  = self.axis
-        d["angle str"] = self.angle_str
-        d["angle pi"] = self.angle/np.pi
-        d["inversion"] = self.inversion
-        d["sign"] = self.sign
-
-        d["rotation matrix"] = self.rotation
-        d["translation"] = self.translation
-
-        R = self.rotation_refUC(refUC)
-        t = self.translation_refUC(refUC, shiftUC)
-        d["rotation matrix refUC"] = R
-        d["translation refUC"]= t
-
-        return d
-
     def str_sym(self, alat):
         """
         Write 4 strings (+1 empty) for the prefix.sym file 
@@ -729,7 +697,7 @@ class SpaceGroup():
         self.Lattice = cell[0]
         self.positions = cell[1]
         self.typat = cell[2]
-        self.alat=alat
+        self.alat = alat
         self.magmom = magmom
         if from_sym_file is not None or not search_cell:
             no_match_symmetries = True
@@ -741,21 +709,24 @@ class SpaceGroup():
 
             self.magnetic = False
             dataset = spglib.get_symmetry_dataset(cell)
-            if version.parse(spglib.__version__) < version.parse('2.5.0'):
-                self.name = dataset['international']
-                self.number = dataset['number']
-                refUC_tmp = dataset['transformation_matrix']
-                shiftUC_tmp = dataset['origin_shift']
-                rotations = dataset['rotations']
-                translations = dataset['translations']
-            else:
-                self.name = dataset.international
-                self.number = dataset.number
-                refUC_tmp = dataset.transformation_matrix
-                shiftUC_tmp = dataset.origin_shift
-                rotations = dataset.rotations
-                translations = dataset.translations
+            # deprecate spglib < 2.5.0
+            # if version.parse(spglib.__version__) < version.parse('2.5.0'):
+            #     self.name = dataset['international']
+            #     self.number = dataset['number']
+            #     refUC_tmp = dataset['transformation_matrix']
+            #     shiftUC_tmp = dataset['origin_shift']
+            #     rotations = dataset['rotations']
+            #     translations = dataset['translations']
+            # else:
+            self.name = dataset.international
+            self.number = dataset.number
+            refUC_tmp = dataset.transformation_matrix
+            shiftUC_tmp = dataset.origin_shift
+            rotations = dataset.rotations
+            translations = dataset.translations
             time_reversal_list = [False] * len(rotations)
+
+            self.crystal_system = get_crystal_system(self.number)
 
         else:  # Magnetic moments
 
@@ -774,6 +745,8 @@ class SpaceGroup():
             root = os.path.dirname(__file__)                                    
             with open(root + "/data/msg_numbers.data", 'r') as f:                    
                 self.number, self.name = f.readlines()[uni_number].strip().split(" ") 
+            
+            self.crystal_system = get_crystal_system(int(self.number.split(".")[0]))
 
         # Read syms from .sym file (useful for Wannier interface)
         if from_sym_file is not None:
@@ -798,11 +771,9 @@ class SpaceGroup():
                                                 time_reversal=time_reversal_list[isym]))
 
         if self.magnetic:
-            self.symmetries = list(filter(lambda x: not x.time_reversal,
-                                          symmetries))
+            self.symmetries = [x for x in symmetries if not x.time_reversal]
             if include_TR:
-                self.au_symmetries = list(filter(lambda x: x.time_reversal,
-                                                 symmetries))
+                self.au_symmetries = [x for x in symmetries if x.time_reversal]
             else:
                 self.au_symmetries = []
         else:
@@ -832,22 +803,20 @@ class SpaceGroup():
         # in the CLI and symmetries don't match, raise a warning.
         # Otherwise, if transf. was calculated automatically,
         # matching of symmetries was checked in determine_basis_transf
-        if no_match_symmetries:
-            self.spin_transf = np.eye(2)  # for printing
-        else:
+        if not no_match_symmetries:
             try:
-                ind, dt, signs, U = self.match_symmetries(signs=self.spinor,
+                ind, _, signs = self.match_symmetries(signs=self.spinor,
                                                        trans_thresh=trans_thresh
                                                        )
-                self.spin_transf = U
 
                 # Sort symmetries like in tables
                 args = np.argsort(ind)
+                sorted_symmetries = []
                 for i,i_ind in enumerate(args):
                     self.symmetries[i_ind].ind = i+1
                     self.symmetries[i_ind].sign = signs[i_ind]
                     self.symmetries.append(self.symmetries[i_ind])
-                self.symmetries = self.symmetries[i+1:]
+                self.symmetries = sorted_symmetries
             except RuntimeError:
                 if search_cell:  # symmetries must match to identify irreps
                     raise RuntimeError((
@@ -869,17 +838,18 @@ class SpaceGroup():
             # Do the same with magnetic operations
             if self.magnetic and len(self.au_symmetries) > 0:
                 try:
-                    ind, dt, signs, _ = self.match_symmetries(signs=self.spinor,
+                    ind, _, signs = self.match_symmetries(signs=self.spinor,
                                                            trans_thresh=trans_thresh,
                                                            au_symmetries=True
                                                            )
                     # Sort symmetries like in tables
                     args = np.argsort(ind)
+                    sorted_au_symmetries = []
                     for i,i_ind in enumerate(args):
                         self.au_symmetries[i_ind].ind = i+1
                         self.au_symmetries[i_ind].sign = signs[i_ind]
-                        self.au_symmetries.append(self.au_symmetries[i_ind])
-                    self.au_symmetries = self.au_symmetries[i+1:]
+                        sorted_au_symmetries.append(self.au_symmetries[i_ind])
+                    self.au_symmetries = sorted_au_symmetries
                 except RuntimeError:
                     if search_cell:  # symmetries must match to identify irreps
                         raise RuntimeError((
@@ -1079,93 +1049,27 @@ class SpaceGroup():
                     self.shiftUC) for s in self.symmetries) +
             "\n\n")
 
-    def __match_spinor_rotations(self, S1, S2):
-        """
-        Determine the sign difference between matrices describing the 
-        transformation of spinors found by `spglib` and those read from tables.
+    def __match_spinor_rotations(self, rotations_table, spin_table):
+        spin_own = []
+        axes = []
+        angles = []
+        for R in rotations_table:
+            SU2, axis, angle = get_su2_rotation_in_reference(
+                R, self.crystal_system, return_params=True
+            )
+            spin_own.append(SU2)
+            axes.append(axis)
+            angles.append(angle)
 
-        Parameters
-        ----------
-        S1 : list
-            Contains the matrices for the transformation of spinors 
-            corresponding to symmetry operations found by `spglib`.
-        S2 : list
-            Contains the matrices for the transformation of spinors 
-            corresponding to symmetry operations read from tables.
-
-        Returns
-        -------
-        array
-            The `j`-th element is the matrix to match the `j`-th matrices of 
-            `S1` and `S2`.
-        """
-        n = 2
-
-        def RR(x): 
-            """
-            Constructs a 2x2 complex matrix out of a list containing real and 
-            imaginary parts.
-
-            Parameters
-            ----------
-            x : list, length=8
-                Length is 8. `x[:4]` contains the real parts, `x[4:]` the 
-                imaginary parts.
+        signs = []
+        for so, st in zip(spin_own, spin_table):
+            sign = np.linalg.solve(so, st).trace() / 2
+            if not np.isclose(np.imag(sign), 0) or not np.isclose(np.abs(sign), 1):
+                raise RuntimeError("Could not match the spin matrices.")
             
-            Returns
-            -------
-            array, shape=(2,2)
-                Matrix of complex elements. 
-            """
+            signs.append(sign)
 
-            return np.array([[x1 + 1j * x2 for x1, x2 in zip(l1, l2)] for l1, l2 in zip(x[:n * n].reshape((n, n)), x[n * n:].reshape((n, n)))])
-
-        def residue_matrix(r): 
-            """
-            Calculate the residue of a matrix.
-
-            Parameters
-            ----------
-            r : array
-                Matrix used as ansatz for the minimization.
-
-            Returns
-            -------
-            float            
-            """
-
-            return sum([min(abs(r.dot(b).dot(r.T.conj()) - s * a).sum() for s in (1, -1)) for a, b in zip(S1, S2)])
-
-        def residue(x): 
-            """
-            Calculate the normalized residue.
-
-            Parameters
-            ----------
-            x : list, length=8
-                Length is 8. `x[:4]` contains the real parts, `x[4:]` the 
-                imaginary parts.
-            
-            Returns
-            -------
-            float
-            """
-            return residue_matrix(RR(x)) / len(S1)
-
-        for i in range(11):
-            x0 = np.random.random(2 * n * n)
-            res = minimize(residue, x0)
-            r = res.fun
-            if r < 1e-4:
-                break
-        if r > 1e-3:
-            raise RuntimeError(
-                "the accurcy is only {0}. Is this good?".format(r))
-
-        R1 = RR(res.x)
-        signs = np.array([R1.dot(b).dot(R1.T.conj()).dot(np.linalg.inv(a)).diagonal().mean().real.round() for a, b in zip(S1, S2)], dtype=int) 
-
-        return signs, R1
+        return axes, angles, signs
 
     def get_irreps_from_table(self, kpname, K, verbosity=0):
         """
@@ -1332,11 +1236,12 @@ class SpaceGroup():
             # Check if the shift given by spglib works
             shiftUC = -refUC.dot(shiftUC_lib)
             try:
-                ind, dt, signs, U = self.match_symmetries(
-                                    refUC,
-                                    shiftUC,
-                                    trans_thresh=trans_thresh
-                                    )
+                # ind, dt, signs, U =
+                self.match_symmetries(
+                    refUC,
+                    shiftUC,
+                    trans_thresh=trans_thresh
+                )
                 return refUC, shiftUC
             except RuntimeError:
                 pass
@@ -1351,11 +1256,12 @@ class SpaceGroup():
                 for r_center in self.vecs_centering():
                     shiftUC = shiftUC_lib + refUC.dot(r_center)
                     try:
-                        ind, dt, signs, _ = self.match_symmetries(
-                                            refUC,
-                                            shiftUC,
-                                            trans_thresh=trans_thresh
-                                            )
+                        # ind, dt, signs, _ = 
+                        self.match_symmetries(
+                            refUC,
+                            shiftUC,
+                            trans_thresh=trans_thresh
+                        )
                         msg = (f'ShiftUC achieved with the centering: {r_center}')
                         log_message(msg, verbosity, 1)
                         return refUC, shiftUC
@@ -1369,11 +1275,12 @@ class SpaceGroup():
                 for r_center in self.vecs_inv_centers():
                     shiftUC = 0.5 * inv.translation + refUC.dot(0.5 * r_center)
                     try:
-                        ind, dt, signs, _ = self.match_symmetries(
-                                            refUC,
-                                            shiftUC,
-                                            trans_thresh=trans_thresh
-                                            )
+                        # ind, dt, signs, _ = 
+                        self.match_symmetries(
+                            refUC,
+                            shiftUC,
+                            trans_thresh=trans_thresh
+                        )
                         msg = ('ShiftUC achieved in 2 steps:\n'
                                '  (1) Place origin of primitive cell on '
                                'inversion center: {}\n'
@@ -1512,13 +1419,25 @@ class SpaceGroup():
                  parameters")
 
         if signs:
-            S1 = [sym.spinor_rotation for sym in symmetries]
-            S2 = [symmetries_tables[i].S for i in ind]
-            signs_array, U = self.__match_spinor_rotations(S1, S2)
+            spin_table = [symmetries_tables[i].S for i in ind]
+            rotations_table = [symmetries_tables[i].R for i in ind]
+            axes, angles, sign_array = self.__match_spinor_rotations(rotations_table, spin_table)
+            for i in ind:
+                symop = symmetries[i]
+                symop.spinor_rotation = self.__get_spin_matrix()
         else:
-            signs_array = np.ones(len(ind), dtype=int)
-            U = None
-        return ind, dt, signs_array, U
+            sign_array = np.ones(len(ind), dtype=int)
+        return ind, dt, sign_array
+
+    def __get_spin_matrix(self, axis_table, angle):
+        Mce = self.Lattice.T
+        Mtc = self.refUC.T
+
+        axis_calc = Mce @ Mtc @ axis_table
+        axis_calc /= np.linalg.norm(axis_calc)
+
+        return su2_formula(axis_calc, angle)
+
 
     def vecs_centering(self):
         """ 
@@ -1711,4 +1630,152 @@ def cart_to_crystal(rot_cart, trans_cart, lattice, alat):
     rot_crystal = np.round(rot_crystal).astype(int)
     trans_crystal = - trans_cart @ lat_inv * alat * BOHR
     return rot_crystal , trans_crystal 
+
+
+def get_axis_and_angle(R, lattice=None):
+
+    def apply_c2_axis_convention(axis):
+        # fix convention
+        if np.abs(axis[0]) < 1e-2:
+            if (np.abs(axis[1]) > 1e-2) and (np.abs(axis[2]) > 1e-2):
+                if axis[1] > 0:
+                    axis = -1 * axis
+        if np.abs(axis[1]) < 1e-2:
+            if (np.abs(axis[0]) > 1e-2) and (np.abs(axis[2]) > 1e-2):
+                if axis[0] < 0:
+                    axis = -1 * axis
+        if np.abs(axis[2]) < 1e-2:
+            if (np.abs(axis[0]) > 1e-2) and (np.abs(axis[1]) > 1e-2):
+                if axis[1] < 0:
+                    axis = -1 * axis
+        
+        return axis
+
+    if lattice is not None:
+        R = lattice.T @ R @ np.linalg.inv(lattice).T
+
+    R2xR3 = np.zeros(3)
+    R2xR3[0] = R[1, 1] * R[2, 2] - R[2, 1] * R[1, 2]
+    R2xR3[1] = R[2, 1] * R[0, 2] - R[0, 1] * R[2, 2]
+    R2xR3[2] = R[0, 1] * R[1, 2] - R[1, 1] * R[0, 2]
+
+    det = np.dot(R[:, 0], R2xR3)
+    mat = R * det
+
+    arg = (np.trace(mat) - 1) * 0.5
+    if arg > 1.0:
+        arg = 1.0
+    if arg < -1.0:
+        arg = -1
+    angle = np.arccos(arg)
+
+    # correct approximate angle with exact value
+    pi = np.pi
+    if np.abs(angle) < 0.001:
+        angle = 0
+    elif np.abs(np.abs(angle) - pi) < 0.001:
+        angle = np.sign(angle) * pi
+    elif np.abs(np.abs(angle) - pi / 2.0) < 0.001:
+        angle = np.sign(angle) * pi / 2.0
+    elif np.abs(np.abs(angle) - 2 * pi / 3.0) < 0.001:
+        angle = np.sign(angle) * 2 * pi / 3.0
+    elif np.abs(np.abs(angle) - pi / 3.0) < 0.001:
+        angle = np.sign(angle) * pi / 3.0
+    elif np.abs(np.abs(angle) - pi / 4.0) < 0.001:
+        angle = np.sign(angle) * pi / 4.0
+    elif np.abs(np.abs(angle) - 3 * pi / 4.0) < 0.001:
+        angle = np.sign(angle) * 3 * pi / 4.0
+    elif np.abs(np.abs(angle) - pi / 6.0) < 0.001:
+        angle = np.sign(angle) * pi / 6.0
+    elif np.abs(np.abs(angle) - 5 * pi / 6.0) < 0.001:
+        angle = np.sign(angle) * 5 * pi / 6.0
+
+    # axis for special case of C2
+    if np.abs(np.abs(angle) - pi) < 1e-3:
+        # find axis
+        for i in range(3):
+            axis = np.zeros(3)
+            axis[i] = 1.0
+            axis = axis + mat @ axis
+
+            if np.max(np.abs(axis) > 0.1):
+                break
+        if np.max(np.abs(axis)) <= 0.1:
+            raise RuntimeError("Cannot find axis")
+        # normalize
+        axis = axis / np.linalg.norm(axis)
+
+        axis = apply_c2_axis_convention(axis)
+    # general case
+    elif np.abs(angle) > 1e-3:
+        axis = np.zeros(3)
+        axis[0] = mat[2, 1] - mat[1, 2]
+        axis[1] = mat[0, 2] - mat[2, 0]
+        axis[2] = mat[1, 0] - mat[0, 1]
+        axis = 0.5 * axis / np.sin(angle)
+
+        axis /= np.linalg.norm(axis)
+
+    elif np.abs(angle) < 1e-4:
+        axis = np.zeros(3)
+        axis[0] = 1.0
+
+    return axis, angle
+
+
+def get_crystal_system(sg_num):
+    if sg_num <= 2:
+        return "triclinic"
+    elif 3 <= sg_num <= 15:
+        return "monoclinic"
+    elif 16 <= sg_num <= 74:
+        return "orthorhombic"
+    elif 75 <= sg_num <= 142:
+        return "tetragonal"
+    elif 143 <= sg_num <= 167:
+        return "trigonal"
+    elif 168 <= sg_num <= 194:
+        return "hexagonal"
+    elif sg_num >= 195:
+        return "cubic"
+
+def get_spin_axes(crystal_system):
+    if crystal_system in ["trigonal", "hexagonal"]:
+        return np.array([
+            [0, -1, 0],
+            [-np.sqrt(3)/2, 0.5, 0],
+            [0, 0, -1]
+        ])
+    else:
+        return np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+
+def su2_formula(axis, angle):
+
+    SU2 = np.zeros((2, 2), dtype=complex)
+    SU2 = SU2 + np.cos(angle / 2) * np.eye(2)
+    SU2 = SU2 - 1.0j * np.sin(angle / 2) * (axis[0] * pauli_sigma[0] + axis[1] * pauli_sigma[1])
+    SU2 = SU2 - 1.0j * np.sin(angle / 2) * axis[2] * pauli_sigma[2]
+
+    return SU2
+
+def get_su2_rotation_in_reference(R, sg_num, return_params=False):
+
+    axis, angle = get_axis_and_angle(R) 
+
+    spin_axes = get_spin_axes(sg_num)
+
+    axis_spin = axis @ spin_axes
+    axis_spin /= np.linalg.norm(axis_spin)
+
+    SU2 = su2_formula(axis_spin, angle)
+
+
+    if return_params:
+        return SU2, axis, angle
+    else:
+        return SU2
 
