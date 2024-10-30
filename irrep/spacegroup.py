@@ -134,7 +134,7 @@ class SymmetryOperation():
         '''
 
         sigma_n = np.einsum('i,ijk->jk', self.axis, pauli_sigma)
-        S = expm(-0.5j*np.pi*self.angle*sigma_n)
+        S = expm(-0.5j*self.angle*sigma_n)
         if self.d:
             S *= -1.0
         return S
@@ -154,8 +154,17 @@ class SymmetryOperation():
         if self.inversion:
             V_cartesian *= -1
 
-        # Transform into DFT cell's basis
-        return np.linalg.inv(self.Lattice.T) @ V_cartesian @ self.Lattice.T
+        # Transform into DFT cell's basis and convert into array of ints
+        V_crystal = np.linalg.inv(self.Lattice.T) @ V_cartesian @ self.Lattice.T
+        V_crystal = np.round(V_crystal, 6)
+        if np.all(np.equal(V_crystal % 1.0, 0)):
+            V_crystal = np.array(V_crystal, dtype=int)
+        else:
+            raise RuntimeError('Matrix of sym #{} in the representation of '
+                               'vectors of the DFT unit cell is not integer:'
+                               '\n{}'.format(self.ind, V_crystal))
+
+        return V_crystal
 
     def get_transl_mod1(self, t):
         """
@@ -763,6 +772,38 @@ class SpaceGroup():
                                                          trans=translations[isym],
                                                          Lattice=self.Lattice,
                                                          d=d))
+
+            # Identify the space group from O(3) matrices of primitive cell
+            spgtype = spglib.get_spacegroup_type_from_symmetry(self.rotations,
+                                                              self.translations,
+                                                              lattice=self.Lattice)
+            # Test
+            for sym in self.symmetries:
+                sym.show()
+            # End test
+
+            if spgtype is None:
+                msg = ('WARNING: Identification of space group from O(3) '
+                       'matrices via spglib failed. Stopping until a '
+                       'robust algorithm is written :S')
+                log_message(msg, v, 1)  # change to 2 when implemented
+                raise RuntimeError()
+
+            print(spgtype)
+            self.number = spgtype.number
+            self.name = spgtype.international
+            hall_number = spgtype.hall_number
+            cell = (self.Lattice, [[0,0,0], [0.5,0.5,0.0],[0.5,0,0],[0,0.5,0]], [1,1,1,1])  # making up a cell
+            dataset = spglib.get_symmetry_dataset(cell, hall_number=hall_number)
+            print(dataset);exit()
+            transformation_matrix = dataset.transformation_matrix
+            origin_shift = dataset.origin_shift
+            print(self.number, self.name)
+            print(transformation_matrix)
+            print(origin_shift)
+            exit()
+
+
 
 
         else:  # vasp, espresso, abinit, w90 and gpaw
