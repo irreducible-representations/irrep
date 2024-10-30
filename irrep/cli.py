@@ -437,6 +437,9 @@ def cli(
         bandstr.spacegroup.write_sym_file(filename=prefix+".sym", alat=alat)
 
     if onlysym:
+        json_data = {}
+        json_data ["spacegroup"] = bandstr.spacegroup.json(symmetries=symmetries)
+        dumpfn(json_data, json_file, indent=4)
         exit()
 
     with open("irreptable-template", "w") as f:
