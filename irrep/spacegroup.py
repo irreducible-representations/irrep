@@ -23,7 +23,6 @@ from math import pi
 # from scipy.linalg import expm
 import spglib
 from irreptables import IrrepTable
-from scipy.optimize import minimize
 from .utility import str_, log_message, BOHR
 # from packaging import version
 import os
@@ -700,9 +699,9 @@ class SpaceGroup():
         self.alat = alat
         self.magmom = magmom
         if from_sym_file is not None or not search_cell:
-            no_match_symmetries = True
+            match_symmetries = False
         else:
-            no_match_symmetries = False
+            match_symmetries = True
 
         # No magnetic moments
         if magmom is None:
@@ -803,9 +802,9 @@ class SpaceGroup():
         # in the CLI and symmetries don't match, raise a warning.
         # Otherwise, if transf. was calculated automatically,
         # matching of symmetries was checked in determine_basis_transf
-        if not no_match_symmetries:
+        if match_symmetries:
             try:
-                ind, _, signs = self.match_symmetries(signs=self.spinor,
+                ind, _, signs = self.match_symmetries(find_spin_matrices=self.spinor,
                                                        trans_thresh=trans_thresh
                                                        )
 
@@ -838,7 +837,7 @@ class SpaceGroup():
             # Do the same with magnetic operations
             if self.magnetic and len(self.au_symmetries) > 0:
                 try:
-                    ind, _, signs = self.match_symmetries(signs=self.spinor,
+                    ind, _, signs = self.match_symmetries(find_spin_matrices=self.spinor,
                                                            trans_thresh=trans_thresh,
                                                            au_symmetries=True
                                                            )
@@ -1302,7 +1301,7 @@ class SpaceGroup():
             self,
             refUC=None,
             shiftUC=None,
-            signs=False,
+            find_spin_matrices=False,
             trans_thresh=1e-5,
             au_symmetries=False
             ):
@@ -1319,7 +1318,7 @@ class SpaceGroup():
         shiftUC : array, default=None
             Translation taking the origin of the unit cell used in the DFT 
             calculation to that of the standard setting.
-        signs : bool, default=False
+        find_spin_matrices : bool, default=False
             If `True`, match also rotations of spinors corresponding to 
             each symmetry.
         trans_thresh : float, default=1e-5
@@ -1418,16 +1417,13 @@ class SpaceGroup():
                  symmetries in the tables. Try to modify the refUC and shiftUC \
                  parameters")
 
-        if signs:
+        if find_spin_matrices:
             spin_table = [symmetries_tables[i].S for i in ind]
             rotations_table = [symmetries_tables[i].R for i in ind]
             axes, angles, sign_array = self.__match_spinor_rotations(rotations_table, spin_table)
-            for i in ind:
-                symop = symmetries[i]
-                symop.spinor_rotation = self.__get_spin_matrix()
-        else:
-            sign_array = np.ones(len(ind), dtype=int)
-        return ind, dt, sign_array
+            for i, symop in enumerate(symmetries):
+                symop.spinor_rotation = self.__get_spin_matrix(axes[i], angles[i])
+                symop.sign = sign_array[i]
 
     def __get_spin_matrix(self, axis_table, angle):
         Mce = self.Lattice.T
