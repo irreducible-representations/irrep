@@ -111,6 +111,7 @@ class SymmetryOperation():
         # self.spinor_rotation = expm(-0.5j * self.angle *
         #                             np.einsum('i,ijk->jk', self.axis, pauli_sigma))
         self.spinor_rotation = None # To be matched with tables
+        self.spin_matrix_refUC = None
         self.sign = 1  # To be matched with tables
 
     def get_transl_mod1(self, t):
@@ -265,7 +266,7 @@ class SymmetryOperation():
         return S
 
 
-    def show(self, refUC=np.eye(3), shiftUC=np.zeros(3), U=np.eye(2)):
+    def show(self, refUC=np.eye(3), shiftUC=np.zeros(3),):
         """
         Print description of symmetry operation.
         
@@ -376,7 +377,7 @@ class SymmetryOperation():
                            for s, row, t in zip(["spinor rot. (refUC) : |",
                                                  " " * 22 + "|",
                                                  ], 
-                                                 self.spinrotation_refUC(U), 
+                                                 self.spin_matrix_refUC, 
                                                  [" |", " |"]
                                                )
                            ]
@@ -804,18 +805,10 @@ class SpaceGroup():
         # matching of symmetries was checked in determine_basis_transf
         if match_symmetries:
             try:
-                ind, _, signs = self.match_symmetries(find_spin_matrices=self.spinor,
-                                                       trans_thresh=trans_thresh
-                                                       )
-
-                # Sort symmetries like in tables
-                args = np.argsort(ind)
-                sorted_symmetries = []
-                for i,i_ind in enumerate(args):
-                    self.symmetries[i_ind].ind = i+1
-                    self.symmetries[i_ind].sign = signs[i_ind]
-                    self.symmetries.append(self.symmetries[i_ind])
-                self.symmetries = sorted_symmetries
+                self.match_symmetries(
+                    find_spin_matrices=self.spinor,
+                    trans_thresh=trans_thresh
+                )
             except RuntimeError:
                 if search_cell:  # symmetries must match to identify irreps
                     raise RuntimeError((
@@ -837,18 +830,11 @@ class SpaceGroup():
             # Do the same with magnetic operations
             if self.magnetic and len(self.au_symmetries) > 0:
                 try:
-                    ind, _, signs = self.match_symmetries(find_spin_matrices=self.spinor,
-                                                           trans_thresh=trans_thresh,
-                                                           au_symmetries=True
-                                                           )
-                    # Sort symmetries like in tables
-                    args = np.argsort(ind)
-                    sorted_au_symmetries = []
-                    for i,i_ind in enumerate(args):
-                        self.au_symmetries[i_ind].ind = i+1
-                        self.au_symmetries[i_ind].sign = signs[i_ind]
-                        sorted_au_symmetries.append(self.au_symmetries[i_ind])
-                    self.au_symmetries = sorted_au_symmetries
+                    self.match_symmetries(
+                        find_spin_matrices=self.spinor,
+                        trans_thresh=trans_thresh,
+                        au_symmetries=True
+                    )
                 except RuntimeError:
                     if search_cell:  # symmetries must match to identify irreps
                         raise RuntimeError((
@@ -969,12 +955,12 @@ class SpaceGroup():
 
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
-                symop.show(refUC=self.refUC, shiftUC=self.shiftUC, U=self.spin_transf)
+                symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
 
         if self.magnetic:
             for symop in self.au_symmetries:
                 if symmetries is None or symop.ind in symmetries:
-                    symop.show(refUC=self.refUC, shiftUC=self.shiftUC, U=self.spin_transf)
+                    symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
 
     def write_sym_file(self, filename, alat=None):
         """
@@ -1052,6 +1038,7 @@ class SpaceGroup():
         spin_own = []
         axes = []
         angles = []
+        spin_matrices_refUC = []
         for R in rotations_table:
             SU2, axis, angle = get_su2_rotation_in_reference(
                 R, self.crystal_system, return_params=True
@@ -1059,6 +1046,7 @@ class SpaceGroup():
             spin_own.append(SU2)
             axes.append(axis)
             angles.append(angle)
+            spin_matrices_refUC.append(SU2)
 
         signs = []
         for so, st in zip(spin_own, spin_table):
@@ -1066,9 +1054,9 @@ class SpaceGroup():
             if not np.isclose(np.imag(sign), 0) or not np.isclose(np.abs(sign), 1):
                 raise RuntimeError("Could not match the spin matrices.")
             
-            signs.append(sign)
+            signs.append(np.real(sign))
 
-        return axes, angles, signs
+        return axes, angles, signs, spin_matrices_refUC
 
     def get_irreps_from_table(self, kpname, K, verbosity=0):
         """
@@ -1420,10 +1408,21 @@ class SpaceGroup():
         if find_spin_matrices:
             spin_table = [symmetries_tables[i].S for i in ind]
             rotations_table = [symmetries_tables[i].R for i in ind]
-            axes, angles, sign_array = self.__match_spinor_rotations(rotations_table, spin_table)
+            axes, angles, sign_array, spin_matrices_refUC = self.__match_spinor_rotations(rotations_table, spin_table)
             for i, symop in enumerate(symmetries):
                 symop.spinor_rotation = self.__get_spin_matrix(axes[i], angles[i])
                 symop.sign = sign_array[i]
+                symop.spin_matrix_refUC = spin_matrices_refUC[i]
+
+        sorting_index = np.argsort(ind)
+        sorted_symmetries = []
+        for i in sorting_index:
+            sorted_symmetries.append(symmetries[i])
+
+        if au_symmetries:
+            self.au_symmetries = sorted_symmetries
+        else:
+            self.symmetries = sorted_symmetries
 
     def __get_spin_matrix(self, axis_table, angle):
         Mce = self.Lattice.T
