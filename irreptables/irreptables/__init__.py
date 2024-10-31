@@ -362,7 +362,6 @@ class IrrepTable:
         while len(lines) > 0:
             l = lines.pop().strip().split("=")
             if l[0].lower() == "sg":
-                print("SGline")
                 assert l[1].strip() == self.number
             elif l[0].lower() == "name":
                 self.name = l[1]
@@ -383,8 +382,8 @@ class IrrepTable:
                         pass
                 break
 
-        self.symmetries = list(filter(lambda x: not x.time_reversal, symmetries))
-        self.au_symmetries = list(filter(lambda x: x.time_reversal, symmetries))
+        self.symmetries = [x for x in symmetries if not x.time_reversal]
+        self.au_symmetries = [x for x in symmetries if x.time_reversal]
 
         msg = "Symmetries are:\n" + "\n".join(s.str() for s in self.symmetries)
         log_message(msg, v, 2)
