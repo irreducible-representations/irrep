@@ -1401,7 +1401,7 @@ class SpaceGroup():
         sorted_symmetries = []
         for i, index in enumerate(sorting_index):
             sym = symmetries[index]
-            sym.index = i + 1
+            sym.ind = i + 1
             sorted_symmetries.append(sym)
 
         if au_symmetries:
