@@ -16,9 +16,7 @@
 
 __version__="1.1.1"
 
-import copy
 import os
-import sys
 import logging
 import numpy as np
 from irrep.utility import str2bool, str2list_space, str_, log_message
@@ -358,13 +356,14 @@ class IrrepTable:
             msg = f"Reading a user-defined irrep table <{name}>"
             log_message(msg, v, 2)
 
+
         log_message("\n---------- DATA FROM THE TABLE ----------\n", v, 2)
         lines = open(name).readlines()[-1::-1]
         while len(lines) > 0:
             l = lines.pop().strip().split("=")
-            # logger.debug(l,l[0].lower())
-            if l[0].lower() == "SG":
-                assert int(l[1]) == self.number
+            if l[0].lower() == "sg":
+                print("SGline")
+                assert l[1].strip() == self.number
             elif l[0].lower() == "name":
                 self.name = l[1]
             elif l[0].lower() == "nsym":

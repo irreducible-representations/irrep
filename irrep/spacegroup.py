@@ -719,7 +719,7 @@ class SpaceGroup():
             #     translations = dataset['translations']
             # else:
             self.name = dataset.international
-            self.number = dataset.number
+            self.number = str(dataset.number)
             refUC_tmp = dataset.transformation_matrix
             shiftUC_tmp = dataset.origin_shift
             rotations = dataset.rotations
@@ -746,7 +746,7 @@ class SpaceGroup():
             with open(root + "/data/msg_numbers.data", 'r') as f:                    
                 self.number, self.name = f.readlines()[uni_number].strip().split(" ") 
             
-            self.crystal_system = get_crystal_system(int(self.number.split(".")[0]))
+            self.crystal_system = get_crystal_system(self.number.split(".")[0])
 
         # Read syms from .sym file (useful for Wannier interface)
         if from_sym_file is not None:
@@ -804,11 +804,18 @@ class SpaceGroup():
         # Otherwise, if transf. was calculated automatically,
         # matching of symmetries was checked in determine_basis_transf
         if match_symmetries:
+            print("Matching symmetries")
             try:
                 self.match_symmetries(
                     find_spin_matrices=self.spinor,
                     trans_thresh=trans_thresh
                 )
+                if self.magnetic and len(self.au_symmetries) > 0:
+                    self.match_symmetries(
+                        find_spin_matrices=self.spinor,
+                        trans_thresh=trans_thresh,
+                        au_symmetries=True
+                    )
             except RuntimeError:
                 if search_cell:  # symmetries must match to identify irreps
                     raise RuntimeError((
@@ -826,32 +833,6 @@ class SpaceGroup():
                            "tables, try not specifying refUC and shiftUC.")
                     log_message(msg, verbosity, 1)
                     pass
-
-            # Do the same with magnetic operations
-            if self.magnetic and len(self.au_symmetries) > 0:
-                try:
-                    self.match_symmetries(
-                        find_spin_matrices=self.spinor,
-                        trans_thresh=trans_thresh,
-                        au_symmetries=True
-                    )
-                except RuntimeError:
-                    if search_cell:  # symmetries must match to identify irreps
-                        raise RuntimeError((
-                            "refUC and shiftUC don't transform the cell to one where "
-                            "symmetries are identical to those read from tables. "
-                            "Try without specifying refUC and shiftUC."
-                            ))
-                    elif refUC is not None or shiftUC is not None:
-                        # User specified refUC or shiftUC in CLI. He/She may
-                        # want the traces in a cell that is not neither the
-                        # one in tables nor the DFT one
-                        msg = ("WARNING: refUC and shiftUC don't transform the cell to "
-                               "one where symmetries are identical to those read from "
-                               "tables. If you want to achieve the same cell as in "
-                               "tables, try not specifying refUC and shiftUC.")
-                        log_message(msg, verbosity, 1)
-                        pass
 
     @property
     def size(self):
@@ -1054,7 +1035,9 @@ class SpaceGroup():
             if not np.isclose(np.imag(sign), 0) or not np.isclose(np.abs(sign), 1):
                 raise RuntimeError("Could not match the spin matrices.")
             
-            signs.append(np.real(sign))
+            signs.append(sign)
+
+        signs = np.round(np.real(signs),1)
 
         return axes, angles, signs, spin_matrices_refUC
 
@@ -1426,7 +1409,7 @@ class SpaceGroup():
 
     def __get_spin_matrix(self, axis_table, angle):
         Mce = self.Lattice.T
-        Mtc = self.refUC.T
+        Mtc = self.refUC
 
         axis_calc = Mce @ Mtc @ axis_table
         axis_calc /= np.linalg.norm(axis_calc)
@@ -1719,6 +1702,7 @@ def get_axis_and_angle(R, lattice=None):
 
 
 def get_crystal_system(sg_num):
+    sg_num = int(sg_num)
     if sg_num <= 2:
         return "triclinic"
     elif 3 <= sg_num <= 15:
