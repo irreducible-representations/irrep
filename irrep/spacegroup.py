@@ -1399,8 +1399,10 @@ class SpaceGroup():
 
         sorting_index = np.argsort(ind)
         sorted_symmetries = []
-        for i in sorting_index:
-            sorted_symmetries.append(symmetries[i])
+        for i, index in enumerate(sorting_index):
+            sym = symmetries[index]
+            sym.index = i + 1
+            sorted_symmetries.append(sym)
 
         if au_symmetries:
             self.au_symmetries = sorted_symmetries
