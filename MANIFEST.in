@@ -1,3 +1,4 @@
 prune examples
 prune irreptables
-include irrep/data/msg_numbers.data
+include irrep/data/*
+include irrep/data/symmetry_indicaators/*
