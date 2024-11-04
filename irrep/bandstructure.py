@@ -1094,8 +1094,8 @@ class BandStructure:
         # load symmetry indicators file
         root = os.path.dirname(__file__)
         filename = (
-            f"{"double" if self.spinor else "single"}_indicators"
-            f"{"_magnetic" if self.magnetic else ""}.json"
+            f"{'double' if self.spinor else 'single'}_indicators"
+            f"{'_magnetic' if self.magnetic else ''}.json"
             )
         si_table = json.load(open(root + "/data/symmetry_indicators/" + filename, 'r'))
 
