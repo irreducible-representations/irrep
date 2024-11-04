@@ -311,6 +311,12 @@ do not hesitate to contact the author:
                 help="Compute symmetry indicators if they are non-trivial. "
                     "Irreps must be identified in the process."
 )
+@click.option("--ebr-decomposition",
+                flag_value=True,
+                default=False,
+                help="Compute the EBR decomposition and topological classification "
+                    "according to TQC. Irresp must be identified in the process."
+)
 def cli(
     ecut,
     fwav,
@@ -347,7 +353,8 @@ def cli(
     v,
     json_file,
     print_hs_kpoints,
-    symmetry_indicators
+    symmetry_indicators,
+    ebr_decomposition
 ):
     """
     Defines the "irrep" command-line tool interface.
@@ -459,6 +466,9 @@ def cli(
 
     # Temporary, until we make it valid for isymsep
     bandstr.write_characters()
+
+    if ebr_decomposition:
+        bandstr.print(ebr_decomposition)
 
     if symmetry_indicators:
         bandstr.print_symmetry_indicators()
