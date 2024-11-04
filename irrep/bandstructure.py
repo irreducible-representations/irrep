@@ -1133,13 +1133,20 @@ class BandStructure:
                 print(f"\tDefinition: ({definition_str}) mod {si_table[indicator]['mod']}")
 
     def print_ebr_decomposition(self):
-        import ebrs
+        from .ebrs import (
+            compose_irrep_string,
+            compute_topological_classification_vector,
+            ORTOOLS_AVAILABLE,
+            compute_ebr_decomposition,
+            get_ebr_names_and_positions,
+            compose_ebr_string
+        )
         from .utility import vector_pprint
 
         def print_symmetry_info():
             basis_labels = ebr_data["basis"]["irrep_labels"]
             print(
-            f"Irrep decomposition at high-symmetry points:\n\n{ebrs.compose_irrep_string(irrep_counts)}"
+            f"Irrep decomposition at high-symmetry points:\n\n{compose_irrep_string(irrep_counts)}"
             f"\n\nIrrep basis:\n{vector_pprint(basis_labels, fmt='s')}"
             f"\n\nSymmetry vector:\n{vector_pprint(symmetry_vector, fmt='d')}"
             f"\n\nSmith singular values:\n{vector_pprint(smith_diagonal, fmt='d')}"
@@ -1168,19 +1175,19 @@ class BandStructure:
             _,
             smith_diagonal,
             nontrivial
-        ) = ebrs.compute_topological_classification_vector(irrep_counts, ebr_data)
+        ) = compute_topological_classification_vector(irrep_counts, ebr_data)
 
         if nontrivial:
             print("The set of bands is classified as TOPOLOGICAL\n")
             print_symmetry_info() 
-        elif not ebrs.ORTOOLS_AVAILABLE:
+        elif not ORTOOLS_AVAILABLE:
             print(
                 "There exists integer-valued solutions to the EBR decomposition "
                 "problem. Install OR-Tools to compute them."
                 )
             print_symmetry_info()
         else:
-            solutions, is_positive = ebrs.compute_ebr_decomposition(ebr_data, symmetry_vector)
+            solutions, is_positive = compute_ebr_decomposition(ebr_data, symmetry_vector)
 
             if is_positive:
                 print("The set of bands is toplogically TRIVIAL")
@@ -1197,9 +1204,10 @@ class BandStructure:
                     "of EBRs that reproduce the bands. Some possibilities are:"
                     )
 
-            ebr_list = ebrs.get_ebr_names_and_positions(ebr_data)
-            for sol in solutions:
-                print(ebrs.compose_ebr_string(sol, ebr_list))
+            ebr_list = get_ebr_names_and_positions(ebr_data)
+            for i, sol in enumerate(solutions):
+                print("Solution", i + 1, "\n")
+                print(compose_ebr_string(sol, ebr_list), "\n")
 
         
 def check_multiplicity(multi):

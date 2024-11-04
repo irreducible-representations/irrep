@@ -468,7 +468,7 @@ def cli(
     bandstr.write_characters()
 
     if ebr_decomposition:
-        bandstr.print(ebr_decomposition)
+        bandstr.print_ebr_decomposition()
 
     if symmetry_indicators:
         bandstr.print_symmetry_indicators()

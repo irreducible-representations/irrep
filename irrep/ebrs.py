@@ -1,8 +1,6 @@
 """Module to compute EBR decompositions.
 """
 import numpy as np
-from irreptables import load_ebr_data
-from .utility import vector_pprint
 
 # Actual EBR decomposition requires OR-Tool's SAT problem solver.
 try:
@@ -210,8 +208,9 @@ def compose_ebr_string(vec, ebrs):
         string representing the EBR decomposition in readable form
     """
     s = ""
-    for ebr, multip in zip(ebrs, vec):
-        label, wp = ebr
-        s += f"{multip} [ {label} @ {wp} ] + "
+    for ebr, multi in zip(ebrs, vec):
+        if multi != 0:
+            label, wp = ebr
+            s += f"{multi} x [ {label} @ {wp} ] + "
 
     return s[:-2]
