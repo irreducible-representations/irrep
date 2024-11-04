@@ -1203,7 +1203,7 @@ class BandStructure:
                 print("The set of bands is toplogically TRIVIAL")
                 print_symmetry_info()
                 print(
-                    "The following are positive, integer-valued linear combinations "
+                    "\nThe following are positive, integer-valued linear combinations "
                     "of EBRs that reproduce the set of bands:"
                     )
             # positive solutions not found -> fragile
