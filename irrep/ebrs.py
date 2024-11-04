@@ -72,6 +72,21 @@ def get_ebr_names_and_positions(ebr_data):
 
 
 def create_symmetry_vector(irrep_counts, basis_labels):
+    """Computes the symmetry vector given an ordered list of basis irrep labels
+    and the irrep counts.
+
+    Parameters
+    ----------
+    irrep_counts : dict
+        irrep multiplicities
+    basis_labels : list
+        basis irrep labels
+
+    Returns
+    -------
+    np.ndarray
+        symmetry vector
+    """
     basis_index = {name : i for i, name in enumerate(basis_labels)}
 
     vec = np.zeros(len(basis_index), dtype=int)
@@ -85,6 +100,21 @@ def create_symmetry_vector(irrep_counts, basis_labels):
 
 
 def compute_topological_classification_vector(irrep_counts, ebr_data):
+    """Computes relevant quantities in the problem of identifying topology from
+    the Smith decomposition of the EBR matrix
+
+    Parameters
+    ----------
+    irrep_counts : dict
+        irrep multiplicities
+    ebr_data : dict
+        EBR data loaded from files
+
+    Returns
+    -------
+    np.ndarray, np.ndarray, np.ndarray, bool
+        symmetry_vector, transformed symmetry vector, Smith divisors, non-triviality of bands
+    """
     symmetry_vector = create_symmetry_vector(irrep_counts, ebr_data["basis"]["irrep_labels"])
 
     u, r, _ = get_smith_form(ebr_data)
@@ -92,6 +122,7 @@ def compute_topological_classification_vector(irrep_counts, ebr_data):
     d_pos = d[d > 0]
 
     vec_prime = u @ symmetry_vector
+    # check if the entries of vec_prime divide the elementary divisors
     nontrivial = ((vec_prime[:len(d_pos)] % d_pos != 0)).any()
 
     return symmetry_vector, vec_prime, d, nontrivial
@@ -183,13 +214,10 @@ def compose_irrep_string(irrep_counts):
     str
         string with direct sum of irreps with multiplicities.
     """
-    s = ""
-    for i, (name, multip) in enumerate(irrep_counts.items()):
-        s += f"{multip} {name} + "
-        # carriage return when the line is too long
-        if(i + 1) % 7 == 0:
-            s += "\n"
-    return s[:-2]
+    terms = [f"{multi} x {name}" for name, multi in irrep_counts.items() if multi != 0]
+    s = " + ".join(terms)
+
+    return s
 
 def compose_ebr_string(vec, ebrs):
     """
@@ -207,10 +235,11 @@ def compose_ebr_string(vec, ebrs):
     str
         string representing the EBR decomposition in readable form
     """
-    s = ""
-    for ebr, multi in zip(ebrs, vec):
-        if multi != 0:
-            label, wp = ebr
-            s += f"{multi} x [ {label} @ {wp} ] + "
 
-    return s[:-2]
+    terms = [
+        f"{multi} z [ {label} @ {wp} ]" for (label, wp), multi in zip(ebrs, vec)
+        if multi != 0
+    ]
+    s = " + ".join(terms)
+
+    return s

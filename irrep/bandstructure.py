@@ -1133,6 +1133,11 @@ class BandStructure:
                 print(f"\tDefinition: ({definition_str}) mod {si_table[indicator]['mod']}")
 
     def print_ebr_decomposition(self):
+        """
+        Computes and prints the EBR decomposition information. If the bands are
+        trivial or fragile-topological, it tries to find EBR decompositions using
+        ORtools if installed.
+        """
         from .ebrs import (
             compose_irrep_string,
             compute_topological_classification_vector,
@@ -1177,18 +1182,23 @@ class BandStructure:
             nontrivial
         ) = compute_topological_classification_vector(irrep_counts, ebr_data)
 
+        # if stable non-trivial topology
         if nontrivial:
             print("The set of bands is classified as TOPOLOGICAL\n")
             print_symmetry_info() 
+        # its fragile or trivial, but cannot compute the EBRs
         elif not ORTOOLS_AVAILABLE:
             print(
                 "There exists integer-valued solutions to the EBR decomposition "
-                "problem. Install OR-Tools to compute them."
+                "problem, so the set of bands is TRIVIAL or displays FRAGILE TOPOLOGY. "
+                "Install OR-Tools to compute decompositions."
                 )
             print_symmetry_info()
+        # is fragile or trivial and EBRs can be computed
         else:
             solutions, is_positive = compute_ebr_decomposition(ebr_data, symmetry_vector)
 
+            # positive solutions found -> trivial
             if is_positive:
                 print("The set of bands is toplogically TRIVIAL")
                 print_symmetry_info()
@@ -1196,6 +1206,7 @@ class BandStructure:
                     "The following are positive, integer-valued linear combinations "
                     "of EBRs that reproduce the set of bands:"
                     )
+            # positive solutions not found -> fragile
             else:
                 print("The set of bands displays FRAGILE TOPOLOGY.")
                 print_symmetry_info()
@@ -1204,6 +1215,7 @@ class BandStructure:
                     "of EBRs that reproduce the bands. Some possibilities are:"
                     )
 
+            # print EBR decomposition
             ebr_list = get_ebr_names_and_positions(ebr_data)
             for i, sol in enumerate(solutions):
                 print("Solution", i + 1, "\n")
