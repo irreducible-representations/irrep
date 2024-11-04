@@ -1043,17 +1043,34 @@ class BandStructure:
         #             d_band_block_indices)
 
     def print_symmetry_indicators(self):
+        """Computes and prints the symmetry-indicator information.
+        """
 
         def check_multiplicity(multi):
+            """Checks if an irrep multiplicity is correct.
+
+            Parameters
+            ----------
+            multi : float
+                irrep multiplicity
+
+            Returns
+            -------
+            bool
+                True if correct, else False
+            """
             
+            # is real
             if not np.isclose(np.imag(multi), 0):
                 return False
+            # is integer
             if not np.isclose(multi, np.round(multi), rtol=0, atol=1e-3):
                 return False
         
             return True
 
         print("\n---------- SYMMETRY INDICATORS ----------\n")
+        # identify_irreps must be used beforehand
         try:
             irrep_data = [kpoint.irreps for kpoint in self.kpoints]
         except AttributeError:
@@ -1062,16 +1079,19 @@ class BandStructure:
                 "because irreps must be identified."
             )
 
+        # dictionary label : multiplicity
         irrep_dict = {}
         for point in irrep_data:
             for irrep in point:
                 for label, multi in irrep.items():
+                    # only add valid multiplicities (filter out uncoverged bands)
                     valid_multi = check_multiplicity(multi)
                     if valid_multi:
                         multi = np.real(multi).round(0)
                         irrep_dict.setdefault(label, 0)
-                        irrep_dict[label] += 1
+                        irrep_dict[label] += multi
         
+        # load symmetry indicators file
         root = os.path.dirname(__file__)
         filename = (
             f"{"double" if self.spinor else "single"}_indicators"
@@ -1079,6 +1099,19 @@ class BandStructure:
             )
         si_table = json.load(open(root + "/data/symmetry_indicators/" + filename, 'r'))
 
+        # if SG not in table, all SIs are trivial
+        # {
+        #     sg: {
+        #         "indicators": {
+        #             indicator : {
+        #                 "factors" : {
+        #                     irrep : factor
+        #                 },
+        #                 "mod": value
+        #             }
+        #         }
+        #     }
+        # }
         if self.spacegroup.number not in si_table:
             print("There are no non-trivial symmetry indicators for this space group.")
 
@@ -1087,12 +1120,14 @@ class BandStructure:
 
             for indicator in si_table:
                 si_factors = si_table[indicator]["factors"]
+                # terms for definition string
                 terms = [
                     f"{factor} x {label}" for label, factor in 
                     si_factors.items() if factor != 0
                 ]
                 definition_str = " + ".join(terms)
                 
+                # count irrep multiplicities by formula factors
                 total = 0
                 for label, value in si_factors.items():
                     total += value * irrep_dict.get(label, 0)
