@@ -18,6 +18,8 @@
 
 import copy
 import functools
+import os
+import json
 
 import numpy as np
 import numpy.linalg as la
@@ -1039,3 +1041,64 @@ class BandStructure:
         #             kpt2kptirr, 
         #             d_band_blocks, 
         #             d_band_block_indices)
+
+    def print_symmetry_indicators(self):
+
+        def check_multiplicity(multi):
+            
+            if not np.isclose(np.imag(multi), 0):
+                return False
+            if not np.isclose(multi, np.round(multi), rtol=0, atol=1e-3):
+                return False
+        
+            return True
+
+        try:
+            irrep_data = [kpoint.irreps for kpoint in self.kpoints]
+        except AttributeError:
+            print(
+                "Could not compute the symmetry indicators "
+                "because irreps must be identified."
+            )
+
+        irrep_dict = {}
+        for point in irrep_data:
+            for irrep in point:
+                for label, multi in irrep.items():
+                    valid_multi = check_multiplicity(multi)
+                    if valid_multi:
+                        multi = np.real(multi).round(0)
+                        irrep_dict.setdefault(label, 0)
+                        irrep_dict[label] += 1
+        
+        root = os.path.dirname(__file__)
+        filename = (
+            f"{"double" if self.spinor else "single"}_indicators_"
+            f"{"magnetic" if self.magnetic else ""}.json"
+            )
+        si_table = json.load(open(root + "/data/symmetry_indicators/" + filename, 'r'))
+
+        if self.spacegroup.number not in si_table:
+            print("There are no non-trivial symmetry indicators for this space group.")
+
+        else:
+            si_table = si_table[self.spacegroup.number]["indicators"]
+
+            for indicator in si_table:
+                si_factors = si_table[indicator]["factors"]
+                terms = [
+                    f"{factor} x {label}" for label, factor in 
+                    si_factors.items() if factor != 0
+                ]
+                definition_str = " + ".join(terms)
+                print(f"{indicator} : ({definition_str}) mod {si_table[indicator]["mod"]}")
+                
+                total = 0
+                for label, value in si_factors.items():
+                    total += value * irrep_dict.get(label, 0)
+
+                print("\tValue:", total % si_table[indicator]["mod"])
+        
+
+        
+
