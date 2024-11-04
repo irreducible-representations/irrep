@@ -1133,7 +1133,7 @@ class BandStructure:
                     total += value * irrep_dict.get(label, 0)
 
                 print(f"{indicator} =", total % si_table[indicator]["mod"])
-                print(f"\tDefinition: ({definition_str}) mod {si_table[indicator]["mod"]}")
+                print(f"\tDefinition: ({definition_str}) mod {si_table[indicator]['mod']}")
         
 
         
