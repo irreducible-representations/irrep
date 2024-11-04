@@ -363,8 +363,8 @@ class IrrepTable:
         while len(lines) > 0:
             l = lines.pop().strip().split("=")
             # logger.debug(l,l[0].lower())
-            if l[0].lower() == "SG":
-                assert int(l[1]) == self.number
+            if l[0].lower() == "sg":
+                assert l[1].strip() == self.number
             elif l[0].lower() == "name":
                 self.name = l[1]
             elif l[0].lower() == "nsym":

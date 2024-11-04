@@ -750,7 +750,7 @@ class SpaceGroup():
                 translations = dataset['translations']
             else:
                 self.name = dataset.international
-                self.number = dataset.number
+                self.number = str(dataset.number)
                 refUC_tmp = dataset.transformation_matrix
                 shiftUC_tmp = dataset.origin_shift
                 rotations = dataset.rotations

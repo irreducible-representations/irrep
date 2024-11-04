@@ -1053,6 +1053,7 @@ class BandStructure:
         
             return True
 
+        print("\n---------- SYMMETRY INDICATORS ----------\n")
         try:
             irrep_data = [kpoint.irreps for kpoint in self.kpoints]
         except AttributeError:
@@ -1073,8 +1074,8 @@ class BandStructure:
         
         root = os.path.dirname(__file__)
         filename = (
-            f"{"double" if self.spinor else "single"}_indicators_"
-            f"{"magnetic" if self.magnetic else ""}.json"
+            f"{"double" if self.spinor else "single"}_indicators"
+            f"{"_magnetic" if self.magnetic else ""}.json"
             )
         si_table = json.load(open(root + "/data/symmetry_indicators/" + filename, 'r'))
 
@@ -1091,13 +1092,13 @@ class BandStructure:
                     si_factors.items() if factor != 0
                 ]
                 definition_str = " + ".join(terms)
-                print(f"{indicator} : ({definition_str}) mod {si_table[indicator]["mod"]}")
                 
                 total = 0
                 for label, value in si_factors.items():
                     total += value * irrep_dict.get(label, 0)
 
-                print("\tValue:", total % si_table[indicator]["mod"])
+                print(f"{indicator} =", total % si_table[indicator]["mod"])
+                print(f"\tDefinition: ({definition_str}) mod {si_table[indicator]["mod"]}")
         
 
         
