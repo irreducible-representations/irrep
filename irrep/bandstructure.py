@@ -1042,10 +1042,7 @@ class BandStructure:
         #             d_band_blocks, 
         #             d_band_block_indices)
 
-    def print_symmetry_indicators(self):
-        """Computes and prints the symmetry-indicator information.
-        """
-
+    def get_irrep_counts(self):
         def check_multiplicity(multi):
             """Checks if an irrep multiplicity is correct.
 
@@ -1068,15 +1065,11 @@ class BandStructure:
                 return False
         
             return True
-
-        print("\n---------- SYMMETRY INDICATORS ----------\n")
-        # identify_irreps must be used beforehand
         try:
             irrep_data = [kpoint.irreps for kpoint in self.kpoints]
         except AttributeError:
-            print(
-                "Could not compute the symmetry indicators "
-                "because irreps must be identified."
+            raise RuntimeError(
+                "Could not get the irrep counts because irreps must be identified."
             )
 
         # dictionary label : multiplicity
@@ -1090,6 +1083,23 @@ class BandStructure:
                         multi = np.real(multi).round(0)
                         irrep_dict.setdefault(label, 0)
                         irrep_dict[label] += multi
+
+        return irrep_dict
+
+    def print_symmetry_indicators(self):
+        """Computes and prints the symmetry-indicator information.
+        """
+
+
+        print("\n---------- SYMMETRY INDICATORS ----------\n")
+        # identify_irreps must be used beforehand
+        try:
+            irrep_dict = self.get_irrep_counts()
+        except RuntimeError:
+            print(
+                "Could not compute the symmetry indicators "
+                "because irreps must be identified."
+            )
         
         # load symmetry indicators file
         root = os.path.dirname(__file__)
