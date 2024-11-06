@@ -30,6 +30,42 @@ from packaging import version
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
 
+# Table with number of symmetries of each type in each crystal class
+# taken from Tab. VI in arXiv:1808.01590v2
+table_crystal_class = {'1': [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+                       '-1': [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+                       '2': [0, 0, 0, 0, 0, 1, 1, 0, 0, 0],
+                       'm': [0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
+                       '2/m': [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+                       '222': [0, 0, 0, 0, 0, 1, 3, 0, 0, 0],
+                       'mm2': [0, 0, 0, 2, 0, 1, 1, 0, 0, 0],
+                       'mmm': [0, 0, 0, 3, 1, 1, 3, 0, 0, 0],
+                       '4': [0, 0, 0, 0, 0, 1, 1, 0, 2, 0],
+                       '-4': [0, 2, 0, 0, 0, 1, 1, 0, 0, 0],
+                       '4/m': [0, 2, 0, 1, 1, 1, 1, 0, 2, 0],
+                       '422': [0, 0, 0, 0, 0, 1, 5, 0, 2, 0],
+                       '4mm': [0, 0, 0, 4, 0, 1, 1, 0, 2, 0],
+                       '-42m': [0, 2, 0, 2, 0, 1, 3, 0, 0, 0],
+                       '4/mmm': [0, 2, 0, 5, 1, 1, 5, 0, 2, 0],
+                       '3': [0, 0, 0, 0, 0, 1, 0, 2, 0, 0],
+                       '-3': [0, 0, 2, 0, 1, 1, 0, 2, 0, 0],
+                       '32': [0, 0, 0, 0, 0, 1, 3, 2, 0, 0],
+                       '3m': [0, 0, 0, 3, 0, 1, 0, 2, 0, 0],
+                       '-3m': [0, 0, 2, 3, 1, 1, 3, 2, 0, 0],
+                       '6': [0, 0, 0, 0, 0, 1, 1, 2, 0, 2],
+                       '-6': [2, 0, 0, 1, 0, 1, 0, 2, 0, 0],
+                       '6/m': [2, 0, 2, 1, 1, 1, 1, 2, 0, 2],
+                       '622': [0, 0, 0, 0, 0, 1, 7, 2, 0, 2],
+                       '6mm': [0, 0, 0, 6, 0, 1, 1, 2, 0, 2],
+                       '-62m': [2, 0, 0, 4, 0, 1, 3, 2, 0, 0],
+                       '6/mmm': [2, 0, 2, 7, 1, 1, 7, 2, 0, 2],
+                       '23': [0, 0, 0, 0, 0, 1, 3, 8, 0, 0],
+                       'm-3': [0, 0, 8, 3, 1, 1, 3, 8, 0, 0],
+                       '432': [0, 0, 0, 0, 0, 1, 9, 8, 6, 0],
+                       '-43m': [0, 6, 0, 6, 0, 1, 3, 8, 0, 0],
+                       'm-3m': [0, 6, 8, 9, 1, 1, 9, 8, 6, 0]
+                       }
+
 
 class SymmetryOperation():
     """
@@ -128,7 +164,52 @@ class SymmetryOperation():
             # Construct vector repr matrix in basis of DFT cell vectors
             self.rotation = self.matrix_vecrep()
 
+        # Identify the type and save it as str into an attribute
+        tr = np.trace(self.rotation)
+        det = np.linalg.det(self.rotation)
+
+        if abs(tr-round(tr)) > 1e-4:
+            raise RuntimeError('The trace of a symmetry in the primitive basis '
+                               'must be an int. For the symmetry # {} it is {}'
+                               .format(self.ind, tr))
+        elif abs(det-round(det)) > 1e-4:
+            raise RuntimeError('The det of a symmetry in the primitive basis '
+                               'must be an int. For the symmetry # {} it is {}'
+                               .format(self.ind, det))
+
+        tr = round(tr)
+        det = round(det)
+
+        self.type = None
+        if tr == -3:
+            self.type = '-1'
+        if tr == -2:
+            self.type = '-6'
+        elif tr == -1:
+            if det == -1:
+                self.type = '-4'
+            elif det == 1:
+                self.type = '2'
+        elif tr == 0:
+            if det == -1:
+                self.type = '-3'
+            elif det == 1:
+                self.type = '3'
+        elif tr == 1:
+            if det == -1:
+                self.type = -2
+            elif det == 1:
+                self.type == '4'
+        elif tr == 2:
+            self.type = '6'
+        elif tr == 3:
+            self.type = '1'
+        if self.type is None:
+            raise RuntimeError("Type of symmetry # {} is unknown. \nTrace={}"
+                               "\nDet={}".format(self.ind, tr, det))
+
         self.angle_str = self.get_angle_str()
+
 
     def matrix_spinrep(self):
         '''
@@ -799,11 +880,16 @@ class SpaceGroup():
                                                          Lattice=self.Lattice,
                                                          d=d))
 
-            # Identify the space group from O(3) matrices of primitive cell
-            spgtype = spglib.get_spacegroup_type_from_symmetry(self.rotations,
-                                                              self.translations,
-                                                              lattice=self.Lattice)
+            
+
+
+
+
             # Test
+            # Identify the space group from O(3) matrices of primitive cell
+            #spgtype = spglib.get_spacegroup_type_from_symmetry(self.rotations,
+            #                                                  self.translations,
+            #                                                  lattice=self.Lattice)
             #for sym in self.symmetries:
             #    sym.show()
 
@@ -1122,6 +1208,35 @@ class SpaceGroup():
         Get an array of translational parts of coset representatives
         '''
         return np.array([sym.translation for sym in self.symmetries if not sym.d])
+
+    @property_cached
+    def crystal_class(self):
+        '''
+        Identify the so-called point group of the space group.
+
+        Notes
+        -----
+        Make sure that the attribute of every instance of SymmetryOperation in 
+        SpaceGroup's attribute symmetry is set to the O(3) matrix in the 
+        primitive cell setting
+        '''
+
+        # Count number of symmetries of each type
+        types = [sym.type for sym in self.symmetries if not sym.d]
+        count_types = []
+        for type in ['-6', '-4', '-3', '-2', '-1', '1' , '2', '3', '4', '6']:
+            count_types.append(len(list(filter(lambda item: item==type, types))))
+
+        # Match counting of symmetry types with table for crystal classes
+        crystal_class = None
+        for key, value in table_crystal_class:
+            if value == count_types:
+                crystal_class = key
+                break
+        if crystal_class is None:
+            raise RuntimeError('Counting of types of symmetries does not match '
+                               'with any crystal class')
+        return crystal_class
 
     def json(self, symmetries=None):
         '''
