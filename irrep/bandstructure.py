@@ -26,8 +26,8 @@ from .readfiles import (ParserAbinit, ParserVasp, ParserEspresso, ParserW90,
                         ParserGPAW, ParserFPLO)
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
-from .gvectors import sortIG, calc_gvectors
-from .utility import get_block_indices, log_message
+from .gvectors import sortIG, calc_gvectors, symm_matrix
+from .utility import get_block_indices, grid_from_kpoints, log_message, UniqueListMod1
 
 
 class BandStructure:
@@ -103,7 +103,12 @@ class BandStructure:
         1: print info about decisions taken internally by the code, recommended 
         when the code runs without errors but the result is not the expected.
         2: print detailed info, recommended when the code stops with an error
-
+    magmom : array(num_atoms, 3)
+        Magnetic moments of atoms in the unit cell. 
+    include_TR : bool
+        If `True`, the symmetries involving time-reversal will be included in the spacegroup.
+        if magmom is None and include_TR is True, the magnetic moments will be set to zero (non-magnetic calculation with TR)
+    
     Attributes
     ----------
     spacegroup : class
@@ -176,7 +181,12 @@ class BandStructure:
         alat=None,
         from_sym_file=None,
         normalize=True,
+        magmom=None,
+        include_TR=False,
     ):
+        
+        # if include_TR:
+        #     raise NotImplementedError("include_TR is not implemented yet")
 
         code = code.lower()
         if spin_channel is not None:
@@ -293,6 +303,7 @@ class BandStructure:
             else:
                 raise RuntimeError("Unknown/unsupported code :{}".format(code))
 
+                
             self.spacegroup = SpaceGroup(
                                   Lattice=self.Lattice,
                                   positions=positions,
@@ -304,7 +315,11 @@ class BandStructure:
                                   trans_thresh=trans_thresh,
                                   verbosity=verbosity,
                                   alat=alat,
-                                  from_sym_file=from_sym_file)
+                                  from_sym_file=from_sym_file,
+                                  magmom = magmom,
+                                  include_TR=include_TR
+                                  )
+
         if onlysym:
             return
 
@@ -921,3 +936,141 @@ class BandStructure:
         k[k > breakTHRESH] = 0.0
         K[1:] = np.cumsum(k)
         return K
+
+
+    def get_dmn(self, grid=None, degen_thresh=1e-2, unitary=True, unitary_params={}):
+        """
+        grid : tuple(int), optional
+            the grid of kpoints (3 integers), if None, the grid is determined from the kpoints
+            may be used to reduce the grid (by an integer factor) for the symmetry analysis
+        degen_thresh : float, optional
+            the threshold for the degeneracy of the bands. Only transformations between bands
+             with energy difference smaller than this value are considered
+        unitary : bool, optional
+            if True, the transformation matrices are made unitary explicitly
+        unitary_params : dict, optional
+            parameters to be passed to :func:`~irrep.utility.orthogonalize`
+
+        Returns
+        -------
+        dict with the following keys:
+            grid : tuple(int)
+                the grid of kpoints (3 integers - number of kpoints in each direction)
+            kpoints : np.array((NK,3))
+                the list of kpoints
+            kptirr : list of int
+                kptirr[i] is the index of the i-th irreducible kpoint in the list of kpoints
+            kptirr2kpt : array of int
+                kptirr2kpt[i,isym]=j means that the i-th irreducible kpoint
+            kpt2kptirr : array of int
+                kpt2kptirr[j]=i means that the j-th kpoint is the i-th irreducible kpoint
+            d_band_blocks : list of list of list of array
+                d_band_blocks[i][isym] is a list of transformation matrices 
+                between (almost degenerate) bands at the i-th irreducible kpoint
+                under the isym-th symmetry operation
+            d_band_block_indices : list of list of int
+                d_band_block_indices[i] is a list of indices of the bands that are almost degenerate
+                at the i-th irreducible kpoint        
+        """
+
+        kpoints = np.array([KP.K  for KP in self.kpoints])
+        grid, selected_kpoints = grid_from_kpoints(kpoints, grid=grid)
+        kpoints = kpoints[selected_kpoints]
+        Nsym = self.spacegroup.size
+
+        def get_K(ik):
+            return self.kpoints[selected_kpoints[ik]]
+
+        # First determine which kpoints are irreducible
+        # and set mapping from irreducible to full grid and back
+        #
+        # kptirr2kpt[i,isym]=j means that the i-th irreducible kpoint
+        # is transformed to the j-th kpoint of full grid
+        #  by the isym-th symmetry operation.
+        #
+        # This is consistent with w90 documentations, but seemd to be opposite to what pw2wannier90 does
+
+        kpoints_mod1 = UniqueListMod1(kpoints)
+        assert len(kpoints_mod1) == len(kpoints)
+        NK = len(kpoints_mod1)
+        is_irreducible = np.ones(NK, dtype=bool)
+        kptirr = []
+        kptirr2kpt = []
+        kpt2kptirr = -np.ones(NK, dtype=int)
+        G = []
+        ikirr = -1
+        for i, k1 in enumerate(kpoints):
+            if is_irreducible[i]:
+                kptirr.append(i)
+                kptirr2kpt.append(np.zeros(Nsym, dtype=int))
+                G.append(np.zeros((Nsym, 3), dtype=int))
+                ikirr += 1
+
+                for isym, symop in enumerate(self.spacegroup.symmetries):
+                    k1p = symop.transform_k(k1)
+                    if k1p not in kpoints_mod1:
+                        raise RuntimeError("Symmetry operation maps k-point outside the grid. Maybe the grid is incompatible with the symmetry operations")
+                    j = kpoints_mod1.index(k1p)
+                    k2 = kpoints[j]
+                    if j != i:
+                        is_irreducible[j] = False
+                    kptirr2kpt[ikirr][isym] = j
+                    # the G vectors mean that
+                    # symop.transform(ki) = kj + G
+                    G[ikirr][isym] = k1p - k2
+                    if kpt2kptirr[j] == -1:
+                        kpt2kptirr[j] = ikirr
+                    else:
+                        assert kpt2kptirr[j] == ikirr, (f"two different irreducible kpoints {ikirr} and {kpt2kptirr[j]} are mapped to the same kpoint {j}"
+                                                             f"kptirr= {kptirr}, \nkpt2kptirr= {kpt2kptirr}\n kptirr2kpt= {kptirr2kpt}")
+        kptirr = np.array(kptirr)
+        NKirr = len(kptirr)
+        kptirr2kpt = np.array(kptirr2kpt)
+        G = np.array(G)
+        del kpoints_mod1
+
+        assert np.all(kptirr2kpt >= 0)
+        assert np.all(kpt2kptirr >= 0)
+
+        d_band_blocks = [[[] for _ in range(Nsym)] for _ in range(NKirr)]
+        d_band_block_indices = []
+        for i, ikirr in enumerate(kptirr):
+            K1 = get_K(ikirr)
+            block_indices = get_block_indices(K1.Energy_raw, thresh=degen_thresh, cyclic=False)
+            d_band_block_indices.append(block_indices)
+            for isym, symop in enumerate(self.spacegroup.symmetries):
+                K2 = get_K(kptirr2kpt[i, isym])
+                block_list = symm_matrix(
+                    K=K1.k,
+                    K_other=K2.k,
+                    WF=K1.WF,
+                    WF_other=K2.WF,
+                    igall=K1.ig,
+                    igall_other=K2.ig,
+                    A=symop.rotation,
+                    S=symop.spinor_rotation,
+                    T=symop.translation,
+                    time_reversal=symop.time_reversal,
+                    spinor=K1.spinor,
+                    block_ind=block_indices,
+                    return_blocks=True,
+                    unitary=unitary,
+                    unitary_params=unitary_params,
+                )
+                d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
+                # transposed because in irrep WF is row vector, while in dmn it is column vector
+        return dict(grid=grid, 
+                    kpoints=kpoints,
+                    kptirr=kptirr, 
+                    kptirr2kpt=kptirr2kpt,
+                    kpt2kptirr=kpt2kptirr, 
+                    d_band_blocks=d_band_blocks, 
+                    d_band_block_indices=d_band_block_indices)
+        # return     (grid, 
+        #             kpoints,
+        #             kptirr, 
+        #             kptirr2kpt,
+        #             kpt2kptirr, 
+        #             d_band_blocks, 
+        #             d_band_block_indices)
+            

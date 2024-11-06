@@ -14,7 +14,7 @@
 ##  e-mail: stepan.tsirkin@physik.uzh.ch                         #
 ##################################################################
 
-__version__="1.1.0"
+__version__="1.1.1"
 
 import os
 import logging
@@ -24,7 +24,7 @@ from irrep.utility import str2bool, str2list_space, str_, log_message
 # using a logger to print useful information during debugging,
 # set to logging.INFO to disable debug messages
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 
 
 class SymopTable:

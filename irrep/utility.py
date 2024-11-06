@@ -16,10 +16,13 @@
 ##################################################################
 
 
+from fractions import Fraction
+import warnings
 import numpy as np
 from scipy import constants
 import fortio
-
+import sys
+from typing import Any
 BOHR = constants.physical_constants['Bohr radius'][0] / constants.angstrom
 
 
@@ -270,7 +273,8 @@ def log_message(msg, verbosity, level):
         print(msg)
 
 
-def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosity=1):
+def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosity=1,
+                  debug_msg=""):
     """
     Orthogonalize a square matrix, using SVD
     
@@ -279,10 +283,10 @@ def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosit
     A : array( (M,M), dtype=complex)
         Matrix to orthogonalize.
     warning_threshold : float, default=np.inf
-        Threshold for warning message. Is someeigenvalues are far from 1
+        Threshold for warning message. Is some singular values are far from 1
     error_threshold : float, default=np.inf
-        Threshold for error message. Is someeigenvalues are far from 1
-
+        Threshold for error message. Is some singular values are far from 1
+ 
     Returns
     -------
     array( (M,M), dtype=complex)
@@ -290,9 +294,9 @@ def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosit
     """
     u, s, vh = np.linalg.svd(A)
     if np.any(np.abs(s - 1) > error_threshold):
-        raise ValueError("Matrix is not orthogonal", A)
+        raise ValueError(f"Matrix is not orthogonal \n {A} \n {debug_msg}")	
     elif np.any(np.abs(s - 1) > warning_threshold):
-        log_message(f"Warning: Matrix is not orthogonal {A}", verbosity, 1)
+        log_message(f"Warning: Matrix is not orthogonal \n {A} \n {debug_msg}", verbosity, 1)
     return u @ vh
 
 def sort_vectors(list_of_vectors):
@@ -380,3 +384,137 @@ def get_block_indices(E, thresh=1e-5, cyclic=False):
     else:
         return np.array([borders[:-1], borders[1:]]).T
        
+def grid_from_kpoints(kpoints, grid=None):
+    """
+    Given a list of kpoints in fractional coordinates, return a the size of the grid in each direction
+    if some k-points are repeated, they are counted only once
+    if some k-points are missing, an error is raised
+
+    Parameters
+    ----------
+    kpoints : np.array((nk, ndim), dtype=float)
+        list of kpoints in fractional coordinates
+
+    Returns
+    -------
+    grid : tuple(int)
+        size of the grid in each
+    selected_kpoints : list of int
+        indices of the selected kpoints
+
+    Raises
+    ------
+    ValueError
+        if some k-points are missing
+    """
+    if grid is None:
+        grid = tuple(np.lcm.reduce([Fraction(k).limit_denominator(100).denominator for k in kp]) for kp in kpoints.T)
+    npgrid = np.array(grid)
+    print(f"mpgrid = {npgrid}, {len(kpoints)}")
+    kpoints_unique = UniqueListMod1()
+    selected_kpoints = []
+    for i, k in enumerate(kpoints):
+        if is_round(k * npgrid, prec=1e-5):
+            if k not in kpoints_unique:
+                kpoints_unique.append(k)
+                selected_kpoints.append(i)
+            else:
+                warnings.warn(f"k-point {k} is repeated")
+    if len(kpoints_unique) < np.prod(grid):
+        raise ValueError(f"Some k-points are missing {len(kpoints_unique)}< {np.prod(grid)}")
+    if len(kpoints_unique) > np.prod(grid):
+        raise RuntimeError("Some k-points are taken twice - this must be a bug")
+    if len(kpoints_unique) < len(kpoints):
+        warnings.warn("Some k-points are not on the grid or are repeated")
+    return grid, selected_kpoints
+
+class UniqueList(list):
+    """	
+    A list that only allows unique elements.
+    uniqueness is determined by the == operator.
+    Thus, non-hashable elements are also allowed.
+    unlike set, the order of elements is preserved.
+    """
+
+    def __init__(self, iterator=[], count=False):
+        super().__init__()
+        self.do_count = count
+        if self.do_count:
+            self.counts = []
+        for x in iterator:
+            self.append(x)
+
+    def append(self, item, count=1):
+        for j, i in enumerate(self):
+            if i == item:
+                if self.do_count:
+                    self.counts[self.index(i)] += count
+                break
+        else:
+            super().append(item)
+            if self.do_count:
+                self.counts.append(1)
+
+    def index(self, value: Any, start=0, stop=sys.maxsize) -> int:
+        for i in range(start, stop):
+            if self[i] == value:
+                return i
+        raise ValueError(f"{value} not in list")
+
+    def __contains__(self, item):
+        for i in self:
+            if i == item:
+                return True
+        return False
+
+    def remove(self, value: Any, all=False) -> None:
+        for i in range(len(self)):
+            if self[i] == value:
+                if all or not self.do_count:
+                    del self[i]
+                    del self.counts[i]
+                else:
+                    self.counts[i] -= 1
+                    if self.counts[i] == 0:
+                        del self[i]
+                        del self.counts[i]
+                return
+
+
+class UniqueListMod1(UniqueList):
+
+    def __init__(self, iterator=[], tol=1e-5):
+        self.tol = tol
+        self.appended_indices = []
+        self.last_try_append = -1
+        super().__init__(iterator)
+
+    def append(self, item):
+        self.last_try_append += 1
+        for i in self:
+            if all_close_mod1(i, item, tol=self.tol):
+                break
+        else:
+            list.append(self, item)
+            self.appended_indices.append(self.last_try_append)
+
+    def __contains__(self, item):
+        for i in self:
+            if all_close_mod1(i, item, tol=self.tol):
+                return True
+        return False
+
+    def index(self, value: Any, start=0, stop=sys.maxsize) -> int:
+        stop = min(stop, len(self))
+        for i in range(start, stop):
+            if all_close_mod1(self[i], value):
+                return i
+        raise ValueError(f"{value} not in list")
+
+
+def all_close_mod1(a, b, tol=1e-5):
+    """check if two vectors are equal modulo 1"""
+    if not np.shape(a) == () and not np.shape(b) == () and (np.shape(a) != np.shape(b)):
+        return False
+    diff = a - b
+    return np.allclose(np.round(diff), diff, atol=tol)
