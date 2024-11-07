@@ -1209,7 +1209,7 @@ class SpaceGroup():
         '''
         return np.array([sym.translation for sym in self.symmetries if not sym.d])
 
-    @property_cached
+    @cached_property
     def crystal_class(self):
         '''
         Identify the so-called point group of the space group.
@@ -1237,6 +1237,39 @@ class SpaceGroup():
             raise RuntimeError('Counting of types of symmetries does not match '
                                'with any crystal class')
         return crystal_class
+
+    @cached_property
+    def laue_group(self):
+        '''
+        From the so-called point group of the crystal (crystal class), 
+        determine the laue group
+        '''
+
+        if self.crystal_class in ['1', '-1']:
+            self.laue = '-1'
+        elif self.crystal_class in ['2', 'm', '2/m']:
+            self.laue = '2/m'
+        elif self.crystal_class in ['222', 'mm2', 'mmm']:
+            self.laue = 'mmm'
+        elif self.crystal_class in ['4', '-4', '4/m']:
+            self.laue = '4/m'
+        elif self.crystal_class in ['422', '4mm', '-42m', '4/mmm']:
+            self.laue = '4/mmm'
+        elif self.crystal_class in ['3', '-3']:
+            self.laue = '-3'
+        elif self.crystal_class in ['32', '3m', '-3m']:
+            self.laue = '-3m'
+        elif self.crystal_class in ['6', '-6', '6/m']:
+            self.laue = '6/m'
+        elif self.crystal_class in ['622', '6mm', '-62m', '6/mmm']:
+            self.laue = '6/mmm'
+        elif self.crystal_class in ['23', 'm-3']:
+            self.laue = 'm-3'
+        elif self.crystal_class in ['432', '-43m', 'm-3m']:
+            self.laue = 'm-3m'
+        else:
+            raise RuntimeError('Point group {} has no laue group associated'
+                               .format(self.crystal_class))
 
     def json(self, symmetries=None):
         '''
