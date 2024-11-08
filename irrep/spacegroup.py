@@ -24,8 +24,10 @@ from scipy.linalg import expm
 import spglib
 from irreptables import IrrepTable
 from scipy.optimize import minimize
-from .utility import str_, log_message, BOHR
+from .utility import str_, log_message, BOHR, parallel
 from packaging import version
+from fractions import Fraction
+from math import lcm
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -65,6 +67,9 @@ table_crystal_class = {'1': [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
                        '-43m': [0, 6, 0, 6, 0, 1, 3, 8, 0, 0],
                        'm-3m': [0, 6, 8, 9, 1, 1, 9, 8, 6, 0]
                        }
+
+grid = [[1,0,0], [0,1,0], [0,0,1], [1,1,0], [1,0,1], [0,1,1], [1,1,1], [2,1,0], 
+        [2,0,1], [0,2,1], [0,1,2]]
 
 
 class SymmetryOperation():
@@ -183,7 +188,7 @@ class SymmetryOperation():
         self.type = None
         if tr == -3:
             self.type = '-1'
-        if tr == -2:
+        elif tr == -2:
             self.type = '-6'
         elif tr == -1:
             if det == -1:
@@ -197,9 +202,9 @@ class SymmetryOperation():
                 self.type = '3'
         elif tr == 1:
             if det == -1:
-                self.type = -2
+                self.type = '-2'
             elif det == 1:
-                self.type == '4'
+                self.type = '4'
         elif tr == 2:
             self.type = '6'
         elif tr == 3:
@@ -207,8 +212,20 @@ class SymmetryOperation():
         if self.type is None:
             raise RuntimeError("Type of symmetry # {} is unknown. \nTrace={}"
                                "\nDet={}".format(self.ind, tr, det))
+        #print(f'# {self.ind} -> type:{self.type}')
 
         self.angle_str = self.get_angle_str()
+
+    @property
+    def order(self):
+        return abs(int(self.type))
+
+    @cached_property
+    def axis_direct(self):
+        '''
+        Return rotation direct coords. of rotation axis
+        '''
+        return np.linalg.inv(self.Lattice.T) @ self.axis
 
 
     def matrix_spinrep(self):
@@ -881,6 +898,7 @@ class SpaceGroup():
                                                          d=d))
 
             
+            self.conv_from_prim()
 
 
 
@@ -1224,18 +1242,20 @@ class SpaceGroup():
         # Count number of symmetries of each type
         types = [sym.type for sym in self.symmetries if not sym.d]
         count_types = []
-        for type in ['-6', '-4', '-3', '-2', '-1', '1' , '2', '3', '4', '6']:
-            count_types.append(len(list(filter(lambda item: item==type, types))))
+        for t in ['-6', '-4', '-3', '-2', '-1', '1', '2', '3', '4', '6']:
+            count_types.append(len(list(filter(lambda item: item==t, types))))
 
         # Match counting of symmetry types with table for crystal classes
         crystal_class = None
-        for key, value in table_crystal_class:
+        for key, value in table_crystal_class.items():
             if value == count_types:
                 crystal_class = key
                 break
         if crystal_class is None:
             raise RuntimeError('Counting of types of symmetries does not match '
-                               'with any crystal class')
+                               'with any crystal class: {}'.format(count_types))
+
+        print(f'Crystal class: {crystal_class}')  # test
         return crystal_class
 
     @cached_property
@@ -1246,30 +1266,32 @@ class SpaceGroup():
         '''
 
         if self.crystal_class in ['1', '-1']:
-            self.laue = '-1'
+            laue = '-1'
         elif self.crystal_class in ['2', 'm', '2/m']:
-            self.laue = '2/m'
+            laue = '2/m'
         elif self.crystal_class in ['222', 'mm2', 'mmm']:
-            self.laue = 'mmm'
+            laue = 'mmm'
         elif self.crystal_class in ['4', '-4', '4/m']:
-            self.laue = '4/m'
+            laue = '4/m'
         elif self.crystal_class in ['422', '4mm', '-42m', '4/mmm']:
-            self.laue = '4/mmm'
+            laue = '4/mmm'
         elif self.crystal_class in ['3', '-3']:
-            self.laue = '-3'
+            laue = '-3'
         elif self.crystal_class in ['32', '3m', '-3m']:
-            self.laue = '-3m'
+            laue = '-3m'
         elif self.crystal_class in ['6', '-6', '6/m']:
-            self.laue = '6/m'
+            laue = '6/m'
         elif self.crystal_class in ['622', '6mm', '-62m', '6/mmm']:
-            self.laue = '6/mmm'
+            laue = '6/mmm'
         elif self.crystal_class in ['23', 'm-3']:
-            self.laue = 'm-3'
+            laue = 'm-3'
         elif self.crystal_class in ['432', '-43m', 'm-3m']:
-            self.laue = 'm-3m'
+            laue = 'm-3m'
         else:
             raise RuntimeError('Point group {} has no laue group associated'
                                .format(self.crystal_class))
+        print(f'Laue group: {laue}')  # test
+        return laue
 
     def json(self, symmetries=None):
         '''
@@ -1590,6 +1612,127 @@ class SpaceGroup():
                                 irr.k) %
                             1) for irr in table.irreps)))
         return tab
+
+
+    def conv_from_prim(self):
+
+        symmetries = [sym for sym in self.symmetries if not sym.d]
+
+        # Determine primary direction and primary rotation's order
+        if self.laue_group == '-1':
+            dir1 = [1,0,0]
+            dir2 = [0,1,0]
+            dir3 = [0,0,1]
+
+        elif self.laue_group in ['mmm', 'm-3', 'm-3m']:
+            n_prim = 4 if self.laue_group == 'm-3m' else 2  # order of primary rot.
+            i = 0
+            for sym in symmetries:
+                if sym.order == n_prim:
+                    if i == 0:
+                        sym1 = sym
+                        i += 1
+                    elif (i == 1 and not parallel(sym.axis, sym1.axis)):
+                        sym2 = sym
+                        i += 1
+                    elif (i == 2 
+                          and not parallel(sym.axis, sym1.axis)
+                          and not parallel(sym.axis, sym2.axis)):
+                        sym3 = sym
+                        break
+            dir1 = sym1.axis_direct / np.linalg.norm(sym1.axis_direct) 
+            dir2 = sym2.axis_direct / np.linalg.norm(sym2.axis_direct)
+            dir3 = sym3.axis_direct / np.linalg.norm(sym3.axis_direct)
+
+        else:  # need to solve S.v=0 to calculate dir2
+            
+            # Define order of primary rotation
+            if self.laue_group == '2/m':
+                n_prim = 2
+            elif self.laue_group in ['4/m', '4/mmm']:
+                n_prim = 4
+            else:
+                n_prim = 3
+
+            # Define primary direction and matrix S
+            for sym in symmetries:
+                if sym.order == n_prim and sym.angle > 0.0:  # counter-clock
+                    axis1 = sym.axis
+                    dir1 = sym.axis_direct
+                    Wp = sym.rotation
+                    if sym.inversion:
+                        Wp *= -1
+                    S = np.zeros((3,3))
+                    for i in range (n_prim):
+                        S += np.linalg.matrix_power(Wp, i)
+                    break
+
+            # Solve S.v = 0 to determine secondary direction
+            found = False
+            for vec in grid:
+
+                # Find component perpendicular to dir1
+                print(f'VEC: {vec}')
+                if parallel(vec, dir1):
+                    print(f'vec: {vec} parallel to axis {dir1} -> discarded')
+                    continue
+                dir2 = vec - (S @ vec) / n_prim
+                print(f'vec after orthogonalization: {dir2}')
+                if self.laue_group != '2/m': # Obtain dir3 by rotating dir2
+                    dir3 = Wp @ dir2
+                    break
+                else:  # Obtain dir3 by solving again S.e=0
+                    if not found:
+                        dir2_tmp = dir2
+                        print('valid dir2: {dir2}')
+                        found = True
+                    elif not parallel(dir2, dir2_tmp):
+                        dir3 = dir2.copy()
+                        dir2 = dir2_tmp
+                        break
+                    else:
+                        print(f'dir2: {dir2} parallel to dir2_tmp {dir2_tmp} -> discarded')
+
+        print(f'dir1:{dir1}')
+        print(f'dir2:{dir2}')
+        print(f'dir3:{dir3}')
+
+        # Save directions in an array and make sure axes are right-handed
+        if self.laue_group == '2/m':
+            M = [dir2, dir1, dir3]
+            if np.linalg.det(M) < 0:
+                print('fix handedness')
+                M[0], M[2] = M[2], M[0]
+        else:
+            M = [dir2, dir3, dir1]
+            if np.linalg.det(M) < 0:
+                print('fix handedness')
+                M[0], M[1] = M[1], M[0]
+
+        # Make sure that all components are integers
+        M = np.array(M)
+        print(M)
+        for i in range(3):
+            components = [Fraction(v).limit_denominator().denominator for v in M[i]]
+            M[i] *= lcm(*components)
+        M = M.round(5)
+        print(f'vecs after integerization:\n{M}')
+
+
+
+        exit()
+            
+
+    
+
+
+        
+
+
+
+
+
+
 
     def determine_basis_transf(
             self,

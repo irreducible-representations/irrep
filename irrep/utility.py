@@ -518,3 +518,8 @@ def all_close_mod1(a, b, tol=1e-5):
         return False
     diff = a - b
     return np.allclose(np.round(diff), diff, atol=tol)
+
+
+def parallel(vec1, vec2):
+    '''Check if two arrays are parallel'''
+    return np.allclose(np.cross(vec1, vec2), np.zeros(3))
