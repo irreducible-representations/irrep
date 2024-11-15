@@ -1154,6 +1154,7 @@ class BandStructure:
             f"Irrep decomposition at high-symmetry points:\n\n{compose_irrep_string(irrep_counts)}"
             f"\n\nIrrep basis:\n{vector_pprint(basis_labels, fmt='s')}"
             f"\n\nSymmetry vector:\n{vector_pprint(symmetry_vector, fmt='d')}"
+            f"\n\nTransformed symmetry vector:\n{vector_pprint(vec_prime, fmt='d')}"
             f"\n\nSmith singular values:\n{vector_pprint(smith_diagonal, fmt='d')}"
             )
 
@@ -1177,7 +1178,7 @@ class BandStructure:
 
         (
             symmetry_vector,
-            _,
+            vec_prime,
             smith_diagonal,
             nontrivial
         ) = compute_topological_classification_vector(irrep_counts, ebr_data)
@@ -1237,7 +1238,7 @@ def check_multiplicity(multi):
     """
     
     # is real
-    if not np.isclose(np.imag(multi), 0):
+    if not np.isclose(np.imag(multi), 0, rtol=0, atol=1e-3):
         return False
     # is integer
     if not np.isclose(multi, np.round(multi), rtol=0, atol=1e-3):
