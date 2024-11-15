@@ -1204,23 +1204,29 @@ class BandStructure:
                 print("The set of bands is toplogically TRIVIAL")
                 print_symmetry_info()
                 print(
-                    "\nThe following are positive, integer-valued linear combinations "
-                    "of EBRs that reproduce the set of bands:"
+                    "\nThere are positive, integer-valued linear combinations "
+                    "of EBRs that reproduce the set of bands."
                     )
             # positive solutions not found -> fragile
             else:
                 print("The set of bands displays FRAGILE TOPOLOGY.")
                 print_symmetry_info()
                 print(
-                    "There are no all-positive, integer-valued linear combinations "
-                    "of EBRs that reproduce the bands. Some possibilities are:"
+                    "There are no positive, integer-valued linear combinations "
+                    "of EBRs that reproduce the bands."
                     )
 
-            # print EBR decomposition
-            ebr_list = get_ebr_names_and_positions(ebr_data)
-            for i, sol in enumerate(solutions):
-                print("Solution", i + 1, "\n")
-                print(compose_ebr_string(sol, ebr_list), "\n")
+            if solutions is None:
+                print(
+                    "\nAlthough they exist, OR-Tools could not find an EBR"
+                    " decomposition."
+                    )
+            else:
+                # print EBR decomposition
+                ebr_list = get_ebr_names_and_positions(ebr_data)
+                for i, sol in enumerate(solutions):
+                    print("Solution", i + 1, "\n")
+                    print(compose_ebr_string(sol, ebr_list), "\n")
 
         
 def check_multiplicity(multi):

@@ -180,14 +180,14 @@ def compute_ebr_decomposition(ebr_data, vec):
 
     # first check positive coefficients only
     is_positive = True
-    solutions, status = get_solutions(bounds=(0,15))
+    solutions, status = get_solutions(bounds=(0,50))
 
     # if positive solutions were not found
     if status not in ["OPTIMAL", "FEASIBLE"]:
         is_positive = False
         
         # try with negative solutions
-        solutions, status = get_solutions(bounds=(-15,15))
+        solutions, status = get_solutions(bounds=(-50,50))
 
         # if negative solutions are not found, something's wrong
         if status not in ["OPTIMAL", "FEASIBLE"]:
@@ -237,7 +237,7 @@ def compose_ebr_string(vec, ebrs):
     """
 
     terms = [
-        f"{multi} z [ {label} @ {wp} ]" for (label, wp), multi in zip(ebrs, vec)
+        f"{multi} x [ {label} @ {wp} ]" for (label, wp), multi in zip(ebrs, vec)
         if multi != 0
     ]
     s = " + ".join(terms)
