@@ -227,7 +227,6 @@ class SymmetryOperation():
         '''
         return np.linalg.inv(self.Lattice.T) @ self.axis
 
-
     def matrix_spinrep(self):
         '''
         Construct matrix for the spin representation based on the formula
@@ -1715,22 +1714,10 @@ class SpaceGroup():
         for i in range(3):
             components = [Fraction(v).limit_denominator().denominator for v in M[i]]
             M[i] *= lcm(*components)
-        M = M.round(5)
-        print(f'vecs after integerization:\n{M}')
-
-
-
+            smallest_nonzero = np.min(M[i,np.where(M[i]>1e-3)[0]])
+            M[i] /= smallest_nonzero
+        print(f'vecs after integerization:\n{M.T}')
         exit()
-            
-
-    
-
-
-        
-
-
-
-
 
 
 
