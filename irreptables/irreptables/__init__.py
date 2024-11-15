@@ -391,10 +391,12 @@ class IrrepTable:
         log_message(msg, v, 2)
 
         self.irreps = []
+        self.kpoints = []
         while len(lines) > 0:
             l = lines.pop().strip()
             try:
                 kp = KPoint(line=l)
+                self.kpoints.append(kp)
                 msg = f"k-point successfully read:\n{kp.str()}"
                 log_message(msg, v, 2)
             except Exception as err:

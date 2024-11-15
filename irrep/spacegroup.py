@@ -1607,18 +1607,25 @@ class SpaceGroup():
         print("\nChange of coordinates from DFT to conventional cell:\n")
         print(matrix_format.format(*np.linalg.inv(refUC_kspace).ravel()))
 
-        _, kp_index = np.unique([irr.kpname for irr in table.irreps], return_index=True)
         print("Coordinates in symmetry tables:\n")
-        for i in kp_index:
-            name = table.irreps[i].kpname
-            coords = table.irreps[i].k
-            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *coords))
+        for kpoint in table.kpoints:
+            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(kpoint.name, *kpoint.k))
         print("\nCoordinates for DFT calculation:\n")
-        for i in kp_index:
-            name = table.irreps[i].kpname
-            coords = table.irreps[i].k
-            k_dft = np.round(refUC_kspace.dot(coords), 5) % 1
-            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *k_dft))
+        for kpoint in table.kpoints:
+            k_dft = np.round(refUC_kspace.dot(kpoint.k), 5) % 1
+            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(kpoint.name, *k_dft))
+        # _, kp_index = np.unique([irr.kpname for irr in table.irreps], return_index=True)
+        # print("Coordinates in symmetry tables:\n")
+        # for i in kp_index:
+        #     name = table.irreps[i].kpname
+        #     coords = table.irreps[i].k
+        #     print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *coords))
+        # print("\nCoordinates for DFT calculation:\n")
+        # for i in kp_index:
+        #     name = table.irreps[i].kpname
+        #     coords = table.irreps[i].k
+        #     k_dft = np.round(refUC_kspace.dot(coords), 5) % 1
+        #     print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *k_dft))
 
     def kpoints_to_calculation_cell(self, kpoints):
         """Transforms kpoints form standard cell to calculation cell
