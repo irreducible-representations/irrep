@@ -59,7 +59,8 @@ class SymopTable:
         # len is 13 if time reversal is specified
         # len is > 13 everytime there is spin
         line_length = len(numbers)
-        if line_length > 12:
+        print("line_length", line_length)
+        if line_length > 13:
             self.S = (
                 np.array(numbers[12:16], dtype=float)
                 * np.exp(1j * np.pi * np.array(numbers[16:20], dtype=float))
@@ -362,6 +363,7 @@ class IrrepTable:
         lines = open(name).readlines()[-1::-1]
         while len(lines) > 0:
             l = lines.pop().strip().split("=")
+            print(l)
             # logger.debug(l,l[0].lower())
             if l[0].lower() == "sg":
                 assert l[1].strip() == self.number
@@ -376,10 +378,13 @@ class IrrepTable:
                 symmetries = []
                 while len(symmetries) < self.nsym:
                     l = lines.pop()
+                    print(l)
                     # logger.debug(l)
                     try:
+                        print("try symop")
                         symmetries.append(SymopTable(l))
                     except Exception as err:
+                        print(err)
                         logger.debug(err)
                         pass
                 break
