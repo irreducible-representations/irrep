@@ -731,13 +731,13 @@ class SpaceGroup():
         self.typat = cell[2]
         self.alat=alat
         self.magmom = magmom
+
         if from_sym_file is not None or not search_cell:
             no_match_symmetries = True
         else:
             no_match_symmetries = False
 
-        # No magnetic moments
-        if magmom is None:
+        if magmom is None:  # No magnetic moments
 
             self.magnetic = False
             dataset = spglib.get_symmetry_dataset(cell)
@@ -755,7 +755,7 @@ class SpaceGroup():
                 shiftUC_tmp = dataset.origin_shift
                 rotations = dataset.rotations
                 translations = dataset.translations
-            time_reversal_list = [False] * len(rotations)
+            time_reversal_list = [False] * len(rotations)  # to do: change it to implement grey groups
 
         else:  # Magnetic moments
 
@@ -787,33 +787,22 @@ class SpaceGroup():
         else:
             translation_mod_1 = True
 
-        symmetries = []
-        for isym, rot in enumerate(rotations):
-            symmetries.append(SymmetryOperation(rot,
-                                                translations[isym],
-                                                self.Lattice,
-                                                ind=isym+1,
-                                                spinor=self.spinor,
-                                                translation_mod1=translation_mod_1,
-                                                time_reversal=time_reversal_list[isym]))
-
-        if self.magnetic:
-            self.symmetries = list(filter(lambda x: not x.time_reversal,
-                                          symmetries))
-            if include_TR:
-                self.au_symmetries = list(filter(lambda x: x.time_reversal,
-                                                 symmetries))
-            else:
-                self.au_symmetries = []
-        else:
-            self.symmetries = symmetries  # unitary syms
-            self.au_symmetries = []  # antinunitary syms
-
-        self.order = len(self.symmetries)  # To be redefined?
+        self.symmetries = []
+        self.rotations = rotations
+        for isym in range(len(rotations)):
+            if include_TR or not time_reversal_list[isym]:
+                self.symmetries.append(SymmetryOperation(
+                                                    rotations[isym],
+                                                    translations[isym],
+                                                    self.Lattice,
+                                                    ind=isym+1,
+                                                    spinor=self.spinor,
+                                                    translation_mod1=translation_mod_1,
+                                                    time_reversal=time_reversal_list[isym]))
 
         # Load symmetries from the space group's table
         irreptable = IrrepTable(self.number, self.spinor, magnetic=self.magnetic, v=verbosity)
-        self.symmetries_tables = irreptable.symmetries
+        self.u_symmetries_tables = irreptable.u_symmetries
         self.au_symmetries_tables = irreptable.au_symmetries
 
         # Determine refUC and shiftUC according to entries in CLI
@@ -835,51 +824,27 @@ class SpaceGroup():
         if no_match_symmetries:
             self.spin_transf = np.eye(2)  # for printing
         else:
-            try:
-                ind, dt, signs, U = self.match_symmetries(signs=self.spinor,
-                                                       trans_thresh=trans_thresh
-                                                       )
-                self.spin_transf = U
-
-                # Sort symmetries like in tables
-                args = np.argsort(ind)
-                for i,i_ind in enumerate(args):
-                    self.symmetries[i_ind].ind = i+1
-                    self.symmetries[i_ind].sign = signs[i_ind]
-                    self.symmetries.append(self.symmetries[i_ind])
-                self.symmetries = self.symmetries[i+1:]
-            except RuntimeError:
-                if search_cell:  # symmetries must match to identify irreps
-                    raise RuntimeError((
-                        "refUC and shiftUC don't transform the cell to one where "
-                        "symmetries are identical to those read from tables. "
-                        "Try without specifying refUC and shiftUC."
-                        ))
-                elif refUC is not None or shiftUC is not None:
-                    # User specified refUC or shiftUC in CLI. He/She may
-                    # want the traces in a cell that is not neither the
-                    # one in tables nor the DFT one
-                    msg = ("WARNING: refUC and shiftUC don't transform the cell to "
-                           "one where symmetries are identical to those read from "
-                           "tables. If you want to achieve the same cell as in "
-                           "tables, try not specifying refUC and shiftUC.")
-                    log_message(msg, verbosity, 1)
-                    pass
-
-            # Do the same with magnetic operations
-            if self.magnetic and len(self.au_symmetries) > 0:
+            au_symmetries = False
+            sorted_symmetries = []
+            while True:
                 try:
-                    ind, dt, signs, _ = self.match_symmetries(signs=self.spinor,
-                                                           trans_thresh=trans_thresh,
-                                                           au_symmetries=True
-                                                           )
-                    # Sort symmetries like in tables
+                    ind, dt, signs, U = self.match_symmetries(
+                                            signs=self.spinor,
+                                            trans_thresh=trans_thresh,
+                                            au_symmetries=au_symmetries
+                                            )
                     args = np.argsort(ind)
+                    if not au_symmetries:
+                        symmetries = self.u_symmetries
+                        self.spin_transf = U
+                        N = 0
+                    else:
+                        symmetries = self.au_symmetries
+                        N = len(sorted_symmetries)
                     for i,i_ind in enumerate(args):
-                        self.au_symmetries[i_ind].ind = i+1
-                        self.au_symmetries[i_ind].sign = signs[i_ind]
-                        self.au_symmetries.append(self.au_symmetries[i_ind])
-                    self.au_symmetries = self.au_symmetries[i+1:]
+                        symmetries[i_ind].ind = i+1 + N
+                        symmetries[i_ind].sign = signs[i_ind]
+                        sorted_symmetries.append(symmetries[i_ind])
                 except RuntimeError:
                     if search_cell:  # symmetries must match to identify irreps
                         raise RuntimeError((
@@ -897,13 +862,35 @@ class SpaceGroup():
                                "tables, try not specifying refUC and shiftUC.")
                         log_message(msg, verbosity, 1)
                         pass
+                if au_symmetries or len(self.au_symmetries) == 0:
+                    break
+                else:
+                    au_symmetries = True
+            self.symmetries = sorted_symmetries
+
+    @property
+    def u_symmetries(self):
+        '''
+        List of unitary symmetries
+        '''
+        return list(filter(lambda x: not x.time_reversal, self.symmetries))
+
+    @property
+    def au_symmetries(self):
+        '''
+        List of antiunitary symmetries
+        '''
+        if self.magnetic and self.include_TR:
+            return list(filter(lambda x: x.time_reversal, self.symmetries))
+        else:
+            return []
 
     @property
     def size(self):
         """
         Number of symmetry operations in the space-group.
         """
-        return len(self.symmetries) + len(self.au_symmetries)
+        return len(self.symmetries)
 
     def json(self, symmetries=None):
         '''
@@ -926,7 +913,7 @@ class SpaceGroup():
         d = {"name": self.name,
              "number": self.number,
              "spinor": self.spinor,
-             "num symmetries": self.order,
+             "num symmetries": self.size,
              "cells match": cells_match,
              "symmetries": {},
              "magnetic": self.magnetic
@@ -985,7 +972,7 @@ class SpaceGroup():
         print()
         print('Space group: {} (# {})'.format(self.name, self.number))
         print('Number of unitary symmetries: {} (mod. lattice translations)'
-              .format(self.order))
+              .format(len(self.u_symmetries)))
         if self.magnetic:
             print('Number of antiunitary symmetries: {}'
                   ' (mod. lattice translations)'
@@ -1047,9 +1034,8 @@ class SpaceGroup():
             String describing matrices of symmetry operations.
         """
 
-        res = (" {0} \n"  # Number of Symmetry operations
-               # In the following lines, one symmetry operation for each operation of the point group n"""
-               ).format(len(self.symmetries) + len(self.au_symmetries))
+        res = f" {self.size}\n"
+        # In the following lines, one symmetry operation for each operation of the point group n"""
         for symop in self.symmetries:
             res += symop.str2(refUC=self.refUC, shiftUC=self.shiftUC, write_tr=self.magnetic)
         for symop in self.au_symmetries:
@@ -1069,8 +1055,7 @@ class SpaceGroup():
             "SG={SG}\n name={name} \n nsym= {nsym}\n spinor={spinor}\n".format(
                 SG=self.number,
                 name=self.name,
-                nsym=len(
-                    self.symmetries),
+                nsym=self.size,
                 spinor=self.spinor) +
             "symmetries=\n" +
             "\n".join(
@@ -1343,7 +1328,7 @@ class SpaceGroup():
 
             # Check if the group is centrosymmetric
             inv = None
-            for sym in self.symmetries:
+            for sym in self.u_symmetries:
                 if np.allclose(sym.rotation, -np.eye(3)):
                     inv = sym
 
@@ -1433,12 +1418,6 @@ class SpaceGroup():
             The :math:`i^{th}` element corresponds to the :math:`i^{th}` 
             symmetry found by `spglib` and it is the sign needed to make
             the matrix for spinor rotation identical to that in tables.
-
-        Note
-        ----
-        Arguments symmetries1 and symmetries2 always take values of 
-        attributes self.symmetry and self.symmetries_tables, so they can
-        be removed, but this way keeps the function more generic.
         """
 
         if refUC is None:
@@ -1452,8 +1431,8 @@ class SpaceGroup():
             symmetries = self.au_symmetries
             symmetries_tables = self.au_symmetries_tables
         else:
-            symmetries = self.symmetries
-            symmetries_tables = self.symmetries_tables
+            symmetries = self.u_symmetries
+            symmetries_tables = self.u_symmetries_tables
 
         for j, sym in enumerate(symmetries):
             R = sym.rotation_refUC(refUC)
@@ -1504,7 +1483,7 @@ class SpaceGroup():
         if self.au_symmetries:
             order = len(self.au_symmetries)
         else:
-            order = len(self.symmetries)
+            order = len(self.u_symmetries)
         if len(set(ind)) != order:
             raise RuntimeError(
                 "Error in matching symmetries detected by spglib with the \

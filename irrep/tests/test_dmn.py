@@ -22,7 +22,7 @@ def check_Fe_qe(include_TR):
                                  unitary_params={"check_upper": False,
                                                  "waring_threshold":1e-3,
                                                  "error_threshold":1e-2}, )
-    print (f"number of symmetries: {bandstructure.spacegroup.order}")
+    print (f"number of symmetries: {bandstructure.spacegroup.size}")
     for a in data["d_band_blocks"][:1]:
         for b in a:
             for c in b:
