@@ -30,9 +30,6 @@ class Kpoint:
     traces (and irreps), for the separation of the band structure in terms of a 
     symmetry operation and for the calculation of the Zak phase.
 
-        symmetries=None,
-        symmetries_tables=None  # calculate_traces needs it
-
     Parameters
     ----------
     ik : int
