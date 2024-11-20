@@ -884,23 +884,58 @@ class SpaceGroup():
                 log_message(msg, verbosity, 1)
 
             self.symmetries = []
+            self.inds_fplo = []  # indices of syms with d=False in FPLO
 
             for isym in range(self.order):
                 
                 angle, axis, d = self.identify_from_spinrep(spin_repr[isym])
+                if d:
+                    continue
                 self.symmetries.append(SymmetryOperation(angle=angle,
                                                          axis=axis,
-                                                         ind=isym,
+                                                         ind=len(self.inds_fplo),
                                                          is_inv=parities[isym],
                                                          trans=translations[isym],
-                                                         Lattice=self.Lattice,
-                                                         d=d))
+                                                         Lattice=self.Lattice))
+                self.inds_fplo.append(isym)
+            self.order = int(self.order/2)  # only d=False symmetries
+
+            self.refUC, self.shiftUC = self.conv_from_prim()
+
+            if not no_match_symmetries:
+                try:
+                    ind, dt, signs = self.match_symmetries(
+                                        signs=self.spinor,
+                                        trans_thresh=trans_thresh
+                                        )
+                    # Sort symmetries like in tables
+                    args = np.argsort(ind)
+                    for i,i_ind in enumerate(args):
+                        self.symmetries[i_ind].ind = i+1
+                        self.symmetries[i_ind].sign = signs[i_ind]
+                        self.symmetries.append(self.symmetries[i_ind])
+                    self.symmetries = self.symmetries[i+1:]
+                    self.inds_fplo = self.inds_fplo[args]
+                except RuntimeError:
+                    if search_cell:  # symmetries must match to identify irreps
+                        raise RuntimeError((
+                            "refUC and shiftUC don't transform the cellto one where "
+                            "symmetries are identical to those read from tables. "
+                            "Try without specifying refUC and shiftUC."
+                            ))
+                    elif refUC is not None or shiftUC is not None:
+                        # User specified refUC or shiftUC in CLI. He/She may
+                        # want the traces in a cell that is not neither the
+                        # one in tables nor the DFT one
+                        msg = ("WARNING: refUC and shiftUC don't transform the cell to "
+                            "one where symmetries are identical to those read from "
+                            "tables. If you want to achieve the same cell as in "
+                            "tables, try not specifying refUC and shiftUC.")
+                        log_message(msg, verbosity, 1)
+                        pass
 
             
-            self.conv_from_prim()
-
-
-
+                        
 
             # Test
             # Identify the space group from O(3) matrices of primitive cell
@@ -1717,8 +1752,11 @@ class SpaceGroup():
             smallest_nonzero = np.min(M[i,np.where(M[i]>1e-3)[0]])
             M[i] /= smallest_nonzero
         print(f'vecs after integerization:\n{M.T}')
-        exit()
 
+        M = M.T  # vectors by columns
+        shiftUC = np.zeros(3)  # determination not implemented yet
+
+        return M
 
 
     def determine_basis_transf(
