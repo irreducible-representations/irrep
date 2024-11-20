@@ -1173,21 +1173,26 @@ class ParserFPLO:
         '''
 
         log_message('Determining offsets of k-point blocks', verbosity, 2)
+
         _, _, num_k = self.parse_header()
-        self.offsets = []
+        list_offsets = []
         f = open(self.file_reps, 'r')
-        while i < NB:
-            offset = file.tell()
+        i = 0
+        while i < num_k:
+            offset = f.tell()
             line = f.readline()
             if self._record(line, 'size of little group'):
-                self.offsets.append(offset)
+                list_offsets.append(offset)
                 i += 1
         f.close()
-        if len(self.offsets) != num_k:
+
+        if len(list_offsets) != num_k:
             raise RuntimeError('Number of k points in +groupreps: {}. '
                                'Number of k point blocks found in +grouprep: {}'
                                .format(num_k, len(self.offset)))
         log_message('Finished determining offsets', verbosity, 2)
+
+        return list_offsets
 
 
     def parse_group(self):
