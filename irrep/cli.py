@@ -415,7 +415,10 @@ def cli(
         from_sym_file=from_sym_file
     )
 
-    bandstr.spacegroup.show()
+    if code.lower() == 'fplo':
+        bandstr.spacegroup.show(print_crystal=False)
+    else:
+        bandstr.spacegroup.show(print_crystal=True)
 
     if writesym:
         bandstr.spacegroup.write_sym_file(filename=prefix+".sym", alat=alat)
