@@ -1204,6 +1204,7 @@ class ParserFPLO:
                 Lattice = np.zeros((3,3), dtype=float)
                 for i in range(3):
                     Lattice[i] = np.array(f.readline().split(), dtype=float)
+                Lattice *= BOHR
 
             if self._record(line, 'centering vectors'):
                 centering = np.zeros((3,3), dtype=float)
@@ -1244,6 +1245,37 @@ class ParserFPLO:
                 f'but {len(parities)} translations were found')
 
         return Lattice, centering, order, spin_repr, translations, parities
+
+
+    def parse_header(self):
+        '''
+        Parse number of bands and if SOC was used from +groupreps file
+
+        Returns
+        -------
+        num_bands : int
+            Number of bands, equal to the size of representation matrices
+        spinor : bool
+            Whether the calculation was full relativistic or not
+        num_k : int
+            Number of k points in +groupreps
+        '''
+
+        f = open(self.file_reps, 'r')
+        for line in f:
+
+            if self._record(line, 'full relativistic'):
+                spinor = int(f.readline()) == 1
+            if self._record(line, 'nr of spins'):
+                if int(f.readline()) > 1:
+                    raise RuntimeError('Spin polarization not implemented yet :S')
+            if self._record(line, 'matrix size'):
+                num_bands = int(f.readline())
+            if self._record(line, 'nr of k points'):
+                num_k = int(f.readline())
+                break
+
+        return num_bands, spinor, num_k
 
 
     def _record(self, line, label):

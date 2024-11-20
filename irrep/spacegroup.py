@@ -898,9 +898,14 @@ class SpaceGroup():
                                                          trans=translations[isym],
                                                          Lattice=self.Lattice))
                 self.inds_fplo.append(isym)
+
+            self.inds_fplo = np.array(self.inds_fplo)
             self.order = int(self.order/2)  # only d=False symmetries
 
             self.refUC, self.shiftUC = self.conv_from_prim()
+
+            # TODO: Implement identification of space group number
+            self.symmetries_tables = IrrepTable(221, self.spinor, v=verbosity).symmetries
 
             if not no_match_symmetries:
                 try:
@@ -910,6 +915,7 @@ class SpaceGroup():
                                         )
                     # Sort symmetries like in tables
                     args = np.argsort(ind)
+                    print('args=', args)
                     for i,i_ind in enumerate(args):
                         self.symmetries[i_ind].ind = i+1
                         self.symmetries[i_ind].sign = signs[i_ind]
@@ -933,8 +939,6 @@ class SpaceGroup():
                             "tables, try not specifying refUC and shiftUC.")
                         log_message(msg, verbosity, 1)
                         pass
-
-            
                         
 
             # Test
@@ -1359,7 +1363,7 @@ class SpaceGroup():
 
         return d
 
-    def show(self, symmetries=None):
+    def show(self, print_crystal=True, print_symmetries=True, symmetries=None):
         """
         Print description of space-group and symmetry operations.
         
@@ -1371,51 +1375,55 @@ class SpaceGroup():
             to each symmetry operation.
         """
 
-        print('')
-        print("\n ---------- CRYSTAL STRUCTURE ---------- \n")
-        print('')
+        if print_crystal:
 
-        # Print cell vectors in DFT and reference cells
-        vecs_refUC = np.dot(self.Lattice, self.refUC).T
-        #vecs_refUC = np.dot(self.refUC, self.Lattice)
-        print('Cell vectors in angstroms:\n')
-        print('{:^32}|{:^32}'.format('Vectors of DFT cell', 'Vectors of REF. cell'))
-        for i in range(3):
-            vec1 = self.Lattice[i]
-            vec2 = vecs_refUC[i]
-            s = 'a{:1d} = {:7.4f}  {:7.4f}  {:7.4f}  '.format(i, vec1[0], vec1[1], vec1[2])
-            s += '|  '
-            s += 'a{:1d} = {:7.4f}  {:7.4f}  {:7.4f}'.format(i, vec2[0], vec2[1], vec2[2])
-            print(s)
-        print()
+            print('')
+            print("\n ---------- CRYSTAL STRUCTURE ---------- \n")
+            print('')
 
-        # Print atomic positions
-        print('Atomic positions in direct coordinates:\n')
-        print('{:^} | {:^25} | {:^25}'.format('Atom type', 'Position in DFT cell', 'Position in REF cell'))
-        positions_refUC = self.positions.dot(np.linalg.inv(self.refUC.T))
-        for itype, pos1, pos2 in zip(self.typat, self.positions, positions_refUC):
-            s = '{:^9d}'.format(itype)
-            s += ' | '
-            s += '  '.join(['{:7.4f}'.format(x) for x in pos1])
-            s += ' | '
-            s += '  '.join(['{:7.4f}'.format(x) for x in pos2])
-            print(s)
+            # Print cell vectors in DFT and reference cells
+            vecs_refUC = np.dot(self.Lattice, self.refUC).T
+            #vecs_refUC = np.dot(self.refUC, self.Lattice)
+            print('Cell vectors in angstroms:\n')
+            print('{:^32}|{:^32}'.format('Vectors of DFT cell', 'Vectors of REF. cell'))
+            for i in range(3):
+                vec1 = self.Lattice[i]
+                vec2 = vecs_refUC[i]
+                s = 'a{:1d} = {:7.4f}  {:7.4f}  {:7.4f}  '.format(i, vec1[0], vec1[1], vec1[2])
+                s += '|  '
+                s += 'a{:1d} = {:7.4f}  {:7.4f}  {:7.4f}'.format(i, vec2[0], vec2[1], vec2[2])
+                print(s)
+            print()
 
-        print()
-        print('\n ---------- SPACE GROUP ----------- \n')
-        print()
-        print('Space group: {} (# {})'.format(self.name, self.number))
-        print('Number of symmetries: {} (mod. lattice translations)'.format(self.order))
-        refUC_print = self.refUC.T  # print following convention in paper
-        print("\nThe transformation from the DFT cell to the reference cell of tables is given by: \n"
-              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[0]]))
-              + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[1]]), np.round(self.shiftUC, 5))
-              + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[2]]))
-              )
+            # Print atomic positions
+            print('Atomic positions in direct coordinates:\n')
+            print('{:^} | {:^25} | {:^25}'.format('Atom type', 'Position in DFT cell', 'Position in REF cell'))
+            positions_refUC = self.positions.dot(np.linalg.inv(self.refUC.T))
+            for itype, pos1, pos2 in zip(self.typat, self.positions, positions_refUC):
+                s = '{:^9d}'.format(itype)
+                s += ' | '
+                s += '  '.join(['{:7.4f}'.format(x) for x in pos1])
+                s += ' | '
+                s += '  '.join(['{:7.4f}'.format(x) for x in pos2])
+                print(s)
 
-        for symop in self.symmetries:
-            if symmetries is None or symop.ind in symmetries:
-                symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
+        if print_crystal:
+
+            print()
+            print('\n ---------- SPACE GROUP ----------- \n')
+            print()
+            print('Space group: {} (# {})'.format(self.name, self.number))
+            print('Number of symmetries: {} (mod. lattice translations)'.format(self.order))
+            refUC_print = self.refUC.T  # print following convention in paper
+            print("\nThe transformation from the DFT cell to the reference cell of tables is given by: \n"
+                  + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[0]]))
+                  + "refUC = | {} |    shiftUC = {}\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[1]]), np.round(self.shiftUC, 5))
+                  + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[2]]))
+                  )
+
+            for symop in self.symmetries:
+                if symmetries is None or symop.ind in symmetries:
+                    symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
 
 
     def write_sym_file(self, filename, alat=None):
@@ -1756,7 +1764,7 @@ class SpaceGroup():
         M = M.T  # vectors by columns
         shiftUC = np.zeros(3)  # determination not implemented yet
 
-        return M
+        return M, shiftUC
 
 
     def determine_basis_transf(

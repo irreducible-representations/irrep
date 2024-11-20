@@ -197,6 +197,7 @@ class BandStructure:
         if code == 'fplo':
 
             parser = ParserFPLO(fGROUP, fREP)
+            NBin, spinor, NK = parser.parse_header()
             self.Lattice, centering, order, spin_repr, translations, parities = parser.parse_group()
 
             # Write translations in direct coords wrt DFT cell vectors
@@ -297,13 +298,9 @@ class BandStructure:
                 self.Ecut0 = Ecut
                 NK = kpred.shape[0]
 
-
-
-
             else:
                 raise RuntimeError("Unknown/unsupported code :{}".format(code))
 
-                
             self.spacegroup = SpaceGroup(
                                   Lattice=self.Lattice,
                                   positions=positions,
@@ -319,6 +316,21 @@ class BandStructure:
                                   magmom = magmom,
                                   include_TR=include_TR
                                   )
+
+            # Set cutoff to calculate traces
+            if Ecut is None or Ecut > self.Ecut0 or Ecut <= 0:
+                self.Ecut = self.Ecut0
+            else:
+                self.Ecut = Ecut
+            # To do: create writer of description for this class
+            msg = ("WAVECAR contains {} k-points and {} bands.\n"
+                   "Saving {} bands starting from {} in the output"
+                   .format(NK, NBin, NBout, IBstart + 1))
+            log_message(msg, verbosity, 1)
+            msg = f"Energy cutoff in WAVECAR : {self.Ecut0}"
+            log_message(msg, verbosity, 1)
+            msg = f"Energy cutoff reduced to : {self.Ecut}"
+            log_message(msg, verbosity, 1)
 
         if onlysym:
             return
@@ -351,27 +363,12 @@ class BandStructure:
         if NBout <= 0:
             raise RuntimeError("No bands to calculate")
 
-        # Set cutoff to calculate traces
-        if Ecut is None or Ecut > self.Ecut0 or Ecut <= 0:
-            self.Ecut = self.Ecut0
-        else:
-            self.Ecut = Ecut
 
         # Calculate vectors of reciprocal lattice
         self.RecLattice = np.zeros((3,3), dtype=float)
         for i in range(3):
             self.RecLattice[i] = np.cross(self.Lattice[(i + 1) % 3], self.Lattice[(i + 2) % 3])
         self.RecLattice *= (2.0*np.pi/np.linalg.det(self.Lattice))
-
-        # To do: create writer of description for this class
-        msg = ("WAVECAR contains {} k-points and {} bands.\n"
-               "Saving {} bands starting from {} in the output"
-               .format(NK, NBin, NBout, IBstart + 1))
-        log_message(msg, verbosity, 1)
-        msg = f"Energy cutoff in WAVECAR : {self.Ecut0}"
-        log_message(msg, verbosity, 1)
-        msg = f"Energy cutoff reduced to : {self.Ecut}"
-        log_message(msg, verbosity, 1)
 
         # Create list of indices for k-points
         if kplist is None:
