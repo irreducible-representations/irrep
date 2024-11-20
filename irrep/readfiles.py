@@ -21,6 +21,7 @@ import numpy as np
 import scipy
 import h5py
 from scipy.io import FortranFile as FF
+from scipy.sparse import csr_matrix
 from sys import stdout
 from functools import cached_property
 
@@ -1159,20 +1160,22 @@ class ParserGPAW:
 
 class ParserFPLO:
 
-    def __init__(self, file_group='+groupinfo', file_reps='+groupreps'):
+    def __init__(self, file_group='+groupinfo', file_reps='+groupreps', file_kpoints='=.groupoutput', verbosity=0):
 
         self.file_group = file_group
         self.file_reps = file_reps
+        self.file_kpoints = file_kpoints
+        self.verbosity = verbosity
 
     @cached_property
-    def offsets_kpoints(self, verbosity=0):
+    def offsets_kpoints(self):
         '''
         Go through the +groupreps file and determine the offset of the first 
         line of each k point's block. Used later to jump directly to that line
         without iterating thorugh the whole file
         '''
 
-        log_message('Determining offsets of k-point blocks', verbosity, 2)
+        log_message('Determining offsets of k-point blocks', self.verbosity, 2)
 
         _, _, num_k = self.parse_header()
         list_offsets = []
@@ -1190,12 +1193,12 @@ class ParserFPLO:
             raise RuntimeError('Number of k points in +groupreps: {}. '
                                'Number of k point blocks found in +grouprep: {}'
                                .format(num_k, len(self.offset)))
-        log_message('Finished determining offsets', verbosity, 2)
+        log_message('Finished determining offsets', self.verbosity, 2)
 
         return list_offsets
 
 
-    def parse_group(self):
+    def parse_group(self, verbosity=None):
         '''
         Function to parse the FPLO file +groupinfo, which contains info 
         about the space group
@@ -1223,6 +1226,9 @@ class ParserFPLO:
         Symmetries are assumed to be sorted identically in `spin_repr`, 
         `translations` and `parities`.
         '''
+
+        if verbosity is None:
+            verbosity = self.verbosity
 
         f = open(self.file_group, 'r')
 
@@ -1279,7 +1285,7 @@ class ParserFPLO:
         return Lattice, centering, order, spin_repr, translations, parities
 
 
-    def parse_header(self):
+    def parse_header(self, verbosity=None):
         '''
         Parse number of bands and if SOC was used from +groupreps file
 
@@ -1293,22 +1299,98 @@ class ParserFPLO:
             Number of k points in +groupreps
         '''
 
+        if verbosity is None:
+            verbosity = self.verbosity
+
         f = open(self.file_reps, 'r')
         for line in f:
 
             if self._record(line, 'full relativistic'):
                 spinor = int(f.readline()) == 1
-            if self._record(line, 'nr of spins'):
+            elif self._record(line, 'nr of spins'):
                 if int(f.readline()) > 1:
                     raise RuntimeError('Spin polarization not implemented yet :S')
-            if self._record(line, 'matrix size'):
+            elif self._record(line, 'matrix size'):
                 num_bands = int(f.readline())
-            if self._record(line, 'nr of k points'):
+            elif self._record(line, 'nr of k points'):
                 num_k = int(f.readline())
                 break
 
         return num_bands, spinor, num_k
 
+
+    def parse_kpoint(self, ik):
+        '''
+        Parse block corresponding to a k point from +groupreps
+
+        Returns
+        -------
+        energies : array
+            Energy levels
+        inds_syms : list
+            Indices of symmetries in little group
+        rep : scr matrx
+            Sparse matrix with the matrices of little group operations
+        '''
+
+        num_bands, _, _ = self.parse_header()
+
+        f = open(self.file_reps, 'r')
+        f.seek(self.offsets[ik])
+
+        for line in f:
+
+            if self._record(line, 'size of little group'):
+                num_syms = int(f.readline())
+                rep = np.zeros((num_syms, num_bands, num_bands), dtype=complex)
+            elif self._record(line, 'little group'):
+                inds_syms = list(map(int, f.readline().split()))
+            elif self._record(line, 'band energies'):
+                energies = np.array(f.readline().split(), dtype=float)
+            elif self._record(line, 'little group element'):
+                isym = int(f.readline())
+                for line in f:
+                    if self._record(line, 'rep matrix'):
+                        break
+                for i in range(num_bands):
+                    line = np.array(f.readline().split(), dtype=float)
+                    rep[isym,i,:] = line[::2] + 1.0j * line[1::2]
+            if isym == num_syms - 1:
+                break
+
+        f.close()
+        rep = csr_matrix(rep)
+
+        return energies, inds_syms, rep
+
+
+                
+
+
+           
+
+                 
+                
+
+
+    def parse_k_from_groupoutput(self, ik):
+        '''
+        Temporary function to parse a coordinate of a k point from +groupoutput 
+        file. At some point, I will ask Klaus Koepernik to add k points to 
+        +groupreps
+
+        Return
+        ------
+        array
+            Coefficients of k point in FPLO's cartesian frame divided by 2pi
+        '''
+
+        f = open(self.file_kpoints, 'r')
+        for i in range(5+ik):
+            line = f.readline()
+        f.close()
+
+        return np.array(line.split(), dtype=float)
 
     def _record(self, line, label):
 

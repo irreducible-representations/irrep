@@ -197,7 +197,7 @@ class BandStructure:
         if code == 'fplo':
 
             parser = ParserFPLO(fGROUP, fREP)
-            NBin, spinor, NK = parser.parse_header()
+            NBin, spinor, NK = parser.parse_header(verbosity)
             self.Lattice, centering, order, spin_repr, translations, parities = parser.parse_group()
 
             # Write translations in direct coords wrt DFT cell vectors
@@ -323,6 +323,12 @@ class BandStructure:
             else:
                 self.Ecut = Ecut
 
+            log_message(msg, verbosity, 1)
+            msg = f"Energy cutoff in WAVECAR : {self.Ecut0}"
+            log_message(msg, verbosity, 1)
+            msg = f"Energy cutoff reduced to : {self.Ecut}"
+            log_message(msg, verbosity, 1)
+
         if onlysym:
             return
 
@@ -355,15 +361,10 @@ class BandStructure:
             raise RuntimeError("No bands to calculate")
 
         # To do: create writer of description for this class
-        msg = ('Number of k points found: {}\\'
-               'Number of bands found: {}\\'
+        msg = ('Number of k points found: {}\n'
+               'Number of bands found: {}\n'
                'Saving bands {} bands starting from {}'
                .format(NK, NBin, NBout, IBstart + 1))
-        log_message(msg, verbosity, 1)
-        msg = f"Energy cutoff in WAVECAR : {self.Ecut0}"
-        log_message(msg, verbosity, 1)
-        msg = f"Energy cutoff reduced to : {self.Ecut}"
-        log_message(msg, verbosity, 1)
 
         # Calculate vectors of reciprocal lattice
         self.RecLattice = np.zeros((3,3), dtype=float)
@@ -429,11 +430,16 @@ class BandStructure:
                 msg = f'Parsing wave functions at k-point #{ik:>3d}: {kpt}'
                 log_message(msg, verbosity, 2)
                 WF = parser.parse_kpoint(ik+1, selectG)
+
             elif code == 'gpaw':
                 kpt = kpred[ik]
                 Energy, WF, kg, kpt= parser.parse_kpoint(ik,
                                                  RecLattice=self.RecLattice,
                                                  Ecut=self.Ecut)
+
+            elif code == 'fplo':
+                kpt = parser.parse_k_from_groupoutput(ik)   # to do: ask Klaus Koepernik to add k points to +groupreps and parse from there
+                 
             
 
             # Pick energy of IBend+1 band to calculate gaps
