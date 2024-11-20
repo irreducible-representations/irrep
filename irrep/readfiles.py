@@ -22,6 +22,7 @@ import scipy
 import h5py
 from scipy.io import FortranFile as FF
 from sys import stdout
+from functools import cached_property
 
 from .gvectors import calc_gvectors, Hartree_eV
 from .utility import FortranFileR as FFR
@@ -1162,6 +1163,32 @@ class ParserFPLO:
 
         self.file_group = file_group
         self.file_reps = file_reps
+
+    @cached_property
+    def offsets_kpoints(self, verbosity=0):
+        '''
+        Go through the +groupreps file and determine the offset of the first 
+        line of each k point's block. Used later to jump directly to that line
+        without iterating thorugh the whole file
+        '''
+
+        log_message('Determining offsets of k-point blocks', verbosity, 2)
+        _, _, num_k = self.parse_header()
+        self.offsets = []
+        f = open(self.file_reps, 'r')
+        while i < NB:
+            offset = file.tell()
+            line = f.readline()
+            if self._record(line, 'size of little group'):
+                self.offsets.append(offset)
+                i += 1
+        f.close()
+        if len(self.offsets) != num_k:
+            raise RuntimeError('Number of k points in +groupreps: {}. '
+                               'Number of k point blocks found in +grouprep: {}'
+                               .format(num_k, len(self.offset)))
+        log_message('Finished determining offsets', verbosity, 2)
+
 
     def parse_group(self):
         '''

@@ -322,15 +322,6 @@ class BandStructure:
                 self.Ecut = self.Ecut0
             else:
                 self.Ecut = Ecut
-            # To do: create writer of description for this class
-            msg = ("WAVECAR contains {} k-points and {} bands.\n"
-                   "Saving {} bands starting from {} in the output"
-                   .format(NK, NBin, NBout, IBstart + 1))
-            log_message(msg, verbosity, 1)
-            msg = f"Energy cutoff in WAVECAR : {self.Ecut0}"
-            log_message(msg, verbosity, 1)
-            msg = f"Energy cutoff reduced to : {self.Ecut}"
-            log_message(msg, verbosity, 1)
 
         if onlysym:
             return
@@ -363,6 +354,16 @@ class BandStructure:
         if NBout <= 0:
             raise RuntimeError("No bands to calculate")
 
+        # To do: create writer of description for this class
+        msg = ('Number of k points found: {}\\'
+               'Number of bands found: {}\\'
+               'Saving bands {} bands starting from {}'
+               .format(NK, NBin, NBout, IBstart + 1))
+        log_message(msg, verbosity, 1)
+        msg = f"Energy cutoff in WAVECAR : {self.Ecut0}"
+        log_message(msg, verbosity, 1)
+        msg = f"Energy cutoff reduced to : {self.Ecut}"
+        log_message(msg, verbosity, 1)
 
         # Calculate vectors of reciprocal lattice
         self.RecLattice = np.zeros((3,3), dtype=float)
