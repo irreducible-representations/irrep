@@ -58,6 +58,9 @@ class Kpoint:
     Energy : array
         Energy levels of the states with band indices between `IBstart` and 
         `IBend`.
+    rep : array, default=None
+        Array of representation matrices of traces parsed from FPLO's 
+        +groupoutput file.
     ig : array
         Array returned by :func:`~gvectors.sortIG`. It contains data about the 
         plane waves in the expansion of wave functions.
@@ -148,6 +151,7 @@ class Kpoint:
         kpt=None,
         WF=None,  # first arg added for abinit (to be kept at the end)
         Energy=None,
+        rep=None,
         ig=None,
         upper=None,
         symmetries=None,
@@ -164,7 +168,6 @@ class Kpoint:
         self.WF = WF
         self.Energy_raw = Energy
         self.ig = ig
-        self.upper = upper
 
         if normalize:
             self.WF /= (
@@ -178,15 +181,16 @@ class Kpoint:
         for symop in symmetries_SG:
             if symop.ind not in symmetries:
                 continue
-            k_rotated = np.dot(np.linalg.inv(symop.rotation).T, self.k)
-            dkpt = np.array(np.round(k_rotated - self.k), dtype=int)
-            if np.allclose(dkpt, k_rotated - self.k):
-                self.little_group.append(symop)
+            if rep is None:  # in FPLO (rep != None) the little group was given
+                k_rotated = np.dot(np.linalg.inv(symop.rotation).T, self.k)
+                dkpt = np.array(np.round(k_rotated - self.k), dtype=int)
+                if np.allclose(dkpt, k_rotated - self.k):
+                    self.little_group.append(symop)
         
-        self.__init__traces(**kwargs_kpoint)
+        self.__init__traces(**kwargs_kpoint, rep=rep)
 
     def __init__traces(self, degen_thresh=1e-8, verbosity=0, calculate_traces=True, refUC=np.eye(3), shiftUC=np.zeros(3), 
-                       symmetries_tables=None, save_wf=True):
+                       symmetries_tables=None, save_wf=True, rep=None):
         """
         Continuation of __init__ method. Calculates traces of symmetry eigenvalues and irreps, when asked. 
         Separated because it is used in the `copy_sub` method.
@@ -214,6 +218,8 @@ class Kpoint:
             traces.
         verbosity : int
             Verbosity level. Default set to minimalistic printing
+        rep : array, default=None
+            Array of matrices of symmetries from FPLO's +groupoutput file. 
         """
         
         self.k_refUC = np.dot(refUC.T, self.k)
@@ -226,9 +232,15 @@ class Kpoint:
         self.block_indices = get_block_indices(self.Energy_raw, thresh=degen_thresh, cyclic=False)
         self.degeneracies = self.block_indices[:, 1] - self.block_indices[:, 0]
 
-        # Calculate traces
+        if rep is not None:  # FPLO case
+            if save_wf:
+                traces = np.diagonal(rep, axis1=1, axis2=2)
+            else:
+                traces = rep
+        else:
+            traces = None
         if calculate_traces:
-            self.char, self.char_refUC, self.Energy_mean = self.calculate_traces(refUC, shiftUC, symmetries_tables, verbosity, use_blocks=False)
+            self.char, self.char_refUC, self.Energy_mean = self.calculate_traces(refUC, shiftUC, symmetries_tables, verbosity, use_blocks=False, traces=traces)
 
             # Determine number of band inversions based on parity
             found = False
@@ -548,7 +560,7 @@ class Kpoint:
 
         return subspaces
 
-    def calculate_traces(self, refUC, shiftUC, symmetries_tables, verbosity=0, use_blocks=True):
+    def calculate_traces(self, refUC, shiftUC, symmetries_tables, verbosity=0, use_blocks=True, traces=None):
         '''
         Calculate traces of symmetry operations
 
@@ -566,7 +578,10 @@ class Kpoint:
             Attribute `symmetries` of class `IrrepTable`. Each component is an 
             instance of class `SymopTable` corresponding to a symmetry operation
             in the "point-group" of the space-group.
-        
+        traces : array, default=None
+            Array of traces parsed from FPLO's +groupoutput file. Not need to 
+            calculate traces.
+
         Returns
         -------
         char : array
@@ -579,20 +594,24 @@ class Kpoint:
         '''
 
         # Put all traces in an array. Rows (cols) correspond to syms (wavefunc)
-        char = []
-        for symop in self.little_group:
-            char.append(
-                    symm_eigenvalues(
-                        self.k,
-                        self.WF,
-                        self.ig,
-                        symop.rotation,
-                        symop.spinor_rotation,
-                        symop.translation,
-                        self.spinor,
-                        block_ind=self.block_indices if use_blocks else None
-                    ))
-        char = np.array(char)
+        if traces is None:
+            char = []
+            for symop in self.little_group:
+                char.append(
+                        symm_eigenvalues(
+                            self.k,
+                            self.WF,
+                            self.ig,
+                            symop.rotation,
+                            symop.spinor_rotation,
+                            symop.translation,
+                            self.spinor,
+                            block_ind=self.block_indices if use_blocks else None
+                        ))
+            char = np.array(char)
+        else:
+            char = traces  # FPLO case, where traces are part of input
+
 
         # Check that number of irreps is int
         Nirrep = np.linalg.norm(char.sum(axis=1)) ** 2 / char.shape[0]

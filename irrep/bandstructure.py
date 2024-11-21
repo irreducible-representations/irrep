@@ -197,7 +197,7 @@ class BandStructure:
         if code == 'fplo':
 
             parser = ParserFPLO(fGROUP, fREP)
-            NBin, spinor, NK = parser.parse_header(verbosity)
+            NBin, self.spinor, NK = parser.parse_header(verbosity)
             self.Lattice, centering, order, spin_repr, translations, parities = parser.parse_group()
 
             # Write translations in direct coords wrt DFT cell vectors
@@ -469,6 +469,7 @@ class BandStructure:
                 else:
                     rep = rep[:,IBstart:IBend]
                 kp = Kpoint(
+                    rep=rep,
                     ik=ik,
                     kpt=kpt,
                     Energy=Energy,
@@ -496,8 +497,8 @@ class BandStructure:
                     kwargs_kpoint=self.kwargs_kpoint,
                     normalize=normalize,
                     )
+                del WF
             self.kpoints.append(kp)
-        del WF
 
     @property
     def num_k(self):
