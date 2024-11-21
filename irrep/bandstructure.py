@@ -479,7 +479,8 @@ class BandStructure:
                     symmetries_SG=self.spacegroup.symmetries,
                     spinor=self.spinor,
                     kwargs_kpoint=self.kwargs_kpoint,
-                    normalize=False
+                    normalize=False,
+                    symmetries=inds_syms
                     )
             else:
                 WF = WF[IBstart:IBend]

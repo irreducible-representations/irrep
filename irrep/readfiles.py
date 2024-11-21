@@ -1350,6 +1350,7 @@ class ParserFPLO:
         if indices is None:
             indices = np.arange(num_bands)
 
+        indices_in_symmetries = []
         if save_matrices:
             rep = np.zeros((len(indices), num_bands, num_bands), dtype=complex)
         else:
@@ -1357,18 +1358,18 @@ class ParserFPLO:
 
         f = open(self.file_reps, 'r')
         f.seek(self.offsets_kpoints[ik])
+        print('indices:', indices, len(indices))
 
         for line in f:
 
             if self._record(line, 'size of little group'):
                 num_syms = int(f.readline())
-            elif self._record(line, 'little group'):
-                inds_syms = list(map(int, f.readline().split()))
+            elif self._record(line, 'size of little group'):
+                inds_parsed = list(map(int, f.readline().split()))
             elif self._record(line, 'band energies'):
                 energies = np.array(f.readline().split(), dtype=float)
             elif self._record(line, 'little group element'):
                 isym = int(f.readline())
-                ind = np.where(indices == isym)[0][0]  # index of sym in tables
                 for line in f:
                     if self._record(line, 'rep matrix'):
                         break
@@ -1376,18 +1377,22 @@ class ParserFPLO:
                     line = np.array(f.readline().split(), dtype=float)
                     if isym not in indices:  # +2pi symmetry, skip it
                         continue
-                    elif save_matrices:
+                    ind = np.where(indices == isym)[0][0]  # index of sym in tables
+                    indices_in_symmetries.append(ind)
+                    if save_matrices:
                         rep[ind,i,:] = line[::2] + 1.0j * line[1::2]
                     else:
                         rep[ind,i] = line[2*i] + 1.0j * line[2*i+1]
+
                 if isym == num_syms - 1:
                     break
 
         f.close()
+        indices_in_symmetries = np.array(indices_in_symmetries) + 1
         if save_matrices:
             rep = csr_matrix(rep)
 
-        return energies, inds_syms, rep
+        return energies, indices_in_symmetries, rep
 
 
     def parse_k_from_groupoutput(self, ik):

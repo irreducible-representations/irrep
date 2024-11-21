@@ -157,6 +157,7 @@ class Kpoint:
         symmetries=None,
         kwargs_kpoint={},
         normalize=True,
+        inds_syms=None
         ):
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
@@ -186,6 +187,8 @@ class Kpoint:
                 dkpt = np.array(np.round(k_rotated - self.k), dtype=int)
                 if np.allclose(dkpt, k_rotated - self.k):
                     self.little_group.append(symop)
+            else:
+                self.little_group.append(symop)
         
         self.__init__traces(**kwargs_kpoint, rep=rep)
 
@@ -621,9 +624,11 @@ class Kpoint:
         Nirrep = int(round(Nirrep))
 
         # Sum traces of degenerate states. Rows (cols) correspond to states (syms)
+        #print(char.shape)  #test
         char = np.array(
             [char[:, start:end].sum(axis=1) for start, end in self.block_indices]
             )
+        #print(char.shape)  #test
 
         # Take average of energies over degenerate states
         Energy_mean = np.array(
@@ -677,6 +682,7 @@ class Kpoint:
                 for ch in self.char:
                     multiplicities = {}
                     for ir in irreptable:
+                        #print(irreptable[ir][0])
                         multipl = np.dot(np.array([irreptable[ir][sym.ind] for sym in self.little_group]),
                                          ch.conj()
                                          ) / len(ch)

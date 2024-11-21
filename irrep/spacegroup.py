@@ -904,6 +904,10 @@ class SpaceGroup():
 
             self.refUC, self.shiftUC = self.conv_from_prim()
 
+            # TEMPORARY ASSIGNEMENT! To do: implement determination of space group
+            self.number = 221
+            self.name = 'Pm-3m'
+
             # TODO: Implement identification of space group number
             self.symmetries_tables = IrrepTable(221, self.spinor, v=verbosity).symmetries
 
@@ -1407,7 +1411,7 @@ class SpaceGroup():
                 s += '  '.join(['{:7.4f}'.format(x) for x in pos2])
                 print(s)
 
-        if print_crystal:
+        if print_symmetries:
 
             print()
             print('\n ---------- SPACE GROUP ----------- \n')
