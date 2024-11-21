@@ -758,9 +758,13 @@ class SpaceGroup():
                 translations = dataset.translations
             time_reversal_list = [False] * len(rotations)  # to do: change it to implement grey groups
 
-        else:  # Magnetic moments
-
+        elif hasattr(magmom, "__len__"):  # Magnetic moments from input
             self.magnetic = True
+        else: # --time-reversal set
+            self.magnetic = True
+            magmom = np.zeros((len(self.positions), 3), dtype=float)
+
+        if self.magnetic:
             dataset = spglib.get_magnetic_symmetry_dataset((*cell,
                                                             magmom))
             if dataset is None:                                                 
@@ -825,48 +829,36 @@ class SpaceGroup():
         if no_match_symmetries:
             self.spin_transf = np.eye(2)  # for printing
         else:
-            au_symmetries = False
             sorted_symmetries = []
-            while True:
-                try:
-                    ind, dt, signs, U = self.match_symmetries(
-                                            signs=self.spinor,
-                                            trans_thresh=trans_thresh,
-                                            au_symmetries=au_symmetries
-                                            )
-                    args = np.argsort(ind)
-                    if not au_symmetries:
-                        symmetries = self.u_symmetries
-                        self.spin_transf = U
-                        N = 0
-                    else:
-                        symmetries = self.au_symmetries
-                        N = len(sorted_symmetries)
-                    for i,i_ind in enumerate(args):
-                        symmetries[i_ind].ind = i+1 + N
-                        symmetries[i_ind].sign = signs[i_ind]
-                        sorted_symmetries.append(symmetries[i_ind])
-                except RuntimeError:
-                    if search_cell:  # symmetries must match to identify irreps
-                        raise RuntimeError((
-                            "refUC and shiftUC don't transform the cell to one where "
-                            "symmetries are identical to those read from tables. "
-                            "Try without specifying refUC and shiftUC."
-                            ))
-                    elif refUC is not None or shiftUC is not None:
-                        # User specified refUC or shiftUC in CLI. He/She may
-                        # want the traces in a cell that is not neither the
-                        # one in tables nor the DFT one
-                        msg = ("WARNING: refUC and shiftUC don't transform the cell to "
-                               "one where symmetries are identical to those read from "
-                               "tables. If you want to achieve the same cell as in "
-                               "tables, try not specifying refUC and shiftUC.")
-                        log_message(msg, verbosity, 1)
-                        pass
-                if au_symmetries or len(self.au_symmetries) == 0:
-                    break
-                else:
-                    au_symmetries = True
+            try:
+                ind, dt, signs, U = self.match_symmetries(
+                                        signs=self.spinor,
+                                        trans_thresh=trans_thresh,
+                                        only_u_symmetries=False
+                                        )
+                args = np.argsort(ind)
+                self.spin_transf = U
+                symmetries = self.symmetries
+                for i,i_ind in enumerate(args):
+                    symmetries[i_ind].ind = i+1
+                    symmetries[i_ind].sign = signs[i_ind]
+                    sorted_symmetries.append(symmetries[i_ind])
+            except RuntimeError:
+                if search_cell:  # symmetries must match to identify irreps
+                    raise RuntimeError((
+                        "refUC and shiftUC don't transform the cell to one where "
+                        "symmetries are identical to those read from tables. "
+                        "Try without specifying refUC and shiftUC."
+                        ))
+                elif refUC is not None or shiftUC is not None:
+                    # User specified refUC or shiftUC in CLI. He/She may
+                    # want the traces in a cell that is not neither the
+                    # one in tables nor the DFT one
+                    msg = ("WARNING: refUC and shiftUC don't transform the cell to "
+                            "one where symmetries are identical to those read from "
+                            "tables. If you want to achieve the same cell as in "
+                            "tables, try not specifying refUC and shiftUC.")
+                    log_message(msg, verbosity, 1)
             self.symmetries = sorted_symmetries
 
     @property
@@ -1334,7 +1326,8 @@ class SpaceGroup():
                         ind, dt, signs, _ = self.match_symmetries(
                                             refUC,
                                             shiftUC,
-                                            trans_thresh=trans_thresh
+                                            trans_thresh=trans_thresh,
+                                            only_u_symmetries=True
                                             )
                         msg = (f'ShiftUC achieved with the centering: {r_center}')
                         log_message(msg, verbosity, 1)
@@ -1352,7 +1345,8 @@ class SpaceGroup():
                         ind, dt, signs, _ = self.match_symmetries(
                                             refUC,
                                             shiftUC,
-                                            trans_thresh=trans_thresh
+                                            trans_thresh=trans_thresh,
+                                            only_u_symmetries=True
                                             )
                         msg = ('ShiftUC achieved in 2 steps:\n'
                                '  (1) Place origin of primitive cell on '
@@ -1377,7 +1371,7 @@ class SpaceGroup():
             shiftUC=None,
             signs=False,
             trans_thresh=1e-5,
-            au_symmetries=False
+            only_u_symmetries=False
             ):
         """
         Matches symmetry operations of two lists. Translational parts 
@@ -1397,6 +1391,8 @@ class SpaceGroup():
             each symmetry.
         trans_thresh : float, default=1e-5
             Threshold used to compare translational parts of symmetries.
+        only_y_symmetries: boolean, default=False
+            Only match unitary symmetries. Useful when determining the centering
         
         Returns
         -------
@@ -1422,12 +1418,13 @@ class SpaceGroup():
 
         ind = []
         dt = []
-        if au_symmetries:
-            symmetries = self.au_symmetries
-            symmetries_tables = self.au_symmetries_tables
-        else:
+        if only_u_symmetries:
             symmetries = self.u_symmetries
             symmetries_tables = self.u_symmetries_tables
+        else:
+            symmetries = self.symmetries
+            symmetries_tables = self.u_symmetries_tables + self.au_symmetries_tables
+        
 
         for j, sym in enumerate(symmetries):
             R = sym.rotation_refUC(refUC)
@@ -1437,7 +1434,7 @@ class SpaceGroup():
                 t1 = refUC.dot(sym2.t - t) % 1
                 #t1 = np.dot(sym2.t - t, refUC) % 1
                 t1[1 - t1 < trans_thresh] = 0
-                if np.allclose(R, sym2.R):
+                if np.allclose(R, sym2.R) and sym.time_reversal == sym2.time_reversal:
                     if np.allclose(t1, [0, 0, 0], atol=trans_thresh):
                         ind.append(i)  # au symmetries labeled from 0
                         dt.append(sym2.t - t)
@@ -1475,10 +1472,7 @@ class SpaceGroup():
                      "rotational part. \nR(found) = \n{} \nt(found) = {}"
                      .format(R, t))
 
-        if self.au_symmetries:
-            order = len(self.au_symmetries)
-        else:
-            order = len(self.u_symmetries)
+        order = len(symmetries)
         if len(set(ind)) != order:
             raise RuntimeError(
                 "Error in matching symmetries detected by spglib with the \

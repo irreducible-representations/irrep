@@ -411,14 +411,14 @@ class IrrepTable:
         '''
         List of unitary symmetries
         '''
-        return list(filter(lambda x: not x.time_reversal, self.symmetries))
+        return [x for x in self.symmetries if not x.time_reversal]
 
     @property
     def au_symmetries(self):
         '''
         List of unitary antisymmetries
         '''
-        return list(filter(lambda x: x.time_reversal, self.symmetries))
+        return [x for x in self.symmetries if x.time_reversal]
 
     def show(self):
         '''

@@ -300,6 +300,12 @@ do not hesitate to contact the author:
                     help="File to save the output in JSON format. (without "
                     "extension, the '.json' will be added automatically)"
 )
+@click.option(
+    "--time-reversal", 
+    flag_value=True, 
+    default=False, 
+    help=("Consider TRS a symmetry and use the corresponding gray group.")
+    )
 def cli(
     ecut,
     fwav,
@@ -333,6 +339,7 @@ def cli(
     correct_ecut0,
     trans_thresh,
     magmom,
+    time_reversal,
     v,
     json_file
 ):
@@ -388,23 +395,14 @@ def cli(
         try:
             magnetic_moments = np.loadtxt(magmom)
         except FileNotFoundError:
-            print("The magnetic moments' file was not found: {}".format(magmom))
+            print("The magnetic moments file was not found: {}".format(magmom))
         except ValueError:
-            print("Error reading magnetic moments' file: {}".format(magmom))
+            print("Error reading magnetic moments file: {}".format(magmom))
+    elif time_reversal:
+        magnetic_moments = True
     else:
         magnetic_moments = None
 
-    if magmom is not None:
-        try:
-            magnetic_moments = np.loadtxt(magmom)
-        except FileNotFoundError as e:
-            print(f"The magnetic moments file was not found: {magmom}")
-            raise e
-        except ValueError as e:
-            print(f"Error reading magnetic moments file {magmom}")
-            raise e
-    else:
-        magnetic_moments = None
 
     bandstr = BandStructure(
         fWAV=fwav,
