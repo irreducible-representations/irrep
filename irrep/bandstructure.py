@@ -323,7 +323,6 @@ class BandStructure:
             else:
                 self.Ecut = Ecut
 
-            log_message(msg, verbosity, 1)
             msg = f"Energy cutoff in WAVECAR : {self.Ecut0}"
             log_message(msg, verbosity, 1)
             msg = f"Energy cutoff reduced to : {self.Ecut}"
@@ -439,22 +438,17 @@ class BandStructure:
 
             elif code == 'fplo':
                 kpt = parser.parse_k_from_groupoutput(ik)   # to do: ask Klaus Koepernik to add k points to +groupreps and parse from there
-                Energy, inds_syms, reps = parser.parse_kpoint(
+                Energy, inds_syms, rep = parser.parse_kpoint(
                                               ik,
                                               self.spacegroup.inds_fplo,
                                               save_wf
                                               )
-            
 
             # Pick energy of IBend+1 band to calculate gaps
             try:
                 upper = Energy[IBend] - self.efermi
             except BaseException:
                 upper = np.nan
-
-            # Preserve only bands in between IBstart and IBend
-            WF = WF[IBstart:IBend]
-            Energy = Energy[IBstart:IBend] - self.efermi
 
             # saved to further use in Separate()
             self.kwargs_kpoint=dict(
@@ -467,20 +461,41 @@ class BandStructure:
                 calculate_traces=calculate_traces,
                 )
 
-            kp = Kpoint(
-                ik=ik,
-                kpt=kpt,
-                WF=WF,
-                Energy=Energy,
-                ig=kg,
-                upper=upper,
-                num_bands=NBout,
-                RecLattice=self.RecLattice,
-                symmetries_SG=self.spacegroup.symmetries,
-                spinor=self.spinor,
-                kwargs_kpoint=self.kwargs_kpoint,
-                normalize=normalize,
-                )
+            # Preserve only bands in between IBstart and IBend
+            Energy = Energy[IBstart:IBend] - self.efermi
+            if code == 'fplo':
+                if save_wf:
+                    rep = rep[:,IBstart:IBend,IBstart:IBend]
+                else:
+                    rep = rep[:,IBstart:IBend]
+                kp = Kpoint(
+                    ik=ik,
+                    kpt=kpt,
+                    Energy=Energy,
+                    upper=upper,
+                    num_bands=NBout,
+                    RecLattice=self.RecLattice,
+                    symmetries_SG=self.spacegroup.symmetries,
+                    spinor=self.spinor,
+                    kwargs_kpoint=self.kwargs_kpoint,
+                    normalize=False
+                    )
+            else:
+                WF = WF[IBstart:IBend]
+                kp = Kpoint(
+                    ik=ik,
+                    kpt=kpt,
+                    WF=WF,
+                    Energy=Energy,
+                    ig=kg,
+                    upper=upper,
+                    num_bands=NBout,
+                    RecLattice=self.RecLattice,
+                    symmetries_SG=self.spacegroup.symmetries,
+                    spinor=self.spinor,
+                    kwargs_kpoint=self.kwargs_kpoint,
+                    normalize=normalize,
+                    )
             self.kpoints.append(kp)
         del WF
 
