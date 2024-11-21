@@ -873,7 +873,7 @@ class SpaceGroup():
         '''
         List of unitary symmetries
         '''
-        return list(filter(lambda x: not x.time_reversal, self.symmetries))
+        return [x for x in self.symmetries if not x.time_reversal]
 
     @property
     def au_symmetries(self):
@@ -881,7 +881,7 @@ class SpaceGroup():
         List of antiunitary symmetries
         '''
         if self.magnetic and self.include_TR:
-            return list(filter(lambda x: x.time_reversal, self.symmetries))
+            return [x for x in self.symmetries if x.time_reversal]
         else:
             return []
 
