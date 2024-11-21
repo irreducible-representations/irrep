@@ -439,7 +439,11 @@ class BandStructure:
 
             elif code == 'fplo':
                 kpt = parser.parse_k_from_groupoutput(ik)   # to do: ask Klaus Koepernik to add k points to +groupreps and parse from there
-                 
+                Energy, inds_syms, reps = parser.parse_kpoint(
+                                              ik,
+                                              self.spacegroup.inds_fplo,
+                                              save_wf
+                                              )
             
 
             # Pick energy of IBend+1 band to calculate gaps

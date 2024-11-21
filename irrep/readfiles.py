@@ -1192,7 +1192,7 @@ class ParserFPLO:
         if len(list_offsets) != num_k:
             raise RuntimeError('Number of k points in +groupreps: {}. '
                                'Number of k point blocks found in +grouprep: {}'
-                               .format(num_k, len(self.offset)))
+                               .format(num_k, len(list_offsets)))
         log_message('Finished determining offsets', self.verbosity, 2)
 
         return list_offsets
@@ -1319,9 +1319,21 @@ class ParserFPLO:
         return num_bands, spinor, num_k
 
 
-    def parse_kpoint(self, ik):
+    def parse_kpoint(self, ik, indices=None, save_matrices=False):
         '''
         Parse block corresponding to a k point from +groupreps
+
+        Parameters
+        ----------
+        ik : int
+            Index of the k point to parse
+        indices : array
+            Indices of symmetries without +2pi rotation in FPLO's order. 
+            Only matrices of these symmetries will be parsed, and ordered 
+            according to this array. By default, include all symmetries.
+        save_matrices : bool
+            If `False`, only traces will be returned. If `True`, matrices 
+            will be returned, as crs sparse matrices.
 
         Returns
         -------
@@ -1335,42 +1347,47 @@ class ParserFPLO:
 
         num_bands, _, _ = self.parse_header()
 
+        if indices is None:
+            indices = np.arange(num_bands)
+
+        if save_matrices:
+            rep = np.zeros((len(indices), num_bands, num_bands), dtype=complex)
+        else:
+            rep =np.zeros((len(indices), num_bands), dtype=complex)
+
         f = open(self.file_reps, 'r')
-        f.seek(self.offsets[ik])
+        f.seek(self.offsets_kpoints[ik])
 
         for line in f:
 
             if self._record(line, 'size of little group'):
                 num_syms = int(f.readline())
-                rep = np.zeros((num_syms, num_bands, num_bands), dtype=complex)
             elif self._record(line, 'little group'):
                 inds_syms = list(map(int, f.readline().split()))
             elif self._record(line, 'band energies'):
                 energies = np.array(f.readline().split(), dtype=float)
             elif self._record(line, 'little group element'):
                 isym = int(f.readline())
+                ind = np.where(indices == isym)[0][0]  # index of sym in tables
                 for line in f:
                     if self._record(line, 'rep matrix'):
                         break
                 for i in range(num_bands):
                     line = np.array(f.readline().split(), dtype=float)
-                    rep[isym,i,:] = line[::2] + 1.0j * line[1::2]
-            if isym == num_syms - 1:
-                break
+                    if isym not in indices:  # +2pi symmetry, skip it
+                        continue
+                    elif save_matrices:
+                        rep[ind,i,:] = line[::2] + 1.0j * line[1::2]
+                    else:
+                        rep[ind,i] = line[2*i] + 1.0j * line[2*i+1]
+                if isym == num_syms - 1:
+                    break
 
         f.close()
-        rep = csr_matrix(rep)
+        if save_matrices:
+            rep = csr_matrix(rep)
 
         return energies, inds_syms, rep
-
-
-                
-
-
-           
-
-                 
-                
 
 
     def parse_k_from_groupoutput(self, ik):
