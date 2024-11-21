@@ -731,6 +731,7 @@ class SpaceGroup():
         self.typat = cell[2]
         self.alat=alat
         self.magmom = magmom
+        self.include_TR = include_TR
 
         if from_sym_file is not None or not search_cell:
             no_match_symmetries = True
@@ -989,10 +990,6 @@ class SpaceGroup():
             if symmetries is None or symop.ind in symmetries:
                 symop.show(refUC=self.refUC, shiftUC=self.shiftUC, U=self.spin_transf)
 
-        if self.magnetic:
-            for symop in self.au_symmetries:
-                if symmetries is None or symop.ind in symmetries:
-                    symop.show(refUC=self.refUC, shiftUC=self.shiftUC, U=self.spin_transf)
 
     def write_sym_file(self, filename, alat=None):
         """
@@ -1037,8 +1034,6 @@ class SpaceGroup():
         res = f" {self.size}\n"
         # In the following lines, one symmetry operation for each operation of the point group n"""
         for symop in self.symmetries:
-            res += symop.str2(refUC=self.refUC, shiftUC=self.shiftUC, write_tr=self.magnetic)
-        for symop in self.au_symmetries:
             res += symop.str2(refUC=self.refUC, shiftUC=self.shiftUC, write_tr=self.magnetic)
         return(res)
 
