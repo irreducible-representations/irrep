@@ -738,7 +738,7 @@ class SpaceGroup():
         else:
             no_match_symmetries = False
 
-        if magmom is None:  # No magnetic moments
+        if magmom is None:  # No magnetic moments magmom = None
 
             self.magnetic = False
             dataset = spglib.get_symmetry_dataset(cell)
@@ -758,9 +758,9 @@ class SpaceGroup():
                 translations = dataset.translations
             time_reversal_list = [False] * len(rotations)  # to do: change it to implement grey groups
 
-        elif hasattr(magmom, "__len__"):  # Magnetic moments from input
+        elif hasattr(magmom, "__len__"):  # Magnetic moments from input magmom is array
             self.magnetic = True
-        else: # --time-reversal set
+        else: # --time-reversal set means magmom = True
             self.magnetic = True
             magmom = np.zeros((len(self.positions), 3), dtype=float)
 
