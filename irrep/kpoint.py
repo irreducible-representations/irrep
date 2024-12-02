@@ -667,7 +667,7 @@ class Kpoint:
                         ir_characters = np.array([irreptable[ir][sym.ind] for sym in self.little_group])
                         # some coreps are not normalized
                         # this is len(ch) for all irreps
-                        normalization = (ir_characters**2).sum()
+                        normalization = (np.abs(ir_characters) ** 2).sum()
                         multipl = np.dot(ir_characters, ch.conj()) / normalization
                         if abs(multipl) > 1e-3:
                             multiplicities[ir] = multipl
