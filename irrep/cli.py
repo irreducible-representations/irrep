@@ -394,6 +394,8 @@ def cli(
     if magmom is not None:
         try:
             magnetic_moments = np.loadtxt(magmom)
+            if magnetic_moments.ndim == 1:
+                magnetic_moments = np.expand_dims(magnetic_moments, axis=0)
         except FileNotFoundError:
             print("The magnetic moments file was not found: {}".format(magmom))
         except ValueError:
