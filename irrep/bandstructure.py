@@ -183,6 +183,7 @@ class BandStructure:
         normalize=True,
         magmom=None,
         include_TR=False,
+        sg=None
     ):
         
         # if include_TR:
@@ -197,7 +198,6 @@ class BandStructure:
         if code == 'fplo':
 
             parser = ParserFPLO(fGROUP, fREP)
-            NBin, self.spinor, NK = parser.parse_header(verbosity)
             self.Lattice, centering, order, spin_repr, translations, parities = parser.parse_group()
 
             # Write translations in direct coords wrt DFT cell vectors
@@ -214,7 +214,12 @@ class BandStructure:
                                   search_cell=search_cell,
                                   trans_thresh=trans_thresh,
                                   verbosity=verbosity,
+                                  sg=sg
                                   )
+
+            if onlysym:
+                return
+            NBin, self.spinor, NK = parser.parse_header(verbosity)
 
         else:
 
@@ -314,9 +319,12 @@ class BandStructure:
                                   alat=alat,
                                   from_sym_file=from_sym_file,
                                   magmom = magmom,
-                                  include_TR=include_TR
+                                  include_TR=include_TR,
+                                  sg=sg
                                   )
 
+            if onlysym:
+                return
             # Set cutoff to calculate traces
             if Ecut is None or Ecut > self.Ecut0 or Ecut <= 0:
                 self.Ecut = self.Ecut0
@@ -328,8 +336,6 @@ class BandStructure:
             msg = f"Energy cutoff reduced to : {self.Ecut}"
             log_message(msg, verbosity, 1)
 
-        if onlysym:
-            return
 
         # Set Fermi energy
         if EF.lower() == "auto":
