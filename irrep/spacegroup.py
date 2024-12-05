@@ -857,6 +857,7 @@ class SpaceGroup():
             verbosity=0,
             magmom=None,
             include_TR=False,
+            sg=None
             ):
 
         self.Lattice = Lattice
@@ -905,11 +906,11 @@ class SpaceGroup():
             self.refUC, self.shiftUC = self.conv_from_prim()
 
             # TEMPORARY ASSIGNEMENT! To do: implement determination of space group
-            self.number = 221
+            self.number = sg
             self.name = 'Pm-3m'
 
             # TODO: Implement identification of space group number
-            self.symmetries_tables = IrrepTable(221, self.spinor, v=verbosity).symmetries
+            self.symmetries_tables = IrrepTable(sg, self.spinor, v=verbosity).symmetries
 
             if not no_match_symmetries:
                 try:
@@ -945,11 +946,15 @@ class SpaceGroup():
                         pass
                         
 
-            # Test
-            # Identify the space group from O(3) matrices of primitive cell
-            #spgtype = spglib.get_spacegroup_type_from_symmetry(self.rotations,
-            #                                                  self.translations,
+            ## Test
+            ## Identify the space group from O(3) matrices of primitive cell
+            #rotations_refUC = [sym.rotation_refUC(self.refUC) for sym in self.symmetries]
+            #translations_refUC = [sym.translation_refUC(self.refUC, np.zeros(3)) for sym in self.symmetries]
+            #Lattice_refUC = np.dot(self.Lattice.T, self.refUC).T
+            #spgtype = spglib.get_spacegroup_type_from_symmetry(rotations_refUC,
+            #                                                  translations_refUC,
             #                                                  lattice=self.Lattice)
+            #print(spgtype.number);exit()
             #for sym in self.symmetries:
             #    sym.show()
 
@@ -1048,6 +1053,9 @@ class SpaceGroup():
                         log_message(msg, verbosity, 1)
                         pass
 
+
+        self.cell_dft = Cell(Lattice)
+        self.cell_conv = Cell(np.dot(self.Lattice.T, self.refUC).T)
 
 
     def _findsym(self, cell, from_sym_file, alat, magmom=None, include_TR=False):
@@ -1425,6 +1433,26 @@ class SpaceGroup():
                   + "        | {} |\n".format("".join(["{:8.4f}".format(el) for el in refUC_print[2]]))
                   )
 
+            if not print_crystal:  # print cell vectors here
+                vecs_refUC = np.dot(self.Lattice.T, self.refUC).T
+                #vecs_refUC = np.dot(self.refUC, self.Lattice)
+                print('Cell vectors in angstroms:\n')
+                print('{:^32}|{:^32}'.format('Vectors of DFT cell', 'Vectors of REF. cell'))
+                for i in range(3):
+                    vec1 = self.Lattice[i]
+                    vec2 = vecs_refUC[i]
+                    s = 'a{:1d} = {:7.4f}  {:7.4f}  {:7.4f}  '.format(i, vec1[0], vec1[1], vec1[2])
+                    s += '|  '
+                    s += 'a{:1d} = {:7.4f}  {:7.4f}  {:7.4f}'.format(i, vec2[0], vec2[1], vec2[2])
+                    print(s)
+                print()
+                print('Lattice parameters in DFT cell:')
+                self.cell_dft.show()
+                print()
+                print('Lattice parameters in conventional cell:')
+                self.cell_conv.show()
+                
+
             for symop in self.symmetries:
                 if symmetries is None or symop.ind in symmetries:
                     symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
@@ -1663,6 +1691,7 @@ class SpaceGroup():
     def conv_from_prim(self):
 
         symmetries = [sym for sym in self.symmetries if not sym.d]
+        print('Lattice prim:\n',self.Lattice)
 
         # Determine primary direction and primary rotation's order
         if self.laue_group == '-1':
@@ -1763,7 +1792,7 @@ class SpaceGroup():
             M[i] *= lcm(*components)
             smallest_nonzero = np.min(M[i,np.where(M[i]>1e-3)[0]])
             M[i] /= smallest_nonzero
-        print(f'vecs after integerization:\n{M.T}')
+        print(f'vecs after integerization (cols):\n{np.round(M.T,4)}')
 
         M = M.T  # vectors by columns
         shiftUC = np.zeros(3)  # determination not implemented yet
@@ -2101,6 +2130,51 @@ class SpaceGroup():
                         )
         vecs = np.vstack([vecs + r for r in self.vecs_centering()])
         return vecs
+
+
+class Cell:
+
+    def __init__(self, Lattice):
+        self.vec1 = Lattice[0]
+        self.vec2 = Lattice[1]
+        self.vec3 = Lattice[2]
+
+    @property
+    def a(self):
+        return np.linalg.norm(self.vec1)
+
+    @property
+    def b(self):
+        return np.linalg.norm(self.vec2)
+
+    @property
+    def c(self):
+        return np.linalg.norm(self.vec3)
+
+    @property
+    def alpha(self):
+        alpha = (self.vec2 @ self.vec3) / (self.b * self.c)
+        alpha = np.arccos(alpha)
+        return alpha
+
+    @property
+    def beta(self):
+        beta = (self.vec1 @ self.vec3) / (self.a * self.c)
+        beta = np.arccos(beta)
+        return beta
+
+    @property
+    def gamma(self):
+        gamma = (self.vec1 @ self.vec2) / (self.a * self.b)
+        gamma = np.arccos(gamma)
+        return gamma
+
+    def show(self):
+        print()
+        print(f'a = {self.a:10.4f} angs  |  alpha = {self.alpha/np.pi*180:6.4f}')
+        print(f'b = {self.b:10.4f} angs  |  beta = {self.beta/np.pi*180:6.4f}')
+        print(f'c = {self.c:10.4f} angs  |  gamma = {self.gamma/np.pi*180:6.4f}')
+        print()
 
 
 def read_sym_file(fname):

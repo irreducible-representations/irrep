@@ -306,6 +306,11 @@ do not hesitate to contact the author:
                     help="File to save the output in JSON format. (without "
                     "extension, the '.json' will be added automatically)"
 )
+@click.option("-sg",
+                default=None,
+                 type=int,
+                    help="SG number (temporary)"
+)
 def cli(
     ecut,
     fwav,
@@ -341,12 +346,17 @@ def cli(
     correct_ecut0,
     trans_thresh,
     v,
-    json_file
+    json_file,
+    sg
 ):
     """
     Defines the "irrep" command-line tool interface.
     """
     # TODO: later, this can be split up into separate sub-commands (e.g. for zak, etc.)
+
+    # tmp, remove at some point
+    if code.lower() != 'fplo':
+        sg = None
 
     # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
     if refuc:
@@ -412,7 +422,8 @@ def cli(
         degen_thresh=degenthresh,
         save_wf=save_wf,
         verbosity=verbosity,
-        from_sym_file=from_sym_file
+        from_sym_file=from_sym_file,
+        sg=sg
     )
 
     if code.lower() == 'fplo':
