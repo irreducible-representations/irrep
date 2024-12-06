@@ -453,7 +453,7 @@ class SymmetryOperation():
         Parameters
         ----------
         alat : float
-            lattice parameter in angstroms.
+            Lattice parameter in angstroms.
 
         Returns
         -------
@@ -700,7 +700,7 @@ class SpaceGroup(SpaceGroupBare):
     trans_thresh : float, default=1e-5
         Threshold used to compare translational parts of symmetries.
     alat : float, default=None
-        lattice parameter in angstroms (quantum espresso convention).
+        Lattice parameter in angstroms (quantum espresso convention).
     from_sym_file : str, default=None
         If provided, the symmetry operations are read from this file.
         (format of pw2wannier90 prefix.sym  file)
@@ -724,7 +724,7 @@ class SpaceGroup(SpaceGroupBare):
         Symbol of the space-group in Hermann-Mauguin notation. 
     number : int 
         Number of the space-group.
-    lattice : array, shape=(3,3) 
+    Lattice : array, shape=(3,3) 
         Each row contains cartesian coordinates of a basis vector forming the 
         unit-cell in real space.
     positions : array
@@ -742,7 +742,7 @@ class SpaceGroup(SpaceGroupBare):
         Translation taking the origin of the unit cell used in the DFT 
         calculation to that of the standard setting.
     alat : float
-        lattice parameter in angstroms (quantum espresso convention).
+        Lattice parameter in angstroms (quantum espresso convention).
     from_sym_file : str, default=None
         if provided, the symmetry operations are read from this file.
         (format of pw2wannier90 prefix.sym  file)
@@ -765,7 +765,7 @@ class SpaceGroup(SpaceGroupBare):
 
     def __init__(
             self,
-            cell=None,
+            cell,
             spinor=True,
             refUC=None,
             shiftUC=None,
@@ -779,7 +779,7 @@ class SpaceGroup(SpaceGroupBare):
             include_TR=False,
             ):                                    
         self.spinor = spinor
-        self.lattice = np.array(cell[0])
+        self.Lattice = np.array(cell[0])
         self.positions = np.array(cell[1])
         self.typat = cell[2]
 
@@ -870,7 +870,7 @@ class SpaceGroup(SpaceGroupBare):
             if provided, the symmetry operations are read from this file.
             (format of pw2wannier90 prefix.sym  file)
         alat : float
-            lattice parameter in angstroms. (quantum espresso convention)
+            Lattice parameter in angstroms. (quantum espresso convention)
         magmom : array(num_atoms, 3)
             Magnetic moments of atoms in the unit cell. 
         include_TR : bool
@@ -938,7 +938,7 @@ class SpaceGroup(SpaceGroupBare):
 
         if from_sym_file is not None:
             print (f"Reading symmetries from file {from_sym_file}")
-            assert alat is not None, "lattice parameter must be provided to read symmetries from file"
+            assert alat is not None, "Lattice parameter must be provided to read symmetries from file"
             rot_cart, trans_cart = read_sym_file(from_sym_file)
             rotations, translations = cart_to_crystal(rot_cart, trans_cart, lattice, alat )
             translation_mod_1=False
@@ -1065,7 +1065,7 @@ class SpaceGroup(SpaceGroupBare):
         filename : str
             Name of the file.
         alat : float, default=None
-            lattice parameter in angstroms. If not specified, the lattice 
+            Lattice parameter in angstroms. If not specified, the lattice 
             parameter is not written to the file.
         """
 
@@ -1073,7 +1073,7 @@ class SpaceGroup(SpaceGroupBare):
             if hasattr(self, 'alat'):
                 alat = self.alat
         if alat is None:
-            warnings.warn("lattice parameter not specified. Symmetry operations will be written assuming A=1")
+            warnings.warn("Lattice parameter not specified. Symmetry operations will be written assuming A=1")
             alat = 1
         with open(filename, "w") as f:
             f.write(" {0} \n".format(len(self.symmetries)))
@@ -1662,7 +1662,7 @@ def cart_to_crystal(rot_cart, trans_cart, lattice, alat):
         Each row contains cartesian coordinates of a basis vector forming the 
         unit-cell in real space.
     alat : float, default=1
-        lattice parameter in angstroms (quantum espresso convention).
+        Lattice parameter in angstroms (quantum espresso convention).
 
     Returns
     -------
