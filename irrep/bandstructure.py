@@ -437,6 +437,10 @@ class BandStructure:
             self.kpoints.append(kp)
         del WF
 
+    @property 
+    def lattice(self):
+        return self.Lattice
+
     @property
     def num_k(self):
         '''Getter for the number of k points'''

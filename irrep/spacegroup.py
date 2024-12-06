@@ -93,7 +93,7 @@ class SymmetryOperation():
     """
 
     def __init__(self, rot, trans, Lattice, time_reversal=False, ind=-1, spinor=True, 
-                 translation_mod1=True):
+                 translation_mod1=True, spinor_rotation=None):
         self.ind = ind
         self.rotation = rot
         self.time_reversal = bool(time_reversal)
@@ -107,9 +107,16 @@ class SymmetryOperation():
         self.angle = iangle * pi / 6
         self.angle_str = self.get_angle_str()
         self.spinor = spinor
-        self.spinor_rotation = expm(-0.5j * self.angle *
+        if spinor_rotation is None:
+            self.spinor_rotation = expm(-0.5j * self.angle *
                                     np.einsum('i,ijk->jk', self.axis, pauli_sigma))
+        else:
+            self.spinor_rotation = spinor_rotation
         self.sign = 1  # May be changed later externally
+
+    @property
+    def lattice(self):
+        return self.Lattice
 
     def get_transl_mod1(self, t):
         """
@@ -149,13 +156,6 @@ class SymmetryOperation():
         raise RuntimeError(
             "{0} pi rotation cannot be in the space group".format(api))
     
-    @cached_property
-    def rotation_cart(self):
-        """
-        Calculate the rotation matrix in cartesian coordinates.
-        """
-        return self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
-
     def _get_operation_type(self):
         """
         Calculates the rotation axis and angle of the symmetry and if it 
@@ -285,8 +285,10 @@ class SymmetryOperation():
                         s += str(b) + coord[i]
                 is_first = False
             return s
-
-        if (not np.allclose(refUC, np.eye(3)) or
+        
+        if refUC is None or shiftUC is None:
+            write_ref = False
+        elif (not np.allclose(refUC, np.eye(3)) or
             not np.allclose(shiftUC, np.zeros(3))):
             write_ref = True  # To avoid writing this huge block again
         else:
@@ -510,17 +512,38 @@ class SymmetryOperation():
             Transformed vector.
         """
         if inverse:
-            return (vector-self.translation[...,:]).dot(self.rotation_inv.T)
+            return (np.array(vector)-self.translation[...,:]).dot(self.rotation_inv.T)
         else:
-            return vector.dot(self.rotation.T) + self.translation[...,:]
-        
+            return np.array(vector).dot(self.rotation.T) + self.translation[...,:]
+
+
     @cached_property
     def rotation_cart(self):
-        return self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
+        """
+        Calculate the rotation matrix in cartesian coordinates.
+        """
+        return self.Lattice.T @ self.rotation @ self.lattice_inv.T
+    
+    @cached_property
+    def translation_cart(self):
+        return self.Lattice.T @ self.translation @ self.lattice_inv.T
+    
+    @cached_property
+    def lattice_inv(self):
+        return np.linalg.inv(self.Lattice)
     
     @cached_property
     def reciprocal_lattice(self):
-        return np.linalg.inv(self.Lattice).T
+        return self.lattice_inv.T
+    
+    @cached_property
+    def det_cart(self):
+        return np.linalg.det(self.rotation_cart)
+
+    @cached_property
+    def det(self):
+        return np.linalg.det(self.rotation)
+
 
     @cached_property
     def rotation_inv(self):
@@ -552,8 +575,100 @@ class SymmetryOperation():
             res = -res
         return res
 
+class SpaceGroupBare():
 
-class SpaceGroup():
+    def __init__(self, Lattice, spinor, rotations, translations, time_reversals, number=0, name="",
+                 spinor_rotations=None):
+            
+            self.Lattice = Lattice
+            self.spinor = spinor
+            self.name = name
+            self.number = number
+            self.symmetries = []
+            if spinor_rotations is None:
+                spinor_rotations = [None]*len(rotations)
+
+            for i, (rot,trans,tr,srot) in enumerate(zip(rotations,
+                                                        translations,
+                                                        time_reversals,
+                                                        spinor_rotations)):
+                self.symmetries.append(SymmetryOperation(rot=rot,
+                                                         trans=trans,
+                                                         ind=i+1,
+                                                         Lattice=self.Lattice,
+                                                         time_reversal=tr,
+                                                         spinor=self.spinor,
+                                                         translation_mod1=False,
+                                                         spinor_rotation=srot))
+                                                    
+    
+    def as_dict(self):
+        """
+        return dictionary with info essential about the spacegroup
+        """
+        return dict(
+                 Lattice=self.Lattice, 
+                 spinor=self.spinor,
+                 rotations=[s.rotation for s in self.symmetries],
+                 translations=[s.translation for s in self.symmetries],
+                 spinor_rotations=[s.spinor_rotation for s in self.symmetries],
+                 time_reversals=[s.time_reversal for s in self.symmetries],
+                 number=self.number if self.number is not None else -1,
+                 name=self.name if self.name is not None else "unknown"
+                 )
+    
+    @property
+    def size(self):
+        """
+        Number of symmetry operations in the space-group.
+        """
+        return len(self.symmetries)
+    
+    def show(self, symmetries=None):
+        """
+        Print description of space-group and symmetry operations.
+        
+        Parameters
+        ----------
+        symmetries : int, default=None
+            Index of symmetry operations whose description will be printed. 
+            Run `IrRep` with flag `onlysym` to check the index corresponding 
+            to each symmetry operation.
+        """
+
+        print('')
+        print("\n ---------- CRYSTAL STRUCTURE ---------- \n")
+        print('')
+
+        # Print cell vectors in DFT cell only
+        print('Cell vectors in angstroms:\n')
+        print('{:^32}'.format('Vectors of DFT cell'))
+        for i in range(3):
+            vec1 = self.Lattice[i]
+            s = 'a{:1d} = {:7.4f}  {:7.4f}  {:7.4f}  '.format(i, vec1[0], vec1[1], vec1[2])
+            print(s)
+        print()
+
+        print()
+        print('\n ---------- SPACE GROUP ----------- \n')
+        print()
+        print('Space group: {} (# {})'.format(self.name, self.number))
+        print('Number of symmetries: {} (mod. lattice translations)'.format(self.size))
+        
+        for symop in self.symmetries:
+            if symmetries is None or symop.ind in symmetries:
+                symop.show(refUC=None, shiftUC=None)
+
+    @property
+    def lattice(self):
+        return self.Lattice
+    
+    @cached_property
+    def lattice_inv(self):
+        return np.linalg.inv(self.lattice)
+
+
+class SpaceGroup(SpaceGroupBare):
     """
     Determine the space-group and save info in attributes. Contains methods to 
     describe and print info about the space-group.
@@ -562,13 +677,14 @@ class SpaceGroup():
     ----------
     cell : tuple, default=None
         `cell[0]` is a 3x3 array where cartesian coordinates of basis 
-        vectors **a**, **b** and **c** are given in rows. `cell[1]` is an array
+        vectors **a**, **b** and **c** are given in rows. 
+        `cell[1]` is an array
         where each row contains the direct coordinates of an ion's position. 
         `cell[2]` is an array where each element is a number identifying the 
         atomic species of an ion. See `cell` parameter of function 
         `cell[3]` (optional) is an array where each element is the magnetic
         moment of an ion.
-        `get_symmetry` in 
+        See `get_symmetry` in 
         `Spglib <https://spglib.github.io/spglib/python-spglib.html#get-symmetry>`_.
     spinor : bool, default=True
         `True` if wave-functions are spinors (SOC), `False` if they are scalars.
@@ -661,10 +777,10 @@ class SpaceGroup():
             verbosity=0,
             magmom=None,
             include_TR=False,
-            ):
+            ):                                    
         self.spinor = spinor
-        self.Lattice = cell[0]
-        self.positions = cell[1]
+        self.Lattice = np.array(cell[0])
+        self.positions = np.array(cell[1])
         self.typat = cell[2]
 
         self.magmom = magmom
@@ -732,6 +848,8 @@ class SpaceGroup():
                         "tables, try not specifying refUC and shiftUC.")
                     log_message(msg, verbosity, 1)
                     pass
+        
+
 
     def _findsym(self, cell, from_sym_file, alat, magmom=None, include_TR=False):
         """
@@ -846,12 +964,6 @@ class SpaceGroup():
                 transformation_matrix,
                 origin_shift)
 
-    @property
-    def size(self):
-        """
-        Number of symmetry operations in the space-group.
-        """
-        return len(self.symmetries)
 
     def json(self, symmetries=None):
         '''
