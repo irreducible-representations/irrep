@@ -47,7 +47,7 @@ class SymmetryOperation():
         vectors of the unit cell.
     time_reversal : bool, default=False
         `True` if the symmetry operation includes time-reversal.
-    lattice : array, shape=(3,3) 
+    Lattice : array, shape=(3,3) 
         Each row contains cartesian coordinates of a basis vector forming the 
         unit-cell in real space.
     ind : int, default=-1
@@ -70,7 +70,7 @@ class SymmetryOperation():
         vectors of the unit cell.
     time_reversal : bool
         `True` if the symmetry operation includes time-reversal.
-    lattice : array, shape=(3,3) 
+    Lattice : array, shape=(3,3) 
         Each row contains cartesian coordinates of a basis vector forming the 
         unit-cell in real space.
     axis : array, shape=(3,)
@@ -92,12 +92,12 @@ class SymmetryOperation():
         to that in tables.
     """
 
-    def __init__(self, rot, trans, lattice, time_reversal=False, ind=-1, spinor=True, 
+    def __init__(self, rot, trans, Lattice, time_reversal=False, ind=-1, spinor=True, 
                  translation_mod1=True, spinor_rotation=None):
         self.ind = ind
         self.rotation = rot
         self.time_reversal = bool(time_reversal)
-        self.lattice = lattice
+        self.Lattice = Lattice
         self.translation_mod1 = translation_mod1
         self.translation = self.get_transl_mod1(trans)
         self.axis, self.angle, self.inversion = self._get_operation_type()
@@ -115,9 +115,8 @@ class SymmetryOperation():
         self.sign = 1  # May be changed later externally
 
     @property
-    def Lattice(self):
-        warnings.warn("Lattice attribute is deprecated, use lattice instead", DeprecationWarning)
-        return self.lattice
+    def lattice(self):
+        return self.Lattice
 
     def get_transl_mod1(self, t):
         """
@@ -465,8 +464,8 @@ class SymmetryOperation():
             1 line : cartesian translation in units of alat
         """
 
-        Rcart  = self.lattice.T.dot(self.rotation).dot(np.linalg.inv(self.lattice).T)
-        t =  - self.translation @ self.lattice/alat/BOHR   
+        Rcart  = self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
+        t =  - self.translation @ self.Lattice/alat/BOHR   
 
         arr = np.vstack((Rcart, [t]))
         return "\n"+"".join("   ".join(f"{x:20.15f}" for x in r) + "\n" for r in arr  )
@@ -523,15 +522,15 @@ class SymmetryOperation():
         """
         Calculate the rotation matrix in cartesian coordinates.
         """
-        return self.lattice.T @ self.rotation @ self.lattice_inv.T
+        return self.Lattice.T @ self.rotation @ self.lattice_inv.T
     
     @cached_property
     def translation_cart(self):
-        return self.lattice.T @ self.translation @ self.lattice_inv.T
+        return self.Lattice.T @ self.translation @ self.lattice_inv.T
     
     @cached_property
     def lattice_inv(self):
-        return np.linalg.inv(self.lattice)
+        return np.linalg.inv(self.Lattice)
     
     @cached_property
     def reciprocal_lattice(self):
@@ -578,10 +577,10 @@ class SymmetryOperation():
 
 class SpaceGroupBare():
 
-    def __init__(self, lattice, spinor, rotations, translations, time_reversals, number=0, name="",
+    def __init__(self, Lattice, spinor, rotations, translations, time_reversals, number=0, name="",
                  spinor_rotations=None):
             
-            self.lattice = lattice
+            self.Lattice = Lattice
             self.spinor = spinor
             self.name = name
             self.number = number
@@ -596,7 +595,7 @@ class SpaceGroupBare():
                 self.symmetries.append(SymmetryOperation(rot=rot,
                                                          trans=trans,
                                                          ind=i+1,
-                                                         lattice=self.lattice,
+                                                         Lattice=self.Lattice,
                                                          time_reversal=tr,
                                                          spinor=self.spinor,
                                                          translation_mod1=False,
@@ -608,7 +607,7 @@ class SpaceGroupBare():
         return dictionary with info essential about the spacegroup
         """
         return dict(
-                 lattice=self.lattice, 
+                 Lattice=self.Lattice, 
                  spinor=self.spinor,
                  rotations=[s.rotation for s in self.symmetries],
                  translations=[s.translation for s in self.symmetries],
@@ -645,7 +644,7 @@ class SpaceGroupBare():
         print('Cell vectors in angstroms:\n')
         print('{:^32}'.format('Vectors of DFT cell'))
         for i in range(3):
-            vec1 = self.lattice[i]
+            vec1 = self.Lattice[i]
             s = 'a{:1d} = {:7.4f}  {:7.4f}  {:7.4f}  '.format(i, vec1[0], vec1[1], vec1[2])
             print(s)
         print()
@@ -661,9 +660,8 @@ class SpaceGroupBare():
                 symop.show(refUC=None, shiftUC=None)
 
     @property
-    def Lattice(self):
-        warnings.warn("Lattice attribute is deprecated, use lattice instead", DeprecationWarning)
-        return self.lattice
+    def lattice(self):
+        return self.Lattice
     
     @cached_property
     def lattice_inv(self):
@@ -1016,12 +1014,12 @@ class SpaceGroup(SpaceGroupBare):
         print('')
 
         # Print cell vectors in DFT and reference cells
-        vecs_refUC = np.dot(self.lattice, self.refUC).T
-        #vecs_refUC = np.dot(self.refUC, self.lattice)
+        vecs_refUC = np.dot(self.Lattice, self.refUC).T
+        #vecs_refUC = np.dot(self.refUC, self.Lattice)
         print('Cell vectors in angstroms:\n')
         print('{:^32}|{:^32}'.format('Vectors of DFT cell', 'Vectors of REF. cell'))
         for i in range(3):
-            vec1 = self.lattice[i]
+            vec1 = self.Lattice[i]
             vec2 = vecs_refUC[i]
             s = 'a{:1d} = {:7.4f}  {:7.4f}  {:7.4f}  '.format(i, vec1[0], vec1[1], vec1[2])
             s += '|  '
