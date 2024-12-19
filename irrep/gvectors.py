@@ -16,7 +16,6 @@
 ##################################################################
 
 
-# import warnings
 import numpy as np
 import numpy.linalg as la
 Rydberg_eV = 13.605693  # eV
@@ -404,6 +403,7 @@ def symm_matrix(
     WF_other=None, igall_other=None, K_other=None,
     block_ind=None,
     return_blocks=False,
+    ortogonalize=True,
     unitary=True,
     unitary_params={}
 ):
@@ -448,6 +448,9 @@ def symm_matrix(
     return_blocks : bool, default=False
         If `True`, returns the diagonal blocks as a list. Otherwise, returns the
         matrix composed of those blocks.
+    ortogonalize : bool, default=True
+        If `True`, the matrix is orthogonalized. Set to `False` for speedup. 
+        (in general it is not needed, but just in case)
     unitary : bool, default=True
         If `True`, the matrix is orthogonalized (made unitary). Set to `False` for speedup. 
         (in general it is not needed, but just in case)
@@ -464,23 +467,23 @@ def symm_matrix(
         K_other = K
     if block_ind is None:
         block_ind = np.array([(0, WF.shape[0])])
-    npw1 = igall.shape[1]
-    
+
     unitary_params_loc = {
         "warning_threshold": 1e-3,
         "error_threshold": 1e-2,
         "check_upper" : False,
     }
     unitary_params_loc.update(unitary_params)
-
+    npw1 = igall.shape[1]
     multZ = np.exp(-2j * np.pi * T.dot(igall_other[:3, :] + K_other[:, None])) [None,:]
+
     if time_reversal:
         A = -A
         WF = WF.conj()
         # multZ = multZ.conj() # this is not needed because igall_other and K_other are alreade reversed (because A=-A)
         if spinor:
             S =  np.array([[0,1],[-1,0]]) @ S.conj()
-        
+
     igrot = transformed_g(kpt=K, ig=igall, A=A, ig_other=igall_other, kpt_other=K_other, inverse=True)
     if spinor:
         WFrot_up   = WF[:, igrot]*multZ
@@ -495,7 +498,6 @@ def symm_matrix(
     for b1,b2 in block_ind:
         WFinv = right_inverse(WF_other[b1:b2])
         block = np.dot(WFrot[b1:b2,:], WFinv)
-        # e = np.linalg.eigvals(block)
         if unitary:
             if not unitary_params_loc["check_upper"] and b2==NB:
                 error_threshold = 10
@@ -517,7 +519,7 @@ def symm_matrix(
             M[i:i+b,i:i+b] = block
             i+=b
         return M
-    
+
 
 def right_inverse(A):
     """

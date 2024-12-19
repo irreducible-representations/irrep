@@ -21,7 +21,7 @@ import numpy as np
 import numpy.linalg as la
 import copy
 from .gvectors import symm_eigenvalues, symm_matrix
-from .utility import compstr, get_block_indices, is_round, format_matrix, log_message, orthogonalize
+from .utility import compstr, get_block_indices, is_round, format_matrix, log_message, orthogonalize, vector_pprint
 
 class Kpoint:
     """
@@ -29,9 +29,6 @@ class Kpoint:
     particular k-point in attributes. Contains methods to calculate and write 
     traces (and irreps), for the separation of the band structure in terms of a 
     symmetry operation and for the calculation of the Zak phase.
-
-        symmetries=None,
-        symmetries_tables=None  # calculate_traces needs it
 
     Parameters
     ----------
@@ -151,9 +148,16 @@ class Kpoint:
         ig=None,
         upper=None,
         symmetries=None,
+        refUC=np.eye(3),
+        shiftUC=np.zeros(3),
+        symmetries_tables=None,  # calculate_traces needs it
+        save_wf=True,
+        v=0,
+        magnetic=False,
         kwargs_kpoint={},
         normalize=True,
         ):
+
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
         self.num_bands = num_bands
@@ -165,6 +169,8 @@ class Kpoint:
         self.Energy_raw = Energy
         self.ig = ig
         self.upper = upper
+
+        self.k_refUC = np.dot(refUC.T, self.k) % 1
 
         if normalize:
             self.WF /= (
@@ -636,7 +642,7 @@ class Kpoint:
             Each key is the label of an irrep, each value another `dict`. Keys 
             of every secondary `dict` are indices of symmetries (starting from 
             1 and following order of operations in tables of BCS) and 
-            values are traces of symmetries.
+            values are traces of symmetries. Traces are in DFT cell.
         '''
         if irreptable is None:
             if hasattr(self, 'irreptable'):
@@ -658,9 +664,11 @@ class Kpoint:
                 for ch in self.char:
                     multiplicities = {}
                     for ir in irreptable:
-                        multipl = np.dot(np.array([irreptable[ir][sym.ind] for sym in self.little_group]),
-                                         ch.conj()
-                                         ) / len(ch)
+                        ir_characters = np.array([irreptable[ir][sym.ind] for sym in self.little_group])
+                        # some coreps are not normalized
+                        # this is len(ch) for all irreps
+                        normalization = (np.abs(ir_characters) ** 2).sum()
+                        multipl = np.dot(ir_characters, ch.conj()) / normalization
                         if abs(multipl) > 1e-3:
                             multiplicities[ir] = multipl
                     irreps.append(multiplicities)
@@ -684,8 +692,8 @@ class Kpoint:
                "               {2} (after cell trasformation)\n\n"
                " number of states : {3}\n"
                .format(self.ik0,
-                       np.round(self.k, 5),
-                       np.round(self.k_refUC, 5),
+                       vector_pprint(np.round(self.k, 5)),
+                       vector_pprint(np.round(self.k_refUC, 5)),
                        self.num_bands)
               ))
 
@@ -774,6 +782,8 @@ class Kpoint:
         '''
 
         json_data = {}
+        json_data['k'] = self.k
+        json_data['k_refUC'] = self.k_refUC
 
         indices_symmetries = [sym.ind for sym in self.little_group]
         json_data ['symmetries'] = list(indices_symmetries)

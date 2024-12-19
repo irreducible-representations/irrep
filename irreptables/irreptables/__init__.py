@@ -14,7 +14,7 @@
 ##  e-mail: stepan.tsirkin@physik.uzh.ch                         #
 ##################################################################
 
-__version__="1.1.1"
+__version__="2.0.0"
 
 import os
 import logging
@@ -46,19 +46,30 @@ class SymopTable:
         Direct coordinates of the translation vector.
     S : array, shape=(2,2)
         SU(2) matrix describing the transformation of spinor components.
+    time_reversal : bool
+        Indicates if the operation is combined with time-reversal.
     '''
 
     def __init__(self, line):
         numbers = line.split()
         self.R = np.array(numbers[:9], dtype=int).reshape(3, 3)
         self.t = np.array(numbers[9:12], dtype=float)
-        if len(numbers) > 12:
+        # len is 13 if time reversal is specified
+        # len is > 13 everytime there is spin
+        line_length = len(numbers)
+        if line_length > 12:
             self.S = (
                 np.array(numbers[12:16], dtype=float)
                 * np.exp(1j * np.pi * np.array(numbers[16:20], dtype=float))
             ).reshape(2, 2)
         else:
             self.S = np.eye(2)
+        if line_length == 13:
+            self.time_reversal = False if int(numbers[12]) == 1 else True
+        elif line_length == 21:
+            self.time_reversal = False if int(numbers[20]) == 1 else True
+        else:
+            self.time_reversal = False
 
     def str(self, spinor=True):
         """
@@ -312,7 +323,10 @@ class IrrepTable:
        Number of symmetry operations in the "point-group" of the space-group. 
     symmetries : list
         Each component is an instance of class `SymopTable` corresponding to a 
-        symmetry operation in the "point-group" of the space-group.
+        unitary symmetry in the "point-group" of the space-group.
+    au_symmetries : list
+        Each component is an instance of class `SymopTable` corresponding to a 
+        antiunitary symmetry in the "point-group" of the space-group.
     NK : int
         Number of maximal k-points in the Brillouin zone.
     irreps : list
@@ -320,15 +334,22 @@ class IrrepTable:
         irrep of the little group of a maximal k-point.
     """
 
-    def __init__(self, SGnumber, spinor, name=None, v=0):
+    def __init__(self, SGnumber, spinor, name=None, v=0, magnetic=False):
         self.number = SGnumber
         self.spinor = spinor
         if name is None:
-            name = "{root}/tables/irreps-SG={SG}-{spinor}.dat".format(
-                SG=self.number,
-                spinor="spin" if self.spinor else "scal",
-                root=os.path.dirname(__file__),
-            )
+            if magnetic is False:
+                name = "{root}/tables/irreps-SG={SG}-{spinor}.dat".format(
+                    SG=self.number,
+                    spinor="spin" if self.spinor else "scal",
+                    root=os.path.dirname(__file__),
+                )
+            else:
+                name = "{root}/correptables/irreps-SG={SG}-{spinor}.dat".format(
+                    SG=self.number,
+                    spinor="spin" if self.spinor else "scal",
+                    root=os.path.dirname(__file__),
+                )
             msg = f"Reading standard irrep table <{name}>"
             log_message(msg, v, 2)
         else:
@@ -382,6 +403,20 @@ class IrrepTable:
                         log_message(msg, v, 2)
                     else:
                         pass
+
+    @property
+    def u_symmetries(self):
+        '''
+        List of unitary symmetries
+        '''
+        return [x for x in self.symmetries if not x.time_reversal]
+
+    @property
+    def au_symmetries(self):
+        '''
+        List of unitary antisymmetries
+        '''
+        return [x for x in self.symmetries if x.time_reversal]
 
     def show(self):
         '''

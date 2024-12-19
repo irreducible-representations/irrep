@@ -100,7 +100,7 @@ class BandStructure:
     include_TR : bool
         If `True`, the symmetries involving time-reversal will be included in the spacegroup.
         if magmom is None and include_TR is True, the magnetic moments will be set to zero (non-magnetic calculation with TR)
-    
+
     Attributes
     ----------
     spacegroup : class
@@ -174,9 +174,6 @@ class BandStructure:
         magmom=None,
         include_TR=False,
     ):
-        
-        # if include_TR:
-        #     raise NotImplementedError("include_TR is not implemented yet")
 
         code = code.lower()
         if spin_channel is not None:
@@ -263,11 +260,10 @@ class BandStructure:
             self.Ecut0 = Ecut
             NK = kpred.shape[0]
         else:
-            raise RuntimeError("Unknown/unsupported code :{}".format(code))
-        
-                
+            raise RuntimeError(f"Unknown/unsupported code :{code}")
+
         cell = (self.Lattice, positions, typat)
-            
+
         self.spacegroup = SpaceGroup(
                               cell=cell,
                               spinor=self.spinor,
@@ -278,9 +274,11 @@ class BandStructure:
                               verbosity=verbosity,
                               alat=alat,
                               from_sym_file=from_sym_file,
-                              magmom = magmom,
+                              magmom=magmom,
                               include_TR=include_TR
                               )
+        self.magnetic = self.spacegroup.magnetic
+
         if onlysym:
             return
 
@@ -414,7 +412,7 @@ class BandStructure:
                 degen_thresh=degen_thresh,
                 refUC=self.spacegroup.refUC,
                 shiftUC=self.spacegroup.shiftUC,
-                symmetries_tables=self.spacegroup.symmetries_tables,
+                symmetries_tables=self.spacegroup.u_symmetries_tables,
                 save_wf=save_wf,
                 verbosity=verbosity,
                 calculate_traces=calculate_traces,
@@ -429,7 +427,7 @@ class BandStructure:
                 upper=upper,
                 num_bands=NBout,
                 RecLattice=self.RecLattice,
-                symmetries_SG=self.spacegroup.symmetries,
+                symmetries_SG=self.spacegroup.u_symmetries,
                 spinor=self.spinor,
                 kwargs_kpoint=self.kwargs_kpoint,
                 normalize=normalize,
@@ -488,7 +486,7 @@ class BandStructure:
                 print("\nInvariant under inversion: No")
             else:
                 print("\nInvariant under inversion: Yes")
-                if self.spinor:
+                if self.spinor and not self.magnetic:
                     print("Number of inversions-odd Kramers pairs : {}"
                           .format(int(KP.num_bandinvs / 2))
                           )
@@ -501,15 +499,16 @@ class BandStructure:
                 print("Gap with upper bands: ", KP.upper - KP.Energy_mean[-1])
         
         # Print total number of band inversions
-        if self.spinor:
+        if self.spinor and not self.magnetic:
             print("\nTOTAL number of inversions-odd Kramers pairs : {}"
                   .format(int(self.num_bandinvs/2)))
         else:
             print("TOTAL number of inversions-odd states : {}"
                   .format(self.num_bandinvs))
         
-        print('Z2 invariant: {}'.format(int(self.num_bandinvs/2 % 2)))
-        print('Z4 invariant: {}'.format(int(self.num_bandinvs/2 % 4)))
+        if not self.magnetic:
+            print('Z2 invariant: {}'.format(int(self.num_bandinvs/2 % 2)))
+            print('Z4 invariant: {}'.format(int(self.num_bandinvs/2 % 4)))
 
         # Print indirect gap and smalles direct gap
         print('Indirect gap: {}'.format(self.gap_indirect))
@@ -548,7 +547,7 @@ class BandStructure:
         json_data['indirect gap (eV)'] =  self.gap_indirect
         json_data['Minimal direct gap (eV)'] =  self.gap_direct
 
-        if self.spinor:
+        if self.spinor and not self.magnetic:
             json_data["number of inversion-odd Kramers pairs"]  = int(self.num_bandinvs / 2)
             json_data["Z4"] = int(self.num_bandinvs / 2) % 4,
         else:
@@ -706,6 +705,11 @@ class BandStructure:
         # Print description of symmetry used for separation
         symop = self.spacegroup.symmetries[isymop - 1]
         symop.show()
+
+        # to do: allow for separation in terms of antiunitary symmetries
+        if isymop > len(self.spacegroup.u_symmetries):
+            raise RuntimeError("Separation in terms of antiunitary symmetries "
+                               "not implemented for now.")
 
         # Separate each k-point
         kpseparated = [
@@ -954,6 +958,7 @@ class BandStructure:
         #  by the isym-th symmetry operation.
         #
         # This is consistent with w90 documentations, but seemd to be opposite to what pw2wannier90 does
+        symmetries = self.spacegroup.symmetries
 
         kpoints_mod1 = UniqueListMod1(kpoints)
         assert len(kpoints_mod1) == len(kpoints)
@@ -971,7 +976,7 @@ class BandStructure:
                 G.append(np.zeros((Nsym, 3), dtype=int))
                 ikirr += 1
 
-                for isym, symop in enumerate(self.spacegroup.symmetries):
+                for isym, symop in enumerate(symmetries):
                     k1p = symop.transform_k(k1)
                     if k1p not in kpoints_mod1:
                         raise RuntimeError("Symmetry operation maps k-point outside the grid. Maybe the grid is incompatible with the symmetry operations")
@@ -1003,7 +1008,7 @@ class BandStructure:
             K1 = get_K(ikirr)
             block_indices = get_block_indices(K1.Energy_raw, thresh=degen_thresh, cyclic=False)
             d_band_block_indices.append(block_indices)
-            for isym, symop in enumerate(self.spacegroup.symmetries):
+            for isym, symop in enumerate(symmetries):
                 K2 = get_K(kptirr2kpt[i, isym])
                 block_list = symm_matrix(
                     K=K1.k,
@@ -1038,4 +1043,3 @@ class BandStructure:
         #             kpt2kptirr, 
         #             d_band_blocks, 
         #             d_band_block_indices)
-            

@@ -278,6 +278,12 @@ do not hesitate to contact the author:
           "Default: 1e-5"
           )
 )
+@click.option("-magmom",
+    type=str,
+    default=None,
+    help=("Path to magnetic moments' file. One row per atom, three "
+          "coordinates in Cartesian.")
+)
 @click.option("-v",
               count=True,
               default=1,
@@ -294,6 +300,12 @@ do not hesitate to contact the author:
                     help="File to save the output in JSON format. (without "
                     "extension, the '.json' will be added automatically)"
 )
+@click.option(
+    "--time-reversal", 
+    flag_value=True, 
+    default=False, 
+    help=("Consider TRS a symmetry and use the corresponding gray group.")
+    )
 def cli(
     ecut,
     fwav,
@@ -326,6 +338,8 @@ def cli(
     searchcell,
     correct_ecut0,
     trans_thresh,
+    magmom,
+    time_reversal,
     v,
     json_file
 ):
@@ -370,10 +384,27 @@ def cli(
     if kpnames:
         kpnames = kpnames.split(",")
 
+    # Decide if wave functions should be kept in memory after calculating trace
     if isymsep or wcc or zak:
         save_wf = True
     else:
         save_wf = False
+
+    # Read magnetic moments from a file
+    if magmom is not None:
+        try:
+            magnetic_moments = np.loadtxt(magmom)
+            if magnetic_moments.ndim == 1:
+                magnetic_moments = np.expand_dims(magnetic_moments, axis=0)
+        except FileNotFoundError:
+            print("The magnetic moments file was not found: {}".format(magmom))
+        except ValueError:
+            print("Error reading magnetic moments file: {}".format(magmom))
+    elif time_reversal:
+        magnetic_moments = True
+    else:
+        magnetic_moments = None
+
 
     bandstr = BandStructure(
         fWAV=fwav,
@@ -394,9 +425,11 @@ def cli(
         shiftUC = shiftuc,
         search_cell = searchcell,
         degen_thresh=degenthresh,
+        magmom=magnetic_moments,
         save_wf=save_wf,
         verbosity=verbosity,
-        from_sym_file=from_sym_file
+        from_sym_file=from_sym_file,
+        include_TR=True  # if magnetic, include TR 
     )
 
     bandstr.spacegroup.show()
@@ -443,7 +476,14 @@ def cli(
             for s_old, bs in subbands.items():
                 separated = bs.Separate(isym, groupKramers=groupkramers, verbosity=verbosity)
                 for s_new, bs_separated in separated.items():
-                    tmp_subbands[tuple(list(s_old) + [s_new])] = bs_separated
+                    # Later, the sorting of evals will be based on the 
+                    # argument of each eval in terms of [0,2pi). So it's 
+                    # convenient to round the imag part around 0 to avoid
+                    # pulling apart 1.0+j1e-4 and 1.0-j1e-4
+                    if abs(s_new.imag) < 1e-4:
+                        s_new = complex(s_new.real, 0.0)
+                    evals = tuple(list(s_old) + [s_new])
+                    tmp_subbands[evals] = bs_separated
             subbands = tmp_subbands
         json_data["characters and irreps"]=[]
         
