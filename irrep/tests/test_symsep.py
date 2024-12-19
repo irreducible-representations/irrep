@@ -1,7 +1,6 @@
 import os
 import subprocess
 from pathlib import Path
-import irrep
 from irrep.bandstructure import BandStructure
 from irrep.gvectors import symm_matrix
 from irrep.utility import get_block_indices, is_round

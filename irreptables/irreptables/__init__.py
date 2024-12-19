@@ -14,11 +14,9 @@
 ##  e-mail: stepan.tsirkin@physik.uzh.ch                         #
 ##################################################################
 
-__version__="1.1.1"
+__version__="2.0.0"
 
-import copy
 import os
-import sys
 import logging
 import numpy as np
 from irrep.utility import str2bool, str2list_space, str_, log_message

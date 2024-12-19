@@ -157,13 +157,6 @@ class SymmetryOperation():
         raise RuntimeError(
             "{0} pi rotation cannot be in the space group".format(api))
 
-    @cached_property
-    def rotation_cart(self):
-        """
-        Calculate the rotation matrix in cartesian coordinates.
-        """
-        return self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
-
     def _get_operation_type(self):
         """
         Calculates the rotation axis and angle of the symmetry and if it 
@@ -488,33 +481,6 @@ class SymmetryOperation():
         else:
            return ("   ".join(" ".join("{0:2d}".format(x) for x in r) for r in R) + "     " + " ".join("{0:10.6f}".format(x) for x in t) + (
                 ("      " + "    ".join("  ".join("{0:10.6f}".format(x) for x in (X.real, X.imag)) for X in S.reshape(-1))) if S is not None else "") + "\n")
-
-    def json_dict(self, refUC=np.eye(3), shiftUC=np.zeros(3)):
-        '''
-        Prepare dictionary with info of symmetry to save in JSON
-
-        Returns
-        -------
-        d : dict
-            Dictionary with info about symmetry
-        '''
-
-        d = {}
-        d["axis"]  = self.axis
-        d["angle str"] = self.angle_str
-        d["angle pi"] = self.angle/np.pi
-        d["inversion"] = self.inversion
-        d["sign"] = self.sign
-
-        d["rotation matrix"] = self.rotation
-        d["translation"] = self.translation
-
-        R = self.rotation_refUC(refUC)
-        t = self.translation_refUC(refUC, shiftUC)
-        d["rotation matrix refUC"] = R
-        d["translation refUC"]= t
-
-        return d
 
     def str_sym(self, alat):
         """
