@@ -1031,11 +1031,5 @@ class BandStructure:
                     kpt2kptirr=kpt2kptirr, 
                     d_band_blocks=d_band_blocks, 
                     d_band_block_indices=d_band_block_indices)
-        # return     (grid, 
-        #             kpoints,
-        #             kptirr, 
-        #             kptirr2kpt,
-        #             kpt2kptirr, 
-        #             d_band_blocks, 
-        #             d_band_block_indices)
+
             

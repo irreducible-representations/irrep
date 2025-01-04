@@ -577,13 +577,14 @@ class SymmetryOperation():
 
 class SpaceGroupBare():
 
-    def __init__(self, Lattice, spinor, rotations, translations, time_reversals, number=0, name="",
+    def __init__(self, Lattice, spinor, rotations, translations, time_reversals, number=0, hall_number=0, name="",
                  spinor_rotations=None):
             
             self.Lattice = Lattice
             self.spinor = spinor
             self.name = name
             self.number = number
+            self.hall_number = hall_number
             self.symmetries = []
             if spinor_rotations is None:
                 spinor_rotations = [None]*len(rotations)
@@ -614,6 +615,7 @@ class SpaceGroupBare():
                  spinor_rotations=[s.spinor_rotation for s in self.symmetries],
                  time_reversals=[s.time_reversal for s in self.symmetries],
                  number=self.number if self.number is not None else -1,
+                 hall_number=self.hall_number if self.hall_number is not None else -1,
                  name=self.name if self.name is not None else "unknown"
                  )
     
@@ -787,6 +789,7 @@ class SpaceGroup(SpaceGroupBare):
         (self.symmetries, 
          self.name, 
          self.number, 
+         self.hall_number,
          refUC_tmp, 
          shiftUC_tmp) = self._findsym(cell, from_sym_file, alat, magmom=magmom, include_TR=include_TR)
         self.order = len(self.symmetries)
@@ -887,6 +890,8 @@ class SpaceGroup(SpaceGroupBare):
             Symbol of the space-group in Hermann-Mauguin notation. 
         int
             Number of the space-group.
+        int
+            Hall number of the space-group.
         array
             3x3 array where cartesian coordinates of basis  vectors **a**, **b** 
             and **c** are given in rows. 
@@ -911,12 +916,14 @@ class SpaceGroup(SpaceGroupBare):
             dataset = spglib.get_magnetic_symmetry_dataset(cell + (magmom, ),mag_symprec=1e-3)
             symbol = "magnetic-unknown"
             number = None
+            hall_number = None
         else:
             dataset = spglib.get_symmetry_dataset(cell)
         if version.parse(spglib.__version__) < version.parse('2.5.0'):
             if not magnetic:
                 symbol = dataset['international']
                 number = dataset['number']
+                hall_number = dataset['hall_number']
             transformation_matrix = dataset['transformation_matrix']
             origin_shift = dataset['origin_shift']
             rotations = dataset['rotations']
@@ -927,6 +934,7 @@ class SpaceGroup(SpaceGroupBare):
             if not magnetic:
                 symbol = dataset.international
                 number = dataset.number
+                hall_number = dataset.hall_number
             transformation_matrix = dataset.transformation_matrix
             origin_shift = dataset.origin_shift
             rotations = dataset.rotations
@@ -961,6 +969,7 @@ class SpaceGroup(SpaceGroupBare):
         return (symmetries, 
                 symbol,
                 number,
+                hall_number,
                 transformation_matrix,
                 origin_shift)
 

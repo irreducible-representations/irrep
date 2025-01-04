@@ -499,10 +499,12 @@ def symm_matrix(
         if unitary:
             if not unitary_params_loc["check_upper"] and b2==NB:
                 error_threshold = 10
+                waring_threshold = 10
             else:
                 error_threshold = unitary_params_loc["error_threshold"]
+                waring_threshold = unitary_params_loc["warning_threshold"]
             block = orthogonalize(block, 
-                                  warning_threshold=unitary_params_loc["warning_threshold"],
+                                  warning_threshold=waring_threshold,
                                   error_threshold=error_threshold,
                                   debug_msg=f"symm_matrix: block {b1}:{b2} of {WF.shape[0]}")
         block_list.append(block)
