@@ -1,7 +1,6 @@
 import os
 import subprocess
 from pathlib import Path
-import irrep
 from irrep.bandstructure import BandStructure
 from irrep.gvectors import symm_matrix
 from irrep.utility import get_block_indices, is_round
@@ -36,7 +35,9 @@ def test_bi_hoti():
     ref_file = "ref_output_isymsep.json"
     check_isymsep(example_dir, command, ref_file)
 
-@pytest.mark.parametrize("isym", [5,11])
+# C2y : 5, 13 (without matching syms)
+# -C4z+ : 11, 4 (without matching syms)
+@pytest.mark.parametrize("isym", [13,4])
 def test_vasp_scalar(isym):
     # Test specifying refUC in CLI
     output_file = f"irrep-output_isymsep-{isym}.json"
@@ -176,6 +177,7 @@ def check_symm_matrix(example_dir, output_file="symm_matrix", ref_file=None, deg
     bandstructure = BandStructure(code='vasp', 
                                   fPOS=os.path.join(path, 'POSCAR'),
                                   fWAV=os.path.join(path, 'WAVECAR'),
+                                  search_cell=True,
                                   Ecut=Ecut, 
                                   spinor=True, normalize=False,
                                   IBend=20)
