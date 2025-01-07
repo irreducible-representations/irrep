@@ -1795,6 +1795,53 @@ class SpaceGroup():
         print(f'vecs after integerization (cols):\n{np.round(M.T,4)}')
 
         M = M.T  # vectors by columns
+
+        # Determine centering and fix it to the one in tables
+        det = np.linalg.det(M)
+
+        msg = ('The preliminary transformation to the '
+               'conventional cell via the matrix M '
+               'takes to an unknown centering. '
+               'Open an issue on GitHub to report to the '
+               'developers')
+
+        if abs(det) - int(abs(det)) > 1e-3:
+            print(f'M: {M}')  # test line
+            print(f'det(M): {det}')  # test line
+            raise RuntimeError(msg)
+
+        elif int(abs(det)) == 4:
+            centering = 'F'
+
+        elif int(abs(det)) == 3:
+            centering = 'R'
+
+        elif int(abs(det)) == 2:  # A, B, C or I
+
+            v = np.sum(np.abs(M), axis=1)
+            v = np.array(v, dtype=int)
+
+            if np.allclose(v, 2*np.ones(3)):
+                centering = 'I'
+
+            else:  # A, B or C
+
+                print(f'v: {v}')
+                irow = np.where(v == 1)[0][0]
+                icol = np.where(np.abs(np.abs(M)[irow] - 1.0) < 1e-5)[0][0]
+                print(irow,icol)
+                centering = ['A', 'B', 'C'][icol]
+
+        elif int(abs(det)) == 1:
+            centering = 'P'
+
+        else:
+            print(f'M: {M}')  # test line
+            print(f'det(M): {det}')  # test line
+            raise RuntimeError(msg)
+
+        print(centering)
+
         shiftUC = np.zeros(3)  # determination not implemented yet
 
         return M, shiftUC
