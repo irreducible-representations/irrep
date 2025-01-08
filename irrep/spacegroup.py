@@ -22,7 +22,7 @@ import numpy as np
 from math import pi
 from scipy.linalg import expm
 import spglib
-from irreptables import IrrepTable
+from irreptables import IrrepTable, SpaceGroup_SVD
 from scipy.optimize import minimize
 from .utility import str_, log_message, BOHR, parallel
 from packaging import version
@@ -870,6 +870,8 @@ class SpaceGroup():
 
         if positions is None or typat is None:  # FPLO, determine space group from spin repr.
 
+            self.number = sg  # temporary until we parse it from DFT data
+
             if spin_repr is None or parities is None:
                 raise RuntimeError(
                     'If the identification of the space group is not carried '
@@ -905,9 +907,7 @@ class SpaceGroup():
 
             self.refUC, self.shiftUC = self.conv_from_prim()
 
-            # TEMPORARY ASSIGNEMENT! To do: implement determination of space group
-            self.number = sg
-            self.name = 'Pm-3m'
+            self.name = 'FAKE'
 
             # TODO: Implement identification of space group number
             self.symmetries_tables = IrrepTable(sg, self.spinor, v=verbosity).symmetries
@@ -1840,7 +1840,76 @@ class SpaceGroup():
             print(f'det(M): {det}')  # test line
             raise RuntimeError(msg)
 
-        print(centering)
+        print(f'centering in preliminary conventional:\n{centering}')
+
+        # Set centering to that in tables
+        sg_svd = SpaceGroup_SVD(self.number, mode='parse')
+        msg = ("WARNING: There should be nothing wrong with your unit cell, "
+               "but it looks interesting... Please, open an issue on "
+               "https://github.com/irreducible-representations/irrep to share "
+               "your =.in file with us")
+
+        if self.laue_group == 'mmm':  # orthorhombic
+
+            if centering == 'A' and sg_svd.centering == 'C':
+                M_fixcent = np.array([[0, 0, 1],
+                                      [1, 0, 0],
+                                      [0, 1, 0]])
+            elif centering == 'C' and sg_svd.centering == 'A':
+                M_fixcent = np.array([[0, 1, 0],
+                                      [0, 0, 1],
+                                      [1, 0, 0]])
+            elif centering == 'B' and sg_svd.centering == 'A':
+                M_fixcent = np.array([[0, 0, 1],
+                                      [1, 0, 0],
+                                      [0, 1, 0]])
+            elif centering == 'B' and sg_svd.centering == 'C':
+                M_fixcent = np.array([[0, 1, 0],
+                                      [0, 0, 1],
+                                      [1, 0, 0]])
+            else:
+                M_fixcent = np.eye(3)
+
+        elif self.laue_group == '2/m':  # monoclinic
+
+            if centering == 'A' and sg_svd.centering == 'C':
+                M_fixcent = np.array([[0, 0, 1],
+                                      [0, 1, 0],
+                                      [-1, 0, 0]])
+            if centering == 'I' and sg_svd.centering == 'C':
+                M_fixcent = np.array([[1, 0, 0],
+                                      [0, 1, 0],
+                                      [1, 0, 1]])
+                print(msg)
+            if centering == 'F' and sg_svd.centering == 'C':
+                raise RuntimeError('This case is strange. Aborting... Please, '
+                                   'report to developers by opening an issue '
+                                   'on https://github.com/irreducible-representations/irrep '
+                                   'and uploading the =.in file')
+            else:
+                M_fixcent = np.eye(3)
+
+        elif self.laue_group in ['4/m', '4/mmm']:  # tetragonal, single fixing matrix
+
+            if centering == 'C' and sg_svd.centering == 'P':
+                M_fixcent = np.array([[-1/2, 1/2, 0],
+                                      [1/2, 1/2, 0],
+                                      [0, 0, 1]])
+
+            elif centering == 'F' and sg_svd.centering == 'I':
+                M_fixcent = np.array([[-1/2, 1/2, 0],
+                                      [1/2, 1/2, 0],
+                                      [0, 0, 1]])
+
+            else:
+                M_fixcent = np.eye(3)
+
+        else:  # cubic, hexagonal, rhombohedral and triclinic
+            M_fixcent = np.eye(3)
+
+        print(f'centering: {centering},  conv centering: {sg_svd.centering},  matrix:\n{M_fixcent}')
+
+        M = M @ M_fixcent
 
         shiftUC = np.zeros(3)  # determination not implemented yet
 
