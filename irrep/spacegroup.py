@@ -28,6 +28,7 @@ from .utility import str_, log_message, BOHR, parallel
 from packaging import version
 from fractions import Fraction
 from math import lcm
+import copy
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -67,6 +68,24 @@ table_crystal_class = {'1': [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
                        '-43m': [0, 6, 0, 6, 0, 1, 3, 8, 0, 0],
                        'm-3m': [0, 6, 8, 9, 1, 1, 9, 8, 6, 0]
                        }
+
+# Matrices (used as standard) to go from centered to primitive cells
+TO_PRIMITIVE = {'A': np.array([[1, 0, 0],
+                               [0, 1/2, -1/2],
+                               [0, 1/2, 1/2]]),
+                'B': np.array([[1/2, 0, -1/2],
+                               [0, 1, 0],
+                               [1/2, 0, 1/2]]),
+                'C': np.array([[1/2, 1/2, 0],
+                               [-1/2, 1/2, 0],
+                               [0, 0, 1]]),
+                'F': np.array([[0, 1/2, 1/2],
+                               [1/2, 0, 1/2],
+                               [1/2, 1/2, 0]]),
+                'R': np.array([[-1/2, 1/2, 1/2],
+                               [1/2, -1/2, 1/2],
+                               [1/2, 1/2, -1/2]])
+                }
 
 grid = [[1,0,0], [0,1,0], [0,0,1], [1,1,0], [1,0,1], [0,1,1], [1,1,1], [2,1,0], 
         [2,0,1], [0,2,1], [0,1,2]]
@@ -1910,6 +1929,22 @@ class SpaceGroup():
         print(f'centering: {centering},  conv centering: {sg_svd.centering},  matrix:\n{M_fixcent}')
 
         M = M @ M_fixcent
+
+        # Take symmetries to the "standard" primitive cell
+        P = M @ TO_PRIMITIVE[sg_svd.centering]
+        for sym in symmetries:
+            sym.rotation = sym.rotation_refUC(P)
+            sym.translation = sym.translation_refUC(P, np.zeros(3))
+
+        # Identify the generators by comparing to SVD matrices
+        #for i in range(sg_svd.num_gens):
+
+        #    while True:
+                
+
+
+        
+        exit()
 
         shiftUC = np.zeros(3)  # determination not implemented yet
 
