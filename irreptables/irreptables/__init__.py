@@ -529,7 +529,9 @@ class SpaceGroup_SVD:
 
         self.number = sg_number
         self.mode = mode
-        self.file = f'svd-{self.number}.dat' 
+        self.file = '{}/svd_data/svd-{}.dat'.format(
+                     os.path.dirname(__file__),
+                     self.number)
         self.generators = self.get_generators()  # in primitive cell
         self.num_gens = len(self.generators)
 
@@ -537,6 +539,12 @@ class SpaceGroup_SVD:
 
         if self.mode == 'create':
             matrices = generators[self.point_group]
+
+            # In the primitive vectors' basis
+            matrices = np.einsum('ja,iab,bk',
+                                 np.linalg.inv(self.to_primitive),
+                                 matrices,
+                                 self.to_primitive)
 
         elif self.mode == 'parse':  # Parse from data file
             f = open(self.file, 'r')
@@ -546,11 +554,6 @@ class SpaceGroup_SVD:
                 matrices[i] = np.reshape(f.readline().split(), shape=(3,3))
             f.close()
 
-        # Matrices of generators in primitive cell
-        matrices = np.einsum('ja,iab,bk',
-                             np.linalg.inv(self.to_primitive),
-                             matrices,
-                             self.to_primitive)
 
         # Check that matrices of generators are integers
         diff = matrices - np.array(matrices, dtype=int)
