@@ -595,7 +595,7 @@ class SpaceGroup_SVD:
     @cached_property
     def N_matrix(self):
 
-        N = self.generators.reshape(self.num_gens*3,3)
+        N = self.rotations.reshape(self.num_gens*3,3)
         return N
 
     def svd(self):
