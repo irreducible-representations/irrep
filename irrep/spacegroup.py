@@ -84,7 +84,8 @@ TO_PRIMITIVE = {'A': np.array([[1, 0, 0],
                                [1/2, 1/2, 0]]),
                 'R': np.array([[-1/2, 1/2, 1/2],
                                [1/2, -1/2, 1/2],
-                               [1/2, 1/2, -1/2]])
+                               [1/2, 1/2, -1/2]]),
+                'P': np.eye(3)
                 }
 
 grid = [[1,0,0], [0,1,0], [0,0,1], [1,1,0], [1,0,1], [0,1,1], [1,1,1], [2,1,0], 
@@ -1930,43 +1931,91 @@ class SpaceGroup():
 
         M = M @ M_fixcent
 
-        # Take symmetries to the "standard" primitive cell
-        P = M @ TO_PRIMITIVE[sg_svd.centering]
-        rotations = []
-        translations = []
-        for sym in symmetries:
-            rotations.append(s.rotation_refUC(P))
-            translations.append(s.translation_refUC(P, np.zeros(3)) % 1)
+        # Try all permutations of vectors to fix the orientation of symmetry
+        # elements w.r.t. to the conventional basis vectors (at this point, 
+        # we know that the shape of the cell matches with the conventional
 
-        # Identify the generators by comparing to SVD matrices
-        inds_generators = []
-        for isvd, W_svd in enumerate(sg_svd.rotations):
-            found = False
+        permutations = [np.eye(3)]
+        if self.laue_group == '2/m' and sg_svd.centering == 'P':
+            permutations.append(np.array([[0, 0, 1],
+                                          [0, -1, 0],
+                                          [1, 0, 0]]))
+        elif self.laue_group == 'mmm':
+            if sg_svd.centering == 'A':
+                permutations.append(np.array([[-1, 0, 0],
+                                              [0, 0, 1],
+                                              [0, 1, 0]]))
+            elif sg_svd.centering == 'C':
+                permutations.append(np.array([[0, 1, 0],
+                                              [1, 0, 0],
+                                              [0, 0, -1]]))
+            else:  # P, I, F
+                permutations.append(np.array([[-1, 0, 0],
+                                              [0, 0, 1],
+                                              [0, 1, 0]]))
+                permutations.append(np.array([[0, 1, 0],
+                                              [1, 0, 0],
+                                              [0, 0, -1]]))
+                permutations.append(np.array([[0, 0, 1],
+                                              [0, -1, 0],
+                                              [1, 0, 0]]))
+        elif self.laue_group in ['4/m', '4/mmm']:  # P, I
+                permutations.append(np.array([[0, 1, 0],
+                                              [1, 0, 0],
+                                              [0, 0, -1]]))
 
-            for i, W_dft in enumerate(rotations):
+        found = False
+        for S in permutations: 
 
-                if np.allclose(W_dft, W_svd):
-                    inds_generators.append(i)
-                    found = True
-                    break
+            # Take symmetries to the "standard" primitive cell
+            P = M @ S @ TO_PRIMITIVE[sg_svd.centering]
+            rotations = []
+            translations = []
+            for sym in symmetries:
+                rotations.append(sym.rotation_refUC(P))
+                translations.append(sym.translation_refUC(P, np.zeros(3)) % 1)
 
-            if not found:
-                raise RuntimeError(
-                    'Could not match generator #{isvd} with a symmetry from the '
-                    'candidate-primitive DFT cell. Please, open an issue on '
-                    'https://github.com/irreducible-representations/irrep and '
-                    'share this error message and the =.in file with us'
-                    )
+            # Identify the generators by comparing to SVD matrices
+            inds_generators = []
+            for isvd, W_svd in enumerate(sg_svd.rotations):
+                found = False
 
-        # Construct matrix of differences in translations (Delta omega)
-        diff_t = np.zeros(self.num_gens*3, dtype=float)
-        
-        
-        exit()
+                for i, W_dft in enumerate(rotations):
 
-        shiftUC = np.zeros(3)  # determination not implemented yet
+                    if np.allclose(W_dft, W_svd):
+                        inds_generators.append(i)
+                        found = True
+                        break
 
-        return M, shiftUC
+                if not found:
+                    raise RuntimeError(
+                        'Could not match generator #{isvd} with a symmetry from the '
+                        'candidate-primitive DFT cell. Please, open an issue on '
+                        'https://github.com/irreducible-representations/irrep and '
+                        'share this error message and the =.in file with us'
+                        )
+
+            # Construct matrix of differences in translations (Delta omega)
+            diff_t = np.zeros(sg_svd.num_gens*3, dtype=float)
+            for i_svd, i_dft in enumerate(inds_generators):
+                diff_t[3*i_svd:3*(i_svd+1)] = (translations[i_dft]
+                                              - sg_svd.translations[i_svd])
+
+            # Determine origin shift and check that it is valid
+            shiftUC = sg_svd.lambda_matrix @ diff_t
+            vec_ref = sg_svd.N_matrix @ shiftUC
+            if np.allclose(vec_ref, diff_t):
+                refUC = M @ S
+                shift
+                found = True
+
+        if not found:
+            raise RuntimeError('No permutation found to match symmetry elements')
+        else:  # test lines
+            print(f'CONVENTIONAL CELL FOUND!\nS=\n{S}')
+            print(M.round(4), shiftUC);exit()
+
+        return refUC, shiftUC
 
 
     def determine_basis_transf(
