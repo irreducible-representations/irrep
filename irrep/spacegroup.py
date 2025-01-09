@@ -1932,17 +1932,35 @@ class SpaceGroup():
 
         # Take symmetries to the "standard" primitive cell
         P = M @ TO_PRIMITIVE[sg_svd.centering]
+        rotations = []
+        translations = []
         for sym in symmetries:
-            sym.rotation = sym.rotation_refUC(P)
-            sym.translation = sym.translation_refUC(P, np.zeros(3))
+            rotations.append(s.rotation_refUC(P))
+            translations.append(s.translation_refUC(P, np.zeros(3)) % 1)
 
         # Identify the generators by comparing to SVD matrices
-        #for i in range(sg_svd.num_gens):
+        inds_generators = []
+        for isvd, W_svd in enumerate(sg_svd.rotations):
+            found = False
 
-        #    while True:
-                
+            for i, W_dft in enumerate(rotations):
 
+                if np.allclose(W_dft, W_svd):
+                    inds_generators.append(i)
+                    found = True
+                    break
 
+            if not found:
+                raise RuntimeError(
+                    'Could not match generator #{isvd} with a symmetry from the '
+                    'candidate-primitive DFT cell. Please, open an issue on '
+                    'https://github.com/irreducible-representations/irrep and '
+                    'share this error message and the =.in file with us'
+                    )
+
+        # Construct matrix of differences in translations (Delta omega)
+        diff_t = np.zeros(self.num_gens*3, dtype=float)
+        
         
         exit()
 

@@ -494,10 +494,13 @@ class SpaceGroup_SVD:
     mode : str
         Whether class has to be created by parsing tables or not. The 
         later is typically the case if you want to redo the SVD.
-    generators : array
+    rotations : array
         First index labels the generators of the point group, and the 
         corresponding value is its matrix in the primitive cell, based on
         the conventional transformation matrix to the primitive cell
+    translations : array
+        Each row is the translations vector of a generator in the 
+        standard-primitive cell
     num_gens : int
         Number of generators of the point group.
     file : str
@@ -530,30 +533,54 @@ class SpaceGroup_SVD:
         self.number = sg_number
         self.mode = mode
         self.file = '{}/svd_data/svd-{}.dat'.format(
-                     os.path.dirname(__file__),
-                     self.number)
-        self.generators = self.get_generators()  # in primitive cell
-        self.num_gens = len(self.generators)
+                        os.path.dirname(__file__),
+                        self.number)
+        self.rotations, self.translations = self.get_generators()  # in primitive cell
+        self.num_gens = len(self.rotations)
 
     def get_generators(self):
 
         if self.mode == 'create':
+
             matrices = generators[self.point_group]
 
-            # In the primitive vectors' basis
+            # Identify generators in tables to get translational parts
+            table = IrrepTable(self.number, spinor=False)
+            inds_generators = []
+            for isvd, W_svd in enumerate(matrices):
+                found = False
+                for i, sym_table in enumerate(table.symmetries):
+                    if np.allclose(sym_table.R, W_svd):
+                        inds_generators.append(i)
+                        found = True
+                        break
+                if not found:
+                    print(f'{isvd} not matched!')
+
+            translations = []
+            for i in inds_generators:
+                translations.append(table.symmetries[i].t)
+            translations = np.array(translations)
+
+            # Generators in primitive cell
             matrices = np.einsum('ja,iab,bk',
-                                 np.linalg.inv(self.to_primitive),
-                                 matrices,
-                                 self.to_primitive)
+                             np.linalg.inv(self.to_primitive),
+                             matrices,
+                             self.to_primitive)
+            translations = np.einsum('ij,kj->ki',
+                             np.linalg.inv(self.to_primitive),
+                             translations)
 
         elif self.mode == 'parse':  # Parse from data file
             f = open(self.file, 'r')
             num_gens = int(f.readline().split()[1])
             matrices = np.zeros((num_gens, 3, 3), dtype=int)
+            translations = np.zeros((num_gens, 3), dtype=float)
             for i in range(num_gens):
-                matrices[i] = np.reshape(f.readline().split(), shape=(3,3))
+                line = f.readline().split()
+                matrices[i] = np.reshape(line[:9], shape=(3,3))
+                translations[i] = np.array(line[9:], dtype=float)
             f.close()
-
 
         # Check that matrices of generators are integers
         diff = matrices - np.array(matrices, dtype=int)
@@ -563,7 +590,7 @@ class SpaceGroup_SVD:
                   'Found a difference of {} w.r.t. integers'
                   .format(diff))
 
-        return matrices
+        return matrices, translations
 
     @cached_property
     def N_matrix(self):
@@ -602,9 +629,10 @@ class SpaceGroup_SVD:
         print('WARNING: this file will be overwritten.')
         f = open(self.file, 'w')
         f.write(f'{self.number}  {self.num_gens}\n')
-        for matrix in self.generators:
-            matrix = matrix.reshape(9)
-            s = [f'{int(x):2d}' for x in matrix]
+        for R, t in zip(self.rotations, self.translations):
+            R = R.reshape(9)
+            s = [f'{int(x):2d}' for x in R]
+            s += [f'{x:5.2f}' for x in t]
             s = '  '.join(s)
             f.write(s)
             f.write('\n')
