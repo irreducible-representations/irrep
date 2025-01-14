@@ -1035,7 +1035,8 @@ class SpaceGroup(SpaceGroupBare):
         # Print atomic positions
         print('Atomic positions in direct coordinates:\n')
         print('{:^} | {:^25} | {:^25}'.format('Atom type', 'Position in DFT cell', 'Position in REF cell'))
-        positions_refUC = self.positions.dot(np.linalg.inv(self.refUC.T))
+        positions_refUC = np.linalg.inv(self.refUC) @ np.transpose(self.positions - self.shiftUC)
+        positions_refUC = positions_refUC.T % 1.0
         for itype, pos1, pos2 in zip(self.typat, self.positions, positions_refUC):
             s = '{:^9d}'.format(itype)
             s += ' | '
