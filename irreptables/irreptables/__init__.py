@@ -16,7 +16,9 @@
 
 __version__="2.0.0"
 
+import copy
 import os
+import sys
 import logging
 import numpy as np
 from irrep.utility import str2bool, str2list_space, str_, log_message
@@ -57,7 +59,7 @@ class SymopTable:
         # len is 13 if time reversal is specified
         # len is > 13 everytime there is spin
         line_length = len(numbers)
-        if line_length > 12:
+        if line_length > 13:
             self.S = (
                 np.array(numbers[12:16], dtype=float)
                 * np.exp(1j * np.pi * np.array(numbers[16:20], dtype=float))
@@ -361,8 +363,8 @@ class IrrepTable:
         while len(lines) > 0:
             l = lines.pop().strip().split("=")
             # logger.debug(l,l[0].lower())
-            if l[0].lower() == "SG":
-                assert int(l[1]) == self.number
+            if l[0].lower() == "sg":
+                assert l[1].strip() == self.number
             elif l[0].lower() == "name":
                 self.name = l[1]
             elif l[0].lower() == "nsym":
@@ -371,16 +373,19 @@ class IrrepTable:
                 assert str2bool(l[1]) == self.spinor
             elif l[0].lower() == "symmetries":
                 log_message("Reading symmetries from tables", v, 2)
-                self.symmetries = []
-                while len(self.symmetries) < self.nsym:
+                symmetries = []
+                while len(symmetries) < self.nsym:
                     l = lines.pop()
                     # logger.debug(l)
                     try:
-                        self.symmetries.append(SymopTable(l))
+                        symmetries.append(SymopTable(l))
                     except Exception as err:
                         logger.debug(err)
                         pass
                 break
+
+        self.symmetries = list(filter(lambda x: not x.time_reversal, symmetries))
+        self.au_symmetries = list(filter(lambda x: x.time_reversal, symmetries))
 
         msg = "Symmetries are:\n" + "\n".join(s.str() for s in self.symmetries)
         log_message(msg, v, 2)

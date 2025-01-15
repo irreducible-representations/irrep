@@ -157,6 +157,13 @@ class SymmetryOperation():
         raise RuntimeError(
             "{0} pi rotation cannot be in the space group".format(api))
 
+    @cached_property
+    def rotation_cart(self):
+        """
+        Calculate the rotation matrix in cartesian coordinates.
+        """
+        return self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
+
     def _get_operation_type(self):
         """
         Calculates the rotation axis and angle of the symmetry and if it 
@@ -841,7 +848,7 @@ class SpaceGroup(SpaceGroupBare):
                 translations = dataset['translations']
             else:
                 self.name = dataset.international
-                self.number = dataset.number
+                self.number = str(dataset.number)
                 refUC_tmp = dataset.transformation_matrix
                 shiftUC_tmp = dataset.origin_shift
                 rotations = dataset.rotations
@@ -867,7 +874,7 @@ class SpaceGroup(SpaceGroupBare):
 
             uni_number = dataset.uni_number
             root = os.path.dirname(__file__)                                    
-            with open(root + "/msg_numbers.data", 'r') as f:                    
+            with open(root + "/data/msg_numbers.data", 'r') as f:                    
                 self.number, self.name = f.readlines()[uni_number].strip().split(" ") 
 
         # Read syms from .sym file (useful for Wannier interface)
@@ -1066,6 +1073,11 @@ class SpaceGroup(SpaceGroupBare):
             if symmetries is None or symop.ind in symmetries:
                 symop.show(refUC=self.refUC, shiftUC=self.shiftUC, U=self.spin_transf)
 
+        if self.magnetic and len(self.au_symmetries) > 0:
+            print("\nThe MSG has also the following anti-unitary symmetries:")
+            for symop in self.au_symmetries:
+                if symmetries is None or symop.ind in symmetries:
+                    symop.show(refUC=self.refUC, shiftUC=self.shiftUC, U=self.spin_transf)
 
     def write_sym_file(self, filename, alat=None):
         """
@@ -1635,6 +1647,69 @@ class SpaceGroup(SpaceGroupBare):
                         )
         vecs = np.vstack([vecs + r for r in self.vecs_centering()])
         return vecs
+    
+    def print_hs_kpoints(self):
+        """
+        Give the kpoint coordinates of the symmetry tables transformed to 
+        the DFT calculation cell.
+
+        """
+
+        table = IrrepTable(self.number, self.spinor, magnetic=self.magnetic)
+        refUC_kspace = np.linalg.inv(self.refUC.T)
+
+        matrix_format = ("\t\t| {: .2f} {: .2f} {: .2f} |\n" 
+                        "\t\t| {: .2f} {: .2f} {: .2f} |\n" 
+                        "\t\t| {: .2f} {: .2f} {: .2f} |\n\n")
+
+        print("\n---------- HS-KPOINTS FOR IRREP IDENTIFICATION ----------\n")
+
+        print("\nChange of coordinates from conventional to DFT cell:\n")
+        print(matrix_format.format(*refUC_kspace.ravel()))
+
+        print("\nChange of coordinates from DFT to conventional cell:\n")
+        print(matrix_format.format(*np.linalg.inv(refUC_kspace).ravel()))
+
+        _, kp_index = np.unique([irr.kpname for irr in table.irreps], return_index=True)
+        print("Coordinates in symmetry tables:\n")
+        for i in kp_index:
+            name = table.irreps[i].kpname
+            coords = table.irreps[i].k
+            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *coords))
+        print("\nCoordinates for DFT calculation:\n")
+        for i in kp_index:
+            name = table.irreps[i].kpname
+            coords = table.irreps[i].k
+            k_dft = np.round(refUC_kspace.dot(coords), 6) % 1
+            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *k_dft))
+
+    def kpoints_to_calculation_cell(self, kpoints):
+        """Transforms kpoints form standard cell to calculation cell
+
+        Parameters
+        ----------
+        kpoints : np.NDArray
+            kpoints in standard cell
+        """
+        refUC_kspace = np.linalg.inv(self.refUC.T)
+
+        kpoints = np.array([refUC_kspace.dot(k) for k in kpoints]) % 1
+
+        return kpoints
+
+    def kpoints_to_standard_cell(self, kpoints):
+        """Transforms kpoints form standard cell to calculation cell
+
+        Parameters
+        ----------
+        kpoints : np.NDArray
+            kpoints in standard cell
+        """
+        refUC_kspace = self.refUC.T
+
+        kpoints = np.array([refUC_kspace.dot(k) for k in kpoints]) % 1
+
+        return kpoints
 
 
 def read_sym_file(fname):

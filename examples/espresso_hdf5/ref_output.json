@@ -1,7 +1,7 @@
 {
     "spacegroup": {
         "name": "Fd-3m",
-        "number": 227,
+        "number": "227",
         "spinor": false,
         "num symmetries": 48,
         "cells match": true,

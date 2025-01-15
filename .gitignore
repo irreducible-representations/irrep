@@ -162,3 +162,4 @@ examples/C2B2Gd-vasp-scalar/irrep-output.json
 examples/C2B2Gd-vasp-spinor/irrep-output.json
 examples/wannier-scalar-NaAs/irrep-output.json
 examples/wannier-spinors-NaAs/irrep-output.json
+.DS_Store
