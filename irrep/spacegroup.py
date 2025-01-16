@@ -1073,12 +1073,6 @@ class SpaceGroup(SpaceGroupBare):
             if symmetries is None or symop.ind in symmetries:
                 symop.show(refUC=self.refUC, shiftUC=self.shiftUC, U=self.spin_transf)
 
-        if self.magnetic and len(self.au_symmetries) > 0:
-            print("\nThe MSG has also the following anti-unitary symmetries:")
-            for symop in self.au_symmetries:
-                if symmetries is None or symop.ind in symmetries:
-                    symop.show(refUC=self.refUC, shiftUC=self.shiftUC, U=self.spin_transf)
-
     def write_sym_file(self, filename, alat=None):
         """
         Write symmetry operations to a file.
