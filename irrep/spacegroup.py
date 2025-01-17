@@ -1450,11 +1450,11 @@ class SpaceGroup(SpaceGroupBare):
             calculation to that of the standard setting.
         find_spin_matrices : bool, default=False
             If `True`, match also rotations of spinors corresponding to 
-            each symmetry.
+            each symmetry. Use only if matching all symmetries.
         trans_thresh : float, default=1e-5
             Threshold used to compare translational parts of symmetries.
         only_y_symmetries: boolean, default=False
-            Only match unitary symmetries. Useful when determining the centering
+            Only match unitary symmetries. Only for determining the centering
         
         Returns
         -------
@@ -1477,6 +1477,11 @@ class SpaceGroup(SpaceGroupBare):
             refUC = self.refUC
         if shiftUC is None:
             shiftUC = self.shiftUC
+
+        assert not (only_u_symmetries and find_spin_matrices), (
+            "only_y_symmetries is only meant to find the centering."
+            " Do not modify spin matrices unless matching all symmetries."
+        )
 
         ind = []
         dt = []
@@ -1563,10 +1568,8 @@ class SpaceGroup(SpaceGroupBare):
             sym.ind = i + 1
             sorted_symmetries.append(sym)
 
-        # update symmetries
-        if au_symmetries:
-            self.au_symmetries = sorted_symmetries
-        else:
+        # update symmetries if matching all
+        if not only_u_symmetries:
             self.symmetries = sorted_symmetries
 
     def __spin_matrix_ref_to_calc(self, axis_table, angle):
