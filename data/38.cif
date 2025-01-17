@@ -1,0 +1,32 @@
+# generated using pymatgen
+data_Al2CrB2Mo
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   7.11104344
+_cell_length_b   7.11104344
+_cell_length_c   3.05892300
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   154.50565128
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Al2CrB2Mo
+_chemical_formula_sum   'Al2 Cr1 B2 Mo1'
+_cell_volume   66.57784594
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Al  Al0  1  0.30697800  0.69302200  0.50000000  1
+  Al  Al1  1  0.69958300  0.30041700  0.00000000  1
+  Cr  Cr2  1  0.91309500  0.08690500  0.00000000  1
+  B  B3  1  0.46393200  0.53606800  0.50000000  1
+  B  B4  1  0.52894300  0.47105700  0.00000000  1
+  Mo  Mo5  1  0.08747000  0.91253000  0.50000000  1

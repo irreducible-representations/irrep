@@ -1,0 +1,1252 @@
+########################################################################
+# this file is part of the FPLO bandstructure package
+# it was created automatically
+# please dont delete this file nor
+# edit it, unless you really know what you are doing
+# any changes added by you may be lost if this file is recreated
+# by FPLO (which is the normal behaviour )
+# so keep duplicates of your changes somewhere else
+#
+########################################################################
+section header{
+
+    struct {char[*] mainversion;char[*] subversion;} version
+    ={"23.00","M-CPA"};
+
+};
+
+
+section Data{
+
+    struct {char[*] screenname;char[*] filename;
+        struct {char[*] action;char[*] menubarentry;char[*] actionname;} menus[*];
+        struct {char[*] action;char[*] variablename;char[*] defaultvalue;char[*] fieldname;int namepos;int fieldoffset;int fieldwidth;char[*] testflags;char[*] testset[*];real intervalleft;real intervalright;} entries[*];
+    } screens[*]
+    ={
+        {"MAIN MENU","=.in"
+            ,{
+                {"MAIN | MAINQUIT","@(q)uit/save",""}
+                ,{"MAIN | MAINEXIT","e@(x)it/discard",""}
+                ,{"MAIN | EXTERNEDIT","@(e)xtern edit",""}
+                ,{"MAIN | SUBMENU","@(B)asis","BASIS MENU"}
+                ,{"MAIN | SUBMENU","@(+) Symmetry","SYMMETRY MENU"}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+                ,{"ALT  | SUBMENU","@(B)andplot","BANDPLOT"}
+                ,{"ALT  | SUBMENU","@(l)SDA+U","LSDA+U"}
+                ,{"ALT  | SUBMENU","O@(p)C","OPC"}
+                ,{"ALT  | SUBMENU","@(F)orces","FORCES"}
+                ,{"ALT  | SUBMENU","@(m)esh","MESH DEFINITION"}
+                ,{"ALT  | RESTORE","@(R)estore",""}
+                ,{"ALT  | REBUILD","R@(e)create","=.in"}
+                ,{"ALT  | EOL","",""}
+                ,{"ALT  | SUBMENU","@(I)nitial spinsplit","INITIAL SPINSPLIT"}
+                ,{"ALT  | SUBMENU","I@(t)eration","ITERATION CONTROL"}
+                ,{"ALT  | EOL","",""}
+                ,{"ALT  | SUBMENU","Brillouin-@(z)one","BRILLOUIN ZONE INTEGRATION"}
+                ,{"ALT  | SUBMENU","@(N)umerics","NUMERICS"}
+                ,{"ALT  | SUBMENU","@(G)rid-output","GRID OUTPUT"}
+                ,{"ALT  | SUBMENU","Core-@(o)ccupation","CORE OCCUPATION"}
+                ,{"ALT  | SUBMENU","Topological-Ins@(u)lators","TOPOLOGICAL INSULATORS"}
+                ,{"ALT  | SUBMENU","Opti@(c)s","OPTICS"}
+                ,{"ALT  | SUBMENU","C@(h)arges","CHARGES"}
+                ,{"ALT  | SUBMENU","@(d)HvA","DHVA"}
+                ,{"ALT  | SUBMENU","@(X)C options","XCOPTIONS"}
+            }
+            ,{
+                {"TITLE|EOL","","","GENERAL DATA",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM","spin.mspin","1","@(s)pin sorts",1,20,13,"TOGGLE",{"1","2"},0,+INF}
+                ,{"ITEM|EOL","spin.initial_spin_split","f","@(i)nitial polarization",40,23,10,"",{},0,+INF}
+                ,{"ITEMLIST ","bzone_integration.nkxyz","12","@(k)-mesh subdivision",1,20,13,"",{},0,+INF}
+                ,{"ITEM|EOL","nband","-1","@(o)ccupied bands",40,23,10,"",{},-INF,+INF}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","bzintmethod","1","BZ subdiv @(m)ethod",1,20,13,"",{"     1\n@(p)rimitive cell","     2\n@(c)onvent.  cell"},0,0}
+                ,{"ITEM   ","iteration_control.steps","40","@(n)umber of iterat.",1,20,13,"",{},1,+INF}
+                ,{"ITEM |EOL  ","iteration_control.tolerance","1.e-6","@(A)ccuracy of density",40,23,10,"LEFT_OPEN",{},0,+INF}
+                ,{"ITEM   ","calc_etot","t","@(t)otal energy calc.",1,20,13,"",{},1,+INF}
+                ,{"ITEM |EOL  ","etot_tolerance","1.e-5","A@(c)curacy of Etot",40,23,10,"LEFT_OPEN",{},0,+INF}
+                ,{"SELECTBOX| AUTO_WIDTH |EOL","iteration_convergence_condition","1","Conver@(g)ence condition",1,20,40,"",{"     1\n@(1)\tDensity OR energy","     2\n@(2)\tDensity","     3\n@(3)\tDensity AND energy","     4\n@(4)\tEnergy"},0,0}
+                ,{"CHECKBOX | TWO_COLUMN | AUTO_WIDTH | EOL ","options","","@(-)\tOptions",40,23,10,"",{},0,0}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","relativistic","1","@(R)elativistic",1,20,40,"",{"     1\n@(n)on relativistic","     2\n@(s)calar relativistic","     4\n@(K)H scalar relativistic","     3\n@(f)ull relativistic"},0,0}
+                ,{"SELECTBOX| AUTO_WIDTH |EOL","xc_potential","9","@(V)xc-version",1,20,40,"",{"     1\n@(1)\tExchange only                (LSDA)","     2\n@(2)\tvon Barth Hedin              (LSDA)","     8\n@(3)\tPerdew and Zunger            (LSDA)","     9\n@(4)\tPerdew Wang 92               (LSDA)"
+                    ,"    10\n@(5)\tPerdew Burke Ernzerhof 96    (GGA)","    12\n@(6)\tBecke Johnson 06             (MGGA)","    13\n@(7)\tBecke Johnson 06 +PW92cor    (MGGA)","    14\n@(8)\tmodified Becke Johnson       (MGGA)"
+                    ,"    15\n@(9)\tmodified Becke Johnson+PW92co(MGGA)","    16\n@(10)\tmBJ+PW92co linear c          (MGGA)","    17\n@(11)\tmBJ+PW92co semi cond c       (MGGA)"},0,0}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","nuclear_model","1","@(F)inite nucleus",1,20,40,"",{"     1\n@(1)\tPoint charge","     2\n@(2)\tConstant density","     3\n@(3)\tLinear density","     4\n@(4)\tSquare density"
+                    ,"     5\n@(5)\tCubic density","     6\n@(6)\tQuintic density"},0,0}
+                ,{"ITEM|EOL","ex_field_strength","1.0","xc-field str@(e)ngth",1,20,13,"",{},0,+INF}
+                ,{"ITEM","fsmoment.fsm","f","@(w) fixed spin mom.",1,20,13,"",{},0,+INF}
+                ,{"ITEM|EOL","fsmoment.moment","0.","@(y) spin moment",40,23,10,"",{},-INF,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","RELATIVISTIC SETTINGS",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST|EOL ","quantization_axis","0","Q@(u)antization-axis",1,20,40,"",{},-INF,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","OTHERS",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"SELECTBOX| AUTO_WIDTH |EOL","verbosity_level","200","@(>)\tverbosity level",1,20,40,"",{"     0\n@(1)\tsilent","   100\n@(2)\tbasic information","   200\n@(3)\tmore information","   300\n@(4)\tmuch information"
+                    ,"  1000\n@(5)\tcomplete information"},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM|EOL","usedatadirectories","f","use @(d)ata directories",1,22,13,"",{},0,+INF}
+            }
+        },{"GRID OUTPUT","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM|EOL","grids_active","f","@(a)ctive",1,26,17,"",{},-INF,+INF}
+                ,{"ITEM|EOL","grids_stop_after","f","@(S)top after writing data",1,26,17,"",{},-INF,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"COMPOUND|EOL","grids","","GRID DEFINITIONS",1,-1,0,"",{},0,0}
+                ,{"COUNTER","","","@(N)umber of grid definitions",1,27,13,"",{},0,+INF}
+                ,{"BODY","","","",0,0,0,"",{},0,0}
+                ,{"SELECTBOX| SHOW_CONTENT | EOL","basis","  2","@(B)asis",1,26,17,"",{"     1\n@(p)rimitive","     2\n@(c)onventional","     3\nc@(a)rtesian"},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST|EOL","direction1","1 0 0","@(1)st direction",1,26,17,"",{},-INF,+INF}
+                ,{"ITEMLIST|EOL","direction2","0 1 0","@(2)nd direction",1,26,17,"",{},-INF,+INF}
+                ,{"ITEMLIST|EOL","direction3","0 0 1","@(3)rd direction",1,26,17,"",{},-INF,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST|EOL","origin","0","@(O)rigin",1,26,17,"",{},-INF,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST","subdivision","30 30 30","@(S)ubdivisions",1,26,10,"",{},0,+INF}
+                ,{"ITEM|EOL","file","","@(U)ser file",47,11,15,"WORD",{},0,+INF}
+                ,{"ITEM|EOL","InclPeriodicPoints","t","@(I)nclude periodic points",1,26,17,"",{},0,+INF}
+                ,{"ITEM|EOL","createOpenDX","f","@(C)reate openDX files",1,26,17,"",{},0,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"MSELECTBOX | SHOW_CONTENT | TWO_COLUMN| EOL","quantities","  1","@(Q)uantities",1,26,17,"",{"     1\nTotal @(D)ensity","     2\nTotal @(P)otential","     3\nSCF   @(W)ave functions","     4\n@(C)oulomb Potential"
+                    ,"     5\nXC Po@(t)ential","     6\n@(E)wald Potential"},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"MSELECTBOX | SHOW_CONTENT | TWO_COLUMN| EOL","outputdata","  2   3   4","Output @(D)ata",1,26,17,"",{"     1\n@(I)\tIndex","     2\n@(P)\tGrid points","     3\n@(T)\tTotal","     4\n@(S)\tSpin"
+                    ,"     5\n@(U)\tSpinup","     6\n@(D)\tSpindown","     7\n@(C)\tComponents"},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST|EOL","scfwavefnctwindow","1 -1","SCF @(W)avefnct energy window",1,36,17,"",{},-INF,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"COMPOUND|EOL","energywindows","","@(r)\tEnergy resolved densities",1,-1,0,"",{},0,0}
+                ,{"ITEM|EOL","name","ewdens","N@(a)me",1,26,13,"",{},0,+INF}
+                ,{"COUNTER","","","@(N)umber of energy resolved densities",1,36,13,"",{},0,+INF}
+                ,{"BODY","","","",2,0,0,"",{},0,0}
+                ,{"FIELD","sections","","",1,26,0,"",{},0,0}
+                ,{"COUNTER|EOL","","","@(N)umber of sections",1,26,13,"",{},0,+INF}
+                ,{"TITLE","","","Emin             Emax             De        Spin",11,-1,0,"",{},0,+INF}
+                ,{"DASHLINE","","","",3,-1,0,"",{},0,0}
+                ,{"ITEM","emin","-1","",3,5,14,"",{},-INF,+INF}
+                ,{"ITEM","emax","0","",25,0,14,"",{},-INF,+INF}
+                ,{"ITEM","de","0.1","",42,0,7,"",{},0,+INF}
+                ,{"ITEM|SELECTOR","spin","0","",52,0,8,"",{"0\nboth","1\nup","2\ndown"},0,2}
+                ,{"ENDFIELD","","","",1,25,8,"",{},0,0}
+                ,{"ENDCOMPOUND","","","",1,25,8,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"COMPOUND|EOL","kresolved","","@(k)-resolved densities/wave functions",1,-1,0,"",{},0,0}
+                ,{"COUNTER","","","Nu@(m)ber of k-resolved densit./Wave fu.",1,36,13,"",{},0,+INF}
+                ,{"BODY","","","",2,0,0,"",{},0,0}
+                ,{"ITEM|EOL","name","kdens","@(N)ame",3,24,14,"",{},-INF,0}
+                ,{"ITEMLIST|EOL","kpoint","0 0 0","@(k)-point",3,24,-1,"",{},-INF,+INF}
+                ,{"ITEMLIST|EOL","bandindices","1","@(b)ands",3,24,-1,"",{},1,+INF}
+                ,{"ITEMLIST|EOL","energywindow","0","@(e)nergy window",3,24,24,"",{},-INF,+INF}
+                ,{"ENDCOMPOUND","","","",1,25,8,"",{},0,0}
+                ,{"ENDCOMPOUND","","","",1,25,8,"",{},0,0}
+            }
+        },{"ITERATION CONTROL","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"EOL","","","",0,0,0,"",{},0,0}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","iteration_version","1","@(V)ersion",1,22,40,"",{"     1\n@(1)\tSimpleMix: Pratt\'s scheme","     2\n@(2)\tIterat   : Hyperspace interpolation","     4\n@(4)\tLCIterat : Iterat with linear progress control"},0,0}
+                ,{"ITEM |EOL  ","iteration_control.mixing","0.2","M@(i)xing",1,22,13,"LEFT_OPEN",{},0,+INF}
+                ,{"ITEM |EOL  ","iteration_control.maxdim","5","@(M)ax subspace dim",1,22,13,"",{},1,+INF}
+                ,{"ITEM |EOL  ","iteration_control.progress","0.2","@(P)rogress",1,22,13,"LEFT_OPEN",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","ITERATION VECTOR RATIO",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL  ","iterationvector_ratio.U","1.0","@(2)\toccu mat / density",1,22,13,"LEFT_OPEN",{},0,+INF}
+            }
+        },{"MESH DEFINITION","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"TITLE|EOL","","","RADIAL FUNCTION MESH",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM ","radial_mesh.nr","200","@(1)\tnumber of mesh points",1,25,8,"",{},2,+INF}
+                ,{"ITEM |EOL ","radial_mesh.rmin","1.e-4","@(2) minimal radius",40,25,8,"LEFT_OPEN",{},0,+INF}
+                ,{"ITEM ","radial_mesh.rmax","0","@(3)\tmaximal radius",1,25,8,"",{},0,+INF}
+                ,{"ITEM |EOL ","radial_mesh.rmax_factor","1.0","@(4) factor for rmax",40,25,8,"LEFT_OPEN",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","ATOM MESH",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM ","atom_radial_mesh.nr","200","@(5)\tnumber of mesh points",1,25,8,"",{},2,+INF}
+                ,{"ITEM |EOL ","atom_radial_mesh.rmin","1.e-7","@(6) minimal radius",40,25,8,"LEFT_OPEN",{},0,+INF}
+                ,{"ITEM|EOL ","atom_radial_mesh.rmax","0","@(7)\tmaximal radius",1,25,8,"",{},0,+INF}
+            }
+        },{"BRILLOUIN ZONE INTEGRATION","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM|EOL ","bzone_kT","1000","@(T)emperature",1,25,8,"",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","WARNING: METAL SWITCH AND METHFESSEL PAXTON ARE NOT TESTED !!!",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","bzone_method","1","@(i)ntegration method",1,25,40,"",{"     1\n@(t)etrahedron method","     2\n@(M)ethfessel-Paxton method"},0,0}
+                ,{"ITEM|EOL ","bzone_integration.metal","t","@(s)uppose its a metal",1,25,8,"",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","METHFESSEL-PAXTON METHOD",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM ","mp_bzone_integration.width","0.005","@(w)idth parameter",1,25,8,"LEFT_OPEN",{},0,+INF}
+                ,{"ITEM |EOL ","mp_bzone_integration.norder","0","@(o)rder parameter",40,25,8,"",{},0,+INF}
+            }
+        },{"XCOPTIONS","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"TITLE|EOL","","","MODIFIED BECKE JOHNSON LIKE",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM   ","mBJcontrols.overwrite_cmBJ","f","@(o)verwrite cmBJ",1,20,13,"",{},0,+INF}
+                ,{"ITEM |EOL  ","mBJcontrols.cmBJ","1.0","@(c)mBJ",40,23,10,"LEFT_OPEN",{},0,+INF}
+            }
+        },{"BANDPLOT","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL  ","bandplot_control.bandplot","f","@(B)andstructure plot",1,27,13,"",{},0,+INF}
+                ,{"ITEM |EOL  ","bandplot_control.read_sympoints","t","@(R)ead sym-points",1,27,13,"",{},0,+INF}
+                ,{"ITEM |EOL  ","bandplot_control.ndivisions","50","@(s)teps between sym-points",1,27,13,"",{},1,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","DOS/AKBL/BANDS",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM  ","bandplot_control.nptdos","1000","Number of e@(-)pts (non-CPA)",1,27,13,"",{},1,+INF}
+                ,{"ITEM |EOL  ","bandplot_control.plot_idos","f","@(p)lot IDOS",50,16,8,"",{},-INF,+INF}
+                ,{"ITEM |EOL  ","bandplot_control.plot_ndos","f","plot n@(e)t DOS",50,16,8,"",{},-INF,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM|EOL  ","bandplot_control.emin","-10.0","@(l)ower energy bound [eV] relative to E_f",1,41,13,"",{},-INF,+INF}
+                ,{"ITEM|EOL  ","bandplot_control.emax","10.0","@(u)pper energy bound [eV] relative to E_f",1,41,13,"",{},-INF,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL  ","bandplot_control.restrict_bands_to_window","t","Restr@(i)ct bands to window",1,27,13,"",{},0,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST|EOL ","ldossites","1","Local @(D)OS sites",1,20,40,"",{},1,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST|EOL ","bandplot_control.coeffout","f","Output +@(c)oeff file",1,20,40,"",{},1,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","BAND WEIGHTS/FAT BANDS",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL  ","bandweight_control.bwdfilename","","Weights def @(f)ile",1,27,13,"",{},0,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL  ","bandweight_control.bandweights","f","@(w)eights",1,27,13,"",{},0,+INF}
+                ,{"ITEM |EOL  ","bandweight_control.bweight_rot","f","@(t)ransform quant. axis",1,27,13,"",{},0,+INF}
+                ,{"ITEMLIST |EOL  ","bandweight_control.x_axis","0.","X-@(a)xis",1,27,43,"",{},-INF,+INF}
+                ,{"ITEMLIST |EOL  ","bandweight_control.z_axis","0.","@(z)-axis",1,27,43,"",{},-INF,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"FIELD","special_sympoints","","",1,27,0,"",{},0,0}
+                ,{"COUNTER","","","@(N)umber of sym-points",1,27,13,"",{},1,+INF}
+                ,{"DASHLINE","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE","",""," No.    Label                 k-point",1,-1,0,"",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"ITEM","label","$~G","",1,5,17,"",{},1,+INF}
+                ,{"ITEMLIST","kpoint","0.","",27,1,43,"",{},-INF,+INF}
+                ,{"ENDFIELD","","","",1,25,8,"",{},0,0}
+            }
+        },{"FORCES","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"EOL","","","",0,0,0,"",{},0,0}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","force_mode","1","@(F)orce Mode",1,22,40,"",{"     1\n@(1)\tNo forces","     2\n@(2)\tSite geometry optimization","     3\n@(3)\tSingle force step"},0,0}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","SITE GEOMETRY OPTIMIZATION",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM  ","force_iteration_control.tolerance","1.e-3","@(A)ccuracy [eV/Ang]",1,20,13,"LEFT_OPEN",{},0,+INF}
+                ,{"ITEM |EOL  ","force_iteration_control.maxdim","-1","@(M)ax subspace dim",40,22,13,"",{},-1,+INF}
+                ,{"ITEM|EOL   ","force_iteration_control.steps","100","@(n)umber of iterat.",1,20,13,"",{},1,+INF}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","force_iteration_version","1","@(V)ersion",1,20,40,"",{"     6\n@(6)\tMinIterat: Find minimum with iterat"},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST|EOL ","geomopt_sites","1","@(W)yckoffs to vary",1,20,-1,"",{},1,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","OPTIONS",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM|EOL","force_in_each_step","f","@(C)alculate force in each step.",1,30,13,"",{},1,+INF}
+                ,{"ITEM   ","approx_nodndL_ewald","f","Not potential @(e)wald correction",1,30,13,"",{},1,+INF}
+            }
+        },{"CORE OCCUPATION","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"EOL","","","",0,0,0,"",{},0,0}
+                ,{"FIELD | EOL","core_occupation","","",1,23,0,"",{},0,0}
+                ,{"COUNTER","","","@(N)umber of definitions",1,23,13,"",{},0,+INF}
+                ,{"DASHLINE","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE","",""," No.    Wy-pos. state          spinup                     spindown",1,-1,0,"",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"ITEM","sort","1","",1,5,4,"",{},1,+INF}
+                ,{"ITEM","state","1s","",14,0,3,"STATE",{},0,+INF}
+                ,{"ITEMLIST","spinup","0.","",23,0,22,"",{},0,+INF}
+                ,{"ITEMLIST","spindn","0.","",50,0,22,"",{},0,+INF}
+                ,{"ENDFIELD","","","",1,25,8,"",{},0,0}
+            }
+        },{"LSDA+U","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"TITLE|EOL","","","GENERAL CONTROL",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM | EOL ","make_lsdau","f","@(m)ake LSDA+U",1,22,11,"",{},1,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","lsdau_functional","1","@(F)unctional",1,22,40,"",{"     1\n@(1)\tLSDA+U Around mean field (AMF/OP)","     2\n@(2)\tLSDA+U Atomic limit      (AL)","     3\n@(3)\tFixed Potential, Lagrange"},0,0}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","lsdau_projection","1","@(P)rojection",1,22,40,"",{"     1\n@(1)\torthogonal","     4\n@(4)\tgross population"},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"FIELD | EOL","lsdau_defs","","CORRELATED STATES",1,23,0,"",{},0,0}
+                ,{"COUNTER","","","@(N)umber of definitions",1,23,13,"",{},0,+INF}
+                ,{"DASHLINE","","","",1,40,0,"",{},0,0}
+                ,{"TITLE","",""," No.    Wy-pos. state    F0 F2 F4 F6 (eV)",1,-1,0,"",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,40,0,"",{},0,0}
+                ,{"ITEM","sort","1","",1,5,4,"",{},1,+INF}
+                ,{"ITEM","state","1s","",14,0,3,"STATE",{},0,+INF}
+                ,{"ITEMLIST","f_slater","0.","",23,0,-1,"",{},0,+INF}
+                ,{"ENDFIELD","","","",1,25,8,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","ITERATION CONTROL",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL  ","lsdau_dmat_deviation","1.e-2","@(O)ccu. matrix tolerance",1,22,10,"LEFT_OPEN",{},0,+INF}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","lsdau_dmat_mode","1","O@(c)cupation matrix mode",1,22,40,"",{"     1\n@(1)\tself consistent","     2\n@(2)\tfixed"},0,0}
+            }
+        },{"OPC","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"TITLE|EOL","","","GENERAL CONTROL",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM | EOL ","make_opc","f","@(m)ake OPC",1,22,11,"",{},1,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","opc_functional","1","@(F)unctional",1,22,40,"",{"     1\n@(1)\tSpin dependend (Nordstroem, Brooks, Johansson, JPhysC 4, 3261 (1992))","     2\n@(2)\tSpin independend (Eriksson, Brooks, Johansson, PRB 41, R7311 (1990))"},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"FIELD | EOL","opc_defs","","OPC STATES",1,23,0,"",{},0,0}
+                ,{"COUNTER","","","@(N)umber of definitions",1,23,13,"",{},0,+INF}
+                ,{"DASHLINE","","","",1,40,0,"",{},0,0}
+                ,{"TITLE","",""," No.    Wy-pos. state   ",1,-1,0,"",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,40,0,"",{},0,0}
+                ,{"ITEM","sort","1","",1,5,4,"",{},1,+INF}
+                ,{"ITEM","state","1s","",14,0,3,"STATE",{},0,+INF}
+                ,{"ENDFIELD","","","",1,25,8,"",{},0,0}
+            }
+        },{"INITIAL SPINSPLIT","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"EOL","","","",0,0,0,"",{},0,0}
+                ,{"FIELD | EOL","initial_spin_split","","",1,23,0,"",{},0,0}
+                ,{"TITLE","","","Wy-pos. element initial spin",1,-1,0,"",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"ITEM|FIXED","element","E ","",1,5,4,"",{},1,+INF}
+                ,{"ITEM","split","0.5","",14,0,15,"",{},-INF,+INF}
+                ,{"ENDFIELD","","","",1,25,8,"",{},0,0}
+            }
+        },{"CPA","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"FIELD | EOL","concentrations","","CONCENTRATION",1,23,0,"",{},0,0}
+                ,{"TITLE","","","_________________________________",1,-1,0,"",{},0,+INF}
+                ,{"TITLE","","","Wy-pos. element concentration",1,-1,0,"",{},0,+INF}
+                ,{"TITLE","","","_________________________________",1,-1,0,"",{},0,+INF}
+                ,{"ITEM|FIXED","atom","E ","",1,5,4,"",{},1,+INF}
+                ,{"ITEM","concentration","1.0","",14,0,15,"LEFT_OPEN",{},0,1.0}
+                ,{"ENDFIELD","","","",1,25,8,"",{},0,0}
+                ,{"TITLE","","","_________________________________",1,-1,0,"",{},0,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","DENSITY OF STATES",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM ","cpa_dos.ne","1000","@(dn)\tnumber of e-points",1,25,8,"",{},2,+INF}
+                ,{"ITEM |EOL ","cpa_dos.eimag","1.e-3","@(di)\timag(e)",40,25,8,"LEFT_OPEN",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","SELF ENERGY ITERATION",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM ","cpa_control.emin0","-1.60","@(l)ower energy bound",1,25,8,"",{},-INF,+INF}
+                ,{"ITEM |EOL ","cpa_control.emax0","0.4","@(u)pper energy bound",40,25,8,"",{},-INF,+INF}
+                ,{"ITEM |EOL ","cpa_control.eimag","1.e-5","@(im)aginary part at e_F",1,25,8,"LEFT_OPEN",{},0,+INF}
+                ,{"ITEM ","cpa_control.nec","16","@(n)umber of e-points",1,25,8,"",{},2,+INF}
+                ,{"ITEM |EOL ","cpa_control.max_se_loops","10","@(c)pa loops maximum",40,25,8,"",{},1,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","FERMI ENERGY ITERATION",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM ","cpa_fermi_control.efermi0","0.08","@(g)uess of fermi energy",1,25,8,"",{},-INF,+INF}
+                ,{"ITEM |EOL ","cpa_fermi_control.max_ef_loops","10","@(m)ax e-fermi loop",40,25,8,"",{},1,+INF}
+                ,{"ITEM ","cpa_fermi_control.slop_0","30.","@(f)irst slope",1,25,8,"LEFT_OPEN",{},0,+INF}
+                ,{"ITEM |EOL ","cpa_fermi_control.slop_min","0.3","@(s)mallest slope",40,25,8,"LEFT_OPEN",{},0,+INF}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","cpa_fermi_method","1","@(i)teration method",1,25,40,"",{"     1\n@(s)ecant method","     2\n@(b)isection method"},0,0}
+            }
+        },{"NUMERICS","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"TITLE|EOL","","","POTENTIAL REPRESENTATION",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM | EOL","max_L","4","@(M)aximum L",1,25,8,"",{},0,12}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","ONE CENTER INTEGRALS",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM | EOL","one_center_integrals.nr","200","@(f)\tradial-mesh points",1,25,8,"",{},2,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","COULOMB ENERGY CALCULATION",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM","coulomb_energy_calc.nxi","26","@(i)\txi-mesh points",1,25,8,"",{},2,+INF}
+                ,{"ITEM | EOL ","coulomb_energy_calc.neta","46","@(j)\teta-mesh points",40,25,8,"",{},2,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","OVERLAP DENSITY CALCULATION",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM","overlap_density_calc.nr","50","@(o)\tradial mesh points",1,25,8,"",{},2,+INF}
+                ,{"ITEM | EOL ","overlap_density_calc.neta","20","@(p)\tazimutal mesh points",40,25,8,"",{},2,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","CUT-OFF TOLERANCES",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM","cutoff_tolerances.dens","1.e-7","@(q)\tdensity",1,25,8,"LEFT_OPEN",{},0,+INF}
+                ,{"ITEM | EOL ","cutoff_tolerances.pot","50","@(r)\tpotential",40,25,8,"LEFT_OPEN",{},0,+INF}
+                ,{"ITEM |EOL","cutoff_tolerances.orbital","1.e-7","@(s)\torbitals",1,25,8,"LEFT_OPEN",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","SYMMETRY TEST",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL","symtest.tol","5.0e-13","@(t)\ttolerance",1,25,8,"LEFT_OPEN",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","INTERPOLATION OF RADIAL FUNCTIONS",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL ","interpolation.degree","8","@(u)\tdegree",1,25,8,"",{},1,8}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","EWALD CONTROL SETTINGS AUTOMATIC MODE",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM","ewald_parameter.eps_r","1.0e-5","@(y2)\tReal space tolerance",1,25,8,"LEFT_OPEN",{},0.,+INF}
+                ,{"ITEM|EOL","ewald_parameter.eps_g","1.0e-5","@(y3)\tRec. space tolerance",40,25,8,"LEFT_OPEN",{},0.,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","THREE CENTER INTEGRALS",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM","three_center_integrals.nr","80","@(n1)\tNo. of radial points",1,25,8,"",{},2,+INF}
+                ,{"ITEM|EOL","three_center_integrals.use_symmetry","t","@(n2)\tUse symmetry",40,25,8,"",{},1,+INF}
+                ,{"ITEM","three_center_integrals.angular_mesh_type_min","3","@(n3)\tType of min ang mesh",1,25,8,"",{},1,+INF}
+                ,{"ITEM|EOL","three_center_integrals.angular_mesh_type_max","15","@(n4)\tType of max ang mesh",40,25,8,"",{},1,+INF}
+            }
+        },{"TOPOLOGICAL INSULATORS","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"TITLE|EOL","","","GENERAL CONTROL",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM | EOL ","topological_insulator.active","f","@(c)alculate Z2-invariant",1,22,11,"",{},1,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL","topological_insulator.homooffset","4","Homo @(o)ffset",1,22,11,"LEFT_OPEN",{},1,+INF}
+                ,{"ITEM | EOL ","topological_insulator.forceusewanniercenters","f","@(f)orce wannier center algo",1,22,11,"",{},1,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","WANNIER CENTERS",1,-1,0,"",{},0,0}
+                ,{"ITEM |EOL","topological_insulator.wanniercenters.nint","20","@(I)ntegrat. intervals",1,22,11,"LEFT_OPEN",{},1,+INF}
+                ,{"ITEM |EOL","topological_insulator.wanniercenters.nky","100","@(k)y-param. intervals",1,22,11,"LEFT_OPEN",{},1,+INF}
+            }
+        },{"OPTICS","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"TITLE|EOL","","","GENERAL CONTROL",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM | EOL ","optics.active","f","@(m)ake optics",1,23,11,"",{},1,+INF}
+                ,{"ITEM | EOL ","optics.jointdos","f","use @(j)oint dos",1,23,11,"",{},1,+INF}
+                ,{"ITEM | EOL ","optics.stopafter","f","use @(s)top after optics",1,23,11,"",{},1,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","ENERGY WINDOW",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM | EOL ","optics.energy.ne","1000","@(n)umber of points",1,23,22,"",{},1,+INF}
+                ,{"ITEM | EOL ","optics.energy.emin","0","@(l)ower energy [eV]",1,23,22,"",{},0,+INF}
+                ,{"ITEM | EOL ","optics.energy.emax","10","@(u)pper energy [eV]",1,23,22,"",{},0,+INF}
+            }
+        },{"CHARGES","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"TITLE|EOL","","","VCA",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM | EOL ","charges.make_vca","f","@(m)ake VCA",1,23,11,"",{},1,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"FIELD | EOL","charges.vca","","VCA DEFINITIONS",1,23,0,"",{},0,0}
+                ,{"COUNTER","","","@(N)umber of definitions",1,23,13,"",{},0,+INF}
+                ,{"DASHLINE","","","",1,40,0,"",{},0,0}
+                ,{"TITLE","",""," No.    Wy-pos. Z",1,-1,0,"",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,40,0,"",{},0,0}
+                ,{"ITEM","sort","1","",1,5,4,"",{},1,+INF}
+                ,{"ITEM","Z","0.","",14,0,22,"LEFT_OPEN",{},0,+INF}
+                ,{"ENDFIELD","","","",1,25,8,"",{},0,0}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","GLOBAL CHARGES",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"SELECTBOX|  AUTO_WIDTH |EOL ","charges.chargemode","0","@(C)harge mode",1,23,40,"",{"     1\n@(1)\tNone","     2\n@(2)\tJellium","     3\n@(3)\tMolecular ionicity"},0,0}
+                ,{"ITEM | EOL ","charges.ionicity","0.0","@(i)onicity",1,23,22,"",{},-INF,+INF}
+            }
+        },{"DHVA","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"TITLE|EOL","","","PREPARE ISO SURFACE",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL  ","isosurface.active","f","Iso Surface @(r)un",1,23,13,"",{},0,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM|EOL","isosurface.isovalue","0","Iso @(v)alue",1,23,13,"",{},-INF,+INF}
+                ,{"ITEMLIST|EOL ","isosurface.subdiv","10","Initial @(s)ubdivision",1,23,13,"",{},1,+INF}
+                ,{"ITEM |EOL  ","isosurface.bisections","2","@(b)isections",1,23,13,"",{},0,22}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST|EOL ","isosurface.bandsup","1","spin-@(u)p   band numbers",1,23,40,"",{},1,+INF}
+                ,{"ITEMLIST|EOL ","isosurface.bandsdown","1","spin-@(d)own band numbers",1,23,40,"",{},1,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL  ","isosurface.wandata","","@(W)annier Hamilt. file",1,23,13,"",{},0,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL  ","isosurface.deleteoldfiles","f","de@(l)ete old files",1,23,13,"",{},0,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL  ","isosurface.needbandweights","f","n@(e)ed bandweights",1,23,13,"",{},0,+INF}
+                ,{"ITEM |EOL  ","isosurface.statefile","","@(o)\taddwei file",1,23,33,"",{},0,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"FIELD","isosurface.energyshift","","@(k)\tEnergy shift",1,27,0,"",{},0,0}
+                ,{"COUNTER","","","@(P)\tnumber of shift terms",1,27,13,"",{},0,+INF}
+                ,{"DASHLINE","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE","",""," No.    weight-index        factor",1,-1,0,"",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"ITEM","weightindex","1","",1,5,17,"",{},1,+INF}
+                ,{"ITEMLIST","coef","0.","",27,1,43,"",{},-INF,+INF}
+                ,{"ENDFIELD","","","",1,25,8,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","DHVA",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"FIELD","dhva.fields","","",1,27,0,"",{},0,0}
+                ,{"COUNTER","","","@(N)umber of fields",1,27,13,"",{},1,+INF}
+                ,{"DASHLINE","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE","",""," No.    Label                 field",1,-1,0,"",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"ITEM","label","[000]","",1,5,17,"",{},1,+INF}
+                ,{"ITEMLIST","field","0.","",27,1,43,"",{},-INF,+INF}
+                ,{"ENDFIELD","","","",1,25,8,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM   ","dhva.nphi","30","An@(g)le subdiv",1,16,10,"",{},1,+INF}
+                ,{"ITEM  ","dhva.phifrom","-1","@(Y1)\trange",33,10,8,"",{},-INF,+INF}
+                ,{"ITEM |disablecolon|EOL  ","dhva.phito","-2","@[Y1]..",57,2,8,"",{},-INF,+INF}
+                ,{"ITEM  ","dhva.nplane","30","No o@(f) planes",1,16,10,"",{},1,+INF}
+                ,{"ITEM  ","dhva.planefrom","-1","@(Y2) range",33,10,8,"",{},-INF,+INF}
+                ,{"ITEM |disablecolon|EOL  ","dhva.planeto","-2","@[Y2]..",57,2,8,"",{},-INF,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST ","dhva.bands","1","B@(a)nd indices",1,16,15,"",{},1,+INF}
+                ,{"ITEMLIST ","dhva.parts","1","par@(t)s",38,8,10,"",{},1,+INF}
+                ,{"ITEMLIST|SELECTOR|EOL ","dhva.spin","1","sp@(i)n",62,6,5,"",{"0\nboth","1\nup","2\ndown"},1,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"TITLE|EOL","","","Numerics",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM|EOL","dhva.areachainthreshold","0.1","@(M1)\tarea chain threshold",1,34,10,"",{},0,+INF}
+                ,{"ITEM|EOL","dhva.orbitcomparisonsearchoffset","0.2","@(M2)\torbit comparison search offset",1,34,10,"",{},0,+INF}
+                ,{"ITEM|EOL","dhva.orbitsampleportion","0.1","@(M3)\torbit sample portion",1,34,10,"",{},0,+INF}
+                ,{"ITEM|EOL","dhva.arearadiusfactor","1","@(M4)\tarea radius factor",1,34,10,"",{},0,+INF}
+                ,{"ITEM|EOL","dhva.smoothnessthreshold","1","@(M5)\tsmoothness threshold",1,34,10,"",{},0,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"CHECKBOX | TWO_COLUMN | AUTO_WIDTH |SHOW_CONTENT | EOL ","dhva.outputoptions","","@(-)\tOutput Options",1,34,10,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"CHECKBOX | TWO_COLUMN | AUTO_WIDTH|SHOW_CONTENT | EOL ","dhva.debugoptions","","@(=)\tDebug Options",1,34,10,"",{},0,0}
+            }
+        },{"SYMMETRY MENU","=.in"
+            ,{
+                {"MAIN | EXIT | SPECIAL_SYMMETRY ","e@(x)it",""}
+                ,{"MAIN | EXTERNEDIT","@(e)xtern edit",""}
+                ,{"MAIN | FPLORUN  ","@(+) Update",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+                ,{"ALT  | VIEWER","Symmetry @(i)nformation","$tmp/+symminfo"}
+            }
+            ,{
+                {"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM|EOL","compound","","@(C)ompound",1,21,50,"",{},0,0}
+                ,{"SELECTBOX|  AUTO_WIDTH|EOL","structure_type"," 1","s@(t)ructure type",1,21,40,"",{"     1\n@(C)rystal","     2\n@(M)olecule","     3\n@(S)lab"},0,0}
+                ,{"SELECTBOX |PRINT_VALUE |THREE_COLUMN | AUTO_WIDTH|EOL","spacegroup.number","225","@(S)pacegroup/Layergr.",1,21,40,"",{"@Conditions[structure_type.type:adjustRange]","@[1]","Triclinic","1\n@(1)\tP 1"
+                    ,"2\n@(2)\tP -1","Monoclinic","3\n@(3)\tP 1 2 1","4\n@(4)\tP 1 21 1"
+                    ,"5\n@(5)\tC 1 2 1","6\n@(6)\tP 1 m 1","7\n@(7)\tP 1 c 1","8\n@(8)\tC 1 m 1"
+                    ,"9\n@(9)\tC 1 c 1","10\n@(10)\tP 1 2/m 1","11\n@(11)\tP 1 21/m 1","12\n@(12)\tC 1 2/m 1"
+                    ,"13\n@(13)\tP 1 2/c 1","14\n@(14)\tP 1 21/c 1","15\n@(15)\tC 1 2/c 1","Orthorhombic"
+                    ,"16\n@(16)\tP 2 2 2","17\n@(17)\tP 2 2 21","18\n@(18)\tP 21 21 2","19\n@(19)\tP 21 21 21"
+                    ,"20\n@(20)\tC 2 2 21","21\n@(21)\tC 2 2 2","22\n@(22)\tF 2 2 2","23\n@(23)\tI 2 2 2"
+                    ,"24\n@(24)\tI 21 21 21","25\n@(25)\tP m m 2","26\n@(26)\tP m c 21","27\n@(27)\tP c c 2"
+                    ,"28\n@(28)\tP m a 2","29\n@(29)\tP c a 21","30\n@(30)\tP n c 2","31\n@(31)\tP m n 21"
+                    ,"32\n@(32)\tP b a 2","33\n@(33)\tP n a 21","34\n@(34)\tP n n 2","35\n@(35)\tC m m 2"
+                    ,"36\n@(36)\tC m c 21","37\n@(37)\tC c c 2","38\n@(38)\tA m m 2","39\n@(39)\tA b m 2"
+                    ,"40\n@(40)\tA m a 2","41\n@(41)\tA b a 2","42\n@(42)\tF m m 2","43\n@(43)\tF d d 2"
+                    ,"44\n@(44)\tI m m 2","45\n@(45)\tI b a 2","46\n@(46)\tI m a 2","47\n@(47)\tP m m m"
+                    ,"48\n@(48)\tP n n n","49\n@(49)\tP c c m","50\n@(50)\tP b a n","51\n@(51)\tP m m a"
+                    ,"52\n@(52)\tP n n a","53\n@(53)\tP m n a","54\n@(54)\tP c c a","55\n@(55)\tP b a m"
+                    ,"56\n@(56)\tP c c n","57\n@(57)\tP b c m","58\n@(58)\tP n n m","59\n@(59)\tP m m n"
+                    ,"60\n@(60)\tP b c n","61\n@(61)\tP b c a","62\n@(62)\tP n m a","63\n@(63)\tC m c m"
+                    ,"64\n@(64)\tC m c a","65\n@(65)\tC m m m","66\n@(66)\tC c c m","67\n@(67)\tC m m a"
+                    ,"68\n@(68)\tC c c a","69\n@(69)\tF m m m","70\n@(70)\tF d d d","71\n@(71)\tI m m m"
+                    ,"72\n@(72)\tI b a m","73\n@(73)\tI b c a","74\n@(74)\tI m m a","Tetragonal"
+                    ,"75\n@(75)\tP 4","76\n@(76)\tP 41","77\n@(77)\tP 42","78\n@(78)\tP 43"
+                    ,"79\n@(79)\tI 4","80\n@(80)\tI 41","81\n@(81)\tP -4","82\n@(82)\tI -4"
+                    ,"83\n@(83)\tP 4/m","84\n@(84)\tP 42/m","85\n@(85)\tP 4/n","86\n@(86)\tP 42/n"
+                    ,"87\n@(87)\tI 4/m","88\n@(88)\tI 41/a","89\n@(89)\tP 4 2 2","90\n@(90)\tP 4 21 2"
+                    ,"91\n@(91)\tP 41 2 2","92\n@(92)\tP 41 21 2","93\n@(93)\tP 42 2 2","94\n@(94)\tP 42 21 2"
+                    ,"95\n@(95)\tP 43 2 2","96\n@(96)\tP 43 21 2","97\n@(97)\tI 4 2 2","98\n@(98)\tI 41 2 2"
+                    ,"99\n@(99)\tP 4 m m","100\n@(100)\tP 4 b m","101\n@(101)\tP 42 c m","102\n@(102)\tP 42 n m"
+                    ,"103\n@(103)\tP 4 c c","104\n@(104)\tP 4 n c","105\n@(105)\tP 42 m c","106\n@(106)\tP 42 b c"
+                    ,"107\n@(107)\tI 4 m m","108\n@(108)\tI 4 c m","109\n@(109)\tI 41 m d","110\n@(110)\tI 41 c d"
+                    ,"111\n@(111)\tP -4 2 m","112\n@(112)\tP -4 2 c","113\n@(113)\tP -4 21 m","114\n@(114)\tP -4 21 c"
+                    ,"115\n@(115)\tP -4 m 2","116\n@(116)\tP -4 c 2","117\n@(117)\tP -4 b 2","118\n@(118)\tP -4 n 2"
+                    ,"119\n@(119)\tI -4 m 2","120\n@(120)\tI -4 c 2","121\n@(121)\tI -4 2 m","122\n@(122)\tI -4 2 d"
+                    ,"123\n@(123)\tP 4/m m m","124\n@(124)\tP 4/m c c","125\n@(125)\tP 4/n b m","126\n@(126)\tP 4/n n c"
+                    ,"127\n@(127)\tP 4/m b m","128\n@(128)\tP 4/m n c","129\n@(129)\tP 4/n m m","130\n@(130)\tP 4/n c c"
+                    ,"131\n@(131)\tP 42/m m c","132\n@(132)\tP 42/m c m","133\n@(133)\tP 42/n b c","134\n@(134)\tP 42/n n m"
+                    ,"135\n@(135)\tP 42/m b c","136\n@(136)\tP 42/m n m","137\n@(137)\tP 42/n m c","138\n@(138)\tP 42/n c m"
+                    ,"139\n@(139)\tI 4/m m m","140\n@(140)\tI 4/m c m","141\n@(141)\tI 41/a m d","142\n@(142)\tI 41/a c d"
+                    ,"Trigonal","143\n@(143)\tP 3","144\n@(144)\tP 31","145\n@(145)\tP 32"
+                    ,"146\n@(146)\tR 3","147\n@(147)\tP -3","148\n@(148)\tR -3","149\n@(149)\tP 3 1 2"
+                    ,"150\n@(150)\tP 3 2 1","151\n@(151)\tP 31 1 2","152\n@(152)\tP 31 2 1","153\n@(153)\tP 32 1 2"
+                    ,"154\n@(154)\tP 32 2 1","155\n@(155)\tR 3 2","156\n@(156)\tP 3 m 1","157\n@(157)\tP 3 1 m"
+                    ,"158\n@(158)\tP 3 c 1","159\n@(159)\tP 3 1 c","160\n@(160)\tR 3 m","161\n@(161)\tR 3 c"
+                    ,"162\n@(162)\tP -3 1 m","163\n@(163)\tP -3 1 c","164\n@(164)\tP -3 m 1","165\n@(165)\tP -3 c 1"
+                    ,"166\n@(166)\tR -3 m","167\n@(167)\tR -3 c","Hexagonal","168\n@(168)\tP 6"
+                    ,"169\n@(169)\tP 61","170\n@(170)\tP 65","171\n@(171)\tP 62","172\n@(172)\tP 64"
+                    ,"173\n@(173)\tP 63","174\n@(174)\tP -6","175\n@(175)\tP 6/m","176\n@(176)\tP 63/m"
+                    ,"177\n@(177)\tP 6 2 2","178\n@(178)\tP 61 2 2","179\n@(179)\tP 65 2 2","180\n@(180)\tP 62 2 2"
+                    ,"181\n@(181)\tP 64 2 2","182\n@(182)\tP 63 2 2","183\n@(183)\tP 6 m m","184\n@(184)\tP 6 c c"
+                    ,"185\n@(185)\tP 63 c m","186\n@(186)\tP 63 m c","187\n@(187)\tP -6 m 2","188\n@(188)\tP -6 c 2"
+                    ,"189\n@(189)\tP -6 2 m","190\n@(190)\tP -6 2 c","191\n@(191)\tP 6/m m m","192\n@(192)\tP 6/m c c"
+                    ,"193\n@(193)\tP 63/m c m","194\n@(194)\tP 63/m m c","Cubic","195\n@(195)\tP 2 3"
+                    ,"196\n@(196)\tF 2 3","197\n@(197)\tI 2 3","198\n@(198)\tP 21 3","199\n@(199)\tI 21 3"
+                    ,"200\n@(200)\tP m -3","201\n@(201)\tP n -3","202\n@(202)\tF m -3","203\n@(203)\tF d -3"
+                    ,"204\n@(204)\tI m -3","205\n@(205)\tP a -3","206\n@(206)\tI a -3","207\n@(207)\tP 4 3 2"
+                    ,"208\n@(208)\tP 42 3 2","209\n@(209)\tF 4 3 2","210\n@(210)\tF 41 3 2","211\n@(211)\tI 4 3 2"
+                    ,"212\n@(212)\tP 43 3 2","213\n@(213)\tP 41 3 2","214\n@(214)\tI 41 3 2","215\n@(215)\tP -4 3 m"
+                    ,"216\n@(216)\tF -4 3 m","217\n@(217)\tI -4 3 m","218\n@(218)\tP -4 3 n","219\n@(219)\tF -4 3 c"
+                    ,"220\n@(220)\tI -4 3 d","221\n@(221)\tP m -3 m","222\n@(222)\tP n -3 n","223\n@(223)\tP m -3 n"
+                    ,"224\n@(224)\tP n -3 m","225\n@(225)\tF m -3 m","226\n@(226)\tF m -3 c","227\n@(227)\tF d -3 m"
+                    ,"228\n@(228)\tF d -3 c","229\n@(229)\tI m -3 m","230\n@(230)\tI a -3 d","@[2]"
+                    ,"Triclinic","1\n@(1)\tP 1","2\n@(2)\tP -1","Monoclinic"
+                    ,"3\n@(3)\tP 1 2 1","4\n@(4)\tP 1 21 1","5\n@(5)\tC 1 2 1","6\n@(6)\tP 1 m 1"
+                    ,"7\n@(7)\tP 1 c 1","8\n@(8)\tC 1 m 1","9\n@(9)\tC 1 c 1","10\n@(10)\tP 1 2/m 1"
+                    ,"11\n@(11)\tP 1 21/m 1","12\n@(12)\tC 1 2/m 1","13\n@(13)\tP 1 2/c 1","14\n@(14)\tP 1 21/c 1"
+                    ,"15\n@(15)\tC 1 2/c 1","Orthorhombic","16\n@(16)\tP 2 2 2","17\n@(17)\tP 2 2 21"
+                    ,"18\n@(18)\tP 21 21 2","19\n@(19)\tP 21 21 21","20\n@(20)\tC 2 2 21","21\n@(21)\tC 2 2 2"
+                    ,"22\n@(22)\tF 2 2 2","23\n@(23)\tI 2 2 2","24\n@(24)\tI 21 21 21","25\n@(25)\tP m m 2"
+                    ,"26\n@(26)\tP m c 21","27\n@(27)\tP c c 2","28\n@(28)\tP m a 2","29\n@(29)\tP c a 21"
+                    ,"30\n@(30)\tP n c 2","31\n@(31)\tP m n 21","32\n@(32)\tP b a 2","33\n@(33)\tP n a 21"
+                    ,"34\n@(34)\tP n n 2","35\n@(35)\tC m m 2","36\n@(36)\tC m c 21","37\n@(37)\tC c c 2"
+                    ,"38\n@(38)\tA m m 2","39\n@(39)\tA b m 2","40\n@(40)\tA m a 2","41\n@(41)\tA b a 2"
+                    ,"42\n@(42)\tF m m 2","43\n@(43)\tF d d 2","44\n@(44)\tI m m 2","45\n@(45)\tI b a 2"
+                    ,"46\n@(46)\tI m a 2","47\n@(47)\tP m m m","48\n@(48)\tP n n n","49\n@(49)\tP c c m"
+                    ,"50\n@(50)\tP b a n","51\n@(51)\tP m m a","52\n@(52)\tP n n a","53\n@(53)\tP m n a"
+                    ,"54\n@(54)\tP c c a","55\n@(55)\tP b a m","56\n@(56)\tP c c n","57\n@(57)\tP b c m"
+                    ,"58\n@(58)\tP n n m","59\n@(59)\tP m m n","60\n@(60)\tP b c n","61\n@(61)\tP b c a"
+                    ,"62\n@(62)\tP n m a","63\n@(63)\tC m c m","64\n@(64)\tC m c a","65\n@(65)\tC m m m"
+                    ,"66\n@(66)\tC c c m","67\n@(67)\tC m m a","68\n@(68)\tC c c a","69\n@(69)\tF m m m"
+                    ,"70\n@(70)\tF d d d","71\n@(71)\tI m m m","72\n@(72)\tI b a m","73\n@(73)\tI b c a"
+                    ,"74\n@(74)\tI m m a","Tetragonal","75\n@(75)\tP 4","76\n@(76)\tP 41"
+                    ,"77\n@(77)\tP 42","78\n@(78)\tP 43","79\n@(79)\tI 4","80\n@(80)\tI 41"
+                    ,"81\n@(81)\tP -4","82\n@(82)\tI -4","83\n@(83)\tP 4/m","84\n@(84)\tP 42/m"
+                    ,"85\n@(85)\tP 4/n","86\n@(86)\tP 42/n","87\n@(87)\tI 4/m","88\n@(88)\tI 41/a"
+                    ,"89\n@(89)\tP 4 2 2","90\n@(90)\tP 4 21 2","91\n@(91)\tP 41 2 2","92\n@(92)\tP 41 21 2"
+                    ,"93\n@(93)\tP 42 2 2","94\n@(94)\tP 42 21 2","95\n@(95)\tP 43 2 2","96\n@(96)\tP 43 21 2"
+                    ,"97\n@(97)\tI 4 2 2","98\n@(98)\tI 41 2 2","99\n@(99)\tP 4 m m","100\n@(100)\tP 4 b m"
+                    ,"101\n@(101)\tP 42 c m","102\n@(102)\tP 42 n m","103\n@(103)\tP 4 c c","104\n@(104)\tP 4 n c"
+                    ,"105\n@(105)\tP 42 m c","106\n@(106)\tP 42 b c","107\n@(107)\tI 4 m m","108\n@(108)\tI 4 c m"
+                    ,"109\n@(109)\tI 41 m d","110\n@(110)\tI 41 c d","111\n@(111)\tP -4 2 m","112\n@(112)\tP -4 2 c"
+                    ,"113\n@(113)\tP -4 21 m","114\n@(114)\tP -4 21 c","115\n@(115)\tP -4 m 2","116\n@(116)\tP -4 c 2"
+                    ,"117\n@(117)\tP -4 b 2","118\n@(118)\tP -4 n 2","119\n@(119)\tI -4 m 2","120\n@(120)\tI -4 c 2"
+                    ,"121\n@(121)\tI -4 2 m","122\n@(122)\tI -4 2 d","123\n@(123)\tP 4/m m m","124\n@(124)\tP 4/m c c"
+                    ,"125\n@(125)\tP 4/n b m","126\n@(126)\tP 4/n n c","127\n@(127)\tP 4/m b m","128\n@(128)\tP 4/m n c"
+                    ,"129\n@(129)\tP 4/n m m","130\n@(130)\tP 4/n c c","131\n@(131)\tP 42/m m c","132\n@(132)\tP 42/m c m"
+                    ,"133\n@(133)\tP 42/n b c","134\n@(134)\tP 42/n n m","135\n@(135)\tP 42/m b c","136\n@(136)\tP 42/m n m"
+                    ,"137\n@(137)\tP 42/n m c","138\n@(138)\tP 42/n c m","139\n@(139)\tI 4/m m m","140\n@(140)\tI 4/m c m"
+                    ,"141\n@(141)\tI 41/a m d","142\n@(142)\tI 41/a c d","Trigonal","143\n@(143)\tP 3"
+                    ,"144\n@(144)\tP 31","145\n@(145)\tP 32","146\n@(146)\tR 3","147\n@(147)\tP -3"
+                    ,"148\n@(148)\tR -3","149\n@(149)\tP 3 1 2","150\n@(150)\tP 3 2 1","151\n@(151)\tP 31 1 2"
+                    ,"152\n@(152)\tP 31 2 1","153\n@(153)\tP 32 1 2","154\n@(154)\tP 32 2 1","155\n@(155)\tR 3 2"
+                    ,"156\n@(156)\tP 3 m 1","157\n@(157)\tP 3 1 m","158\n@(158)\tP 3 c 1","159\n@(159)\tP 3 1 c"
+                    ,"160\n@(160)\tR 3 m","161\n@(161)\tR 3 c","162\n@(162)\tP -3 1 m","163\n@(163)\tP -3 1 c"
+                    ,"164\n@(164)\tP -3 m 1","165\n@(165)\tP -3 c 1","166\n@(166)\tR -3 m","167\n@(167)\tR -3 c"
+                    ,"Hexagonal","168\n@(168)\tP 6","169\n@(169)\tP 61","170\n@(170)\tP 65"
+                    ,"171\n@(171)\tP 62","172\n@(172)\tP 64","173\n@(173)\tP 63","174\n@(174)\tP -6"
+                    ,"175\n@(175)\tP 6/m","176\n@(176)\tP 63/m","177\n@(177)\tP 6 2 2","178\n@(178)\tP 61 2 2"
+                    ,"179\n@(179)\tP 65 2 2","180\n@(180)\tP 62 2 2","181\n@(181)\tP 64 2 2","182\n@(182)\tP 63 2 2"
+                    ,"183\n@(183)\tP 6 m m","184\n@(184)\tP 6 c c","185\n@(185)\tP 63 c m","186\n@(186)\tP 63 m c"
+                    ,"187\n@(187)\tP -6 m 2","188\n@(188)\tP -6 c 2","189\n@(189)\tP -6 2 m","190\n@(190)\tP -6 2 c"
+                    ,"191\n@(191)\tP 6/m m m","192\n@(192)\tP 6/m c c","193\n@(193)\tP 63/m c m","194\n@(194)\tP 63/m m c"
+                    ,"Cubic","195\n@(195)\tP 2 3","196\n@(196)\tF 2 3","197\n@(197)\tI 2 3"
+                    ,"198\n@(198)\tP 21 3","199\n@(199)\tI 21 3","200\n@(200)\tP m -3","201\n@(201)\tP n -3"
+                    ,"202\n@(202)\tF m -3","203\n@(203)\tF d -3","204\n@(204)\tI m -3","205\n@(205)\tP a -3"
+                    ,"206\n@(206)\tI a -3","207\n@(207)\tP 4 3 2","208\n@(208)\tP 42 3 2","209\n@(209)\tF 4 3 2"
+                    ,"210\n@(210)\tF 41 3 2","211\n@(211)\tI 4 3 2","212\n@(212)\tP 43 3 2","213\n@(213)\tP 41 3 2"
+                    ,"214\n@(214)\tI 41 3 2","215\n@(215)\tP -4 3 m","216\n@(216)\tF -4 3 m","217\n@(217)\tI -4 3 m"
+                    ,"218\n@(218)\tP -4 3 n","219\n@(219)\tF -4 3 c","220\n@(220)\tI -4 3 d","221\n@(221)\tP m -3 m"
+                    ,"222\n@(222)\tP n -3 n","223\n@(223)\tP m -3 n","224\n@(224)\tP n -3 m","225\n@(225)\tF m -3 m"
+                    ,"226\n@(226)\tF m -3 c","227\n@(227)\tF d -3 m","228\n@(228)\tF d -3 c","229\n@(229)\tI m -3 m"
+                    ,"230\n@(230)\tI a -3 d","@[3]","Triclinic","L1\nL@(1)\tp 1"
+                    ,"L2\nL@(2)\tp -1","Monoclinic inclined","L3\nL@(3)\tp 1 1 2","L4\nL@(4)\tp 1 1 m"
+                    ,"L5\nL@(5)\tp 1 1 a","L6\nL@(6)\tp 1 1 2/m","L7\nL@(7)\tp 1 1 2/a","Monoclinic orthogonal"
+                    ,"L8\nL@(8)\tp 2 1 1","L9\nL@(9)\tp 21 1 1","L10\nL@(10)\tc 2 1 1","L11\nL@(11)\tp m 1 1"
+                    ,"L12\nL@(12)\tp b 1 1","L13\nL@(13)\tc m 1 1","L14\nL@(14)\tp 2/m 1 1","L15\nL@(15)\tp 21/m 1 1"
+                    ,"L16\nL@(16)\tp 2/b 1 1","L17\nL@(17)\tp 21/b 1 1","L18\nL@(18)\tc 2/m 1 1","Orthorhombic"
+                    ,"L19\nL@(19)\tp 2 2 2","L20\nL@(20)\tp 21 2 2","L21\nL@(21)\tp 21 21 2","L22\nL@(22)\tc 2 2 2"
+                    ,"L23\nL@(23)\tp m m 2","L24\nL@(24)\tp m a 2","L25\nL@(25)\tp b a 2","L26\nL@(26)\tc m m 2"
+                    ,"L27\nL@(27)\tp m 2 m","L28\nL@(28)\tp m 21 b","L29\nL@(29)\tp b 21 m","L30\nL@(30)\tp b 2 b"
+                    ,"L31\nL@(31)\tp m 2 a","L32\nL@(32)\tp m 21 n","L33\nL@(33)\tp b 21 a","L34\nL@(34)\tp b 2 n"
+                    ,"L35\nL@(35)\tc m 2 m","L36\nL@(36)\tc m 2 e","L37\nL@(37)\tp m m m","L38\nL@(38)\tp m a a"
+                    ,"L39\nL@(39)\tp b a n","L40\nL@(40)\tp m a m","L41\nL@(41)\tp m m a","L42\nL@(42)\tp m a n"
+                    ,"L43\nL@(43)\tp b a a","L44\nL@(44)\tp b a m","L45\nL@(45)\tp b m a","L46\nL@(46)\tp m m n"
+                    ,"L47\nL@(47)\tc m m m","L48\nL@(48)\tc m m e","Tetragonal","L49\nL@(49)\tp 4"
+                    ,"L50\nL@(50)\tp -4","L51\nL@(51)\tp 4/m","L52\nL@(52)\tp 4/n","L53\nL@(53)\tp 4 2 2"
+                    ,"L54\nL@(54)\tp 4 21 2","L55\nL@(55)\tp 4 m m","L56\nL@(56)\tp 4 b m","L57\nL@(57)\tp -4 2 m"
+                    ,"L58\nL@(58)\tp -4 21 m","L59\nL@(59)\tp -4 m 2","L60\nL@(60)\tp -4 b 2","L61\nL@(61)\tp 4/m m m"
+                    ,"L62\nL@(62)\tp 4/n b m","L63\nL@(63)\tp 4/m b m","L64\nL@(64)\tp 4/n m m","Trigonal"
+                    ,"L65\nL@(65)\tp 3","L66\nL@(66)\tp -3","L67\nL@(67)\tp 3 1 2","L68\nL@(68)\tp 3 2 1"
+                    ,"L69\nL@(69)\tp 3 m 1","L70\nL@(70)\tp 3 1 m","L71\nL@(71)\tp -3 1 m","L72\nL@(72)\tp -3 m 1"
+                    ,"Hexagonal","L73\nL@(73)\tp 6","L74\nL@(74)\tp -6","L75\nL@(75)\tp 6/m"
+                    ,"L76\nL@(76)\tp 6 2 2","L77\nL@(77)\tp 6 m m","L78\nL@(78)\tp -6 m 2","L79\nL@(79)\tp -6 2 m"
+                    ,"L80\nL@(80)\tp 6/m m m"},0,0}
+                ,{"SELECTBOX  | AUTO_WIDTH|EOL","spacegroup.setting","","S@(e)tting",1,21,40,"",{"@Conditions[structure_type.type:setDefault,spacegroup.number:setDefault]","@[1,1]","default\n@(u)\tP 1 (unique)\n@default@","@[1,2]"
+                    ,"default\n@(u)\tP -1 (unique)\n@default@","@[1,3]","b\n@(b)\tP 1 2 1 (axis b)\n@default@","c\n@(c)\tP 1 1 2 (axis c)"
+                    ,"a\n@(a)\tP 2 1 1 (axis a)","@[1,4]","b\n@(b)\tP 1 21 1 (axis b)\n@default@","c\n@(c)\tP 1 1 21 (axis c)"
+                    ,"a\n@(a)\tP 21 1 1 (axis a)","@[1,5]","b1\n@(b1)\tC 1 2 1 (axis b, cell 1)\n@default@","b2\n@(b2)\tA 1 2 1 (axis b, cell 2)"
+                    ,"b3\n@(b3)\tI 1 2 1 (axis b, cell 3)","c1\n@(c1)\tA 1 1 2 (axis c, cell 1)","c2\n@(c2)\tB 1 1 2 (axis c, cell 2)","c3\n@(c3)\tI 1 1 2 (axis c, cell 3)"
+                    ,"a1\n@(a1)\tB 2 1 1 (axis a, cell 1)","a2\n@(a2)\tC 2 1 1 (axis a, cell 2)","a3\n@(a3)\tI 2 1 1 (axis a, cell 3)","@[1,6]"
+                    ,"b\n@(b)\tP 1 m 1 (axis b)\n@default@","c\n@(c)\tP 1 1 m (axis c)","a\n@(a)\tP m 1 1 (axis a)","@[1,7]"
+                    ,"b1\n@(b1)\tP 1 c 1 (axis b, cell 1)\n@default@","b2\n@(b2)\tP 1 n 1 (axis b, cell 2)","b3\n@(b3)\tP 1 a 1 (axis b, cell 3)","c1\n@(c1)\tP 1 1 a (axis c, cell 1)"
+                    ,"c2\n@(c2)\tP 1 1 n (axis c, cell 2)","c3\n@(c3)\tP 1 1 b (axis c, cell 3)","a1\n@(a1)\tP b 1 1 (axis a, cell 1)","a2\n@(a2)\tP n 1 1 (axis a, cell 2)"
+                    ,"a3\n@(a3)\tP c 1 1 (axis a, cell 3)","@[1,8]","b1\n@(b1)\tC 1 m 1 (axis b, cell 1)\n@default@","b2\n@(b2)\tA 1 m 1 (axis b, cell 2)"
+                    ,"b3\n@(b3)\tI 1 m 1 (axis b, cell 3)","c1\n@(c1)\tA 1 1 m (axis c, cell 1)","c2\n@(c2)\tB 1 1 m (axis c, cell 2)","c3\n@(c3)\tI 1 1 m (axis c, cell 3)"
+                    ,"a1\n@(a1)\tB m 1 1 (axis a, cell 1)","a2\n@(a2)\tC m 1 1 (axis a, cell 2)","a3\n@(a3)\tI m 1 1 (axis a, cell 3)","@[1,9]"
+                    ,"b1\n@(b1)\tC 1 c 1 (axis b, cell 1)\n@default@","b2\n@(b2)\tA 1 n 1 (axis b, cell 2)","b3\n@(b3)\tI 1 a 1 (axis b, cell 3)","-b1\n@(-b1)\tA 1 a 1 (axis -b, cell 1)"
+                    ,"-b2\n@(-b2)\tC 1 n 1 (axis -b, cell 2)","-b3\n@(-b3)\tI 1 c 1 (axis -b, cell 3)","c1\n@(c1)\tA 1 1 a (axis c, cell 1)","c2\n@(c2)\tB 1 1 n (axis c, cell 2)"
+                    ,"c3\n@(c3)\tI 1 1 b (axis c, cell 3)","-c1\n@(-c1)\tB 1 1 b (axis -c, cell 1)","-c2\n@(-c2)\tA 1 1 n (axis -c, cell 2)","-c3\n@(-c3)\tI 1 1 a (axis -c, cell 3)"
+                    ,"a1\n@(a1)\tB b 1 1 (axis a, cell 1)","a2\n@(a2)\tC n 1 1 (axis a, cell 2)","a3\n@(a3)\tI c 1 1 (axis a, cell 3)","-a1\n@(-a1)\tC c 1 1 (axis -a, cell 1)"
+                    ,"-a2\n@(-a2)\tB n 1 1 (axis -a, cell 2)","-a3\n@(-a3)\tI b 1 1 (axis -a, cell 3)","@[1,10]","b\n@(b)\tP 1 2/m 1 (axis b)\n@default@"
+                    ,"c\n@(c)\tP 1 1 2/m (axis c)","a\n@(a)\tP 2/m 1 1 (axis a)","@[1,11]","b\n@(b)\tP 1 21/m 1 (axis b)\n@default@"
+                    ,"c\n@(c)\tP 1 1 21/m (axis c)","a\n@(a)\tP 21/m 1 1 (axis a)","@[1,12]","b1\n@(b1)\tC 1 2/m 1 (axis b, cell 1)\n@default@"
+                    ,"b2\n@(b2)\tA 1 2/m 1 (axis b, cell 2)","b3\n@(b3)\tI 1 2/m 1 (axis b, cell 3)","c1\n@(c1)\tA 1 1 2/m (axis c, cell 1)","c2\n@(c2)\tB 1 1 2/m (axis c, cell 2)"
+                    ,"c3\n@(c3)\tI 1 1 2/m (axis c, cell 3)","a1\n@(a1)\tB 2/m 1 1 (axis a, cell 1)","a2\n@(a2)\tC 2/m 1 1 (axis a, cell 2)","a3\n@(a3)\tI 2/m 1 1 (axis a, cell 3)"
+                    ,"@[1,13]","b1\n@(b1)\tP 1 2/c 1 (axis b, cell 1)\n@default@","b2\n@(b2)\tP 1 2/n 1 (axis b, cell 2)","b3\n@(b3)\tP 1 2/a 1 (axis b, cell 3)"
+                    ,"c1\n@(c1)\tP 1 1 2/a (axis c, cell 1)","c2\n@(c2)\tP 1 1 2/n (axis c, cell 2)","c3\n@(c3)\tP 1 1 2/b (axis c, cell 3)","a1\n@(a1)\tP 2/b 1 1 (axis a, cell 1)"
+                    ,"a2\n@(a2)\tP 2/n 1 1 (axis a, cell 2)","a3\n@(a3)\tP 2/c 1 1 (axis a, cell 3)","@[1,14]","b1\n@(b1)\tP 1 21/c 1 (axis b, cell 1)\n@default@"
+                    ,"b2\n@(b2)\tP 1 21/n 1 (axis b, cell 2)","b3\n@(b3)\tP 1 21/a 1 (axis b, cell 3)","c1\n@(c1)\tP 1 1 21/a (axis c, cell 1)","c2\n@(c2)\tP 1 1 21/n (axis c, cell 2)"
+                    ,"c3\n@(c3)\tP 1 1 21/b (axis c, cell 3)","a1\n@(a1)\tP 21/b 1 1 (axis a, cell 1)","a2\n@(a2)\tP 21/n 1 1 (axis a, cell 2)","a3\n@(a3)\tP 21/c 1 1 (axis a, cell 3)"
+                    ,"@[1,15]","b1\n@(b1)\tC 1 2/c 1 (axis b, cell 1)\n@default@","b2\n@(b2)\tA 1 2/n 1 (axis b, cell 2)","b3\n@(b3)\tI 1 2/a 1 (axis b, cell 3)"
+                    ,"-b1\n@(-b1)\tA 1 2/a 1 (axis -b, cell 1)","-b2\n@(-b2)\tC 1 2/n 1 (axis -b, cell 2)","-b3\n@(-b3)\tI 1 2/c 1 (axis -b, cell 3)","c1\n@(c1)\tA 1 1 2/a (axis c, cell 1)"
+                    ,"c2\n@(c2)\tB 1 1 2/n (axis c, cell 2)","c3\n@(c3)\tI 1 1 2/b (axis c, cell 3)","-c1\n@(-c1)\tB 1 1 2/b (axis -c, cell 1)","-c2\n@(-c2)\tA 1 1 2/n (axis -c, cell 2)"
+                    ,"-c3\n@(-c3)\tI 1 1 2/a (axis -c, cell 3)","a1\n@(a1)\tB 2/b 1 1 (axis a, cell 1)","a2\n@(a2)\tC 2/n 1 1 (axis a, cell 2)","a3\n@(a3)\tI 2/c 1 1 (axis a, cell 3)"
+                    ,"-a1\n@(-a1)\tC 2/c 1 1 (axis -a, cell 1)","-a2\n@(-a2)\tB 2/n 1 1 (axis -a, cell 2)","-a3\n@(-a3)\tI 2/b 1 1 (axis -a, cell 3)","@[1,16]"
+                    ,"default\n@(u)\tP 2 2 2 (unique)\n@default@","@[1,17]","default\n@(abc)\tP 2 2 21 (abc)\n@default@","cab\n@(cab)\tP 21 2 2 (cab)"
+                    ,"bca\n@(bca)\tP 2 21 2 (bca)","@[1,18]","default\n@(abc)\tP 21 21 2 (abc)\n@default@","cab\n@(cab)\tP 2 21 21 (cab)"
+                    ,"bca\n@(bca)\tP 21 2 21 (bca)","@[1,19]","default\n@(u)\tP 21 21 21 (unique)\n@default@","@[1,20]"
+                    ,"default\n@(abc)\tC 2 2 21 (abc)\n@default@","cab\n@(cab)\tA 21 2 2 (cab)","bca\n@(bca)\tB 2 21 2 (bca)","@[1,21]"
+                    ,"default\n@(abc)\tC 2 2 2 (abc)\n@default@","cab\n@(cab)\tA 2 2 2 (cab)","bca\n@(bca)\tB 2 2 2 (bca)","@[1,22]"
+                    ,"default\n@(u)\tF 2 2 2 (unique)\n@default@","@[1,23]","default\n@(u)\tI 2 2 2 (unique)\n@default@","@[1,24]"
+                    ,"default\n@(u)\tI 21 21 21 (unique)\n@default@","@[1,25]","default\n@(abc)\tP m m 2 (abc)\n@default@","cab\n@(cab)\tP 2 m m (cab)"
+                    ,"bca\n@(bca)\tP m 2 m (bca)","@[1,26]","default\n@(abc)\tP m c 21 (abc)\n@default@","ba-c\n@(ba-c)\tP c m 21 (ba-c)"
+                    ,"cab\n@(cab)\tP 21 m a (cab)","-cba\n@(-cba)\tP 21 a m (-cba)","bca\n@(bca)\tP b 21 m (bca)","a-cb\n@(a-cb)\tP m 21 b (a-cb)"
+                    ,"@[1,27]","default\n@(abc)\tP c c 2 (abc)\n@default@","cab\n@(cab)\tP 2 a a (cab)","bca\n@(bca)\tP b 2 b (bca)"
+                    ,"@[1,28]","default\n@(abc)\tP m a 2 (abc)\n@default@","ba-c\n@(ba-c)\tP b m 2 (ba-c)","cab\n@(cab)\tP 2 m b (cab)"
+                    ,"-cba\n@(-cba)\tP 2 c m (-cba)","bca\n@(bca)\tP c 2 m (bca)","a-cb\n@(a-cb)\tP m 2 a (a-cb)","@[1,29]"
+                    ,"default\n@(abc)\tP c a 21 (abc)\n@default@","ba-c\n@(ba-c)\tP b c 21 (ba-c)","cab\n@(cab)\tP 21 a b (cab)","-cba\n@(-cba)\tP 21 c a (-cba)"
+                    ,"bca\n@(bca)\tP c 21 b (bca)","a-cb\n@(a-cb)\tP b 21 a (a-cb)","@[1,30]","default\n@(abc)\tP n c 2 (abc)\n@default@"
+                    ,"ba-c\n@(ba-c)\tP c n 2 (ba-c)","cab\n@(cab)\tP 2 n a (cab)","-cba\n@(-cba)\tP 2 a n (-cba)","bca\n@(bca)\tP b 2 n (bca)"
+                    ,"a-cb\n@(a-cb)\tP n 2 b (a-cb)","@[1,31]","default\n@(abc)\tP m n 21 (abc)\n@default@","ba-c\n@(ba-c)\tP n m 21 (ba-c)"
+                    ,"cab\n@(cab)\tP 21 m n (cab)","-cba\n@(-cba)\tP 21 n m (-cba)","bca\n@(bca)\tP n 21 m (bca)","a-cb\n@(a-cb)\tP m 21 n (a-cb)"
+                    ,"@[1,32]","default\n@(abc)\tP b a 2 (abc)\n@default@","cab\n@(cab)\tP 2 c b (cab)","bca\n@(bca)\tP c 2 a (bca)"
+                    ,"@[1,33]","default\n@(abc)\tP n a 21 (abc)\n@default@","ba-c\n@(ba-c)\tP b n 21 (ba-c)","cab\n@(cab)\tP 21 n b (cab)"
+                    ,"-cba\n@(-cba)\tP 21 c n (-cba)","bca\n@(bca)\tP c 21 n (bca)","a-cb\n@(a-cb)\tP n 21 a (a-cb)","@[1,34]"
+                    ,"default\n@(abc)\tP n n 2 (abc)\n@default@","cab\n@(cab)\tP 2 n n (cab)","bca\n@(bca)\tP n 2 n (bca)","@[1,35]"
+                    ,"default\n@(abc)\tC m m 2 (abc)\n@default@","cab\n@(cab)\tA 2 m m (cab)","bca\n@(bca)\tB m 2 m (bca)","@[1,36]"
+                    ,"default\n@(abc)\tC m c 21 (abc)\n@default@","ba-c\n@(ba-c)\tC c m 21 (ba-c)","cab\n@(cab)\tA 21 m a (cab)","-cba\n@(-cba)\tA 21 a m (-cba)"
+                    ,"bca\n@(bca)\tB b 21 m (bca)","a-cb\n@(a-cb)\tB m 21 b (a-cb)","@[1,37]","default\n@(abc)\tC c c 2 (abc)\n@default@"
+                    ,"cab\n@(cab)\tA 2 a a (cab)","bca\n@(bca)\tB b 2 b (bca)","@[1,38]","default\n@(abc)\tA m m 2 (abc)\n@default@"
+                    ,"ba-c\n@(ba-c)\tB m m 2 (ba-c)","cab\n@(cab)\tB 2 m m (cab)","-cba\n@(-cba)\tC 2 m m (-cba)","bca\n@(bca)\tC m 2 m (bca)"
+                    ,"a-cb\n@(a-cb)\tA m 2 m (a-cb)","@[1,39]","default\n@(abc)\tA b m 2 (abc)\n@default@","ba-c\n@(ba-c)\tB m a 2 (ba-c)"
+                    ,"cab\n@(cab)\tB 2 c m (cab)","-cba\n@(-cba)\tC 2 m b (-cba)","bca\n@(bca)\tC m 2 a (bca)","a-cb\n@(a-cb)\tA c 2 m (a-cb)"
+                    ,"@[1,40]","default\n@(abc)\tA m a 2 (abc)\n@default@","ba-c\n@(ba-c)\tB b m 2 (ba-c)","cab\n@(cab)\tB 2 m b (cab)"
+                    ,"-cba\n@(-cba)\tC 2 c m (-cba)","bca\n@(bca)\tC c 2 m (bca)","a-cb\n@(a-cb)\tA m 2 a (a-cb)","@[1,41]"
+                    ,"default\n@(abc)\tA b a 2 (abc)\n@default@","ba-c\n@(ba-c)\tB b a 2 (ba-c)","cab\n@(cab)\tB 2 c b (cab)","-cba\n@(-cba)\tC 2 c b (-cba)"
+                    ,"bca\n@(bca)\tC c 2 a (bca)","a-cb\n@(a-cb)\tA c 2 a (a-cb)","@[1,42]","default\n@(abc)\tF m m 2 (abc)\n@default@"
+                    ,"cab\n@(cab)\tF 2 m m (cab)","bca\n@(bca)\tF m 2 m (bca)","@[1,43]","default\n@(abc)\tF d d 2 (abc)\n@default@"
+                    ,"cab\n@(cab)\tF 2 d d (cab)","bca\n@(bca)\tF d 2 d (bca)","@[1,44]","default\n@(abc)\tI m m 2 (abc)\n@default@"
+                    ,"cab\n@(cab)\tI 2 m m (cab)","bca\n@(bca)\tI m 2 m (bca)","@[1,45]","default\n@(abc)\tI b a 2 (abc)\n@default@"
+                    ,"cab\n@(cab)\tI 2 c b (cab)","bca\n@(bca)\tI c 2 a (bca)","@[1,46]","default\n@(abc)\tI m a 2 (abc)\n@default@"
+                    ,"ba-c\n@(ba-c)\tI b m 2 (ba-c)","cab\n@(cab)\tI 2 m b (cab)","-cba\n@(-cba)\tI 2 c m (-cba)","bca\n@(bca)\tI c 2 m (bca)"
+                    ,"a-cb\n@(a-cb)\tI m 2 a (a-cb)","@[1,47]","default\n@(u)\tP m m m (unique)\n@default@","@[1,48]"
+                    ,"1\n@(1)\tP n n n:1 (origin 1)","2\n@(2)\tP n n n:2 (origin 2)\n@default@","@[1,49]","default\n@(abc)\tP c c m (abc)\n@default@"
+                    ,"cab\n@(cab)\tP m a a (cab)","bca\n@(bca)\tP b m b (bca)","@[1,50]","1\n@(1)\tP b a n:1 (abc, origin 1)"
+                    ,"2\n@(2)\tP b a n:2 (abc, origin 2)\n@default@","1cab\n@(1cab)\tP n c b:1 (cab, origin 1)","2cab\n@(2cab)\tP n c b:2 (cab, origin 2)","1bca\n@(1bca)\tP c n a:1 (bca, origin 1)"
+                    ,"2bca\n@(2bca)\tP c n a:2 (bca, origin 2)","@[1,51]","default\n@(abc)\tP m m a (abc)\n@default@","ba-c\n@(ba-c)\tP m m b (ba-c)"
+                    ,"cab\n@(cab)\tP b m m (cab)","-cba\n@(-cba)\tP c m m (-cba)","bca\n@(bca)\tP m c m (bca)","a-cb\n@(a-cb)\tP m a m (a-cb)"
+                    ,"@[1,52]","default\n@(abc)\tP n n a (abc)\n@default@","ba-c\n@(ba-c)\tP n n b (ba-c)","cab\n@(cab)\tP b n n (cab)"
+                    ,"-cba\n@(-cba)\tP c n n (-cba)","bca\n@(bca)\tP n c n (bca)","a-cb\n@(a-cb)\tP n a n (a-cb)","@[1,53]"
+                    ,"default\n@(abc)\tP m n a (abc)\n@default@","ba-c\n@(ba-c)\tP n m b (ba-c)","cab\n@(cab)\tP b m n (cab)","-cba\n@(-cba)\tP c n m (-cba)"
+                    ,"bca\n@(bca)\tP n c m (bca)","a-cb\n@(a-cb)\tP m a n (a-cb)","@[1,54]","default\n@(abc)\tP c c a (abc)\n@default@"
+                    ,"ba-c\n@(ba-c)\tP c c b (ba-c)","cab\n@(cab)\tP b a a (cab)","-cba\n@(-cba)\tP c a a (-cba)","bca\n@(bca)\tP b c b (bca)"
+                    ,"a-cb\n@(a-cb)\tP b a b (a-cb)","@[1,55]","default\n@(abc)\tP b a m (abc)\n@default@","cab\n@(cab)\tP m c b (cab)"
+                    ,"bca\n@(bca)\tP c m a (bca)","@[1,56]","default\n@(abc)\tP c c n (abc)\n@default@","cab\n@(cab)\tP n a a (cab)"
+                    ,"bca\n@(bca)\tP b n b (bca)","@[1,57]","default\n@(abc)\tP b c m (abc)\n@default@","ba-c\n@(ba-c)\tP c a m (ba-c)"
+                    ,"cab\n@(cab)\tP m c a (cab)","-cba\n@(-cba)\tP m a b (-cba)","bca\n@(bca)\tP b m a (bca)","a-cb\n@(a-cb)\tP c m b (a-cb)"
+                    ,"@[1,58]","default\n@(abc)\tP n n m (abc)\n@default@","cab\n@(cab)\tP m n n (cab)","bca\n@(bca)\tP n m n (bca)"
+                    ,"@[1,59]","1\n@(1)\tP m m n:1 (abc, origin 1)","2\n@(2)\tP m m n:2 (abc, origin 2)\n@default@","1cab\n@(1cab)\tP n m m:1 (cab, origin 1)"
+                    ,"2cab\n@(2cab)\tP n m m:2 (cab, origin 2)","1bca\n@(1bca)\tP m n m:1 (bca, origin 1)","2bca\n@(2bca)\tP m n m:2 (bca, origin 2)","@[1,60]"
+                    ,"default\n@(abc)\tP b c n (abc)\n@default@","ba-c\n@(ba-c)\tP c a n (ba-c)","cab\n@(cab)\tP n c a (cab)","-cba\n@(-cba)\tP n a b (-cba)"
+                    ,"bca\n@(bca)\tP b n a (bca)","a-cb\n@(a-cb)\tP c n b (a-cb)","@[1,61]","default\n@(abc)\tP b c a (abc)\n@default@"
+                    ,"ba-c\n@(ba-c)\tP c a b (ba-c)","@[1,62]","default\n@(abc)\tP n m a (abc)\n@default@","ba-c\n@(ba-c)\tP m n b (ba-c)"
+                    ,"cab\n@(cab)\tP b n m (cab)","-cba\n@(-cba)\tP c m n (-cba)","bca\n@(bca)\tP m c n (bca)","a-cb\n@(a-cb)\tP n a m (a-cb)"
+                    ,"@[1,63]","default\n@(abc)\tC m c m (abc)\n@default@","ba-c\n@(ba-c)\tC c m m (ba-c)","cab\n@(cab)\tA m m a (cab)"
+                    ,"-cba\n@(-cba)\tA m a m (-cba)","bca\n@(bca)\tB b m m (bca)","a-cb\n@(a-cb)\tB m m b (a-cb)","@[1,64]"
+                    ,"default\n@(abc)\tC m c a (abc)\n@default@","ba-c\n@(ba-c)\tC c m b (ba-c)","cab\n@(cab)\tA b m a (cab)","-cba\n@(-cba)\tA c a m (-cba)"
+                    ,"bca\n@(bca)\tB b c m (bca)","a-cb\n@(a-cb)\tB m a b (a-cb)","@[1,65]","default\n@(abc)\tC m m m (abc)\n@default@"
+                    ,"cab\n@(cab)\tA m m m (cab)","bca\n@(bca)\tB m m m (bca)","@[1,66]","default\n@(abc)\tC c c m (abc)\n@default@"
+                    ,"cab\n@(cab)\tA m a a (cab)","bca\n@(bca)\tB b m b (bca)","@[1,67]","default\n@(abc)\tC m m a (abc)\n@default@"
+                    ,"ba-c\n@(ba-c)\tC m m b (ba-c)","cab\n@(cab)\tA b m m (cab)","-cba\n@(-cba)\tA c m m (-cba)","bca\n@(bca)\tB m c m (bca)"
+                    ,"a-cb\n@(a-cb)\tB m a m (a-cb)","@[1,68]","1\n@(1)\tC c c a:1 (abc, origin 1)","2\n@(2)\tC c c a:2 (abc, origin 2)\n@default@"
+                    ,"1ba-c\n@(1ba-c)\tC c c b:1 (ba-c, origin 1)","2ba-c\n@(2ba-c)\tC c c b:2 (ba-c, origin 2)","1cab\n@(1cab)\tA b a a:1 (cab, origin 1)","2cab\n@(2cab)\tA b a a:2 (cab, origin 2)"
+                    ,"1-cba\n@(1-cba)\tA c a a:1 (-cba, origin 1)","2-cba\n@(2-cba)\tA c a a:2 (-cba, origin 2)","1bca\n@(1bca)\tB b c b:1 (bca, origin 1)","2bca\n@(2bca)\tB b c b:2 (bca, origin 2)"
+                    ,"1a-cb\n@(1a-cb)\tB b a b:1 (a-cb, origin 1)","2a-cb\n@(2a-cb)\tB b a b:2 (a-cb, origin 2)","@[1,69]","default\n@(u)\tF m m m (unique)\n@default@"
+                    ,"@[1,70]","1\n@(1)\tF d d d:1 (origin 1)","2\n@(2)\tF d d d:2 (origin 2)\n@default@","@[1,71]"
+                    ,"default\n@(u)\tI m m m (unique)\n@default@","@[1,72]","default\n@(abc)\tI b a m (abc)\n@default@","cab\n@(cab)\tI m c b (cab)"
+                    ,"bca\n@(bca)\tI c m a (bca)","@[1,73]","default\n@(abc)\tI b c a (abc)\n@default@","ba-c\n@(ba-c)\tI c a b (ba-c)"
+                    ,"@[1,74]","default\n@(abc)\tI m m a (abc)\n@default@","ba-c\n@(ba-c)\tI m m b (ba-c)","cab\n@(cab)\tI b m m (cab)"
+                    ,"-cba\n@(-cba)\tI c m m (-cba)","bca\n@(bca)\tI m c m (bca)","a-cb\n@(a-cb)\tI m a m (a-cb)","@[1,75]"
+                    ,"default\n@(u)\tP 4 (unique)\n@default@","@[1,76]","default\n@(u)\tP 41 (unique)\n@default@","@[1,77]"
+                    ,"default\n@(u)\tP 42 (unique)\n@default@","@[1,78]","default\n@(u)\tP 43 (unique)\n@default@","@[1,79]"
+                    ,"default\n@(u)\tI 4 (unique)\n@default@","@[1,80]","default\n@(u)\tI 41 (unique)\n@default@","@[1,81]"
+                    ,"default\n@(u)\tP -4 (unique)\n@default@","@[1,82]","default\n@(u)\tI -4 (unique)\n@default@","@[1,83]"
+                    ,"default\n@(u)\tP 4/m (unique)\n@default@","@[1,84]","default\n@(u)\tP 42/m (unique)\n@default@","@[1,85]"
+                    ,"1\n@(1)\tP 4/n:1 (origin 1)","2\n@(2)\tP 4/n:2 (origin 2)\n@default@","@[1,86]","1\n@(1)\tP 42/n:1 (origin 1)"
+                    ,"2\n@(2)\tP 42/n:2 (origin 2)\n@default@","@[1,87]","default\n@(u)\tI 4/m (unique)\n@default@","@[1,88]"
+                    ,"1\n@(1)\tI 41/a:1 (origin 1)","2\n@(2)\tI 41/a:2 (origin 2)\n@default@","@[1,89]","default\n@(u)\tP 4 2 2 (unique)\n@default@"
+                    ,"@[1,90]","default\n@(u)\tP 4 21 2 (unique)\n@default@","@[1,91]","default\n@(u)\tP 41 2 2 (unique)\n@default@"
+                    ,"@[1,92]","default\n@(u)\tP 41 21 2 (unique)\n@default@","@[1,93]","default\n@(u)\tP 42 2 2 (unique)\n@default@"
+                    ,"@[1,94]","default\n@(u)\tP 42 21 2 (unique)\n@default@","@[1,95]","default\n@(u)\tP 43 2 2 (unique)\n@default@"
+                    ,"@[1,96]","default\n@(u)\tP 43 21 2 (unique)\n@default@","@[1,97]","default\n@(u)\tI 4 2 2 (unique)\n@default@"
+                    ,"@[1,98]","default\n@(u)\tI 41 2 2 (unique)\n@default@","@[1,99]","default\n@(u)\tP 4 m m (unique)\n@default@"
+                    ,"@[1,100]","default\n@(u)\tP 4 b m (unique)\n@default@","@[1,101]","default\n@(u)\tP 42 c m (unique)\n@default@"
+                    ,"@[1,102]","default\n@(u)\tP 42 n m (unique)\n@default@","@[1,103]","default\n@(u)\tP 4 c c (unique)\n@default@"
+                    ,"@[1,104]","default\n@(u)\tP 4 n c (unique)\n@default@","@[1,105]","default\n@(u)\tP 42 m c (unique)\n@default@"
+                    ,"@[1,106]","default\n@(u)\tP 42 b c (unique)\n@default@","@[1,107]","default\n@(u)\tI 4 m m (unique)\n@default@"
+                    ,"@[1,108]","default\n@(u)\tI 4 c m (unique)\n@default@","@[1,109]","default\n@(u)\tI 41 m d (unique)\n@default@"
+                    ,"@[1,110]","default\n@(u)\tI 41 c d (unique)\n@default@","@[1,111]","default\n@(u)\tP -4 2 m (unique)\n@default@"
+                    ,"@[1,112]","default\n@(u)\tP -4 2 c (unique)\n@default@","@[1,113]","default\n@(u)\tP -4 21 m (unique)\n@default@"
+                    ,"@[1,114]","default\n@(u)\tP -4 21 c (unique)\n@default@","@[1,115]","default\n@(u)\tP -4 m 2 (unique)\n@default@"
+                    ,"@[1,116]","default\n@(u)\tP -4 c 2 (unique)\n@default@","@[1,117]","default\n@(u)\tP -4 b 2 (unique)\n@default@"
+                    ,"@[1,118]","default\n@(u)\tP -4 n 2 (unique)\n@default@","@[1,119]","default\n@(u)\tI -4 m 2 (unique)\n@default@"
+                    ,"@[1,120]","default\n@(u)\tI -4 c 2 (unique)\n@default@","@[1,121]","default\n@(u)\tI -4 2 m (unique)\n@default@"
+                    ,"@[1,122]","default\n@(u)\tI -4 2 d (unique)\n@default@","@[1,123]","default\n@(u)\tP 4/m m m (unique)\n@default@"
+                    ,"@[1,124]","default\n@(u)\tP 4/m c c (unique)\n@default@","@[1,125]","1\n@(1)\tP 4/n b m:1 (origin 1)"
+                    ,"2\n@(2)\tP 4/n b m:2 (origin 2)\n@default@","@[1,126]","1\n@(1)\tP 4/n n c:1 (origin 1)","2\n@(2)\tP 4/n n c:2 (origin 2)\n@default@"
+                    ,"@[1,127]","default\n@(u)\tP 4/m b m (unique)\n@default@","@[1,128]","default\n@(u)\tP 4/m n c (unique)\n@default@"
+                    ,"@[1,129]","1\n@(1)\tP 4/n m m:1 (origin 1)","2\n@(2)\tP 4/n m m:2 (origin 2)\n@default@","@[1,130]"
+                    ,"1\n@(1)\tP 4/n c c:1 (origin 1)","2\n@(2)\tP 4/n c c:2 (origin 2)\n@default@","@[1,131]","default\n@(u)\tP 42/m m c (unique)\n@default@"
+                    ,"@[1,132]","default\n@(u)\tP 42/m c m (unique)\n@default@","@[1,133]","1\n@(1)\tP 42/n b c:1 (origin 1)"
+                    ,"2\n@(2)\tP 42/n b c:2 (origin 2)\n@default@","@[1,134]","1\n@(1)\tP 42/n n m:1 (origin 1)","2\n@(2)\tP 42/n n m:2 (origin 2)\n@default@"
+                    ,"@[1,135]","default\n@(u)\tP 42/m b c (unique)\n@default@","@[1,136]","default\n@(u)\tP 42/m n m (unique)\n@default@"
+                    ,"@[1,137]","1\n@(1)\tP 42/n m c:1 (origin 1)","2\n@(2)\tP 42/n m c:2 (origin 2)\n@default@","@[1,138]"
+                    ,"1\n@(1)\tP 42/n c m:1 (origin 1)","2\n@(2)\tP 42/n c m:2 (origin 2)\n@default@","@[1,139]","default\n@(u)\tI 4/m m m (unique)\n@default@"
+                    ,"@[1,140]","default\n@(u)\tI 4/m c m (unique)\n@default@","@[1,141]","1\n@(1)\tI 41/a m d:1 (origin 1)"
+                    ,"2\n@(2)\tI 41/a m d:2 (origin 2)\n@default@","@[1,142]","1\n@(1)\tI 41/a c d:1 (origin 1)","2\n@(2)\tI 41/a c d:2 (origin 2)\n@default@"
+                    ,"@[1,143]","default\n@(u)\tP 3 (unique)\n@default@","@[1,144]","default\n@(u)\tP 31 (unique)\n@default@"
+                    ,"@[1,145]","default\n@(u)\tP 32 (unique)\n@default@","@[1,146]","H\nH@(e)x\tR 3:H (hexagonal)"
+                    ,"R\n@(R)ho\tR 3:R (rhombohedral)\n@default@","@[1,147]","default\n@(u)\tP -3 (unique)\n@default@","@[1,148]"
+                    ,"H\nH@(e)x\tR -3:H (hexagonal)","R\n@(R)ho\tR -3:R (rhombohedral)\n@default@","@[1,149]","default\n@(u)\tP 3 1 2 (unique)\n@default@"
+                    ,"@[1,150]","default\n@(u)\tP 3 2 1 (unique)\n@default@","@[1,151]","default\n@(u)\tP 31 1 2 (unique)\n@default@"
+                    ,"@[1,152]","default\n@(u)\tP 31 2 1 (unique)\n@default@","@[1,153]","default\n@(u)\tP 32 1 2 (unique)\n@default@"
+                    ,"@[1,154]","default\n@(u)\tP 32 2 1 (unique)\n@default@","@[1,155]","H\nH@(e)x\tR 3 2:H (hexagonal)"
+                    ,"R\n@(R)ho\tR 3 2:R (rhombohedral)\n@default@","@[1,156]","default\n@(u)\tP 3 m 1 (unique)\n@default@","@[1,157]"
+                    ,"default\n@(u)\tP 3 1 m (unique)\n@default@","@[1,158]","default\n@(u)\tP 3 c 1 (unique)\n@default@","@[1,159]"
+                    ,"default\n@(u)\tP 3 1 c (unique)\n@default@","@[1,160]","H\nH@(e)x\tR 3 m:H (hexagonal)","R\n@(R)ho\tR 3 m:R (rhombohedral)\n@default@"
+                    ,"@[1,161]","H\nH@(e)x\tR 3 c:H (hexagonal)","R\n@(R)ho\tR 3 c:R (rhombohedral)\n@default@","@[1,162]"
+                    ,"default\n@(u)\tP -3 1 m (unique)\n@default@","@[1,163]","default\n@(u)\tP -3 1 c (unique)\n@default@","@[1,164]"
+                    ,"default\n@(u)\tP -3 m 1 (unique)\n@default@","@[1,165]","default\n@(u)\tP -3 c 1 (unique)\n@default@","@[1,166]"
+                    ,"H\nH@(e)x\tR -3 m:H (hexagonal)","R\n@(R)ho\tR -3 m:R (rhombohedral)\n@default@","@[1,167]","H\nH@(e)x\tR -3 c:H (hexagonal)"
+                    ,"R\n@(R)ho\tR -3 c:R (rhombohedral)\n@default@","@[1,168]","default\n@(u)\tP 6 (unique)\n@default@","@[1,169]"
+                    ,"default\n@(u)\tP 61 (unique)\n@default@","@[1,170]","default\n@(u)\tP 65 (unique)\n@default@","@[1,171]"
+                    ,"default\n@(u)\tP 62 (unique)\n@default@","@[1,172]","default\n@(u)\tP 64 (unique)\n@default@","@[1,173]"
+                    ,"default\n@(u)\tP 63 (unique)\n@default@","@[1,174]","default\n@(u)\tP -6 (unique)\n@default@","@[1,175]"
+                    ,"default\n@(u)\tP 6/m (unique)\n@default@","@[1,176]","default\n@(u)\tP 63/m (unique)\n@default@","@[1,177]"
+                    ,"default\n@(u)\tP 6 2 2 (unique)\n@default@","@[1,178]","default\n@(u)\tP 61 2 2 (unique)\n@default@","@[1,179]"
+                    ,"default\n@(u)\tP 65 2 2 (unique)\n@default@","@[1,180]","default\n@(u)\tP 62 2 2 (unique)\n@default@","@[1,181]"
+                    ,"default\n@(u)\tP 64 2 2 (unique)\n@default@","@[1,182]","default\n@(u)\tP 63 2 2 (unique)\n@default@","@[1,183]"
+                    ,"default\n@(u)\tP 6 m m (unique)\n@default@","@[1,184]","default\n@(u)\tP 6 c c (unique)\n@default@","@[1,185]"
+                    ,"default\n@(u)\tP 63 c m (unique)\n@default@","@[1,186]","default\n@(u)\tP 63 m c (unique)\n@default@","@[1,187]"
+                    ,"default\n@(u)\tP -6 m 2 (unique)\n@default@","@[1,188]","default\n@(u)\tP -6 c 2 (unique)\n@default@","@[1,189]"
+                    ,"default\n@(u)\tP -6 2 m (unique)\n@default@","@[1,190]","default\n@(u)\tP -6 2 c (unique)\n@default@","@[1,191]"
+                    ,"default\n@(u)\tP 6/m m m (unique)\n@default@","@[1,192]","default\n@(u)\tP 6/m c c (unique)\n@default@","@[1,193]"
+                    ,"default\n@(u)\tP 63/m c m (unique)\n@default@","@[1,194]","default\n@(u)\tP 63/m m c (unique)\n@default@","@[1,195]"
+                    ,"default\n@(u)\tP 2 3 (unique)\n@default@","@[1,196]","default\n@(u)\tF 2 3 (unique)\n@default@","@[1,197]"
+                    ,"default\n@(u)\tI 2 3 (unique)\n@default@","@[1,198]","default\n@(u)\tP 21 3 (unique)\n@default@","@[1,199]"
+                    ,"default\n@(u)\tI 21 3 (unique)\n@default@","@[1,200]","default\n@(u)\tP m -3 (unique)\n@default@","@[1,201]"
+                    ,"1\n@(1)\tP n -3:1 (origin 1)","2\n@(2)\tP n -3:2 (origin 2)\n@default@","@[1,202]","default\n@(u)\tF m -3 (unique)\n@default@"
+                    ,"@[1,203]","1\n@(1)\tF d -3:1 (origin 1)","2\n@(2)\tF d -3:2 (origin 2)\n@default@","@[1,204]"
+                    ,"default\n@(u)\tI m -3 (unique)\n@default@","@[1,205]","default\n@(u)\tP a -3 (unique)\n@default@","@[1,206]"
+                    ,"default\n@(u)\tI a -3 (unique)\n@default@","@[1,207]","default\n@(u)\tP 4 3 2 (unique)\n@default@","@[1,208]"
+                    ,"default\n@(u)\tP 42 3 2 (unique)\n@default@","@[1,209]","default\n@(u)\tF 4 3 2 (unique)\n@default@","@[1,210]"
+                    ,"default\n@(u)\tF 41 3 2 (unique)\n@default@","@[1,211]","default\n@(u)\tI 4 3 2 (unique)\n@default@","@[1,212]"
+                    ,"default\n@(u)\tP 43 3 2 (unique)\n@default@","@[1,213]","default\n@(u)\tP 41 3 2 (unique)\n@default@","@[1,214]"
+                    ,"default\n@(u)\tI 41 3 2 (unique)\n@default@","@[1,215]","default\n@(u)\tP -4 3 m (unique)\n@default@","@[1,216]"
+                    ,"default\n@(u)\tF -4 3 m (unique)\n@default@","@[1,217]","default\n@(u)\tI -4 3 m (unique)\n@default@","@[1,218]"
+                    ,"default\n@(u)\tP -4 3 n (unique)\n@default@","@[1,219]","default\n@(u)\tF -4 3 c (unique)\n@default@","@[1,220]"
+                    ,"default\n@(u)\tI -4 3 d (unique)\n@default@","@[1,221]","default\n@(u)\tP m -3 m (unique)\n@default@","@[1,222]"
+                    ,"1\n@(1)\tP n -3 n:1 (origin 1)","2\n@(2)\tP n -3 n:2 (origin 2)\n@default@","@[1,223]","default\n@(u)\tP m -3 n (unique)\n@default@"
+                    ,"@[1,224]","1\n@(1)\tP n -3 m:1 (origin 1)","2\n@(2)\tP n -3 m:2 (origin 2)\n@default@","@[1,225]"
+                    ,"default\n@(u)\tF m -3 m (unique)\n@default@","@[1,226]","default\n@(u)\tF m -3 c (unique)\n@default@","@[1,227]"
+                    ,"1\n@(1)\tF d -3 m:1 (origin 1)","2\n@(2)\tF d -3 m:2 (origin 2)\n@default@","@[1,228]","1\n@(1)\tF d -3 c:1 (origin 1)"
+                    ,"2\n@(2)\tF d -3 c:2 (origin 2)\n@default@","@[1,229]","default\n@(u)\tI m -3 m (unique)\n@default@","@[1,230]"
+                    ,"default\n@(u)\tI a -3 d (unique)\n@default@","@[2,1]","default\n@(u)\tP 1 (unique)\n@default@","@[2,2]"
+                    ,"default\n@(u)\tP -1 (unique)\n@default@","@[2,3]","default\n@(u)\tP 1 2 1 (unique)\n@default@","@[2,4]"
+                    ,"default\n@(u)\tP 1 21 1 (unique)\n@default@","@[2,5]","default\n@(u)\tC 1 2 1 (unique)\n@default@","@[2,6]"
+                    ,"default\n@(u)\tP 1 m 1 (unique)\n@default@","@[2,7]","default\n@(u)\tP 1 c 1 (unique)\n@default@","@[2,8]"
+                    ,"default\n@(u)\tC 1 m 1 (unique)\n@default@","@[2,9]","default\n@(u)\tC 1 c 1 (unique)\n@default@","@[2,10]"
+                    ,"default\n@(u)\tP 1 2/m 1 (unique)\n@default@","@[2,11]","default\n@(u)\tP 1 21/m 1 (unique)\n@default@","@[2,12]"
+                    ,"default\n@(u)\tC 1 2/m 1 (unique)\n@default@","@[2,13]","default\n@(u)\tP 1 2/c 1 (unique)\n@default@","@[2,14]"
+                    ,"default\n@(u)\tP 1 21/c 1 (unique)\n@default@","@[2,15]","default\n@(u)\tC 1 2/c 1 (unique)\n@default@","@[2,16]"
+                    ,"default\n@(u)\tP 2 2 2 (unique)\n@default@","@[2,17]","default\n@(u)\tP 2 2 21 (unique)\n@default@","@[2,18]"
+                    ,"default\n@(u)\tP 21 21 2 (unique)\n@default@","@[2,19]","default\n@(u)\tP 21 21 21 (unique)\n@default@","@[2,20]"
+                    ,"default\n@(u)\tC 2 2 21 (unique)\n@default@","@[2,21]","default\n@(u)\tC 2 2 2 (unique)\n@default@","@[2,22]"
+                    ,"default\n@(u)\tF 2 2 2 (unique)\n@default@","@[2,23]","default\n@(u)\tI 2 2 2 (unique)\n@default@","@[2,24]"
+                    ,"default\n@(u)\tI 21 21 21 (unique)\n@default@","@[2,25]","default\n@(u)\tP m m 2 (unique)\n@default@","@[2,26]"
+                    ,"default\n@(u)\tP m c 21 (unique)\n@default@","@[2,27]","default\n@(u)\tP c c 2 (unique)\n@default@","@[2,28]"
+                    ,"default\n@(u)\tP m a 2 (unique)\n@default@","@[2,29]","default\n@(u)\tP c a 21 (unique)\n@default@","@[2,30]"
+                    ,"default\n@(u)\tP n c 2 (unique)\n@default@","@[2,31]","default\n@(u)\tP m n 21 (unique)\n@default@","@[2,32]"
+                    ,"default\n@(u)\tP b a 2 (unique)\n@default@","@[2,33]","default\n@(u)\tP n a 21 (unique)\n@default@","@[2,34]"
+                    ,"default\n@(u)\tP n n 2 (unique)\n@default@","@[2,35]","default\n@(u)\tC m m 2 (unique)\n@default@","@[2,36]"
+                    ,"default\n@(u)\tC m c 21 (unique)\n@default@","@[2,37]","default\n@(u)\tC c c 2 (unique)\n@default@","@[2,38]"
+                    ,"default\n@(u)\tA m m 2 (unique)\n@default@","@[2,39]","default\n@(u)\tA b m 2 (unique)\n@default@","@[2,40]"
+                    ,"default\n@(u)\tA m a 2 (unique)\n@default@","@[2,41]","default\n@(u)\tA b a 2 (unique)\n@default@","@[2,42]"
+                    ,"default\n@(u)\tF m m 2 (unique)\n@default@","@[2,43]","default\n@(u)\tF d d 2 (unique)\n@default@","@[2,44]"
+                    ,"default\n@(u)\tI m m 2 (unique)\n@default@","@[2,45]","default\n@(u)\tI b a 2 (unique)\n@default@","@[2,46]"
+                    ,"default\n@(u)\tI m a 2 (unique)\n@default@","@[2,47]","default\n@(u)\tP m m m (unique)\n@default@","@[2,48]"
+                    ,"default\n@(u)\tP n n n:2 (unique)\n@default@","@[2,49]","default\n@(u)\tP c c m (unique)\n@default@","@[2,50]"
+                    ,"default\n@(u)\tP b a n:2 (unique)\n@default@","@[2,51]","default\n@(u)\tP m m a (unique)\n@default@","@[2,52]"
+                    ,"default\n@(u)\tP n n a (unique)\n@default@","@[2,53]","default\n@(u)\tP m n a (unique)\n@default@","@[2,54]"
+                    ,"default\n@(u)\tP c c a (unique)\n@default@","@[2,55]","default\n@(u)\tP b a m (unique)\n@default@","@[2,56]"
+                    ,"default\n@(u)\tP c c n (unique)\n@default@","@[2,57]","default\n@(u)\tP b c m (unique)\n@default@","@[2,58]"
+                    ,"default\n@(u)\tP n n m (unique)\n@default@","@[2,59]","default\n@(u)\tP m m n:2 (unique)\n@default@","@[2,60]"
+                    ,"default\n@(u)\tP b c n (unique)\n@default@","@[2,61]","default\n@(u)\tP b c a (unique)\n@default@","@[2,62]"
+                    ,"default\n@(u)\tP n m a (unique)\n@default@","@[2,63]","default\n@(u)\tC m c m (unique)\n@default@","@[2,64]"
+                    ,"default\n@(u)\tC m c a (unique)\n@default@","@[2,65]","default\n@(u)\tC m m m (unique)\n@default@","@[2,66]"
+                    ,"default\n@(u)\tC c c m (unique)\n@default@","@[2,67]","default\n@(u)\tC m m a (unique)\n@default@","@[2,68]"
+                    ,"default\n@(u)\tC c c a:2 (unique)\n@default@","@[2,69]","default\n@(u)\tF m m m (unique)\n@default@","@[2,70]"
+                    ,"default\n@(u)\tF d d d:2 (unique)\n@default@","@[2,71]","default\n@(u)\tI m m m (unique)\n@default@","@[2,72]"
+                    ,"default\n@(u)\tI b a m (unique)\n@default@","@[2,73]","default\n@(u)\tI b c a (unique)\n@default@","@[2,74]"
+                    ,"default\n@(u)\tI m m a (unique)\n@default@","@[2,75]","default\n@(u)\tP 4 (unique)\n@default@","@[2,76]"
+                    ,"default\n@(u)\tP 41 (unique)\n@default@","@[2,77]","default\n@(u)\tP 42 (unique)\n@default@","@[2,78]"
+                    ,"default\n@(u)\tP 43 (unique)\n@default@","@[2,79]","default\n@(u)\tI 4 (unique)\n@default@","@[2,80]"
+                    ,"default\n@(u)\tI 41 (unique)\n@default@","@[2,81]","default\n@(u)\tP -4 (unique)\n@default@","@[2,82]"
+                    ,"default\n@(u)\tI -4 (unique)\n@default@","@[2,83]","default\n@(u)\tP 4/m (unique)\n@default@","@[2,84]"
+                    ,"default\n@(u)\tP 42/m (unique)\n@default@","@[2,85]","default\n@(u)\tP 4/n:2 (unique)\n@default@","@[2,86]"
+                    ,"default\n@(u)\tP 42/n:2 (unique)\n@default@","@[2,87]","default\n@(u)\tI 4/m (unique)\n@default@","@[2,88]"
+                    ,"default\n@(u)\tI 41/a:2 (unique)\n@default@","@[2,89]","default\n@(u)\tP 4 2 2 (unique)\n@default@","@[2,90]"
+                    ,"default\n@(u)\tP 4 21 2 (unique)\n@default@","@[2,91]","default\n@(u)\tP 41 2 2 (unique)\n@default@","@[2,92]"
+                    ,"default\n@(u)\tP 41 21 2 (unique)\n@default@","@[2,93]","default\n@(u)\tP 42 2 2 (unique)\n@default@","@[2,94]"
+                    ,"default\n@(u)\tP 42 21 2 (unique)\n@default@","@[2,95]","default\n@(u)\tP 43 2 2 (unique)\n@default@","@[2,96]"
+                    ,"default\n@(u)\tP 43 21 2 (unique)\n@default@","@[2,97]","default\n@(u)\tI 4 2 2 (unique)\n@default@","@[2,98]"
+                    ,"default\n@(u)\tI 41 2 2 (unique)\n@default@","@[2,99]","default\n@(u)\tP 4 m m (unique)\n@default@","@[2,100]"
+                    ,"default\n@(u)\tP 4 b m (unique)\n@default@","@[2,101]","default\n@(u)\tP 42 c m (unique)\n@default@","@[2,102]"
+                    ,"default\n@(u)\tP 42 n m (unique)\n@default@","@[2,103]","default\n@(u)\tP 4 c c (unique)\n@default@","@[2,104]"
+                    ,"default\n@(u)\tP 4 n c (unique)\n@default@","@[2,105]","default\n@(u)\tP 42 m c (unique)\n@default@","@[2,106]"
+                    ,"default\n@(u)\tP 42 b c (unique)\n@default@","@[2,107]","default\n@(u)\tI 4 m m (unique)\n@default@","@[2,108]"
+                    ,"default\n@(u)\tI 4 c m (unique)\n@default@","@[2,109]","default\n@(u)\tI 41 m d (unique)\n@default@","@[2,110]"
+                    ,"default\n@(u)\tI 41 c d (unique)\n@default@","@[2,111]","default\n@(u)\tP -4 2 m (unique)\n@default@","@[2,112]"
+                    ,"default\n@(u)\tP -4 2 c (unique)\n@default@","@[2,113]","default\n@(u)\tP -4 21 m (unique)\n@default@","@[2,114]"
+                    ,"default\n@(u)\tP -4 21 c (unique)\n@default@","@[2,115]","default\n@(u)\tP -4 m 2 (unique)\n@default@","@[2,116]"
+                    ,"default\n@(u)\tP -4 c 2 (unique)\n@default@","@[2,117]","default\n@(u)\tP -4 b 2 (unique)\n@default@","@[2,118]"
+                    ,"default\n@(u)\tP -4 n 2 (unique)\n@default@","@[2,119]","default\n@(u)\tI -4 m 2 (unique)\n@default@","@[2,120]"
+                    ,"default\n@(u)\tI -4 c 2 (unique)\n@default@","@[2,121]","default\n@(u)\tI -4 2 m (unique)\n@default@","@[2,122]"
+                    ,"default\n@(u)\tI -4 2 d (unique)\n@default@","@[2,123]","default\n@(u)\tP 4/m m m (unique)\n@default@","@[2,124]"
+                    ,"default\n@(u)\tP 4/m c c (unique)\n@default@","@[2,125]","default\n@(u)\tP 4/n b m:2 (unique)\n@default@","@[2,126]"
+                    ,"default\n@(u)\tP 4/n n c:2 (unique)\n@default@","@[2,127]","default\n@(u)\tP 4/m b m (unique)\n@default@","@[2,128]"
+                    ,"default\n@(u)\tP 4/m n c (unique)\n@default@","@[2,129]","default\n@(u)\tP 4/n m m:2 (unique)\n@default@","@[2,130]"
+                    ,"default\n@(u)\tP 4/n c c:2 (unique)\n@default@","@[2,131]","default\n@(u)\tP 42/m m c (unique)\n@default@","@[2,132]"
+                    ,"default\n@(u)\tP 42/m c m (unique)\n@default@","@[2,133]","default\n@(u)\tP 42/n b c:2 (unique)\n@default@","@[2,134]"
+                    ,"default\n@(u)\tP 42/n n m:2 (unique)\n@default@","@[2,135]","default\n@(u)\tP 42/m b c (unique)\n@default@","@[2,136]"
+                    ,"default\n@(u)\tP 42/m n m (unique)\n@default@","@[2,137]","default\n@(u)\tP 42/n m c:2 (unique)\n@default@","@[2,138]"
+                    ,"default\n@(u)\tP 42/n c m:2 (unique)\n@default@","@[2,139]","default\n@(u)\tI 4/m m m (unique)\n@default@","@[2,140]"
+                    ,"default\n@(u)\tI 4/m c m (unique)\n@default@","@[2,141]","default\n@(u)\tI 41/a m d:2 (unique)\n@default@","@[2,142]"
+                    ,"default\n@(u)\tI 41/a c d:2 (unique)\n@default@","@[2,143]","default\n@(u)\tP 3 (unique)\n@default@","@[2,144]"
+                    ,"default\n@(u)\tP 31 (unique)\n@default@","@[2,145]","default\n@(u)\tP 32 (unique)\n@default@","@[2,146]"
+                    ,"default\n@(u)\tR 3:R (unique)\n@default@","@[2,147]","default\n@(u)\tP -3 (unique)\n@default@","@[2,148]"
+                    ,"default\n@(u)\tR -3:R (unique)\n@default@","@[2,149]","default\n@(u)\tP 3 1 2 (unique)\n@default@","@[2,150]"
+                    ,"default\n@(u)\tP 3 2 1 (unique)\n@default@","@[2,151]","default\n@(u)\tP 31 1 2 (unique)\n@default@","@[2,152]"
+                    ,"default\n@(u)\tP 31 2 1 (unique)\n@default@","@[2,153]","default\n@(u)\tP 32 1 2 (unique)\n@default@","@[2,154]"
+                    ,"default\n@(u)\tP 32 2 1 (unique)\n@default@","@[2,155]","default\n@(u)\tR 3 2:R (unique)\n@default@","@[2,156]"
+                    ,"default\n@(u)\tP 3 m 1 (unique)\n@default@","@[2,157]","default\n@(u)\tP 3 1 m (unique)\n@default@","@[2,158]"
+                    ,"default\n@(u)\tP 3 c 1 (unique)\n@default@","@[2,159]","default\n@(u)\tP 3 1 c (unique)\n@default@","@[2,160]"
+                    ,"default\n@(u)\tR 3 m:R (unique)\n@default@","@[2,161]","default\n@(u)\tR 3 c:R (unique)\n@default@","@[2,162]"
+                    ,"default\n@(u)\tP -3 1 m (unique)\n@default@","@[2,163]","default\n@(u)\tP -3 1 c (unique)\n@default@","@[2,164]"
+                    ,"default\n@(u)\tP -3 m 1 (unique)\n@default@","@[2,165]","default\n@(u)\tP -3 c 1 (unique)\n@default@","@[2,166]"
+                    ,"default\n@(u)\tR -3 m:R (unique)\n@default@","@[2,167]","default\n@(u)\tR -3 c:R (unique)\n@default@","@[2,168]"
+                    ,"default\n@(u)\tP 6 (unique)\n@default@","@[2,169]","default\n@(u)\tP 61 (unique)\n@default@","@[2,170]"
+                    ,"default\n@(u)\tP 65 (unique)\n@default@","@[2,171]","default\n@(u)\tP 62 (unique)\n@default@","@[2,172]"
+                    ,"default\n@(u)\tP 64 (unique)\n@default@","@[2,173]","default\n@(u)\tP 63 (unique)\n@default@","@[2,174]"
+                    ,"default\n@(u)\tP -6 (unique)\n@default@","@[2,175]","default\n@(u)\tP 6/m (unique)\n@default@","@[2,176]"
+                    ,"default\n@(u)\tP 63/m (unique)\n@default@","@[2,177]","default\n@(u)\tP 6 2 2 (unique)\n@default@","@[2,178]"
+                    ,"default\n@(u)\tP 61 2 2 (unique)\n@default@","@[2,179]","default\n@(u)\tP 65 2 2 (unique)\n@default@","@[2,180]"
+                    ,"default\n@(u)\tP 62 2 2 (unique)\n@default@","@[2,181]","default\n@(u)\tP 64 2 2 (unique)\n@default@","@[2,182]"
+                    ,"default\n@(u)\tP 63 2 2 (unique)\n@default@","@[2,183]","default\n@(u)\tP 6 m m (unique)\n@default@","@[2,184]"
+                    ,"default\n@(u)\tP 6 c c (unique)\n@default@","@[2,185]","default\n@(u)\tP 63 c m (unique)\n@default@","@[2,186]"
+                    ,"default\n@(u)\tP 63 m c (unique)\n@default@","@[2,187]","default\n@(u)\tP -6 m 2 (unique)\n@default@","@[2,188]"
+                    ,"default\n@(u)\tP -6 c 2 (unique)\n@default@","@[2,189]","default\n@(u)\tP -6 2 m (unique)\n@default@","@[2,190]"
+                    ,"default\n@(u)\tP -6 2 c (unique)\n@default@","@[2,191]","default\n@(u)\tP 6/m m m (unique)\n@default@","@[2,192]"
+                    ,"default\n@(u)\tP 6/m c c (unique)\n@default@","@[2,193]","default\n@(u)\tP 63/m c m (unique)\n@default@","@[2,194]"
+                    ,"default\n@(u)\tP 63/m m c (unique)\n@default@","@[2,195]","default\n@(u)\tP 2 3 (unique)\n@default@","@[2,196]"
+                    ,"default\n@(u)\tF 2 3 (unique)\n@default@","@[2,197]","default\n@(u)\tI 2 3 (unique)\n@default@","@[2,198]"
+                    ,"default\n@(u)\tP 21 3 (unique)\n@default@","@[2,199]","default\n@(u)\tI 21 3 (unique)\n@default@","@[2,200]"
+                    ,"default\n@(u)\tP m -3 (unique)\n@default@","@[2,201]","default\n@(u)\tP n -3:2 (unique)\n@default@","@[2,202]"
+                    ,"default\n@(u)\tF m -3 (unique)\n@default@","@[2,203]","default\n@(u)\tF d -3:2 (unique)\n@default@","@[2,204]"
+                    ,"default\n@(u)\tI m -3 (unique)\n@default@","@[2,205]","default\n@(u)\tP a -3 (unique)\n@default@","@[2,206]"
+                    ,"default\n@(u)\tI a -3 (unique)\n@default@","@[2,207]","default\n@(u)\tP 4 3 2 (unique)\n@default@","@[2,208]"
+                    ,"default\n@(u)\tP 42 3 2 (unique)\n@default@","@[2,209]","default\n@(u)\tF 4 3 2 (unique)\n@default@","@[2,210]"
+                    ,"default\n@(u)\tF 41 3 2 (unique)\n@default@","@[2,211]","default\n@(u)\tI 4 3 2 (unique)\n@default@","@[2,212]"
+                    ,"default\n@(u)\tP 43 3 2 (unique)\n@default@","@[2,213]","default\n@(u)\tP 41 3 2 (unique)\n@default@","@[2,214]"
+                    ,"default\n@(u)\tI 41 3 2 (unique)\n@default@","@[2,215]","default\n@(u)\tP -4 3 m (unique)\n@default@","@[2,216]"
+                    ,"default\n@(u)\tF -4 3 m (unique)\n@default@","@[2,217]","default\n@(u)\tI -4 3 m (unique)\n@default@","@[2,218]"
+                    ,"default\n@(u)\tP -4 3 n (unique)\n@default@","@[2,219]","default\n@(u)\tF -4 3 c (unique)\n@default@","@[2,220]"
+                    ,"default\n@(u)\tI -4 3 d (unique)\n@default@","@[2,221]","default\n@(u)\tP m -3 m (unique)\n@default@","@[2,222]"
+                    ,"default\n@(u)\tP n -3 n:2 (unique)\n@default@","@[2,223]","default\n@(u)\tP m -3 n (unique)\n@default@","@[2,224]"
+                    ,"default\n@(u)\tP n -3 m:2 (unique)\n@default@","@[2,225]","default\n@(u)\tF m -3 m (unique)\n@default@","@[2,226]"
+                    ,"default\n@(u)\tF m -3 c (unique)\n@default@","@[2,227]","default\n@(u)\tF d -3 m:2 (unique)\n@default@","@[2,228]"
+                    ,"default\n@(u)\tF d -3 c:2 (unique)\n@default@","@[2,229]","default\n@(u)\tI m -3 m (unique)\n@default@","@[2,230]"
+                    ,"default\n@(u)\tI a -3 d (unique)\n@default@","@[3,L1]","default\n@(u)\tp 1 (unique)\n@default@","@[3,L2]"
+                    ,"default\n@(u)\tp -1 (unique)\n@default@","@[3,L3]","default\n@(u)\tp 1 1 2 (unique)\n@default@","@[3,L4]"
+                    ,"default\n@(u)\tp 1 1 m (unique)\n@default@","@[3,L5]","c1\n@(c1)\tp 1 1 a (axis c, cell 1)\n@default@","c2\n@(c2)\tp 1 1 n (axis c, cell 2)"
+                    ,"c3\n@(c3)\tp 1 1 b (axis c, cell 3)","@[3,L6]","default\n@(u)\tp 1 1 2/m (unique)\n@default@","@[3,L7]"
+                    ,"c1\n@(c1)\tp 1 1 2/a (axis c, cell 1)\n@default@","c2\n@(c2)\tp 1 1 2/n (axis c, cell 2)","c3\n@(c3)\tp 1 1 2/b (axis c, cell 3)","@[3,L8]"
+                    ,"a\n@(a)\tp 2 1 1 (axis a)\n@default@","b\n@(b)\tp 1 2 1 (axis b)","@[3,L9]","a\n@(a)\tp 21 1 1 (axis a)\n@default@"
+                    ,"b\n@(b)\tp 1 21 1 (axis b)","@[3,L10]","a\n@(a)\tc 2 1 1 (axis a)\n@default@","b\n@(b)\tc 1 2 1 (axis b)"
+                    ,"@[3,L11]","a\n@(a)\tp m 1 1 (axis a)\n@default@","b\n@(b)\tp 1 m 1 (axis b)","@[3,L12]"
+                    ,"a\n@(a)\tp b 1 1 (axis a)\n@default@","b\n@(b)\tp 1 a 1 (axis b)","@[3,L13]","a\n@(a)\tc m 1 1 (axis a)\n@default@"
+                    ,"b\n@(b)\tc 1 m 1 (axis b)","@[3,L14]","a\n@(a)\tp 2/m 1 1 (axis a)\n@default@","b\n@(b)\tp 1 2/m 1 (axis b)"
+                    ,"@[3,L15]","a\n@(a)\tp 21/m 1 1 (axis a)\n@default@","b\n@(b)\tp 1 21/m 1 (axis b)","@[3,L16]"
+                    ,"a\n@(a)\tp 2/b 1 1 (axis a)\n@default@","b\n@(b)\tp 1 2/a 1 (axis b)","@[3,L17]","a\n@(a)\tp 21/b 1 1 (axis a)\n@default@"
+                    ,"b\n@(b)\tp 1 21/a 1 (axis b)","@[3,L18]","a\n@(a)\tc 2/m 1 1 (axis a)\n@default@","b\n@(b)\tc 1 2/m 1 (axis b)"
+                    ,"@[3,L19]","default\n@(u)\tp 2 2 2 (unique)\n@default@","@[3,L20]","default\n@(ab)\tp 21 2 2 (ab)\n@default@"
+                    ,"-ba\n@(-ba)\tp 2 21 2 (-ba)","@[3,L21]","default\n@(u)\tp 21 21 2 (unique)\n@default@","@[3,L22]"
+                    ,"default\n@(u)\tc 2 2 2 (unique)\n@default@","@[3,L23]","default\n@(u)\tp m m 2 (unique)\n@default@","@[3,L24]"
+                    ,"default\n@(ab)\tp m a 2 (ab)\n@default@","-ba\n@(-ba)\tp b m 2 (-ba)","@[3,L25]","default\n@(u)\tp b a 2 (unique)\n@default@"
+                    ,"@[3,L26]","default\n@(u)\tc m m 2 (unique)\n@default@","@[3,L27]","default\n@(ab)\tp m 2 m (ab)\n@default@"
+                    ,"-ba\n@(-ba)\tp 2 m m (-ba)","@[3,L28]","default\n@(ab)\tp m 21 b (ab)\n@default@","-ba\n@(-ba)\tp 21 m a (-ba)"
+                    ,"@[3,L29]","default\n@(ab)\tp b 21 m (ab)\n@default@","-ba\n@(-ba)\tp 21 a m (-ba)","@[3,L30]"
+                    ,"default\n@(ab)\tp b 2 b (ab)\n@default@","-ba\n@(-ba)\tp 2 a a (-ba)","@[3,L31]","default\n@(ab)\tp m 2 a (ab)\n@default@"
+                    ,"-ba\n@(-ba)\tp 2 m b (-ba)","@[3,L32]","default\n@(ab)\tp m 21 n (ab)\n@default@","-ba\n@(-ba)\tp 21 m n (-ba)"
+                    ,"@[3,L33]","default\n@(ab)\tp b 21 a (ab)\n@default@","-ba\n@(-ba)\tp 21 a b (-ba)","@[3,L34]"
+                    ,"default\n@(ab)\tp b 2 n (ab)\n@default@","-ba\n@(-ba)\tp 2 a n (-ba)","@[3,L35]","default\n@(ab)\tc m 2 m (ab)\n@default@"
+                    ,"-ba\n@(-ba)\tc 2 m m (-ba)","@[3,L36]","default\n@(ab)\tc m 2 e (ab)\n@default@","-ba\n@(-ba)\tc 2 m e (-ba)"
+                    ,"@[3,L37]","default\n@(u)\tp m m m (unique)\n@default@","@[3,L38]","default\n@(ab)\tp m a a (ab)\n@default@"
+                    ,"-ba\n@(-ba)\tp b m b (-ba)","@[3,L39]","default\n@(u)\tp b a n (unique)\n@default@","@[3,L40]"
+                    ,"default\n@(ab)\tp m a m (ab)\n@default@","-ba\n@(-ba)\tp b m m (-ba)","@[3,L41]","default\n@(ab)\tp m m a (ab)\n@default@"
+                    ,"-ba\n@(-ba)\tp m m b (-ba)","@[3,L42]","default\n@(ab)\tp m a n (ab)\n@default@","-ba\n@(-ba)\tp b m n (-ba)"
+                    ,"@[3,L43]","default\n@(ab)\tp b a a (ab)\n@default@","-ba\n@(-ba)\tp b a b (-ba)","@[3,L44]"
+                    ,"default\n@(u)\tp b a m (unique)\n@default@","@[3,L45]","default\n@(ab)\tp b m a (ab)\n@default@","-ba\n@(-ba)\tp m a b (-ba)"
+                    ,"@[3,L46]","default\n@(u)\tp m m n (unique)\n@default@","@[3,L47]","default\n@(u)\tc m m m (unique)\n@default@"
+                    ,"@[3,L48]","default\n@(u)\tc m m e (unique)\n@default@","@[3,L49]","default\n@(u)\tp 4 (unique)\n@default@"
+                    ,"@[3,L50]","default\n@(u)\tp -4 (unique)\n@default@","@[3,L51]","default\n@(u)\tp 4/m (unique)\n@default@"
+                    ,"@[3,L52]","1\n@(1)\tp 4/n:1 (origin 1)","2\n@(2)\tp 4/n:2 (origin 2)\n@default@","@[3,L53]"
+                    ,"default\n@(u)\tp 4 2 2 (unique)\n@default@","@[3,L54]","default\n@(u)\tp 4 21 2 (unique)\n@default@","@[3,L55]"
+                    ,"default\n@(u)\tp 4 m m (unique)\n@default@","@[3,L56]","default\n@(u)\tp 4 b m (unique)\n@default@","@[3,L57]"
+                    ,"default\n@(u)\tp -4 2 m (unique)\n@default@","@[3,L58]","default\n@(u)\tp -4 21 m (unique)\n@default@","@[3,L59]"
+                    ,"default\n@(u)\tp -4 m 2 (unique)\n@default@","@[3,L60]","default\n@(u)\tp -4 b 2 (unique)\n@default@","@[3,L61]"
+                    ,"default\n@(u)\tp 4/m m m (unique)\n@default@","@[3,L62]","1\n@(1)\tp 4/n b m:1 (origin 1)","2\n@(2)\tp 4/n b m:2 (origin 2)\n@default@"
+                    ,"@[3,L63]","default\n@(u)\tp 4/m b m (unique)\n@default@","@[3,L64]","1\n@(1)\tp 4/n m m:1 (origin 1)"
+                    ,"2\n@(2)\tp 4/n m m:2 (origin 2)\n@default@","@[3,L65]","default\n@(u)\tp 3 (unique)\n@default@","@[3,L66]"
+                    ,"default\n@(u)\tp -3 (unique)\n@default@","@[3,L67]","default\n@(u)\tp 3 1 2 (unique)\n@default@","@[3,L68]"
+                    ,"default\n@(u)\tp 3 2 1 (unique)\n@default@","@[3,L69]","default\n@(u)\tp 3 m 1 (unique)\n@default@","@[3,L70]"
+                    ,"default\n@(u)\tp 3 1 m (unique)\n@default@","@[3,L71]","default\n@(u)\tp -3 1 m (unique)\n@default@","@[3,L72]"
+                    ,"default\n@(u)\tp -3 m 1 (unique)\n@default@","@[3,L73]","default\n@(u)\tp 6 (unique)\n@default@","@[3,L74]"
+                    ,"default\n@(u)\tp -6 (unique)\n@default@","@[3,L75]","default\n@(u)\tp 6/m (unique)\n@default@","@[3,L76]"
+                    ,"default\n@(u)\tp 6 2 2 (unique)\n@default@","@[3,L77]","default\n@(u)\tp 6 m m (unique)\n@default@","@[3,L78]"
+                    ,"default\n@(u)\tp -6 m 2 (unique)\n@default@","@[3,L79]","default\n@(u)\tp -6 2 m (unique)\n@default@","@[3,L80]"
+                    ,"default\n@(u)\tp 6/m m m (unique)\n@default@"},0,0}
+                ,{"SELECTBOX|  AUTO_WIDTH|EOL","lengthunit","1","@(U)nit of length",1,21,40,"",{"     1\n@(B)ohr radii","     2\n@(A)ngstroem"},0,0}
+                ,{"ITEMLIST | EOL","lattice_constants","5.4","@(L)attice constants",1,21,50,"LEFT_OPEN",{},0,+INF}
+                ,{"ITEMLIST | EOL","axis_angles","90","@(A)xis angles",1,21,50,"LEFT_OPEN",{},0,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM |EOL  ","cellrotation.active","f","change gl@(o)bal axes",1,21,13,"",{},0,+INF}
+                ,{"ITEMLIST | EOL","cellrotation.newx","0","new X-ax@(i)s",1,21,50,"",{},-INF,+INF}
+                ,{"ITEMLIST | EOL","cellrotation.newz","0","new @(z)-axis",1,21,50,"",{},-INF,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST | EOL","subgroupgenerators","0","Subgroup @(G)enerators",1,21,50,"LEFT_OPEN",{},0,64}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM|EOL","nsort","1","@(n)umber of atoms",1,21,40,"",{},1,+INF}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"FIELD|EOL","wyckoff_positions","","Wyckoff positions",1,21,40,"",{},0,0}
+                ,{"ITEM","element","Al","-th atom sort",1,21,5,"",{"E ","H ","He","Li"
+                    ,"Be","B ","C ","N "
+                    ,"O ","F ","Ne","Na"
+                    ,"Mg","Al","Si","P "
+                    ,"S ","Cl","Ar","K "
+                    ,"Ca","Sc","Ti","V "
+                    ,"Cr","Mn","Fe","Co"
+                    ,"Ni","Cu","Zn","Ga"
+                    ,"Ge","As","Se","Br"
+                    ,"Kr","Rb","Sr","Y "
+                    ,"Zr","Nb","Mo","Tc"
+                    ,"Ru","Rh","Pd","Ag"
+                    ,"Cd","In","Sn","Sb"
+                    ,"Te","I ","Xe","Cs"
+                    ,"Ba","La","Ce","Pr"
+                    ,"Nd","Pm","Sm","Eu"
+                    ,"Gd","Tb","Dy","Ho"
+                    ,"Er","Tm","Yb","Lu"
+                    ,"Hf","Ta","W ","Re"
+                    ,"Os","Ir","Pt","Au"
+                    ,"Hg","Tl","Pb","Bi"
+                    ,"Po","At","Rn","Fr"
+                    ,"Ra","Ac","Th","Pa"
+                    ,"U ","Np","Pu","Am"
+                    ,"Cm","Bk","Cf","Es"
+                    ,"Fm","Md","No","Lr"},0,+INF}
+                ,{"ITEMLIST ","tau","0.","tau",30,0,40,"",{},-INF,+INF}
+                ,{"ENDFIELD","","","",1,21,40,"",{},0,0}
+            }
+        },{"BASIS MENU","=.in"
+            ,{
+                {"MAIN | EXIT ","e@(x)it",""}
+                ,{"MAIN | SEPARATOR","",""}
+                ,{"MAIN | HELP","@(H)elp",""}
+            }
+            ,{
+                {"EOL","","","",0,0,0,"",{},0,0}
+                ,{"SELECTBOX|  AUTO_WIDTH|EOL","basis.version","1","@(v)ersion",1,26,40,"",{"     1\n@(1)\tdefault FPLO9 basis"},0,0}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","Modifications",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEM | EOL","basis.extensionlevel","1","@(E)xtension level",1,26,40,"",{},1,+INF}
+                ,{"ITEM | EOL","basis.add3d","f","add 3@(d) for H,He",1,26,40,"",{},1,+INF}
+                ,{"ITEM | EOL","basis.addf","f","add @(f)-state if missing",1,26,40,"",{},1,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","Put 4f into core",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST | EOL","basis.core4f_by_el","","by e@(l)ement names",1,26,40,"",{"E ","H ","He","Li"
+                    ,"Be","B ","C ","N "
+                    ,"O ","F ","Ne","Na"
+                    ,"Mg","Al","Si","P "
+                    ,"S ","Cl","Ar","K "
+                    ,"Ca","Sc","Ti","V "
+                    ,"Cr","Mn","Fe","Co"
+                    ,"Ni","Cu","Zn","Ga"
+                    ,"Ge","As","Se","Br"
+                    ,"Kr","Rb","Sr","Y "
+                    ,"Zr","Nb","Mo","Tc"
+                    ,"Ru","Rh","Pd","Ag"
+                    ,"Cd","In","Sn","Sb"
+                    ,"Te","I ","Xe","Cs"
+                    ,"Ba","La","Ce","Pr"
+                    ,"Nd","Pm","Sm","Eu"
+                    ,"Gd","Tb","Dy","Ho"
+                    ,"Er","Tm","Yb","Lu"
+                    ,"Hf","Ta","W ","Re"
+                    ,"Os","Ir","Pt","Au"
+                    ,"Hg","Tl","Pb","Bi"
+                    ,"Po","At","Rn","Fr"
+                    ,"Ra","Ac","Th","Pa"
+                    ,"U ","Np","Pu","Am"
+                    ,"Cm","Bk","Cf","Es"
+                    ,"Fm","Md","No","Lr"},1,+INF}
+                ,{"ITEMLIST | EOL","basis.core4f_by_sort","1","by @(s)ort",1,26,40,"",{},1,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"TITLE|EOL","","","Remove any f-states from valence sector and put 4f into core",1,-1,0,"",{},0,0}
+                ,{"EOL","","","",0,0,0,"",{},0,0}
+                ,{"ITEMLIST | EOL","basis.core4fNovalenceF_by_el","","@(b)y element names",1,26,40,"",{"E ","H ","He","Li"
+                    ,"Be","B ","C ","N "
+                    ,"O ","F ","Ne","Na"
+                    ,"Mg","Al","Si","P "
+                    ,"S ","Cl","Ar","K "
+                    ,"Ca","Sc","Ti","V "
+                    ,"Cr","Mn","Fe","Co"
+                    ,"Ni","Cu","Zn","Ga"
+                    ,"Ge","As","Se","Br"
+                    ,"Kr","Rb","Sr","Y "
+                    ,"Zr","Nb","Mo","Tc"
+                    ,"Ru","Rh","Pd","Ag"
+                    ,"Cd","In","Sn","Sb"
+                    ,"Te","I ","Xe","Cs"
+                    ,"Ba","La","Ce","Pr"
+                    ,"Nd","Pm","Sm","Eu"
+                    ,"Gd","Tb","Dy","Ho"
+                    ,"Er","Tm","Yb","Lu"
+                    ,"Hf","Ta","W ","Re"
+                    ,"Os","Ir","Pt","Au"
+                    ,"Hg","Tl","Pb","Bi"
+                    ,"Po","At","Rn","Fr"
+                    ,"Ra","Ac","Th","Pa"
+                    ,"U ","Np","Pu","Am"
+                    ,"Cm","Bk","Cf","Es"
+                    ,"Fm","Md","No","Lr"},1,+INF}
+                ,{"ITEMLIST | EOL","basis.core4fNovalenceF_by_sort","1","by so@(r)t",1,26,40,"",{},1,+INF}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"FIELD | EOL","basis.multicore","","Multi-core orbitals",1,26,0,"",{},0,0}
+                ,{"COUNTER","","","@(M)ultiplicity",1,26,13,"",{},0,+INF}
+                ,{"DASHLINE","","","",1,40,0,"",{},0,0}
+                ,{"TITLE","",""," No.     Q           S",1,-1,0,"",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,40,0,"",{},0,0}
+                ,{"ITEM","Q","0.","",1,5,8,"",{},0,+INF}
+                ,{"ITEM","S","0.","",18,0,8,"STATE",{},-INF,+INF}
+                ,{"ENDFIELD","","","",1,25,8,"",{},0,0}
+                ,{"DASHLINE|EOL","","","",1,-1,0,"",{},0,0}
+                ,{"FIELD | EOL","basis.multisemicore","","@(y)\tMulti-semicore orbitals",1,26,0,"",{},0,0}
+                ,{"COUNTER","","","M@(u)ltiplicity",1,26,13,"",{},0,+INF}
+                ,{"DASHLINE","","","",1,40,0,"",{},0,0}
+                ,{"TITLE","",""," No.     Q           S",1,-1,0,"",{},0,+INF}
+                ,{"DASHLINE|EOL","","","",1,40,0,"",{},0,0}
+                ,{"ITEM","Q","0.","",1,5,8,"",{},0,+INF}
+                ,{"ITEM","S","0.","",18,0,8,"STATE",{},-INF,+INF}
+                ,{"ENDFIELD","","","",1,25,8,"",{},0,0}
+            }
+        }
+    };
+
+};
+
+

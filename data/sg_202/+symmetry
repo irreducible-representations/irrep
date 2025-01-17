@@ -1,0 +1,50 @@
+
+                   SYMMETRYGROUP      
+
+Space group      : 1, HM: P 1, Hall: P 1
+Point group      : C1
+Inversion        : no
+Symmorphic       : yes
+
+                   OPERATIONS      
+
+
+(The XYZ-operation symbols "(A,B,C)+(t1,t2,t3)" mean:
+ if a vector is given relative to the lattice basis vectors 
+ r=X*a1+Y*a2+Z*a3 then it is transformed into
+ r'=(A+t1)*a1+(B+t2)*a2+(C+t3)*a2.
+
+
+Full Group Operations : 1
+Index   rotation          translation      : symbol
+ 0:   (+X  ,+Y  ,+Z  ) + (0   ,0   ,0   )  :   E
+
+                   TRANSLATION     
+
+Length units throughout calculations are Bohr radii.
+
+lattice constants [aB] :  14.494152910335419     14.494153911890265     14.494162037712604   
+lattice constants [Ang]:  7.669975410000000      7.669975940000000      7.669980240000000    
+axis angles            :  60.000024209999999     60.000059559999997     60.000082010000000   
+bravais lattice        : Simple Triclinic
+conventional to primitive transformation
+      b1  : 1    0    0   
+      b2  : 0    1    0   
+      b3  : 0    0    1   
+coordinate rotation: cell=(a1,a2,a3)
+                         =R*default_cell
+      R=       1.000000000000000      0.000000000000000      0.000000000000000    
+               0.000000000000000      1.000000000000000      0.000000000000000    
+               0.000000000000000      0.000000000000000      1.000000000000000    
+lattice vectors
+      a1  :  11.834438234778537     4.184090371034828      7.247063406815908    
+      a2  :  0.000000000000000      12.552308556267869     7.247071652040453    
+      a3  :  0.000000000000000      0.000000000000000      14.494162037712604   
+reciprocal lattice vectors / 2*Pi
+      g1  :  0.084499152402625      0.000000000000000      0.000000000000000    
+      g2  : -0.028166300114721      0.079666620328630      0.000000000000000    
+      g3  : -0.028166341670359     -0.039833258679961      0.068993295190028    
+
+Volume (real cell) [aB^3] :  2153.100818041598359 
+Volume (real cell) [Ang^3]:  319.056623305666790  
+

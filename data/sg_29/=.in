@@ -1,0 +1,804 @@
+########################################################################
+# this file is part of the FPLO bandstructure package
+# it was created automatically
+# please dont delete this file nor
+# edit it directly, unless you really know what you are doing
+# Use FEDIT to change its content
+#
+########################################################################
+section header{
+
+    struct {char[*] mainversion;char[*] subversion;} version
+    ={"23.00","M-CPA"};
+
+
+    struct {char[*] hostname;char[*] date;char[*] by;} last_changes
+    ={"mi2-Precision-5820-Tower","Thu Jan 16 17:19:51 2025","fedit (23.00-65-x86_64)"};
+
+    char[*] compound="Al example";
+};
+
+
+section structure_information{
+
+    struct {int type;char[*] description;} structure_type
+    ={1,"Crystal   "};
+
+
+    struct {char[*] number;char[*] setting;char[*] symbol;} spacegroup
+    ={"1","default","P 1"};
+
+    int subgroupgenerators[*]={
+    };
+
+    struct {int type;char[*] description;} lengthunit
+    ={2,"Angstroem "};
+
+    real lattice_constants[3]={6.755519,12.790828,20.006086
+    };
+    real axis_angles[3]={90,90,90
+    };
+
+    struct {logical active;real newx[3];real newz[3];} cellrotation
+    ={f,{1,0,0},{0,0,1}};
+
+    int max_L=4;
+    int nsort=120;
+
+    struct {char[2] element;real tau[3];} wyckoff_positions[nsort]
+    ={
+        {"Ag",{-0.453872,-0.367067,-0.388064}}
+        ,{"Ag",{0.00493,-0.45071,0.053221}}
+        ,{"Ag",{0.103357,-0.370818,-0.134052}}
+        ,{"Ag",{-0.498566,-0.124837,-0.060676}}
+        ,{"Ag",{-0.402734,0.210464,-0.301785}}
+        ,{"Ag",{-0.498566,0.375163,-0.439324}}
+        ,{"Ag",{-0.453872,0.132933,-0.111936}}
+        ,{"Ag",{0.402734,-0.289536,0.301785}}
+        ,{"Ag",{-0.064022,0.392527,0.189879}}
+        ,{"Ag",{-0.00493,0.04929,-0.053221}}
+        ,{"Ag",{-0.103357,-0.370818,0.365948}}
+        ,{"Ag",{0.453872,-0.367067,0.111936}}
+        ,{"Ag",{-0.402734,-0.289536,-0.198215}}
+        ,{"Ag",{0.402734,0.210464,0.198215}}
+        ,{"Ag",{-0.103357,0.129182,0.134052}}
+        ,{"Ag",{-0.064022,-0.107473,0.310121}}
+        ,{"Ag",{0.00493,0.04929,0.446779}}
+        ,{"Ag",{0.064022,-0.107473,-0.189879}}
+        ,{"Ag",{0.064022,0.392527,-0.310121}}
+        ,{"Ag",{0.498566,-0.124837,0.439324}}
+        ,{"Ag",{0.103357,0.129182,-0.365948}}
+        ,{"Ag",{0.498566,0.375163,0.060676}}
+        ,{"Ag",{-0.00493,-0.45071,-0.446779}}
+        ,{"Ag",{0.453872,0.132933,0.388064}}
+        ,{"As",{0.207192,0.382404,0.375345}}
+        ,{"As",{0.207192,-0.117596,0.124655}}
+        ,{"As",{0.456636,0.459454,0.245026}}
+        ,{"As",{-0.292759,-0.119093,0.123961}}
+        ,{"As",{0.034297,-0.19828,0.494198}}
+        ,{"As",{0.456636,-0.040546,0.254974}}
+        ,{"As",{-0.207192,-0.117596,-0.375345}}
+        ,{"As",{-0.034297,0.30172,-0.494198}}
+        ,{"As",{-0.207192,0.382404,-0.124655}}
+        ,{"As",{0.292759,-0.119093,-0.376039}}
+        ,{"As",{-0.034297,-0.19828,-0.005802}}
+        ,{"As",{0.048536,-0.305408,-0.304127}}
+        ,{"As",{-0.459489,-0.431048,-0.053792}}
+        ,{"As",{0.048536,0.194592,-0.195873}}
+        ,{"As",{0.292759,0.380907,-0.123961}}
+        ,{"As",{-0.292759,0.380907,0.376039}}
+        ,{"As",{0.459489,-0.431048,0.446208}}
+        ,{"As",{0.034297,0.30172,0.005802}}
+        ,{"As",{0.459489,0.068952,0.053792}}
+        ,{"As",{-0.048536,-0.305408,0.195873}}
+        ,{"As",{-0.459489,0.068952,-0.446208}}
+        ,{"As",{-0.048536,0.194592,0.304127}}
+        ,{"As",{-0.456636,-0.040546,-0.245026}}
+        ,{"As",{-0.456636,0.459454,-0.254974}}
+        ,{"O",{0.130953,0.241566,0.36195}}
+        ,{"O",{-0.455676,-0.170578,-0.390826}}
+        ,{"O",{0.020828,-0.281985,0.276885}}
+        ,{"O",{-0.166794,0.367726,-0.031547}}
+        ,{"O",{0.042261,0.433363,-0.139846}}
+        ,{"O",{0.250457,-0.103812,0.218046}}
+        ,{"O",{-0.130953,-0.258434,-0.36195}}
+        ,{"O",{-0.457265,-0.120121,0.316972}}
+        ,{"O",{0.105383,0.376218,0.072609}}
+        ,{"O",{-0.223856,-0.209568,0.05432}}
+        ,{"O",{0.09822,-3/7,-0.329639}}
+        ,{"O",{0.364346,0.475925,-0.191658}}
+        ,{"O",{-0.042261,0.433363,0.360154}}
+        ,{"O",{-0.166794,-0.132274,-0.468453}}
+        ,{"O",{-0.281082,-0.478089,-1/9}}
+        ,{"O",{-0.491611,-0.308692,0.41845}}
+        ,{"O",{0.042261,-0.066637,-0.360154}}
+        ,{"O",{-0.024193,0.176541,0.025329}}
+        ,{"O",{0.166794,-0.132274,0.031547}}
+        ,{"O",{-0.322872,0.491331,0.437833}}
+        ,{"O",{-0.105383,-0.123782,-0.072609}}
+        ,{"O",{-0.322872,-0.008669,0.062167}}
+        ,{"O",{0.024193,-0.323459,-0.025329}}
+        ,{"O",{-0.09822,0.071442,0.329639}}
+        ,{"O",{0.322872,-0.008669,-0.437833}}
+        ,{"O",{0.223856,-0.209568,-0.44568}}
+        ,{"O",{-0.393159,0.082066,-0.220813}}
+        ,{"O",{-0.393159,-0.417934,-0.279187}}
+        ,{"O",{-0.491611,0.191308,0.08155}}
+        ,{"O",{-0.09822,-3/7,0.170361}}
+        ,{"O",{0.455676,0.329422,0.390826}}
+        ,{"O",{-0.264957,-0.228341,0.185443}}
+        ,{"O",{0.455676,-0.170578,0.109174}}
+        ,{"O",{0.491611,0.191308,-0.41845}}
+        ,{"O",{0.264957,-0.228341,-0.314557}}
+        ,{"O",{-0.020828,0.218015,-0.276885}}
+        ,{"O",{0.390092,-0.45118,-0.472581}}
+        ,{"O",{-0.281082,0.021911,-0.388797}}
+        ,{"O",{0.390092,0.04882,-0.027419}}
+        ,{"O",{-0.390092,-0.45118,0.027419}}
+        ,{"O",{0.130953,-0.258434,0.13805}}
+        ,{"O",{0.393159,-0.417934,0.220813}}
+        ,{"O",{-0.250457,-0.103812,-0.281954}}
+        ,{"O",{-0.042261,-0.066637,0.139846}}
+        ,{"O",{0.09822,0.071442,-0.170361}}
+        ,{"O",{0.024193,0.176541,-0.474671}}
+        ,{"O",{0.364346,-0.024075,-0.308342}}
+        ,{"O",{-0.457265,0.379879,0.183028}}
+        ,{"O",{-0.024193,-0.323459,0.474671}}
+        ,{"O",{-0.455676,0.329422,-0.109174}}
+        ,{"O",{0.281082,0.021911,1/9}}
+        ,{"O",{-0.364346,0.475925,0.308342}}
+        ,{"O",{0.457265,-0.120121,-0.183028}}
+        ,{"O",{-0.390092,0.04882,0.472581}}
+        ,{"O",{-0.020828,-0.281985,-0.223115}}
+        ,{"O",{0.020828,0.218015,0.223115}}
+        ,{"O",{0.250457,0.396188,0.281954}}
+        ,{"O",{0.457265,0.379879,-0.316972}}
+        ,{"O",{0.281082,-0.478089,0.388797}}
+        ,{"O",{-0.250457,0.396188,-0.218046}}
+        ,{"O",{-0.364346,-0.024075,0.191658}}
+        ,{"O",{0.491611,-0.308692,-0.08155}}
+        ,{"O",{-0.130953,0.241566,-0.13805}}
+        ,{"O",{0.166794,0.367726,0.468453}}
+        ,{"O",{0.223856,0.290432,-0.05432}}
+        ,{"O",{-0.223856,0.290432,0.44568}}
+        ,{"O",{0.322872,0.491331,-0.062167}}
+        ,{"O",{0.393159,0.082066,0.279187}}
+        ,{"O",{0.264957,0.271659,-0.185443}}
+        ,{"O",{-0.105383,0.376218,-0.427391}}
+        ,{"O",{-0.264957,0.271659,0.314557}}
+        ,{"O",{0.105383,-0.123782,0.427391}}
+    };
+
+};
+
+
+section structure_dependend{
+
+    struct {char[2] atom;real concentration;} concentrations[nsort]
+    ={
+        {"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"As",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+        ,{"O",1}
+    };
+
+
+    struct {char[2] element;real split;} initial_spin_split[nsort]
+    ={
+        {"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"As",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+        ,{"O",2}
+    };
+
+
+    struct {int sort;char[2] state;real spinup[7];real spindn[7];} core_occupation[*]
+    ={
+    };
+
+
+    struct {char[20] label;real kpoint[3];} special_sympoints[*]
+    ={
+        {"Z",{0,0,-0.16883659802322}}
+        ,{"$~G",{0,0,0}}
+        ,{"Y",{0,-0.26407668838953,0}}
+        ,{"<BREAK>",{0,0,0}}
+        ,{"T",{0,-0.26407668838953,-0.16883659802322}}
+        ,{"$~G",{0,0,0}}
+        ,{"X",{-1/2,0,0}}
+        ,{"<BREAK>",{0,0,0}}
+        ,{"U",{-1/2,0,-0.16883659802322}}
+        ,{"$~G",{0,0,0}}
+        ,{"V",{-1/2,-0.26407668838953,0}}
+        ,{"<BREAK>",{0,0,0}}
+        ,{"R",{-1/2,-0.26407668838953,-0.16883659802322}}
+        ,{"$~G",{0,0,0}}
+    };
+
+};
+
+
+section mesh{
+
+    struct {int nr;real rmin;real rmax;real rmax_factor;} radial_mesh
+    ={200,1.0e-5,0.0,1.0};
+
+
+    struct {int nr;real rmin;real rmax;} atom_radial_mesh
+    ={2000,1.0e-7,0.0};
+
+};
+
+
+section brillouin{
+
+    struct {logical metal;int nkxyz[3];} bzone_integration
+    ={t,{12,12,12}};
+
+
+    struct {int ne;real range;real width;int norder;} mp_bzone_integration
+    ={1001,5.0,0.005,0};
+
+
+    struct {int type;char[*] description;} bzone_method
+    ={1,"tetrahedron method"};
+
+
+    struct {int type;char[*] description;} bzintmethod
+    ={1,"primitive cell"};
+
+    real bzone_kT=100.0;
+    int nband=-1;
+};
+
+
+section bandstructure_plot{
+
+    struct {logical bandplot;logical read_sympoints;int ndivisions;real emin;real emax;int nptdos;logical plot_idos;logical plot_ndos;logical restrict_bands_to_window;logical coeffout;} bandplot_control
+    ={f,t,50,-20.0,20.0,1000,f,f,f,f};
+
+
+    struct {logical bandweights;logical bweight_rot;real z_axis[3];real x_axis[3];char[*] bwdfilename;
+        struct {int type;char[*] description;} frelprojection;
+    } bandweight_control
+    ={f,f,{0.0,0.0,1.0},{1.0,0.0,0.0},""
+        ,{1,"jmu"}
+    };
+
+};
+
+
+section iteration_control{
+
+    struct {int steps;real tolerance;real mixing;int maxdim;real progress;} iteration_control
+    ={100,1.e-6,0.4,5,0.1};
+
+
+    struct {int scheme;char[*] description;} iteration_version
+    ={2,"Iterat   : Hyperspace interpolation"};
+
+
+    struct {int type;char[*] description;} iteration_convergence_condition
+    ={2,"Density"};
+
+    real etot_tolerance=1.e-8;
+    # ratio of things put into iteration vector compared 
+    # to density 
+
+    struct {real U;} iterationvector_ratio
+    ={1.0};
+
+};
+
+
+section forces{
+
+    struct {int steps;real tolerance;int maxdim;} force_iteration_control
+    ={100,1.0e-3,0};
+
+
+    struct {int scheme;char[*] description;} force_iteration_version
+    ={6,"MinIterat: Find minimum with iterat"};
+
+    logical force_in_each_step=f;
+    logical approx_nodndL_ewald=f;
+
+    struct {int mode;char[*] description;} force_mode
+    ={1,"No forces"};
+
+    int geomopt_sites[*]={
+    };
+};
+
+
+section options{
+
+    struct {int mspin;logical initial_spin_split;} spin
+    ={1,f};
+
+
+    struct {int type;char[*] description;} xc_potential
+    ={10,"Perdew Burke Ernzerhof 96    (GGA)"};
+
+
+    struct {logical overwrite_cmBJ;real cmBJ;} mBJcontrols
+    ={f,1};
+
+    real ex_field_strength=1.0;
+
+    struct {int type;char[*] description;} relativistic
+    ={2,"scalar relativistic"};
+
+
+    struct {int type;char[*] description;} nuclear_model
+    ={1,"Point charge"};
+
+
+    struct {
+        struct {int type;char[*] description;} chargemode;
+        real ionicity;logical make_vca;
+        struct {int sort;real Z;} vca[*];
+    } charges
+    ={
+         {1,"None"}
+        ,0.0,f
+        ,{
+        }
+    };
+
+
+    struct {int type;char[*] description;} spin_pop_type
+    ={3,"exact expression (expensive)"};
+
+    real quantization_axis[3]={0,0,1
+    };
+    flag options[*]={CALC_DOS(-),NOT_USED(-),FULLBZ(-),CALC_PLASMON_FREQ(-)
+    ,EMPTY_LATTICE_TEST(-),NO_DOS(-),PLOT_REALFUNC(-),PLOT_BASIS(-)
+    ,TEST_LOI(-),TEST_DIAGNO(-),TEST_SYMMETRIZATION(-),TEST_HS_SYM(-)
+    ,PROT_PRINT_BASIS(-),PROT_MAKELATTICE(-),PROT_STRUCTURE_PRNT(-),PROT_TCI(-)
+    ,NOT_USED(-),NOT_USED(-),NOT_USED(-),NO_SYMMETRYTEST(+)
+    ,NO_POTENTIAL(-),NOT_USED(-),NO_CORE(-),NOT_USED(-)
+    ,NO_POPANALYSIS(-),NO_LOI(-),NO_BASIS(-),NO_EFCH(-)
+    ,NOT_USED(-),NOT_USED(-),NOT_USED(-)
+    };
+
+    struct {int type;char[*] description;} verbosity_level
+    ={200,"more information"};
+
+
+    struct {real moment;logical fsm;} fsmoment
+    ={1.0,f};
+
+    logical calc_etot=t;
+    logical usedatadirectories=f;
+};
+
+
+section cpa{
+
+    struct {real emin0;real emax0;int nec;int max_se_loops;real eimag;} cpa_control
+    ={-1.60,0.4,30,10,1.0e-5};
+
+
+    struct {real efermi0;real slop_0;real slop_min;int max_ef_loops;} cpa_fermi_control
+    ={0.08,30.0,0.3,10};
+
+
+    struct {int type;char[*] description;} cpa_fermi_method
+    ={1,"secant method"};
+
+
+    struct {int ne;real eimag;} cpa_dos
+    ={1000,1.e-3};
+
+
+    struct {int ne;real eimag;} cpa_bloch_spectral_density
+    ={100,1.e-3};
+
+};
+
+
+section numerics{
+
+    struct {int degree;} interpolation
+    ={8};
+
+
+    struct {int nr;} one_center_integrals
+    ={200};
+
+
+    struct {int nxi;int neta;} coulomb_energy_calc
+    ={26,46};
+
+
+    struct {int nr;int neta;} overlap_density_calc
+    ={50,20};
+
+
+    struct {real dens;real pot;real orbital;} cutoff_tolerances
+    ={1.e-9,1.e-12,1.e-8};
+
+    #WARNING: cutoff is obsolete now
+
+    struct {real cutoff;real eps_r;real eps_g;} ewald_parameter
+    ={2.0,1.0e-5,1.0e-5};
+
+
+    struct {int nr;int angular_mesh_type_min;int angular_mesh_type_max;logical use_symmetry;} three_center_integrals
+    ={80,3,15,t};
+
+
+    struct {real tol;} symtest
+    ={5.0e-13};
+
+    # WARNING: nfft_ewp_per_site is obsolete now  
+    int nfft_ewp_per_site=-500;
+};
+
+
+section LSDA_U{
+    logical make_lsdau=f;
+
+    struct {int type;char[*] description;} lsdau_projection
+    ={1,"orthogonal"};
+
+
+    struct {int type;char[*] description;} lsdau_functional
+    ={1,"LSDA+U Around mean field (AMF/OP)"};
+
+
+    struct {int type;char[*] description;} lsdau_dmat_mode
+    ={1,"self consistent"};
+
+    real lsdau_dmat_deviation=1.e-2;
+
+    struct {int sort;char[2] state;real f_slater[4];} lsdau_defs[*]
+    ={
+    };
+
+};
+
+
+section OPC{
+    logical make_opc=f;
+
+    struct {int type;char[*] description;} opc_projection
+    ={1,"orthogonal"};
+
+
+    struct {int type;char[*] description;} opc_functional
+    ={1,"Spin dependend (Nordstroem, Brooks, Johansson, JPhysC 4, 3261 (1992))"};
+
+
+    struct {int sort;char[2] state;} opc_defs[*]
+    ={
+    };
+
+};
+
+
+section Advanced_output{
+    int ldossites[*]={
+    };
+    logical grids_active=f;
+    logical grids_stop_after=f;
+
+    struct {
+        struct {int type;char[*] description;} basis;
+        real direction1[3];real direction2[3];real direction3[3];real origin[3];int subdivision[3];char[*] file;logical InclPeriodicPoints;logical createOpenDX;
+        struct {int type;char[*] description;} quantities[*];
+        struct {int type;char[*] description;} outputdata[*];
+        real scfwavefnctwindow[2];
+        struct {char[*] name;
+            struct {real emin;real emax;real de;
+                struct {int type;char[*] description;} spin;
+            } sections[*];
+        } energywindows[*];
+        struct {char[*] name;real kpoint[3];int bandindices[*];real energywindow[2];} kresolved[*];
+    } grids[*]
+    ={
+    };
+
+
+    struct {logical active;logical forceusewanniercenters;int homooffset;
+        struct {int nint;int nky;} wanniercenters;
+    } topological_insulator
+    ={f,f,4
+        ,{40,100}
+    };
+
+
+    struct {logical active;logical jointdos;logical bandoutput;logical stopafter;
+        struct {int ne;real emin;real emax;} energy;
+    } optics
+    ={f,f,f,f
+        ,{1000,0,10}
+    };
+
+};
+
+
+section BasisSettings{
+
+    struct {
+        struct {int type;char[*] description;} version;
+        int extensionlevel;logical add3d;logical addf;char[*] core4f_by_el[*];int core4f_by_sort[*];char[*] core4fNovalenceF_by_el[*];int core4fNovalenceF_by_sort[*];
+        struct {real Q;real S;} multicore[*];
+        struct {real Q;real S;} multisemicore[*];
+    } basis
+    ={
+         {1,"default FPLO9 basis"}
+        ,1,f,f,{},{},{},{}
+        ,{
+        }
+        ,{
+        }
+    };
+
+};
+
+
+section dHvA{
+
+    struct {logical active;int bandsup[*];int bandsdown[*];real isovalue;int subdiv[3];int bisections;char[*] wandata;logical deleteoldfiles;logical needbandweights;char[*] statefile;
+        struct {int weightindex;real coef;} energyshift[*];
+    } isosurface
+    ={f,{},{},0.,{12,12,12},0,"",t,f,""
+        ,{
+        }
+    };
+
+
+    struct {
+        struct {char[*] label;real field[3];} fields[*];
+        int bands[*];int parts[*];
+        struct {int type;char[*] description;} spin;
+        int nphi;int phifrom;int phito;int nplane;int planefrom;int planeto;real areachainthreshold;real orbitcomparisonsearchoffset;real orbitsampleportion;real arearadiusfactor;real smoothnessthreshold;flag outputoptions[*];flag debugoptions[*];
+    } dhva
+    ={
+         {
+            {"[010]",{0.,1.,0.}}
+            ,{"[001]",{0.,0.,1.}}
+        }
+        ,{},{}
+        ,{0,"both"}
+        ,30,-1,-2,100,-1,-2,0.1,0.2,0.1,1.,1.,{show_non_closed(-),output_orbits(-),output_extremal_orbits(+)},{determine_area_chain_extrema(-),sort_area_chains(-),sort_extrema_chains(-),extend_periodic_area_chains(-)
+        ,collect_orbits(-),calc_orbit(-),run(+)}
+    };
+
+};
+
+

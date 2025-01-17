@@ -1,0 +1,32 @@
+Warning: transformation to the convenctional unit cell will not be calculated, nor its validity checked (if given). See the description of flag -searchcell on:
+irrep --help
+Warning: -kpnames not specified. Only traces of symmetry operations will be calculated. Remember that -kpnames must be specified to identify irreps
+Lattice prim:
+ [[15.58572699  0.         -8.998423  ]
+ [ 0.          3.795889    0.        ]
+ [ 0.          0.         17.99684599]]
+Crystal class: 2/m
+Laue group: 2/m
+VEC: [1, 0, 0]
+vec after orthogonalization: [1. 0. 0.]
+valid dir2: {dir2}
+VEC: [0, 1, 0]
+vec: [0, 1, 0] parallel to axis [-7.85748910e-18  2.63442898e-01 -3.92874455e-18] -> discarded
+VEC: [0, 0, 1]
+vec after orthogonalization: [0. 0. 1.]
+dir1:[-7.85748910e-18  2.63442898e-01 -3.92874455e-18]
+dir2:[1. 0. 0.]
+dir3:[0. 0. 1.]
+[[ 1.00000000e+00  0.00000000e+00  0.00000000e+00]
+ [-7.85748910e-18  2.63442898e-01 -3.92874455e-18]
+ [ 0.00000000e+00  0.00000000e+00  1.00000000e+00]]
+vecs after integerization (cols):
+[[ 1. -0.  0.]
+ [ 0.  1.  0.]
+ [ 0. -0.  1.]]
+centering in preliminary conventional:
+P
+centering: P,  conv centering: P,  matrix:
+[[1. 0. 0.]
+ [0. 1. 0.]
+ [0. 0. 1.]]

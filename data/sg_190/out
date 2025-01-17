@@ -1,0 +1,17 @@
+Warning: transformation to the convenctional unit cell will not be calculated, nor its validity checked (if given). See the description of flag -searchcell on:
+irrep --help
+Warning: -kpnames not specified. Only traces of symmetry operations will be calculated. Remember that -kpnames must be specified to identify irreps
+Lattice prim:
+ [[ 7.10440476 -4.10173     0.        ]
+ [ 0.          8.20346     0.        ]
+ [ 0.          0.          6.094279  ]]
+Crystal class: -62m
+Laue group: 6/mmm
+VEC: [1, 0, 0]
+vec after orthogonalization: [1. 0. 0.]
+dir1:[ 0.          0.         -0.16408832]
+dir2:[1. 0. 0.]
+dir3:[-1. -1.  0.]
+[[ 1.          0.          0.        ]
+ [-1.         -1.          0.        ]
+ [ 0.          0.         -0.16408832]]

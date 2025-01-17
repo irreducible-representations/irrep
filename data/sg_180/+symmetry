@@ -1,0 +1,53 @@
+
+                   SYMMETRYGROUP      
+
+Space group      : 21, HM: C 2 2 2, Hall: C 2 2
+Point group      : D2
+Inversion        : no
+Symmorphic       : yes
+
+                   OPERATIONS      
+
+
+(The XYZ-operation symbols "(A,B,C)+(t1,t2,t3)" mean:
+ if a vector is given relative to the lattice basis vectors 
+ r=X*a1+Y*a2+Z*a3 then it is transformed into
+ r'=(A+t1)*a1+(B+t2)*a2+(C+t3)*a2.
+
+
+Full Group Operations : 4
+Index   rotation          translation      : symbol
+ 0:   (+X  ,+Y  ,+Z  ) + (0   ,0   ,0   )  :   E
+ 1:   (-X  ,+Y  ,-Z  ) + (0   ,0   ,0   )  :   C2(y)
+ 2:   (+X  ,-Y  ,-Z  ) + (0   ,0   ,0   )  :   C2(x)
+ 3:   (-X  ,-Y  ,+Z  ) + (0   ,0   ,0   )  :   C2(z)
+
+                   TRANSLATION     
+
+Length units throughout calculations are Bohr radii.
+
+lattice constants [aB] :  22.827351642146152     13.179380513266047     11.858295580252527   
+lattice constants [Ang]:  12.079714271941700     6.974227820082000      6.275139780000000    
+axis angles            :  90.000000000000000     90.000000000000000     90.000000000000000   
+bravais lattice        : C-Base Centered Orthorhombic
+conventional to primitive transformation
+      b1  : 1/2  1/2  0   
+      b2  : -1/2 1/2  0   
+      b3  : 0    0    1   
+coordinate rotation: cell=(a1,a2,a3)
+                         =R*default_cell
+      R=       1.000000000000000      0.000000000000000      0.000000000000000    
+               0.000000000000000      1.000000000000000      0.000000000000000    
+               0.000000000000000      0.000000000000000      1.000000000000000    
+lattice vectors
+      a1  :  11.413675821073076     6.589690256633023      0.000000000000000    
+      a2  : -11.413675821073076     6.589690256633023      0.000000000000000    
+      a3  :  0.000000000000000      0.000000000000000      11.858295580252527   
+reciprocal lattice vectors / 2*Pi
+      g1  :  0.043807096665287      0.075876100473268     -0.000000000000000    
+      g2  : -0.043807096665287      0.075876100473268      0.000000000000000    
+      g3  :  0.000000000000000     -0.000000000000000      0.084329151118925    
+
+Volume (real cell) [aB^3] :  1783.786208032011928 
+Volume (real cell) [Ang^3]:  264.329844410898204  
+

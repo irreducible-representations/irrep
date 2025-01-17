@@ -1,0 +1,34 @@
+Warning: transformation to the convenctional unit cell will not be calculated, nor its validity checked (if given). See the description of flag -searchcell on:
+irrep --help
+Warning: -kpnames not specified. Only traces of symmetry operations will be calculated. Remember that -kpnames must be specified to identify irreps
+Lattice prim:
+ [[ 7.930658    0.          0.        ]
+ [ 0.         10.43585899  0.        ]
+ [ 0.          0.          6.029281  ]]
+Crystal class: mmm
+Laue group: mmm
+dir1:[-1.61149823e-16  1.00000000e+00 -1.29793931e-32]
+dir2:[ 1.00000000e+00  1.39599264e-16 -8.05423975e-17]
+dir3:[0. 0. 1.]
+fix handedness
+[[ 0.00000000e+00  0.00000000e+00  1.00000000e+00]
+ [ 1.00000000e+00  1.39599264e-16 -8.05423975e-17]
+ [-1.61149823e-16  1.00000000e+00 -1.29793931e-32]]
+vecs after integerization (cols):
+[[ 0.  1. -0.]
+ [ 0.  0.  1.]
+ [ 1. -0. -0.]]
+centering in preliminary conventional:
+P
+centering: P,  conv centering: P,  matrix:
+[[1. 0. 0.]
+ [0. 1. 0.]
+ [0. 0. 1.]]
+CONVENTIONAL CELL FOUND!
+S=
+[[ 0  0  1]
+ [ 0 -1  0]
+ [ 1  0  0]]
+[[ 0.  1. -0.]
+ [ 0.  0.  1.]
+ [ 1. -0. -0.]] [-0.14828754 -0.14828754 -0.14828754]

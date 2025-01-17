@@ -1,0 +1,36 @@
+# generated using pymatgen
+data_Al2Cu2Ni
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   2.95840800
+_cell_length_b   2.95840800
+_cell_length_c   14.31194800
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Al2Cu2Ni
+_chemical_formula_sum   'Al4 Cu4 Ni2'
+_cell_volume   125.26071491
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Al  Al0  1  0.00000000  0.00000000  0.99633800  1
+  Al  Al1  1  0.00000000  0.00000000  0.19162000  1
+  Al  Al2  1  0.00000000  0.00000000  0.39990600  1
+  Al  Al3  1  0.00000000  0.00000000  0.61040000  1
+  Cu  Cu4  1  0.50000000  0.50000000  0.29704100  1
+  Cu  Cu5  1  0.50000000  0.50000000  0.50329600  1
+  Cu  Cu6  1  0.50000000  0.50000000  0.70633500  1
+  Cu  Cu7  1  0.50000000  0.50000000  0.89682800  1
+  Ni  Ni8  1  0.00000000  0.00000000  0.80088100  1
+  Ni  Ni9  1  0.50000000  0.50000000  0.09735500  1

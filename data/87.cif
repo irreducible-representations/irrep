@@ -1,0 +1,42 @@
+# generated using pymatgen
+data_AlC2Br5(NO3)2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.12855000
+_cell_length_b   5.12855000
+_cell_length_c   10.55402752
+_cell_angle_alpha   75.93830872
+_cell_angle_beta   75.93830872
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   AlC2Br5(NO3)2
+_chemical_formula_sum   'Al1 C2 Br5 N2 O6'
+_cell_volume   260.69073327
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Al  Al0  1  0.00000000  0.00000000  0.00000000  1
+  C  C1  1  0.25900500  0.25900500  0.48198900  1
+  C  C2  1  0.74099500  0.74099500  0.51801100  1
+  Br  Br3  1  0.63125200  0.13125200  0.73749500  1
+  Br  Br4  1  0.13125200  0.63125200  0.73749500  1
+  Br  Br5  1  0.36874800  0.86874800  0.26250500  1
+  Br  Br6  1  0.86874800  0.36874800  0.26250500  1
+  Br  Br7  1  0.50000000  0.50000000  0.00000000  1
+  N  N8  1  0.31950000  0.31950000  0.36100000  1
+  N  N9  1  0.68050000  0.68050000  0.63900000  1
+  O  O10  1  0.10383700  0.10383700  0.79232600  1
+  O  O11  1  0.89616300  0.89616300  0.20767400  1
+  O  O12  1  0.19211700  0.30998200  0.00000000  1
+  O  O13  1  0.80788300  0.69001800  0.00000000  1
+  O  O14  1  0.69001800  0.19211700  0.00000000  1
+  O  O15  1  0.30998200  0.80788300  0.00000000  1

@@ -1,0 +1,32 @@
+# generated using pymatgen
+data_AcMg5
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   4.96799329
+_cell_length_b   6.17018243
+_cell_length_c   6.17018291
+_cell_angle_alpha   59.99994812
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   AcMg5
+_chemical_formula_sum   'Ac1 Mg5'
+_cell_volume   163.79756767
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ac  Ac0  1  0.50000000  0.66666700  0.33333300  1
+  Mg  Mg1  1  0.00000000  0.16678045  0.83321955  1
+  Mg  Mg2  1  0.50000000  0.33333300  -0.00000000  1
+  Mg  Mg3  1  0.00000000  0.16655155  0.33333400  1
+  Mg  Mg4  1  0.50000000  0.00000000  0.66666600  1
+  Mg  Mg5  1  -0.00000000  0.66666700  0.83344745  1

@@ -1,0 +1,33 @@
+# generated using pymatgen
+data_Ag4AuS2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   3.97501200
+_cell_length_b   5.17080000
+_cell_length_c   6.89667975
+_cell_angle_alpha   86.24372615
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Ag4AuS2
+_chemical_formula_sum   'Ag4 Au1 S2'
+_cell_volume   141.44977794
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ag  Ag0  1  0.50000000  0.29210900  0.86690000  1
+  Ag  Ag1  1  0.00000000  0.69678600  0.72973000  1
+  Ag  Ag2  1  0.00000000  0.30321400  0.27027000  1
+  Ag  Ag3  1  0.50000000  0.70789100  0.13310000  1
+  Au  Au4  1  0.50000000  0.00000000  0.50000000  1
+  S  S5  1  0.50000000  0.50000000  0.50000000  1
+  S  S6  1  0.00000000  0.00000000  0.00000000  1

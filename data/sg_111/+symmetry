@@ -1,0 +1,57 @@
+
+                   SYMMETRYGROUP      
+
+Space group      : 111, HM: P -4 2 m, Hall: P -4 2
+Point group      : D2d(a)
+Inversion        : no
+Symmorphic       : yes
+
+                   OPERATIONS      
+
+
+(The XYZ-operation symbols "(A,B,C)+(t1,t2,t3)" mean:
+ if a vector is given relative to the lattice basis vectors 
+ r=X*a1+Y*a2+Z*a3 then it is transformed into
+ r'=(A+t1)*a1+(B+t2)*a2+(C+t3)*a2.
+
+
+Full Group Operations : 8
+Index   rotation          translation      : symbol
+ 0:   (+X  ,+Y  ,+Z  ) + (0   ,0   ,0   )  :   E
+ 1:   (-X  ,+Y  ,-Z  ) + (0   ,0   ,0   )  :   C2(y)
+ 2:   (+X  ,-Y  ,-Z  ) + (0   ,0   ,0   )  :   C2(x)
+ 3:   (-X  ,-Y  ,+Z  ) + (0   ,0   ,0   )  :   C2(z)
+44:   (-Y  ,-X  ,+Z  ) + (0   ,0   ,0   )  :   m(xy)
+45:   (-Y  ,+X  ,-Z  ) + (0   ,0   ,0   )  :   -4-(z)
+46:   (+Y  ,-X  ,-Z  ) + (0   ,0   ,0   )  :   -4(z)
+47:   (+Y  ,+X  ,+Z  ) + (0   ,0   ,0   )  :   m(x-y)
+
+                   TRANSLATION     
+
+Length units throughout calculations are Bohr radii.
+
+lattice constants [aB] :  12.242833473886249     12.242833473886249     12.060578025179009   
+lattice constants [Ang]:  6.478628470000000      6.478628470000000      6.382183040000000    
+axis angles            :  90.000000000000000     90.000000000000000     90.000000000000000   
+bravais lattice        : Simple Tetragonal
+conventional to primitive transformation
+      b1  : 1    0    0   
+      b2  : 0    1    0   
+      b3  : 0    0    1   
+coordinate rotation: cell=(a1,a2,a3)
+                         =R*default_cell
+      R=       1.000000000000000      0.000000000000000      0.000000000000000    
+               0.000000000000000      1.000000000000000      0.000000000000000    
+               0.000000000000000      0.000000000000000      1.000000000000000    
+lattice vectors
+      a1  :  12.242833473886249     0.000000000000000      0.000000000000000    
+      a2  :  0.000000000000000      12.242833473886249     0.000000000000000    
+      a3  :  0.000000000000000      0.000000000000000      12.060578025179009   
+reciprocal lattice vectors / 2*Pi
+      g1  :  0.081680437958499      0.000000000000000      0.000000000000000    
+      g2  :  0.000000000000000      0.081680437958499      0.000000000000000    
+      g3  :  0.000000000000000      0.000000000000000      0.082914765603463    
+
+Volume (real cell) [aB^3] :  1807.723514363388858 
+Volume (real cell) [Ang^3]:  267.876987240962819  
+

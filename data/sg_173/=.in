@@ -1,0 +1,608 @@
+########################################################################
+# this file is part of the FPLO bandstructure package
+# it was created automatically
+# please dont delete this file nor
+# edit it directly, unless you really know what you are doing
+# Use FEDIT to change its content
+#
+########################################################################
+section header{
+
+    struct {char[*] mainversion;char[*] subversion;} version
+    ={"23.00","M-CPA"};
+
+
+    struct {char[*] hostname;char[*] date;char[*] by;} last_changes
+    ={"mi2-Precision-5820-Tower","Thu Jan 16 17:19:57 2025","fedit (23.00-65-x86_64)"};
+
+    char[*] compound="Al example";
+};
+
+
+section structure_information{
+
+    struct {int type;char[*] description;} structure_type
+    ={1,"Crystal   "};
+
+
+    struct {char[*] number;char[*] setting;char[*] symbol;} spacegroup
+    ={"4","b","P 1 21 1"};
+
+    int subgroupgenerators[*]={
+    };
+
+    struct {int type;char[*] description;} lengthunit
+    ={2,"Angstroem "};
+
+    real lattice_constants[3]={18.42966022,13.420083,18.42965999714863
+    };
+    real axis_angles[3]={90,119.9999996,90
+    };
+
+    struct {logical active;real newx[3];real newz[3];} cellrotation
+    ={f,{1,0,0},{0,0,1}};
+
+    int max_L=4;
+    int nsort=54;
+
+    struct {char[2] element;real tau[3];} wyckoff_positions[nsort]
+    ={
+        {"Al",{0,-0.130261,0}}
+        ,{"Al",{-0.360924,-0.412547,-0.054838}}
+        ,{"Al",{0.054838,-0.412547,-0.306086}}
+        ,{"Al",{0.306086,-0.412547,0.360924}}
+        ,{"Al",{-1/3,-0.218971,1/3}}
+        ,{"Al",{-1/3,0.312333,1/3}}
+        ,{"Bi",{0.264565,0.449532,-0.051101}}
+        ,{"Bi",{0.051101,0.449532,0.315666}}
+        ,{"Bi",{-0.315666,0.449532,-0.264565}}
+        ,{"Bi",{0.465883,-0.281588,0.041745}}
+        ,{"Bi",{-0.041745,-0.281588,0.424138}}
+        ,{"Bi",{-0.424138,-0.281588,-0.465883}}
+        ,{"Bi",{0.373288,-0.272856,0.142127}}
+        ,{"Bi",{-0.142127,-0.272856,0.231161}}
+        ,{"Bi",{-0.231161,-0.272856,-0.373288}}
+        ,{"Bi",{0.367795,0.497484,0.143919}}
+        ,{"Bi",{-0.143919,0.497484,0.223876}}
+        ,{"Bi",{-0.223876,0.497484,-0.367795}}
+        ,{"Bi",{0.272279,-0.229921,-0.053981}}
+        ,{"Bi",{0.053981,-0.229921,0.32626}}
+        ,{"Bi",{-0.32626,-0.229921,-0.272279}}
+        ,{"Bi",{0.335478,-0.395832,-0.124683}}
+        ,{"Bi",{0.124683,-0.395832,0.460161}}
+        ,{"Bi",{-0.460161,-0.395832,-0.335478}}
+        ,{"Bi",{0.459751,0.487709,0.042866}}
+        ,{"Bi",{-0.042866,0.487709,0.416885}}
+        ,{"Bi",{-0.416885,0.487709,-0.459751}}
+        ,{"Bi",{0.201601,-0.384093,0.019409}}
+        ,{"Bi",{-0.019408,-0.384093,0.182192}}
+        ,{"Bi",{-0.182191,-0.384093,-0.2016}}
+        ,{"Cl",{-0.338363,-0.165902,0.219365}}
+        ,{"Cl",{-0.219365,-0.165902,0.442272}}
+        ,{"Cl",{-0.442272,-0.165902,0.338363}}
+        ,{"Cl",{-0.346486,-0.404187,0.069745}}
+        ,{"Cl",{-0.069744,-0.404187,-0.416231}}
+        ,{"Cl",{0.416232,-0.404187,0.346487}}
+        ,{"Cl",{-0.340277,0.365112,0.218616}}
+        ,{"Cl",{-0.218616,0.365112,0.441107}}
+        ,{"Cl",{-0.441107,0.365112,0.340277}}
+        ,{"Cl",{-0.453692,0.477303,-0.129762}}
+        ,{"Cl",{0.129762,0.477303,-0.32393}}
+        ,{"Cl",{0.32393,0.477303,0.453692}}
+        ,{"Cl",{0.406271,0.229706,0.116223}}
+        ,{"Cl",{-0.116223,0.229706,0.290048}}
+        ,{"Cl",{-0.290048,0.229706,-0.406271}}
+        ,{"Cl",{-1/3,0.151341,1/3}}
+        ,{"Cl",{0,0.031512,0}}
+        ,{"Cl",{0.021599,-0.18365,-0.098416}}
+        ,{"Cl",{0.098416,-0.18365,0.120015}}
+        ,{"Cl",{-0.120015,-0.18365,-0.021599}}
+        ,{"Cl",{-1/3,-0.378546,1/3}}
+        ,{"Cl",{-0.240855,-0.452598,-0.039095}}
+        ,{"Cl",{0.039094,-0.452598,-0.20176}}
+        ,{"Cl",{0.201759,-0.452598,0.240854}}
+    };
+
+};
+
+
+section structure_dependend{
+
+    struct {char[2] atom;real concentration;} concentrations[nsort]
+    ={
+        {"Al",1}
+        ,{"Al",1}
+        ,{"Al",1}
+        ,{"Al",1}
+        ,{"Al",1}
+        ,{"Al",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Bi",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+        ,{"Cl",1}
+    };
+
+
+    struct {char[2] element;real split;} initial_spin_split[nsort]
+    ={
+        {"Al",2}
+        ,{"Al",2}
+        ,{"Al",2}
+        ,{"Al",2}
+        ,{"Al",2}
+        ,{"Al",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Bi",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+        ,{"Cl",2}
+    };
+
+
+    struct {int sort;char[2] state;real spinup[7];real spindn[7];} core_occupation[*]
+    ={
+    };
+
+
+    struct {char[20] label;real kpoint[3];} special_sympoints[*]
+    ={
+        {"$~G",{0,0,0}}
+        ,{"Y",{-0.57735026686251,0,0}}
+        ,{"F$_0$.",{-0.57735026686251,0,1/3}}
+        ,{"A",{-0.28867513343127,0,1/2}}
+        ,{"E",{-0.28867513343127,-0.6866447927334,1/2}}
+        ,{"G$_0$.",{0,-0.6866447927334,2/3}}
+        ,{"D",{0.28867513343127,-0.6866447927334,1/2}}
+        ,{"B",{0.28867513343127,0,1/2}}
+        ,{"F$_1$.",{0,0,2/3}}
+        ,{"<BREAK>",{0,0,0}}
+        ,{"G$_1$.",{-0.57735026686251,-0.6866447927334,1/3}}
+        ,{"C",{-0.57735026686251,-0.6866447927334,0}}
+        ,{"Z",{0,-0.6866447927334,0}}
+        ,{"<BREAK>",{0,0,0}}
+        ,{"Y",{-0.57735026686251,0,0}}
+        ,{"C",{-0.57735026686251,-0.6866447927334,0}}
+    };
+
+};
+
+
+section mesh{
+
+    struct {int nr;real rmin;real rmax;real rmax_factor;} radial_mesh
+    ={200,1.0e-5,0.0,1.0};
+
+
+    struct {int nr;real rmin;real rmax;} atom_radial_mesh
+    ={2000,1.0e-7,0.0};
+
+};
+
+
+section brillouin{
+
+    struct {logical metal;int nkxyz[3];} bzone_integration
+    ={t,{12,12,12}};
+
+
+    struct {int ne;real range;real width;int norder;} mp_bzone_integration
+    ={1001,5.0,0.005,0};
+
+
+    struct {int type;char[*] description;} bzone_method
+    ={1,"tetrahedron method"};
+
+
+    struct {int type;char[*] description;} bzintmethod
+    ={1,"primitive cell"};
+
+    real bzone_kT=100.0;
+    int nband=-1;
+};
+
+
+section bandstructure_plot{
+
+    struct {logical bandplot;logical read_sympoints;int ndivisions;real emin;real emax;int nptdos;logical plot_idos;logical plot_ndos;logical restrict_bands_to_window;logical coeffout;} bandplot_control
+    ={f,t,50,-20.0,20.0,1000,f,f,f,f};
+
+
+    struct {logical bandweights;logical bweight_rot;real z_axis[3];real x_axis[3];char[*] bwdfilename;
+        struct {int type;char[*] description;} frelprojection;
+    } bandweight_control
+    ={f,f,{0.0,0.0,1.0},{1.0,0.0,0.0},""
+        ,{1,"jmu"}
+    };
+
+};
+
+
+section iteration_control{
+
+    struct {int steps;real tolerance;real mixing;int maxdim;real progress;} iteration_control
+    ={100,1.e-6,0.4,5,0.1};
+
+
+    struct {int scheme;char[*] description;} iteration_version
+    ={2,"Iterat   : Hyperspace interpolation"};
+
+
+    struct {int type;char[*] description;} iteration_convergence_condition
+    ={2,"Density"};
+
+    real etot_tolerance=1.e-8;
+    # ratio of things put into iteration vector compared 
+    # to density 
+
+    struct {real U;} iterationvector_ratio
+    ={1.0};
+
+};
+
+
+section forces{
+
+    struct {int steps;real tolerance;int maxdim;} force_iteration_control
+    ={100,1.0e-3,0};
+
+
+    struct {int scheme;char[*] description;} force_iteration_version
+    ={6,"MinIterat: Find minimum with iterat"};
+
+    logical force_in_each_step=f;
+    logical approx_nodndL_ewald=f;
+
+    struct {int mode;char[*] description;} force_mode
+    ={1,"No forces"};
+
+    int geomopt_sites[*]={
+    };
+};
+
+
+section options{
+
+    struct {int mspin;logical initial_spin_split;} spin
+    ={1,f};
+
+
+    struct {int type;char[*] description;} xc_potential
+    ={10,"Perdew Burke Ernzerhof 96    (GGA)"};
+
+
+    struct {logical overwrite_cmBJ;real cmBJ;} mBJcontrols
+    ={f,1};
+
+    real ex_field_strength=1.0;
+
+    struct {int type;char[*] description;} relativistic
+    ={2,"scalar relativistic"};
+
+
+    struct {int type;char[*] description;} nuclear_model
+    ={1,"Point charge"};
+
+
+    struct {
+        struct {int type;char[*] description;} chargemode;
+        real ionicity;logical make_vca;
+        struct {int sort;real Z;} vca[*];
+    } charges
+    ={
+         {1,"None"}
+        ,0.0,f
+        ,{
+        }
+    };
+
+
+    struct {int type;char[*] description;} spin_pop_type
+    ={3,"exact expression (expensive)"};
+
+    real quantization_axis[3]={0,0,1
+    };
+    flag options[*]={CALC_DOS(-),NOT_USED(-),FULLBZ(-),CALC_PLASMON_FREQ(-)
+    ,EMPTY_LATTICE_TEST(-),NO_DOS(-),PLOT_REALFUNC(-),PLOT_BASIS(-)
+    ,TEST_LOI(-),TEST_DIAGNO(-),TEST_SYMMETRIZATION(-),TEST_HS_SYM(-)
+    ,PROT_PRINT_BASIS(-),PROT_MAKELATTICE(-),PROT_STRUCTURE_PRNT(-),PROT_TCI(-)
+    ,NOT_USED(-),NOT_USED(-),NOT_USED(-),NO_SYMMETRYTEST(+)
+    ,NO_POTENTIAL(-),NOT_USED(-),NO_CORE(-),NOT_USED(-)
+    ,NO_POPANALYSIS(-),NO_LOI(-),NO_BASIS(-),NO_EFCH(-)
+    ,NOT_USED(-),NOT_USED(-),NOT_USED(-)
+    };
+
+    struct {int type;char[*] description;} verbosity_level
+    ={200,"more information"};
+
+
+    struct {real moment;logical fsm;} fsmoment
+    ={1.0,f};
+
+    logical calc_etot=t;
+    logical usedatadirectories=f;
+};
+
+
+section cpa{
+
+    struct {real emin0;real emax0;int nec;int max_se_loops;real eimag;} cpa_control
+    ={-1.60,0.4,30,10,1.0e-5};
+
+
+    struct {real efermi0;real slop_0;real slop_min;int max_ef_loops;} cpa_fermi_control
+    ={0.08,30.0,0.3,10};
+
+
+    struct {int type;char[*] description;} cpa_fermi_method
+    ={1,"secant method"};
+
+
+    struct {int ne;real eimag;} cpa_dos
+    ={1000,1.e-3};
+
+
+    struct {int ne;real eimag;} cpa_bloch_spectral_density
+    ={100,1.e-3};
+
+};
+
+
+section numerics{
+
+    struct {int degree;} interpolation
+    ={8};
+
+
+    struct {int nr;} one_center_integrals
+    ={200};
+
+
+    struct {int nxi;int neta;} coulomb_energy_calc
+    ={26,46};
+
+
+    struct {int nr;int neta;} overlap_density_calc
+    ={50,20};
+
+
+    struct {real dens;real pot;real orbital;} cutoff_tolerances
+    ={1.e-9,1.e-12,1.e-8};
+
+    #WARNING: cutoff is obsolete now
+
+    struct {real cutoff;real eps_r;real eps_g;} ewald_parameter
+    ={2.0,1.0e-5,1.0e-5};
+
+
+    struct {int nr;int angular_mesh_type_min;int angular_mesh_type_max;logical use_symmetry;} three_center_integrals
+    ={80,3,15,t};
+
+
+    struct {real tol;} symtest
+    ={5.0e-13};
+
+    # WARNING: nfft_ewp_per_site is obsolete now  
+    int nfft_ewp_per_site=-500;
+};
+
+
+section LSDA_U{
+    logical make_lsdau=f;
+
+    struct {int type;char[*] description;} lsdau_projection
+    ={1,"orthogonal"};
+
+
+    struct {int type;char[*] description;} lsdau_functional
+    ={1,"LSDA+U Around mean field (AMF/OP)"};
+
+
+    struct {int type;char[*] description;} lsdau_dmat_mode
+    ={1,"self consistent"};
+
+    real lsdau_dmat_deviation=1.e-2;
+
+    struct {int sort;char[2] state;real f_slater[4];} lsdau_defs[*]
+    ={
+    };
+
+};
+
+
+section OPC{
+    logical make_opc=f;
+
+    struct {int type;char[*] description;} opc_projection
+    ={1,"orthogonal"};
+
+
+    struct {int type;char[*] description;} opc_functional
+    ={1,"Spin dependend (Nordstroem, Brooks, Johansson, JPhysC 4, 3261 (1992))"};
+
+
+    struct {int sort;char[2] state;} opc_defs[*]
+    ={
+    };
+
+};
+
+
+section Advanced_output{
+    int ldossites[*]={
+    };
+    logical grids_active=f;
+    logical grids_stop_after=f;
+
+    struct {
+        struct {int type;char[*] description;} basis;
+        real direction1[3];real direction2[3];real direction3[3];real origin[3];int subdivision[3];char[*] file;logical InclPeriodicPoints;logical createOpenDX;
+        struct {int type;char[*] description;} quantities[*];
+        struct {int type;char[*] description;} outputdata[*];
+        real scfwavefnctwindow[2];
+        struct {char[*] name;
+            struct {real emin;real emax;real de;
+                struct {int type;char[*] description;} spin;
+            } sections[*];
+        } energywindows[*];
+        struct {char[*] name;real kpoint[3];int bandindices[*];real energywindow[2];} kresolved[*];
+    } grids[*]
+    ={
+    };
+
+
+    struct {logical active;logical forceusewanniercenters;int homooffset;
+        struct {int nint;int nky;} wanniercenters;
+    } topological_insulator
+    ={f,f,4
+        ,{40,100}
+    };
+
+
+    struct {logical active;logical jointdos;logical bandoutput;logical stopafter;
+        struct {int ne;real emin;real emax;} energy;
+    } optics
+    ={f,f,f,f
+        ,{1000,0,10}
+    };
+
+};
+
+
+section BasisSettings{
+
+    struct {
+        struct {int type;char[*] description;} version;
+        int extensionlevel;logical add3d;logical addf;char[*] core4f_by_el[*];int core4f_by_sort[*];char[*] core4fNovalenceF_by_el[*];int core4fNovalenceF_by_sort[*];
+        struct {real Q;real S;} multicore[*];
+        struct {real Q;real S;} multisemicore[*];
+    } basis
+    ={
+         {1,"default FPLO9 basis"}
+        ,1,f,f,{},{},{},{}
+        ,{
+        }
+        ,{
+        }
+    };
+
+};
+
+
+section dHvA{
+
+    struct {logical active;int bandsup[*];int bandsdown[*];real isovalue;int subdiv[3];int bisections;char[*] wandata;logical deleteoldfiles;logical needbandweights;char[*] statefile;
+        struct {int weightindex;real coef;} energyshift[*];
+    } isosurface
+    ={f,{},{},0.,{12,12,12},0,"",t,f,""
+        ,{
+        }
+    };
+
+
+    struct {
+        struct {char[*] label;real field[3];} fields[*];
+        int bands[*];int parts[*];
+        struct {int type;char[*] description;} spin;
+        int nphi;int phifrom;int phito;int nplane;int planefrom;int planeto;real areachainthreshold;real orbitcomparisonsearchoffset;real orbitsampleportion;real arearadiusfactor;real smoothnessthreshold;flag outputoptions[*];flag debugoptions[*];
+    } dhva
+    ={
+         {
+            {"[010]",{0.,1.,0.}}
+            ,{"[001]",{0.,0.,1.}}
+        }
+        ,{},{}
+        ,{0,"both"}
+        ,30,-1,-2,100,-1,-2,0.1,0.2,0.1,1.,1.,{show_non_closed(-),output_orbits(-),output_extremal_orbits(+)},{determine_area_chain_extrema(-),sort_area_chains(-),sort_extrema_chains(-),extend_periodic_area_chains(-)
+        ,collect_orbits(-),calc_orbit(-),run(+)}
+    };
+
+};
+
+

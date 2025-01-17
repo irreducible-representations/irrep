@@ -1,0 +1,40 @@
+# generated using pymatgen
+data_AgHgAsO4
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   8.25996707
+_cell_length_b   6.91956149
+_cell_length_c   6.34946456
+_cell_angle_alpha   76.86458693
+_cell_angle_beta   54.66695882
+_cell_angle_gamma   48.46845425
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   AgHgAsO4
+_chemical_formula_sum   'Ag2 Hg2 As2 O8'
+_cell_volume   214.25628169
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ag  Ag0  1  0.68681000  0.81319000  0.68681000  1
+  Ag  Ag1  1  0.43681000  0.56319000  0.43681000  1
+  Hg  Hg2  1  0.06067800  0.43932200  0.06067800  1
+  Hg  Hg3  1  0.81067800  0.18932200  0.81067800  1
+  As  As4  1  0.37902300  0.12097700  0.37902300  1
+  As  As5  1  0.12902300  0.87097700  0.12902300  1
+  O  O6  1  0.05275800  0.28586200  0.50090700  1
+  O  O7  1  0.38735200  0.26399100  0.55747200  1
+  O  O8  1  0.50090700  0.16047300  0.05275800  1
+  O  O9  1  0.55747200  0.79118500  0.38735200  1
+  O  O10  1  0.45881500  0.69252800  0.98600900  1
+  O  O11  1  0.08952700  0.74909300  0.96413800  1
+  O  O12  1  0.98600900  0.86264800  0.45881500  1
+  O  O13  1  0.96413800  0.19724200  0.08952700  1

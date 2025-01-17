@@ -1,0 +1,33 @@
+# generated using pymatgen
+data_AgWS4N
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   6.43548779
+_cell_length_b   6.43548779
+_cell_length_c   6.43548779
+_cell_angle_alpha   102.14369461
+_cell_angle_beta   102.14369461
+_cell_angle_gamma   125.39933084
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   AgWS4N
+_chemical_formula_sum   'Ag1 W1 S4 N1'
+_cell_volume   193.05770558
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ag  Ag0  1  0.50000000  0.50000000  0.00000000  1
+  W  W1  1  0.00000000  0.00000000  0.00000000  1
+  S  S2  1  0.98354100  0.67118200  0.07702900  1
+  S  S3  1  0.59415300  0.90651200  0.92297100  1
+  S  S4  1  0.32881800  0.40584700  0.31235900  1
+  S  S5  1  0.09348800  0.01645900  0.68764100  1
+  N  N6  1  0.75000000  0.25000000  0.50000000  1

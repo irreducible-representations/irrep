@@ -1,0 +1,28 @@
+# Testing determination of cell transformation
+
+This directory is temporary and contains data for testing purposes. It will be removed as soon as we finish the tests are over.
+
+---
+
+## Test with Materials Project as source
+
+Follow these steps:
+
+1. **Pick a material in each space group and download its .cif file from Materials Project's API**. Open and run the file `download_cifs.ipynb` for that.
+
+2. **Convert the .cif file into =.in**. Run `run_cif2in.py`, which calls to `cif2in.py` iteratively. This file uses `pyfplo` to convert a .cif into a `=.in`.
+
+```
+bash run_cif2in.sh
+```
+
+The `=.in` file of each space group has been generated and moved into the corresponding `sg_*` directory.
+
+3. **Run FPLO23 to generate the groupinfo file**. For that, run `run_fplo.sh`, which enters the directory of each space group, copies there the `=.groupoutput` file and runs `fplo23`.
+
+```
+bash run_fplo.sh
+```
+
+4. **Run IrRep with each calculation to calculate the transformation to the conventional cell**. For that, run `run_irrep.sh`. It will enter each space group's directory and run irrep there in `-onlysym` mode. If it gives an error, the space group's number will be added to the file `log_failed_SGs.dat`.
+

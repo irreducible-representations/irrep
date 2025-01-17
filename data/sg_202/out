@@ -1,0 +1,15 @@
+Warning: transformation to the convenctional unit cell will not be calculated, nor its validity checked (if given). See the description of flag -searchcell on:
+irrep --help
+Warning: -kpnames not specified. Only traces of symmetry operations will be calculated. Remember that -kpnames must be specified to identify irreps
+Lattice prim:
+ [[6.26251501 2.21412527 3.8349808 ]
+ [0.         6.64239563 3.83498516]
+ [0.         0.         7.66998024]]
+Crystal class: 1
+Laue group: -1
+dir1:[1, 0, 0]
+dir2:[0, 1, 0]
+dir3:[0, 0, 1]
+[[0 1 0]
+ [0 0 1]
+ [1 0 0]]

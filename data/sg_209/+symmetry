@@ -1,0 +1,73 @@
+
+                   SYMMETRYGROUP      
+
+Space group      : 209, HM: F 4 3 2, Hall: F 4 2 3
+Point group      : O
+Inversion        : no
+Symmorphic       : yes
+
+                   OPERATIONS      
+
+
+(The XYZ-operation symbols "(A,B,C)+(t1,t2,t3)" mean:
+ if a vector is given relative to the lattice basis vectors 
+ r=X*a1+Y*a2+Z*a3 then it is transformed into
+ r'=(A+t1)*a1+(B+t2)*a2+(C+t3)*a2.
+
+
+Full Group Operations : 24
+Index   rotation          translation      : symbol
+ 0:   (+X  ,+Y  ,+Z  ) + (0   ,0   ,0   )  :   E
+ 1:   (-X  ,+Y  ,-Z  ) + (0   ,0   ,0   )  :   C2(y)
+ 2:   (+X  ,-Y  ,-Z  ) + (0   ,0   ,0   )  :   C2(x)
+ 3:   (-X  ,-Y  ,+Z  ) + (0   ,0   ,0   )  :   C2(z)
+ 4:   (-Y  ,+Z  ,-X  ) + (0   ,0   ,0   )  :   C3-(1-1-1)
+ 5:   (-Y  ,-Z  ,+X  ) + (0   ,0   ,0   )  :   C3-(-11-1)
+ 6:   (+Y  ,-Z  ,-X  ) + (0   ,0   ,0   )  :   C3-(-1-11)
+ 7:   (+Y  ,+Z  ,+X  ) + (0   ,0   ,0   )  :   C3-(111)
+ 8:   (-Z  ,-X  ,+Y  ) + (0   ,0   ,0   )  :   C3(1-1-1)
+ 9:   (+Z  ,+X  ,+Y  ) + (0   ,0   ,0   )  :   C3(111)
+10:   (+Z  ,-X  ,-Y  ) + (0   ,0   ,0   )  :   C3(-11-1)
+11:   (-Z  ,+X  ,-Y  ) + (0   ,0   ,0   )  :   C3(-1-11)
+12:   (+Y  ,+X  ,-Z  ) + (0   ,0   ,0   )  :   C2(xy)
+13:   (+Y  ,-X  ,+Z  ) + (0   ,0   ,0   )  :   C4-(z)
+14:   (-Y  ,+X  ,+Z  ) + (0   ,0   ,0   )  :   C4(z)
+15:   (-Y  ,-X  ,-Z  ) + (0   ,0   ,0   )  :   C2(x-y)
+16:   (+Z  ,-Y  ,+X  ) + (0   ,0   ,0   )  :   C2(xz)
+17:   (-Z  ,-Y  ,-X  ) + (0   ,0   ,0   )  :   C2(-xz)
+18:   (-Z  ,+Y  ,+X  ) + (0   ,0   ,0   )  :   C4-(y)
+19:   (+Z  ,+Y  ,-X  ) + (0   ,0   ,0   )  :   C4(y)
+20:   (-X  ,-Z  ,-Y  ) + (0   ,0   ,0   )  :   C2(y-z)
+21:   (+X  ,+Z  ,-Y  ) + (0   ,0   ,0   )  :   C4-(x)
+22:   (-X  ,+Z  ,+Y  ) + (0   ,0   ,0   )  :   C2(yz)
+23:   (+X  ,-Z  ,+Y  ) + (0   ,0   ,0   )  :   C4(x)
+
+                   TRANSLATION     
+
+Length units throughout calculations are Bohr radii.
+
+lattice constants [aB] :  19.514423122118622     19.514423122118622     19.514423122118622   
+lattice constants [Ang]:  10.326587998133760     10.326587998133760     10.326587998133760   
+axis angles            :  90.000000000000000     90.000000000000000     90.000000000000000   
+bravais lattice        : Face Centered Cubic
+conventional to primitive transformation
+      b1  : 0    1/2  1/2 
+      b2  : 1/2  0    1/2 
+      b3  : 1/2  1/2  0   
+coordinate rotation: cell=(a1,a2,a3)
+                         =R*default_cell
+      R=       1.000000000000000      0.000000000000000      0.000000000000000    
+               0.000000000000000      1.000000000000000      0.000000000000000    
+               0.000000000000000      0.000000000000000      1.000000000000000    
+lattice vectors
+      a1  :  0.000000000000000      9.757211561059311      9.757211561059311    
+      a2  :  9.757211561059311      0.000000000000000      9.757211561059311    
+      a3  :  9.757211561059311      9.757211561059311      0.000000000000000    
+reciprocal lattice vectors / 2*Pi
+      g1  : -0.051244148686443      0.051244148686443      0.051244148686443    
+      g2  :  0.051244148686443     -0.051244148686443      0.051244148686443    
+      g3  :  0.051244148686443      0.051244148686443     -0.051244148686443    
+
+Volume (real cell) [aB^3] :  1857.835087276157310 
+Volume (real cell) [Ang^3]:  275.302756210121572  
+
