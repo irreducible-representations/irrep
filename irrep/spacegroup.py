@@ -82,9 +82,12 @@ TO_PRIMITIVE = {'A': np.array([[1, 0, 0],
                 'F': np.array([[0, 1/2, 1/2],
                                [1/2, 0, 1/2],
                                [1/2, 1/2, 0]]),
-                'R': np.array([[-1/2, 1/2, 1/2],
+                'I': np.array([[-1/2, 1/2, 1/2],
                                [1/2, -1/2, 1/2],
                                [1/2, 1/2, -1/2]]),
+                'R': np.array([[2./3., -1./3., -1./3.],
+                               [1./3., 1./3., -2./3.],
+                               [1./3., 1./3., 1./3.]]),
                 'P': np.eye(3)
                 }
 
@@ -1989,10 +1992,11 @@ class SpaceGroup():
 
                 if not found:
                     raise RuntimeError(
-                        'Could not match generator #{isvd} with a symmetry from the '
+                        'Could not match generator #{} with a symmetry from the '
                         'candidate-primitive DFT cell. Please, open an issue on '
                         'https://github.com/irreducible-representations/irrep and '
                         'share this error message and the =.in file with us'
+                        .format(isvd)
                         )
 
             # Construct matrix of differences in translations (Delta omega)
@@ -2006,7 +2010,6 @@ class SpaceGroup():
             vec_ref = sg_svd.N_matrix @ shiftUC
             if np.allclose(vec_ref, diff_t):
                 refUC = M @ S
-                shift
                 found = True
 
         if not found:
