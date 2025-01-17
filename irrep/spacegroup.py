@@ -1438,7 +1438,7 @@ class SpaceGroup(SpaceGroupBare):
         """
         Matches symmetry operations of two lists. Translational parts 
         are matched mod. lattice translations (important for centered 
-        structures).
+        structures). Modifies the spin operations in-place.
 
         Parameters
         ----------
