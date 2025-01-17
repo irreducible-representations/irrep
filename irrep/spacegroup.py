@@ -20,7 +20,7 @@ from functools import cached_property
 import warnings
 import numpy as np
 from math import pi
-# from scipy.linalg import expm
+from scipy.linalg import expm
 import spglib
 from irreptables import IrrepTable
 from .utility import str_, log_message, BOHR
@@ -107,11 +107,10 @@ class SymmetryOperation():
         self.angle = iangle * pi / 6
         self.angle_str = self.get_angle_str()
         self.spinor = spinor
-        # CHECK
-        # self.spinor_rotation = expm(-0.5j * self.angle *
-        #                             np.einsum('i,ijk->jk', self.axis, pauli_sigma))
-        self.spinor_rotation = None # To be matched with tables
-        self.spin_matrix_refUC = None
+        #to be matched with tables
+        self.spinor_rotation = expm(-0.5j * self.angle *
+                                    np.einsum('i,ijk->jk', self.axis, pauli_sigma))
+        self.spin_matrix_refUC = self.spinor_rotation.copy()
         self.sign = 1  # To be matched with tables
 
     @property
@@ -809,7 +808,6 @@ class SpaceGroup(SpaceGroupBare):
             trans_thresh=1e-5,
             alat=None,
             from_sym_file=None,
-            no_match_symmetries=False,
             magmom=None,
             verbosity=0,
             include_TR=True
@@ -823,7 +821,7 @@ class SpaceGroup(SpaceGroupBare):
         self.magmom = magmom
         self.include_TR = include_TR
 
-        if from_sym_file is not None or not search_cell:
+        if from_sym_file is not None: # or not search_cell:
             match_symmetries = False
         else:
             match_symmetries = True
@@ -928,12 +926,6 @@ class SpaceGroup(SpaceGroupBare):
                     find_spin_matrices=self.spinor,
                     trans_thresh=trans_thresh
                 )
-                # if self.magnetic and len(self.au_symmetries) > 0:
-                #     self.match_symmetries(
-                #         find_spin_matrices=self.spinor,
-                #         trans_thresh=trans_thresh,
-                #         au_symmetries=True
-                #     )
             except RuntimeError:
                 if search_cell:  # symmetries must match to identify irreps
                     raise RuntimeError((

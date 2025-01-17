@@ -371,19 +371,15 @@ class IrrepTable:
                 assert str2bool(l[1]) == self.spinor
             elif l[0].lower() == "symmetries":
                 log_message("Reading symmetries from tables", v, 2)
-                symmetries = []
-                while len(symmetries) < self.nsym:
+                self.symmetries = []
+                while len(self.symmetries) < self.nsym:
                     l = lines.pop()
                     # logger.debug(l)
                     try:
-                        symmetries.append(SymopTable(l))
+                        self.symmetries.append(SymopTable(l))
                     except Exception as err:
                         logger.debug(err)
-                        pass
                 break
-
-        self.symmetries = [x for x in symmetries if not x.time_reversal]
-        self.au_symmetries = [x for x in symmetries if x.time_reversal]
 
         msg = "Symmetries are:\n" + "\n".join(s.str() for s in self.symmetries)
         log_message(msg, v, 2)
