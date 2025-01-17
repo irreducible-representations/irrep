@@ -578,7 +578,7 @@ class SpaceGroup_SVD:
             translations = np.zeros((num_gens, 3), dtype=float)
             for i in range(num_gens):
                 line = f.readline().split()
-                matrices[i] = np.reshape(line[:9], shape=(3,3))
+                matrices[i] = np.reshape(line[:9], newshape=(3,3))
                 translations[i] = np.array(line[9:], dtype=float)
             f.close()
 
