@@ -16,9 +16,7 @@
 
 __version__="2.0.0"
 
-import copy
 import os
-import sys
 import logging
 import numpy as np
 from irrep.utility import str2bool, str2list_space, str_, log_message
@@ -358,11 +356,11 @@ class IrrepTable:
             msg = f"Reading a user-defined irrep table <{name}>"
             log_message(msg, v, 2)
 
+
         log_message("\n---------- DATA FROM THE TABLE ----------\n", v, 2)
         lines = open(name).readlines()[-1::-1]
         while len(lines) > 0:
             l = lines.pop().strip().split("=")
-            # logger.debug(l,l[0].lower())
             if l[0].lower() == "sg":
                 assert l[1].strip() == self.number
             elif l[0].lower() == "name":
@@ -384,8 +382,8 @@ class IrrepTable:
                         pass
                 break
 
-        self.symmetries = list(filter(lambda x: not x.time_reversal, symmetries))
-        self.au_symmetries = list(filter(lambda x: x.time_reversal, symmetries))
+        self.symmetries = [x for x in symmetries if not x.time_reversal]
+        self.au_symmetries = [x for x in symmetries if x.time_reversal]
 
         msg = "Symmetries are:\n" + "\n".join(s.str() for s in self.symmetries)
         log_message(msg, v, 2)
