@@ -13,7 +13,7 @@ section header{
 
 
     struct {char[*] hostname;char[*] date;char[*] by;} last_changes
-    ={"mi2-Precision-5820-Tower","Thu Jan 16 17:19:59 2025","fedit (23.00-65-x86_64)"};
+    ={"mi2-Precision-5820-Tower","Wed Jan 29 12:17:23 2025","fedit (23.00-65-x86_64)"};
 
     char[*] compound="Al example";
 };
@@ -26,7 +26,7 @@ section structure_information{
 
 
     struct {char[*] number;char[*] setting;char[*] symbol;} spacegroup
-    ={"161","R","R 3 c:R"};
+    ={"220","default","I -4 3 d"};
 
     int subgroupgenerators[*]={
     };
@@ -34,33 +34,21 @@ section structure_information{
     struct {int type;char[*] description;} lengthunit
     ={2,"Angstroem "};
 
-    real lattice_constants[3]={13.04682166,13.04682166,13.04682166
+    real lattice_constants[3]={10.02841525494449,10.02841525494449,10.02841525494449
     };
-    real axis_angles[3]={109.47122063,109.47122063,109.47122063
+    real axis_angles[3]={90,90,90
     };
 
     struct {logical active;real newx[3];real newz[3];} cellrotation
     ={f,{1,0,0},{0,0,1}};
 
     int max_L=4;
-    int nsort=14;
+    int nsort=2;
 
     struct {char[2] element;real tau[3];} wyckoff_positions[nsort]
     ={
-        {"Ag",{-0.412026,-0.372981,-0.218347}}
-        ,{"Ag",{-1/4,-1/8,1/8}}
-        ,{"Ag",{-0.127019,0.460955,0.154634}}
-        ,{"Ag",{0.039045,-0.087974,-0.30632}}
-        ,{"Ag",{-0.281653,0.345366,-0.19368}}
-        ,{"P",{0.39973,0.39973,0.39973}}
-        ,{"P",{0,0.10027,1/2}}
-        ,{"S",{-0.052422,0.081707,0.322099}}
-        ,{"S",{0,0.443038,1/2}}
-        ,{"S",{0.125479,-0.240391,-0.322099}}
-        ,{"S",{0.052422,-0.365871,0.374521}}
-        ,{"S",{0.056962,0.056962,0.056962}}
-        ,{"S",{0.365871,0.240391,0.418293}}
-        ,{"Cl",{-1/8,1/4,1/8}}
+        {"Ba",{0.18070888,0.18070888,0.18070888}}
+        ,{"As",{1/4,-1/8,0}}
     };
 
 };
@@ -70,39 +58,15 @@ section structure_dependend{
 
     struct {char[2] atom;real concentration;} concentrations[nsort]
     ={
-        {"Ag",1}
-        ,{"Ag",1}
-        ,{"Ag",1}
-        ,{"Ag",1}
-        ,{"Ag",1}
-        ,{"P",1}
-        ,{"P",1}
-        ,{"S",1}
-        ,{"S",1}
-        ,{"S",1}
-        ,{"S",1}
-        ,{"S",1}
-        ,{"S",1}
-        ,{"Cl",1}
+        {"Ba",1}
+        ,{"As",1}
     };
 
 
     struct {char[2] element;real split;} initial_spin_split[nsort]
     ={
-        {"Ag",2}
-        ,{"Ag",2}
-        ,{"Ag",2}
-        ,{"Ag",2}
-        ,{"Ag",2}
-        ,{"P",2}
-        ,{"P",2}
-        ,{"S",2}
-        ,{"S",2}
-        ,{"S",2}
-        ,{"S",2}
-        ,{"S",2}
-        ,{"S",2}
-        ,{"Cl",2}
+        {"Ba",2}
+        ,{"As",2}
     };
 
 
@@ -114,15 +78,14 @@ section structure_dependend{
     struct {char[20] label;real kpoint[3];} special_sympoints[*]
     ={
         {"$~G",{0,0,0}}
-        ,{"P",{0.35355339060307,-0.61237243571277,1/8}}
-        ,{"T",{0.35355339060307,-0.61237243571277,1/2}}
-        ,{"P$_2$.",{0,0,3/4}}
+        ,{"H",{0,1,0}}
+        ,{"N",{1/2,1/2,0}}
         ,{"$~G",{0,0,0}}
-        ,{"F",{0.5303300859046,-0.30618621785638,0}}
-        ,{"P$_1$.",{0.70710678120614,0,-1/8}}
-        ,{"P$_3$.",{0.70710678120614,0,1/4}}
-        ,{"L",{0.35355339060307,0,1/2}}
-        ,{"T",{0.35355339060307,-0.61237243571277,1/2}}
+        ,{"P",{1/2,1/2,1/2}}
+        ,{"H",{0,1,0}}
+        ,{"<BREAK>",{0,0,0}}
+        ,{"P",{1/2,1/2,1/2}}
+        ,{"N",{1/2,1/2,0}}
     };
 
 };

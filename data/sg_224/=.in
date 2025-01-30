@@ -13,7 +13,7 @@ section header{
 
 
     struct {char[*] hostname;char[*] date;char[*] by;} last_changes
-    ={"mi2-Precision-5820-Tower","Thu Jan 16 17:19:59 2025","fedit (23.00-65-x86_64)"};
+    ={"mi2-Precision-5820-Tower","Wed Jan 29 12:17:24 2025","fedit (23.00-65-x86_64)"};
 
     char[*] compound="Al example";
 };
@@ -34,7 +34,7 @@ section structure_information{
     struct {int type;char[*] description;} lengthunit
     ={2,"Angstroem "};
 
-    real lattice_constants[3]={4.75399071,4.75399071,4.75399071
+    real lattice_constants[3]={4.611562,4.611562,4.611562
     };
     real axis_angles[3]={90,90,90
     };
@@ -47,8 +47,8 @@ section structure_information{
 
     struct {char[2] element;real tau[3];} wyckoff_positions[nsort]
     ={
-        {"Ag",{0,0,-1/2}}
-        ,{"O",{-1/4,-1/4,-1/4}}
+        {"Ag",{-1/4,-1/4,-1/4}}
+        ,{"O",{0,0,0}}
     };
 
 };

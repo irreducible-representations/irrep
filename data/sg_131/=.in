@@ -13,7 +13,7 @@ section header{
 
 
     struct {char[*] hostname;char[*] date;char[*] by;} last_changes
-    ={"mi2-Precision-5820-Tower","Thu Jan 16 17:19:55 2025","fedit (23.00-65-x86_64)"};
+    ={"mi2-Precision-5820-Tower","Wed Jan 29 12:28:10 2025","fedit (23.00-65-x86_64)"};
 
     char[*] compound="Al example";
 };
@@ -26,7 +26,7 @@ section structure_information{
 
 
     struct {char[*] number;char[*] setting;char[*] symbol;} spacegroup
-    ={"66","default","C c c m"};
+    ={"131","default","P 42/m m c"};
 
     int subgroupgenerators[*]={
     };
@@ -34,7 +34,7 @@ section structure_information{
     struct {int type;char[*] description;} lengthunit
     ={2,"Angstroem "};
 
-    real lattice_constants[3]={4.69363297871306,4.66671315867685,5.58085064
+    real lattice_constants[3]={6.13651154,6.13651154,12.10870699
     };
     real axis_angles[3]={90,90,90
     };
@@ -43,12 +43,17 @@ section structure_information{
     ={f,{1,0,0},{0,0,1}};
 
     int max_L=4;
-    int nsort=2;
+    int nsort=7;
 
     struct {char[2] element;real tau[3];} wyckoff_positions[nsort]
     ={
-        {"Ag",{1/4,1/4,0}}
-        ,{"O",{0,0,-1/4}}
+        {"Ag",{0,0,-1/4}}
+        ,{"Ag",{0,1/2,1/2}}
+        ,{"Sb",{0,0,0}}
+        ,{"Sb",{0,1/2,0}}
+        ,{"Te",{1/2,1/2,-1/4}}
+        ,{"Te",{0,1/2,-0.25229698}}
+        ,{"Te",{1/2,1/2,0}}
     };
 
 };
@@ -59,14 +64,24 @@ section structure_dependend{
     struct {char[2] atom;real concentration;} concentrations[nsort]
     ={
         {"Ag",1}
-        ,{"O",1}
+        ,{"Ag",1}
+        ,{"Sb",1}
+        ,{"Sb",1}
+        ,{"Te",1}
+        ,{"Te",1}
+        ,{"Te",1}
     };
 
 
     struct {char[2] element;real split;} initial_spin_split[nsort]
     ={
         {"Ag",2}
-        ,{"O",2}
+        ,{"Ag",2}
+        ,{"Sb",2}
+        ,{"Sb",2}
+        ,{"Te",2}
+        ,{"Te",2}
+        ,{"Te",2}
     };
 
 
@@ -78,20 +93,19 @@ section structure_dependend{
     struct {char[20] label;real kpoint[3];} special_sympoints[*]
     ={
         {"$~G",{0,0,0}}
-        ,{"$~D$_0$.",{0,1.00001654223075,0}}
-        ,{"S",{1/2,0.50288423769802,0}}
-        ,{"R",{1/2,0.50288423769802,0.42051232701625}}
-        ,{"B$_0$.",{0,1.00001654223075,0.42051232701625}}
-        ,{"Z",{0,0,0.42051232701625}}
+        ,{"X",{0,1/2,0}}
+        ,{"M",{1/2,1/2,0}}
         ,{"$~G",{0,0,0}}
-        ,{"Y",{1,0,0}}
-        ,{"F$_0$.",{1,0.00575193316529,0}}
-        ,{"G$_0$.",{1,0.00575193316529,0.42051232701625}}
-        ,{"T",{1,0,0.42051232701625}}
-        ,{"Y",{1,0,0}}
+        ,{"Z",{0,0,0.25339251932794}}
+        ,{"R",{0,1/2,0.25339251932794}}
+        ,{"A",{1/2,1/2,0.25339251932794}}
+        ,{"Z",{0,0,0.25339251932794}}
         ,{"<BREAK>",{0,0,0}}
-        ,{"Z",{0,0,0.42051232701625}}
-        ,{"T",{1,0,0.42051232701625}}
+        ,{"X",{0,1/2,0}}
+        ,{"R",{0,1/2,0.25339251932794}}
+        ,{"<BREAK>",{0,0,0}}
+        ,{"M",{1/2,1/2,0}}
+        ,{"A",{1/2,1/2,0.25339251932794}}
     };
 
 };

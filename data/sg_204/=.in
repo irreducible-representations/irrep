@@ -13,7 +13,7 @@ section header{
 
 
     struct {char[*] hostname;char[*] date;char[*] by;} last_changes
-    ={"mi2-Precision-5820-Tower","Thu Jan 16 17:19:58 2025","fedit (23.00-65-x86_64)"};
+    ={"mi2-Precision-5820-Tower","Wed Jan 29 12:17:22 2025","fedit (23.00-65-x86_64)"};
 
     char[*] compound="Al example";
 };
@@ -26,7 +26,7 @@ section structure_information{
 
 
     struct {char[*] number;char[*] setting;char[*] symbol;} spacegroup
-    ={"148","R","R -3:R"};
+    ={"204","default","I m -3"};
 
     int subgroupgenerators[*]={
     };
@@ -34,22 +34,23 @@ section structure_information{
     struct {int type;char[*] description;} lengthunit
     ={2,"Angstroem "};
 
-    real lattice_constants[3]={6.51854949,6.51854949,6.51854949
+    real lattice_constants[3]={7.12049800547959,7.12049800547959,7.12049800547959
     };
-    real axis_angles[3]={109.47121625000001,109.47121625000001,109.47121625000001
+    real axis_angles[3]={90,90,90
     };
 
     struct {logical active;real newx[3];real newz[3];} cellrotation
     ={f,{1,0,0},{0,0,1}};
 
     int max_L=4;
-    int nsort=3;
+    int nsort=4;
 
     struct {char[2] element;real tau[3];} wyckoff_positions[nsort]
     ={
-        {"Al",{0.30777085,0.18655487,0.49432672}}
-        ,{"Al",{-0.18655487,0.12121497,0.30777085}}
-        ,{"Mo",{0,0,0}}
+        {"Al",{0,0,0}}
+        ,{"Co",{1/4,-1/4,1/4}}
+        ,{"Cu",{0,0,-1/2}}
+        ,{"O",{0,0.292084,-0.164818}}
     };
 
 };
@@ -60,16 +61,18 @@ section structure_dependend{
     struct {char[2] atom;real concentration;} concentrations[nsort]
     ={
         {"Al",1}
-        ,{"Al",1}
-        ,{"Mo",1}
+        ,{"Co",1}
+        ,{"Cu",1}
+        ,{"O",1}
     };
 
 
     struct {char[2] element;real split;} initial_spin_split[nsort]
     ={
         {"Al",2}
-        ,{"Al",2}
-        ,{"Mo",2}
+        ,{"Co",2}
+        ,{"Cu",2}
+        ,{"O",2}
     };
 
 
@@ -81,15 +84,14 @@ section structure_dependend{
     struct {char[20] label;real kpoint[3];} special_sympoints[*]
     ={
         {"$~G",{0,0,0}}
-        ,{"P",{0.35355340015875,-0.61237245226368,1/8}}
-        ,{"T",{0.35355340015875,-0.61237245226368,1/2}}
-        ,{"P$_2$.",{0,0,3/4}}
+        ,{"H",{0,1,0}}
+        ,{"N",{1/2,1/2,0}}
         ,{"$~G",{0,0,0}}
-        ,{"F",{0.53033010023813,-0.30618622613184,0}}
-        ,{"P$_1$.",{0.7071068003175,0,-1/8}}
-        ,{"P$_3$.",{0.7071068003175,0,1/4}}
-        ,{"L",{0.35355340015875,0,1/2}}
-        ,{"T",{0.35355340015875,-0.61237245226368,1/2}}
+        ,{"P",{1/2,1/2,1/2}}
+        ,{"H",{0,1,0}}
+        ,{"<BREAK>",{0,0,0}}
+        ,{"P",{1/2,1/2,1/2}}
+        ,{"N",{1/2,1/2,0}}
     };
 
 };

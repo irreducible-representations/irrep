@@ -1,8 +1,8 @@
 
                    SYMMETRYGROUP      
 
-Space group      : 15:b1, HM: C 1 2/c 1, Hall: -C 2yc
-Point group      : C2h(y)
+Space group      : 165, HM: P -3 c 1, Hall: -P 3 2"c
+Point group      : D3d(b)
 Inversion        : yes
 Symmorphic       : no
 
@@ -13,26 +13,38 @@ Symmorphic       : no
  if a vector is given relative to the lattice basis vectors 
  r=X*a1+Y*a2+Z*a3 then it is transformed into
  r'=(A+t1)*a1+(B+t2)*a2+(C+t3)*a2.
+ The operations refer to the corresponding
+ primitive hexa/tri-gonal unit cell!
+ Example: C2(x) is along the a axis, while
+ C2(xy) is along the a+b axis.
 
 
-Full Group Operations : 4
+Full Group Operations : 12
 Index   rotation          translation      : symbol
  0:   (+X  ,+Y  ,+Z  ) + (0   ,0   ,0   )  :   E
- 1:   (-X  ,+Y  ,-Z  ) + (0   ,0   ,1/2 )  :   C2(y)
+ 1:   (-X  ,-X+Y,-Z  ) + (0   ,0   ,1/2 )  :   C2(y)
+25:   (-X+Y,-X  ,+Z  ) + (0   ,0   ,0   )  :   C3-(z)
+26:   (-Y  ,+X-Y,+Z  ) + (0   ,0   ,0   )  :   C3(z)
+28:   (+Y  ,+X  ,-Z  ) + (0   ,0   ,1/2 )  :   C2(xy)
+31:   (+X-Y,-Y  ,-Z  ) + (0   ,0   ,1/2 )  :   C2(x)
 32:   (-X  ,-Y  ,-Z  ) + (0   ,0   ,0   )  :   I
-33:   (+X  ,-Y  ,+Z  ) + (0   ,0   ,1/2 )  :   m(y)
+33:   (+X  ,+X-Y,+Z  ) + (0   ,0   ,1/2 )  :   m(y)
+57:   (+X-Y,+X  ,-Z  ) + (0   ,0   ,0   )  :   -3-(z)
+58:   (+Y  ,-X+Y,-Z  ) + (0   ,0   ,0   )  :   -3(z)
+60:   (-Y  ,-X  ,+Z  ) + (0   ,0   ,1/2 )  :   m(xy)
+63:   (-X+Y,+Y  ,+Z  ) + (0   ,0   ,1/2 )  :   m(x)
 
                    TRANSLATION     
 
 Length units throughout calculations are Bohr radii.
 
-lattice constants [aB] :  36.299556372153639     20.957557827763395     17.623389310173220   
-lattice constants [Ang]:  19.208897994293629     11.090261996475540     9.325896000000000    
-axis angles            :  90.000000000000000     90.000000000000000     90.000000000000000   
-bravais lattice        : C-Base Centered Monoclinic
+lattice constants [aB] :  10.813795240203737     10.813795240203737     44.182919299668370   
+lattice constants [Ang]:  5.722414003373330      5.722414003373330      23.380593999999999   
+axis angles            :  90.000000000000000     90.000000000000000     120.000000000000000  
+bravais lattice        : Simple Trigonal
 conventional to primitive transformation
-      b1  : 1/2  1/2  0   
-      b2  : -1/2 1/2  0   
+      b1  : 1    0    0   
+      b2  : 0    1    0   
       b3  : 0    0    1   
 coordinate rotation: cell=(a1,a2,a3)
                          =R*default_cell
@@ -40,14 +52,14 @@ coordinate rotation: cell=(a1,a2,a3)
                0.000000000000000      1.000000000000000      0.000000000000000    
                0.000000000000000      0.000000000000000      1.000000000000000    
 lattice vectors
-      a1  :  18.149778186076819     10.478778913881698     0.000000000000000    
-      a2  : -18.149778186076819     10.478778913881698     0.000000000000000    
-      a3  :  0.000000000000000      0.000000000000000      17.623389310173220   
+      a1  :  9.365021389339685     -5.406897620101866      0.000000000000000    
+      a2  :  0.000000000000000      10.813795240203737     0.000000000000000    
+      a3  :  0.000000000000000      0.000000000000000      44.182919299668370   
 reciprocal lattice vectors / 2*Pi
-      g1  :  0.027548546041382      0.047715483274261     -0.000000000000000    
-      g2  : -0.027548546041382      0.047715483274261      0.000000000000000    
-      g3  :  0.000000000000000     -0.000000000000000      0.056742774184915    
+      g1  :  0.106780322054396      0.000000000000000      0.000000000000000    
+      g2  :  0.053390161027198      0.092474471523391     -0.000000000000000    
+      g3  : -0.000000000000000      0.000000000000000      0.022633180782319    
 
-Volume (real cell) [aB^3] :  6703.497165228613085 
-Volume (real cell) [Ang^3]:  993.355792703817883  
+Volume (real cell) [aB^3] :  4474.467141779791746 
+Volume (real cell) [Ang^3]:  663.047622009141264  
 

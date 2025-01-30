@@ -1,16 +1,16 @@
 # generated using pymatgen
-data_AgAsBr4
+data_Al(CoO2)2
 _symmetry_space_group_name_H-M   'P 1'
-_cell_length_a   8.36569416
-_cell_length_b   7.80271493
-_cell_length_c   8.36569385
-_cell_angle_alpha   62.20224875
-_cell_angle_beta   58.68802596
-_cell_angle_gamma   62.20224815
+_cell_length_a   5.81297513
+_cell_length_b   5.81297513
+_cell_length_c   5.81297513
+_cell_angle_alpha   119.59350937
+_cell_angle_beta   118.82814703
+_cell_angle_gamma   91.37365619
 _symmetry_Int_Tables_number   1
-_chemical_formula_structural   AgAsBr4
-_chemical_formula_sum   'Ag2 As2 Br8'
-_cell_volume   394.15564317
+_chemical_formula_structural   Al(CoO2)2
+_chemical_formula_sum   'Al2 Co4 O8'
+_cell_volume   140.49846107
 _cell_formula_units_Z   2
 loop_
  _symmetry_equiv_pos_site_id
@@ -24,15 +24,17 @@ loop_
  _atom_site_fract_y
  _atom_site_fract_z
  _atom_site_occupancy
-  Ag  Ag0  1  0.00000000  0.00000000  0.50000000  1
-  Ag  Ag1  1  0.50000000  0.00000000  0.00000000  1
-  As  As2  1  0.00000000  0.00000000  0.00000000  1
-  As  As3  1  0.00000000  0.50000000  0.00000000  1
-  Br  Br4  1  0.21641800  0.27894900  0.21641800  1
-  Br  Br5  1  0.21641800  0.78821700  0.21641800  1
-  Br  Br6  1  0.22456700  0.25550500  0.76442300  1
-  Br  Br7  1  0.76442300  0.25550500  0.22456700  1
-  Br  Br8  1  0.23557700  0.74449500  0.77543300  1
-  Br  Br9  1  0.78358200  0.21178300  0.78358200  1
-  Br  Br10  1  0.77543300  0.74449500  0.23557700  1
-  Br  Br11  1  0.78358200  0.72105100  0.78358200  1
+  Al  Al0  1  0.50000000  0.50000000  0.50000000  1
+  Al  Al1  1  0.50000000  0.00000000  0.00000000  1
+  Co  Co2  1  0.50000000  0.00000000  0.50000000  1
+  Co  Co3  1  0.12172800  0.37172800  0.75000000  1
+  Co  Co4  1  0.00000000  0.00000000  0.00000000  1
+  Co  Co5  1  0.87827200  0.62827200  0.25000000  1
+  O  O6  1  0.29323300  0.76152900  0.53170400  1
+  O  O7  1  0.72982500  0.76152900  0.96829600  1
+  O  O8  1  0.73176800  0.21610700  0.98433900  1
+  O  O9  1  0.73176800  0.74742900  0.51566100  1
+  O  O10  1  0.26823200  0.25257100  0.48433900  1
+  O  O11  1  0.26823200  0.78389300  0.01566100  1
+  O  O12  1  0.70676700  0.23847100  0.46829600  1
+  O  O13  1  0.27017500  0.23847100  0.03170400  1

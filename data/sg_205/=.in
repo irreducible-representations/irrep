@@ -13,7 +13,7 @@ section header{
 
 
     struct {char[*] hostname;char[*] date;char[*] by;} last_changes
-    ={"mi2-Precision-5820-Tower","Thu Jan 16 17:19:58 2025","fedit (23.00-65-x86_64)"};
+    ={"mi2-Precision-5820-Tower","Wed Jan 29 12:17:22 2025","fedit (23.00-65-x86_64)"};
 
     char[*] compound="Al example";
 };
@@ -34,7 +34,7 @@ section structure_information{
     struct {int type;char[*] description;} lengthunit
     ={2,"Angstroem "};
 
-    real lattice_constants[3]={12.4300559,12.4300559,12.4300559
+    real lattice_constants[3]={7.02253,7.02253,7.02253
     };
     real axis_angles[3]={90,90,90
     };
@@ -43,15 +43,12 @@ section structure_information{
     ={f,{1,0,0},{0,0,1}};
 
     int max_L=4;
-    int nsort=5;
+    int nsort=2;
 
     struct {char[2] element;real tau[3];} wyckoff_positions[nsort]
     ={
-        {"Ag",{-0.36664592,-0.36664592,-0.36664592}}
-        ,{"B",{-0.09401438,0.07213505,0.06623792}}
-        ,{"B",{0.1309158,0.47228817,-0.46936979}}
-        ,{"Cl",{-0.19632517,0.1476182,0.13263645}}
-        ,{"Cl",{-0.27053016,-0.44608133,0.44316799}}
+        {"Al",{0.341499,0.341499,0.341499}}
+        ,{"As",{0.141202,0.141202,0.141202}}
     };
 
 };
@@ -61,21 +58,15 @@ section structure_dependend{
 
     struct {char[2] atom;real concentration;} concentrations[nsort]
     ={
-        {"Ag",1}
-        ,{"B",1}
-        ,{"B",1}
-        ,{"Cl",1}
-        ,{"Cl",1}
+        {"Al",1}
+        ,{"As",1}
     };
 
 
     struct {char[2] element;real split;} initial_spin_split[nsort]
     ={
-        {"Ag",2}
-        ,{"B",2}
-        ,{"B",2}
-        ,{"Cl",2}
-        ,{"Cl",2}
+        {"Al",2}
+        ,{"As",2}
     };
 
 

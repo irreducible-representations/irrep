@@ -13,7 +13,7 @@ section header{
 
 
     struct {char[*] hostname;char[*] date;char[*] by;} last_changes
-    ={"mi2-Precision-5820-Tower","Thu Jan 16 17:19:54 2025","fedit (23.00-65-x86_64)"};
+    ={"mi2-Precision-5820-Tower","Wed Jan 29 12:17:17 2025","fedit (23.00-65-x86_64)"};
 
     char[*] compound="Al example";
 };
@@ -34,7 +34,7 @@ section structure_information{
     struct {int type;char[*] description;} lengthunit
     ={2,"Angstroem "};
 
-    real lattice_constants[3]={8.582822,8.582822,6.45047
+    real lattice_constants[3]={6.357208,6.357208,8.255304
     };
     real axis_angles[3]={90,90,90
     };
@@ -43,17 +43,14 @@ section structure_information{
     ={f,{1,0,0},{0,0,1}};
 
     int max_L=4;
-    int nsort=7;
+    int nsort=4;
 
     struct {char[2] element;real tau[3];} wyckoff_positions[nsort]
     ={
-        {"Ag",{-1/2,0,0.485143}}
-        ,{"H",{-0.415247,-0.297918,0.380227}}
-        ,{"H",{-0.281429,-0.212445,-0.470826}}
-        ,{"H",{-0.444342,-0.283403,-0.363468}}
-        ,{"S",{-1/2,-1/2,0}}
-        ,{"N",{-0.399511,-0.227656,-0.492033}}
-        ,{"O",{-0.372759,-0.434937,0.133443}}
+        {"Ag",{-1/2,0,0.455637}}
+        ,{"S",{0,0,0}}
+        ,{"N",{0.152182,0.0043,-0.491886}}
+        ,{"O",{0.049568,0.178356,0.111305}}
     };
 
 };
@@ -64,9 +61,6 @@ section structure_dependend{
     struct {char[2] atom;real concentration;} concentrations[nsort]
     ={
         {"Ag",1}
-        ,{"H",1}
-        ,{"H",1}
-        ,{"H",1}
         ,{"S",1}
         ,{"N",1}
         ,{"O",1}
@@ -76,9 +70,6 @@ section structure_dependend{
     struct {char[2] element;real split;} initial_spin_split[nsort]
     ={
         {"Ag",2}
-        ,{"H",2}
-        ,{"H",2}
-        ,{"H",2}
         ,{"S",2}
         ,{"N",2}
         ,{"O",2}
@@ -96,16 +87,16 @@ section structure_dependend{
         ,{"X",{0,1/2,0}}
         ,{"M",{1/2,1/2,0}}
         ,{"$~G",{0,0,0}}
-        ,{"Z",{0,0,0.66528656051419}}
-        ,{"R",{0,1/2,0.66528656051419}}
-        ,{"A",{1/2,1/2,0.66528656051419}}
-        ,{"Z",{0,0,0.66528656051419}}
+        ,{"Z",{0,0,0.38503778903842}}
+        ,{"R",{0,1/2,0.38503778903842}}
+        ,{"A",{1/2,1/2,0.38503778903842}}
+        ,{"Z",{0,0,0.38503778903842}}
         ,{"<BREAK>",{0,0,0}}
         ,{"X",{0,1/2,0}}
-        ,{"R",{0,1/2,0.66528656051419}}
+        ,{"R",{0,1/2,0.38503778903842}}
         ,{"<BREAK>",{0,0,0}}
         ,{"M",{1/2,1/2,0}}
-        ,{"A",{1/2,1/2,0.66528656051419}}
+        ,{"A",{1/2,1/2,0.38503778903842}}
     };
 
 };

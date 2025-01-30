@@ -1,16 +1,16 @@
 # generated using pymatgen
-data_Ag2O
+data_BiO2
 _symmetry_space_group_name_H-M   'P 1'
-_cell_length_a   6.33540129
-_cell_length_b   6.63088356
-_cell_length_c   6.63088381
-_cell_angle_alpha   94.25444838
-_cell_angle_beta   61.46345202
-_cell_angle_gamma   61.46344317
+_cell_length_a   8.67616977
+_cell_length_b   8.67616977
+_cell_length_c   8.67616977
+_cell_angle_alpha   152.25936323
+_cell_angle_beta   134.81116521
+_cell_angle_gamma   53.85461565
 _symmetry_Int_Tables_number   1
-_chemical_formula_structural   Ag2O
-_chemical_formula_sum   'Ag8 O4'
-_cell_volume   197.79721321
+_chemical_formula_structural   BiO2
+_chemical_formula_sum   'Bi4 O8'
+_cell_volume   214.52717488
 _cell_formula_units_Z   4
 loop_
  _symmetry_equiv_pos_site_id
@@ -24,15 +24,15 @@ loop_
  _atom_site_fract_y
  _atom_site_fract_z
  _atom_site_occupancy
-  Ag  Ag0  1  0.00000000  0.50000000  0.00000000  1
-  Ag  Ag1  1  0.50000000  0.50000000  0.00000000  1
-  Ag  Ag2  1  0.00000000  0.00000000  0.00000000  1
-  Ag  Ag3  1  0.25000000  0.50000000  0.50000000  1
-  Ag  Ag4  1  0.50000000  0.00000000  0.00000000  1
-  Ag  Ag5  1  0.00000000  0.00000000  0.50000000  1
-  Ag  Ag6  1  0.75000000  0.50000000  0.50000000  1
-  Ag  Ag7  1  0.50000000  0.00000000  0.50000000  1
-  O  O8  1  0.22155894  0.38906813  0.16781398  1
-  O  O9  1  0.27844106  0.83218702  0.61093187  1
-  O  O10  1  0.72155894  0.16781398  0.38906813  1
-  O  O11  1  0.77844106  0.61093187  0.83218702  1
+  Bi  Bi0  1  0.10572700  0.38816400  0.71756300  1
+  Bi  Bi1  1  0.32939900  0.11183600  0.21756300  1
+  Bi  Bi2  1  0.67060100  0.88816400  0.78243700  1
+  Bi  Bi3  1  0.89427300  0.61183600  0.28243700  1
+  O  O4  1  0.96257600  0.24956400  0.71301200  1
+  O  O5  1  0.97783300  0.08680100  0.89103200  1
+  O  O6  1  0.19576900  0.58680100  0.60896800  1
+  O  O7  1  0.46344800  0.25043600  0.21301200  1
+  O  O8  1  0.03742400  0.75043600  0.28698800  1
+  O  O9  1  0.02216700  0.91319900  0.10896800  1
+  O  O10  1  0.80423100  0.41319900  0.39103200  1
+  O  O11  1  0.53655200  0.74956400  0.78698800  1

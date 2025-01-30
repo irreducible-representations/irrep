@@ -13,7 +13,7 @@ section header{
 
 
     struct {char[*] hostname;char[*] date;char[*] by;} last_changes
-    ={"mi2-Precision-5820-Tower","Thu Jan 16 17:19:56 2025","fedit (23.00-65-x86_64)"};
+    ={"mi2-Precision-5820-Tower","Wed Jan 29 12:17:19 2025","fedit (23.00-65-x86_64)"};
 
     char[*] compound="Al example";
 };
@@ -34,7 +34,7 @@ section structure_information{
     struct {int type;char[*] description;} lengthunit
     ={2,"Angstroem "};
 
-    real lattice_constants[3]={4.09548748,4.09548748,6.29988201
+    real lattice_constants[3]={3.05671958,3.05671958,7.09543393
     };
     real axis_angles[3]={90,90,120
     };
@@ -43,13 +43,12 @@ section structure_information{
     ={f,{1,0,0},{0,0,1}};
 
     int max_L=4;
-    int nsort=3;
+    int nsort=2;
 
     struct {char[2] element;real tau[3];} wyckoff_positions[nsort]
     ={
-        {"Ac",{-1/3,1/3,-0.24519245}}
-        ,{"O",{-1/3,1/3,0.35529608}}
-        ,{"O",{0,0,0}}
+        {"Ag",{1/3,-1/3,-0.34215594}}
+        ,{"Hg",{0,0,0}}
     };
 
 };
@@ -59,17 +58,15 @@ section structure_dependend{
 
     struct {char[2] atom;real concentration;} concentrations[nsort]
     ={
-        {"Ac",1}
-        ,{"O",1}
-        ,{"O",1}
+        {"Ag",1}
+        ,{"Hg",1}
     };
 
 
     struct {char[2] element;real split;} initial_spin_split[nsort]
     ={
-        {"Ac",2}
-        ,{"O",2}
-        ,{"O",2}
+        {"Ag",2}
+        ,{"Hg",2}
     };
 
 
@@ -84,16 +81,16 @@ section structure_dependend{
         ,{"M",{0.57735026918963,0,0}}
         ,{"K",{0.57735026918963,1/3,0}}
         ,{"$~G",{0,0,0}}
-        ,{"A",{0,0,0.3250447765132}}
-        ,{"L",{0.57735026918963,0,0.3250447765132}}
-        ,{"H",{0.57735026918963,1/3,0.3250447765132}}
-        ,{"A",{0,0,0.3250447765132}}
+        ,{"A",{0,0,0.21540046811485}}
+        ,{"L",{0.57735026918963,0,0.21540046811485}}
+        ,{"H",{0.57735026918963,1/3,0.21540046811485}}
+        ,{"A",{0,0,0.21540046811485}}
         ,{"<BREAK>",{0,0,0}}
-        ,{"L",{0.57735026918963,0,0.3250447765132}}
+        ,{"L",{0.57735026918963,0,0.21540046811485}}
         ,{"M",{0.57735026918963,0,0}}
         ,{"<BREAK>",{0,0,0}}
         ,{"K",{0.57735026918963,1/3,0}}
-        ,{"H",{0.57735026918963,1/3,0.3250447765132}}
+        ,{"H",{0.57735026918963,1/3,0.21540046811485}}
     };
 
 };

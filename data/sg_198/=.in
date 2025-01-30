@@ -13,7 +13,7 @@ section header{
 
 
     struct {char[*] hostname;char[*] date;char[*] by;} last_changes
-    ={"mi2-Precision-5820-Tower","Thu Jan 16 17:19:58 2025","fedit (23.00-65-x86_64)"};
+    ={"mi2-Precision-5820-Tower","Wed Jan 29 12:17:21 2025","fedit (23.00-65-x86_64)"};
 
     char[*] compound="Al example";
 };
@@ -34,7 +34,7 @@ section structure_information{
     struct {int type;char[*] description;} lengthunit
     ={2,"Angstroem "};
 
-    real lattice_constants[3]={8.047341,8.047341,8.047341
+    real lattice_constants[3]={11.051446,11.051446,11.051446
     };
     real axis_angles[3]={90,90,90
     };
@@ -43,14 +43,18 @@ section structure_information{
     ={f,{1,0,0},{0,0,1}};
 
     int max_L=4;
-    int nsort=4;
+    int nsort=8;
 
     struct {char[2] element;real tau[3];} wyckoff_positions[nsort]
     ={
-        {"Ag",{0.315672,-0.01948,0.35812}}
-        ,{"S",{-0.14317,-0.35683,0.35683}}
-        ,{"N",{0.079273,-0.420727,-0.079273}}
-        ,{"O",{-0.30889,-0.078681,-0.032212}}
+        {"Ag",{0.227034,-0.072634,-0.103547}}
+        ,{"Ag",{0.010418,-0.224131,-0.017842}}
+        ,{"Ag",{0.348657,-0.151343,-0.348657}}
+        ,{"As",{-0.248704,0.251296,0.248704}}
+        ,{"Se",{-0.123776,0.376224,0.123776}}
+        ,{"Se",{0.36227,-0.120735,0.121219}}
+        ,{"Se",{0.216138,-0.283862,-0.216138}}
+        ,{"Se",{0.483661,-0.016339,-0.483661}}
     };
 
 };
@@ -61,18 +65,26 @@ section structure_dependend{
     struct {char[2] atom;real concentration;} concentrations[nsort]
     ={
         {"Ag",1}
-        ,{"S",1}
-        ,{"N",1}
-        ,{"O",1}
+        ,{"Ag",1}
+        ,{"Ag",1}
+        ,{"As",1}
+        ,{"Se",1}
+        ,{"Se",1}
+        ,{"Se",1}
+        ,{"Se",1}
     };
 
 
     struct {char[2] element;real split;} initial_spin_split[nsort]
     ={
         {"Ag",2}
-        ,{"S",2}
-        ,{"N",2}
-        ,{"O",2}
+        ,{"Ag",2}
+        ,{"Ag",2}
+        ,{"As",2}
+        ,{"Se",2}
+        ,{"Se",2}
+        ,{"Se",2}
+        ,{"Se",2}
     };
 
 

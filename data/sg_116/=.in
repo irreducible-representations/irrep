@@ -13,7 +13,7 @@ section header{
 
 
     struct {char[*] hostname;char[*] date;char[*] by;} last_changes
-    ={"mi2-Precision-5820-Tower","Thu Jan 16 17:19:54 2025","fedit (23.00-65-x86_64)"};
+    ={"mi2-Precision-5820-Tower","Wed Jan 29 12:17:17 2025","fedit (23.00-65-x86_64)"};
 
     char[*] compound="Al example";
 };
@@ -34,7 +34,7 @@ section structure_information{
     struct {int type;char[*] description;} lengthunit
     ={2,"Angstroem "};
 
-    real lattice_constants[3]={5.39141,5.39141,8.431887
+    real lattice_constants[3]={5.77819146,5.77819146,9.30200365
     };
     real axis_angles[3]={90,90,90
     };
@@ -47,11 +47,11 @@ section structure_information{
 
     struct {char[2] element;real tau[3];} wyckoff_positions[nsort]
     ={
-        {"Co",{-1/2,0,0.130341}}
-        ,{"Co",{-1/2,-1/2,1/4}}
-        ,{"Co",{0,0,-1/2}}
-        ,{"Si",{0.346045,0.204882,0.408804}}
-        ,{"Si",{0.172419,0.172419,-1/4}}
+        {"Ge",{0.21761742,0.34960242,0.08527257}}
+        ,{"Ge",{0.17132469,0.17132469,-1/4}}
+        ,{"Os",{0,-1/2,0.37659059}}
+        ,{"Os",{-1/2,-1/2,1/4}}
+        ,{"Os",{0,0,0}}
     };
 
 };
@@ -61,21 +61,21 @@ section structure_dependend{
 
     struct {char[2] atom;real concentration;} concentrations[nsort]
     ={
-        {"Co",1}
-        ,{"Co",1}
-        ,{"Co",1}
-        ,{"Si",1}
-        ,{"Si",1}
+        {"Ge",1}
+        ,{"Ge",1}
+        ,{"Os",1}
+        ,{"Os",1}
+        ,{"Os",1}
     };
 
 
     struct {char[2] element;real split;} initial_spin_split[nsort]
     ={
-        {"Co",2}
-        ,{"Co",2}
-        ,{"Co",2}
-        ,{"Si",2}
-        ,{"Si",2}
+        {"Ge",2}
+        ,{"Ge",2}
+        ,{"Os",2}
+        ,{"Os",2}
+        ,{"Os",2}
     };
 
 
@@ -90,16 +90,16 @@ section structure_dependend{
         ,{"X",{0,1/2,0}}
         ,{"M",{1/2,1/2,0}}
         ,{"$~G",{0,0,0}}
-        ,{"Z",{0,0,0.31970364403602}}
-        ,{"R",{0,1/2,0.31970364403602}}
-        ,{"A",{1/2,1/2,0.31970364403602}}
-        ,{"Z",{0,0,0.31970364403602}}
+        ,{"Z",{0,0,0.31058853970671}}
+        ,{"R",{0,1/2,0.31058853970671}}
+        ,{"A",{1/2,1/2,0.31058853970671}}
+        ,{"Z",{0,0,0.31058853970671}}
         ,{"<BREAK>",{0,0,0}}
         ,{"X",{0,1/2,0}}
-        ,{"R",{0,1/2,0.31970364403602}}
+        ,{"R",{0,1/2,0.31058853970671}}
         ,{"<BREAK>",{0,0,0}}
         ,{"M",{1/2,1/2,0}}
-        ,{"A",{1/2,1/2,0.31970364403602}}
+        ,{"A",{1/2,1/2,0.31058853970671}}
     };
 
 };

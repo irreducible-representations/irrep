@@ -1,8 +1,8 @@
 
                    SYMMETRYGROUP      
 
-Space group      : 66, HM: C c c m, Hall: -C 2 2c
-Point group      : D2h
+Space group      : 192, HM: P 6/m c c, Hall: -P 6 2c
+Point group      : D6h
 Inversion        : yes
 Symmorphic       : no
 
@@ -13,30 +13,50 @@ Symmorphic       : no
  if a vector is given relative to the lattice basis vectors 
  r=X*a1+Y*a2+Z*a3 then it is transformed into
  r'=(A+t1)*a1+(B+t2)*a2+(C+t3)*a2.
+ The operations refer to the corresponding
+ primitive hexa/tri-gonal unit cell!
+ Example: C2(x) is along the a axis, while
+ C2(xy) is along the a+b axis.
 
 
-Full Group Operations : 8
+Full Group Operations : 24
 Index   rotation          translation      : symbol
  0:   (+X  ,+Y  ,+Z  ) + (0   ,0   ,0   )  :   E
- 1:   (-X  ,+Y  ,-Z  ) + (0   ,0   ,1/2 )  :   C2(y)
- 2:   (+X  ,-Y  ,-Z  ) + (0   ,0   ,1/2 )  :   C2(x)
+ 1:   (-X  ,-X+Y,-Z  ) + (0   ,0   ,1/2 )  :   C2(y)
+ 2:   (+X  ,+X-Y,-Z  ) + (0   ,0   ,1/2 )  :   C2(2x+y)
  3:   (-X  ,-Y  ,+Z  ) + (0   ,0   ,0   )  :   C2(z)
+24:   (+Y  ,-X+Y,+Z  ) + (0   ,0   ,0   )  :   C6-(z)
+25:   (-X+Y,-X  ,+Z  ) + (0   ,0   ,0   )  :   C3-(z)
+26:   (-Y  ,+X-Y,+Z  ) + (0   ,0   ,0   )  :   C3(z)
+27:   (+X-Y,+X  ,+Z  ) + (0   ,0   ,0   )  :   C6(z)
+28:   (+Y  ,+X  ,-Z  ) + (0   ,0   ,1/2 )  :   C2(xy)
+29:   (-X+Y,+Y  ,-Z  ) + (0   ,0   ,1/2 )  :   C2(x+2y)
+30:   (-Y  ,-X  ,-Z  ) + (0   ,0   ,1/2 )  :   C2(x-y)
+31:   (+X-Y,-Y  ,-Z  ) + (0   ,0   ,1/2 )  :   C2(x)
 32:   (-X  ,-Y  ,-Z  ) + (0   ,0   ,0   )  :   I
-33:   (+X  ,-Y  ,+Z  ) + (0   ,0   ,1/2 )  :   m(y)
-34:   (-X  ,+Y  ,+Z  ) + (0   ,0   ,1/2 )  :   m(x)
+33:   (+X  ,+X-Y,+Z  ) + (0   ,0   ,1/2 )  :   m(y)
+34:   (-X  ,-X+Y,+Z  ) + (0   ,0   ,1/2 )  :   m(2x+y)
 35:   (+X  ,+Y  ,-Z  ) + (0   ,0   ,0   )  :   m(z)
+56:   (-Y  ,+X-Y,-Z  ) + (0   ,0   ,0   )  :   -6-(z)
+57:   (+X-Y,+X  ,-Z  ) + (0   ,0   ,0   )  :   -3-(z)
+58:   (+Y  ,-X+Y,-Z  ) + (0   ,0   ,0   )  :   -3(z)
+59:   (-X+Y,-X  ,-Z  ) + (0   ,0   ,0   )  :   -6(z)
+60:   (-Y  ,-X  ,+Z  ) + (0   ,0   ,1/2 )  :   m(xy)
+61:   (+X-Y,-Y  ,+Z  ) + (0   ,0   ,1/2 )  :   m(x+2y)
+62:   (+Y  ,+X  ,+Z  ) + (0   ,0   ,1/2 )  :   m(x-y)
+63:   (-X+Y,+Y  ,+Z  ) + (0   ,0   ,1/2 )  :   m(x)
 
                    TRANSLATION     
 
 Length units throughout calculations are Bohr radii.
 
-lattice constants [aB] :  30.451209302774817     17.581014097153066     17.532079633539656   
-lattice constants [Ang]:  16.114086004329391     9.303472002966940      9.277577000000001    
-axis angles            :  90.000000000000000     90.000000000000000     90.000000000000000   
-bravais lattice        : C-Base Centered Orthorhombic
+lattice constants [aB] :  17.575408407969178     17.575408407969178     17.563783568738671   
+lattice constants [Ang]:  9.300505599999999      9.300505599999999      9.294354000000000    
+axis angles            :  90.000000000000000     90.000000000000000     120.000000000000000  
+bravais lattice        : Simple Hexagonal
 conventional to primitive transformation
-      b1  : 1/2  1/2  0   
-      b2  : -1/2 1/2  0   
+      b1  : 1    0    0   
+      b2  : 0    1    0   
       b3  : 0    0    1   
 coordinate rotation: cell=(a1,a2,a3)
                          =R*default_cell
@@ -44,14 +64,14 @@ coordinate rotation: cell=(a1,a2,a3)
                0.000000000000000      1.000000000000000      0.000000000000000    
                0.000000000000000      0.000000000000000      1.000000000000000    
 lattice vectors
-      a1  :  15.225604651387409     8.790507048576533      0.000000000000000    
-      a2  : -15.225604651387409     8.790507048576533      0.000000000000000    
-      a3  :  0.000000000000000      0.000000000000000      17.532079633539656   
+      a1  :  15.220750163187928    -8.787704203984585      0.000000000000000    
+      a2  :  0.000000000000000      17.575408407969178     0.000000000000000    
+      a3  :  0.000000000000000      0.000000000000000      17.563783568738671   
 reciprocal lattice vectors / 2*Pi
-      g1  :  0.032839418298861      0.056879540308311     -0.000000000000000    
-      g2  : -0.032839418298861      0.056879540308311      0.000000000000000    
-      g3  :  0.000000000000000     -0.000000000000000      0.057038298986901    
+      g1  :  0.065699784128810      0.000000000000000      0.000000000000000    
+      g2  :  0.032849892064405      0.056897682078703     -0.000000000000000    
+      g3  : -0.000000000000000      0.000000000000000      0.056935340616465    
 
-Volume (real cell) [aB^3] :  4693.014601911483624 
-Volume (real cell) [Ang^3]:  695.433014312819296  
+Volume (real cell) [aB^3] :  4698.503556793202733 
+Volume (real cell) [Ang^3]:  696.246393507775679  
 

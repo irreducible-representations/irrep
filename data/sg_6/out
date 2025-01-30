@@ -26,7 +26,3 @@ vecs after integerization (cols):
  [ 0. -0.  1.]]
 centering in preliminary conventional:
 P
-centering: P,  conv centering: P,  matrix:
-[[1. 0. 0.]
- [0. 1. 0.]
- [0. 0. 1.]]
