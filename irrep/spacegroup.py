@@ -1759,7 +1759,9 @@ class SpaceGroup():
             for sym in symmetries:
                 if sym.order == n_prim and sym.angle > 0.0:  # counter-clock
                     axis1 = sym.axis
+                    print(f'axis1:{axis1}')
                     dir1 = sym.axis_direct
+                    print(f'dir1:{dir1}')
                     Wp = sym.rotation.copy()
                     if sym.inversion:
                         Wp *= -1
@@ -1769,6 +1771,7 @@ class SpaceGroup():
                     break
 
             # Solve S.v = 0 to determine secondary direction
+            print(f'S:{S}')
             found = False
             for vec in grid:
 
@@ -1780,6 +1783,7 @@ class SpaceGroup():
                 dir2 = vec - (S @ vec) / n_prim
                 print(f'vec after orthogonalization: {dir2}')
                 if self.laue_group != '2/m': # Obtain dir3 by rotating dir2
+                    print(f'Wp:\n{Wp}')
                     dir3 = Wp @ dir2
                     break
                 else:  # Obtain dir3 by solving again S.e=0
@@ -1813,18 +1817,30 @@ class SpaceGroup():
 
         # Make sure that all components are integers
         M = np.array(M)
-        print(f'Before integerization: {M.round(4)}')
+        M_float = np.array(M.copy(), dtype=float)
+        #print(f'Before integerization: {M.round(4)}')
         for i in range(3):
+            print(f'vector {i}: {M[i]}')
             components = [Fraction(v).limit_denominator().denominator for v in M[i]]
-            M[i] *= lcm(*components)
-            smallest_nonzero = np.min(M[i,np.where(M[i]>1e-3)[0]])
-            M[i] /= smallest_nonzero
-        print(f'After integerization (cols):\n{np.round(M.T,4)}')
+            print(f'components: {components}')
+            M_float[i] *= lcm(*components)
+            absolute = np.abs(M_float)
+            #smallest_nonzero = np.min(M_float[i,np.where(M_float[i]>1e-3)[0]])
+            smallest_nonzero = np.min(absolute[i,np.where(absolute[i]>1e-3)[0]])
+            print(f'smallest_nonzero: {smallest_nonzero}')
+            M_float[i] /= smallest_nonzero
+            print(f'{M_float[i]}')
+        print(f'After integerization (cols):\n{np.round(M_float.T,4)}')
 
-        M = M.T  # vectors by columns
+        print(M_float.T)
+        print(np.rint(M_float.T))
+        M = np.array(np.rint(M_float.T), dtype=int)
+        #M = M.T  # vectors by columns
 
         # Determine centering and fix it to the one in tables
         det = np.linalg.det(M)
+        print(M)
+        print(f'det: {det}')
 
         msg = ('The preliminary transformation to the '
                'conventional cell via the matrix M '
@@ -1984,7 +2000,7 @@ class SpaceGroup():
         for S in permutations: 
 
             # Take symmetries to the "standard" primitive cell
-            print(TO_PRIMITIVE[sg_svd.centering])
+            print('S:\n',TO_PRIMITIVE[sg_svd.centering])
             P = M @ S @ TO_PRIMITIVE[sg_svd.centering]
             rotations = []
             translations = []
@@ -1992,12 +2008,12 @@ class SpaceGroup():
                 rotations.append(sym.rotation_refUC(P))
                 translations.append(sym.translation_refUC(P, np.zeros(3)) % 1)
 
-#            # TEST
-#            for i,rot in enumerate(rotations):
-#                print(f'\n# SYM {i}')
-#                print(rot)
-#                print('----')
-#                print(translations[i])
+            # TEST
+            for i,rot in enumerate(rotations):
+                print(f'\n# SYM {i}')
+                print(rot)
+                print(translations[i])
+                print('----')
 
             # Identify the generators by comparing to SVD matrices
             inds_generators = []
@@ -2014,6 +2030,7 @@ class SpaceGroup():
                 if not found:
                     print(f'R(table):\n{W_svd}')
                     print(f't(table):\n{sg_svd.translations[isvd]}')
+                    break
                     raise RuntimeError(
                         'Could not match generator #{} with a symmetry from the '
                         'candidate-primitive DFT cell. Please, open an issue on '
