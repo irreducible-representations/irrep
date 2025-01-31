@@ -914,7 +914,10 @@ class SpaceGroup():
 
             for isym in range(self.order):
                 
+                print(f'ISYM {isym}')
+                print(spin_repr[isym].round(4))
                 angle, axis, d = self.identify_from_spinrep(spin_repr[isym])
+                print(angle, axis, d, parities[isym])
                 if d:
                     continue
                 self.symmetries.append(SymmetryOperation(angle=angle,
@@ -1757,7 +1760,7 @@ class SpaceGroup():
                 if sym.order == n_prim and sym.angle > 0.0:  # counter-clock
                     axis1 = sym.axis
                     dir1 = sym.axis_direct
-                    Wp = sym.rotation
+                    Wp = sym.rotation.copy()
                     if sym.inversion:
                         Wp *= -1
                     S = np.zeros((3,3))
@@ -1772,7 +1775,7 @@ class SpaceGroup():
                 # Find component perpendicular to dir1
                 print(f'VEC: {vec}')
                 if parallel(vec, dir1):
-                    print(f'vec: {vec} parallel to axis {dir1} -> discarded')
+                    print(f'vec: {vec} parallel to axis {dir1.round(4)} -> discarded')
                     continue
                 dir2 = vec - (S @ vec) / n_prim
                 print(f'vec after orthogonalization: {dir2}')
@@ -1782,14 +1785,15 @@ class SpaceGroup():
                 else:  # Obtain dir3 by solving again S.e=0
                     if not found:
                         dir2_tmp = dir2
-                        print('valid dir2: {dir2}')
+                        print(f'valid dir2: {dir2}')
                         found = True
                     elif not parallel(dir2, dir2_tmp):
+                        print(f'valid dir3: {dir2}')
                         dir3 = dir2.copy()
                         dir2 = dir2_tmp
                         break
                     else:
-                        print(f'dir2: {dir2} parallel to dir2_tmp {dir2_tmp} -> discarded')
+                        print(f'dir2: {dir2} parallel to dir2_tmp {dir2_tmp} -> discarded for dir3')
 
         print(f'dir1:{dir1}')
         print(f'dir2:{dir2}')
@@ -1809,13 +1813,13 @@ class SpaceGroup():
 
         # Make sure that all components are integers
         M = np.array(M)
-        print(M)
+        print(f'Before integerization: {M.round(4)}')
         for i in range(3):
             components = [Fraction(v).limit_denominator().denominator for v in M[i]]
             M[i] *= lcm(*components)
             smallest_nonzero = np.min(M[i,np.where(M[i]>1e-3)[0]])
             M[i] /= smallest_nonzero
-        print(f'vecs after integerization (cols):\n{np.round(M.T,4)}')
+        print(f'After integerization (cols):\n{np.round(M.T,4)}')
 
         M = M.T  # vectors by columns
 
@@ -1930,7 +1934,7 @@ class SpaceGroup():
         else:  # cubic, hexagonal, rhombohedral and triclinic
             M_fixcent = np.eye(3)
 
-        print(f'centering: {centering},  conv centering: {sg_svd.centering},  matrix:\n{M_fixcent}')
+        print(f'centering: {centering},  conv centering: {sg_svd.centering},  matrix fixing centering:\n{M_fixcent}')
 
         M = M @ M_fixcent
 
@@ -1967,16 +1971,33 @@ class SpaceGroup():
                                               [1, 0, 0],
                                               [0, 0, -1]]))
 
+        # TEST
+        #print('SYMS IN PRELIMINARY CONVENTIONAL CELL')
+        #for i,sym in enumerate(symmetries):
+        #    print(f'\n# SYM {i}')
+        #    print(sym.rotation)
+        #    print(sym.rotation_refUC(M))
+        #    print('----')
+        #    print(sym.translation_refUC(M, np.zeros(3)) % 1)
+
         found = False
         for S in permutations: 
 
             # Take symmetries to the "standard" primitive cell
+            print(TO_PRIMITIVE[sg_svd.centering])
             P = M @ S @ TO_PRIMITIVE[sg_svd.centering]
             rotations = []
             translations = []
             for sym in symmetries:
                 rotations.append(sym.rotation_refUC(P))
                 translations.append(sym.translation_refUC(P, np.zeros(3)) % 1)
+
+#            # TEST
+#            for i,rot in enumerate(rotations):
+#                print(f'\n# SYM {i}')
+#                print(rot)
+#                print('----')
+#                print(translations[i])
 
             # Identify the generators by comparing to SVD matrices
             inds_generators = []
@@ -1991,6 +2012,8 @@ class SpaceGroup():
                         break
 
                 if not found:
+                    print(f'R(table):\n{W_svd}')
+                    print(f't(table):\n{sg_svd.translations[isvd]}')
                     raise RuntimeError(
                         'Could not match generator #{} with a symmetry from the '
                         'candidate-primitive DFT cell. Please, open an issue on '
