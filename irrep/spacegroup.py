@@ -91,8 +91,8 @@ TO_PRIMITIVE = {'A': np.array([[1, 0, 0],
                 'P': np.eye(3)
                 }
 
-grid = [[1,0,0], [0,1,0], [0,0,1], [1,1,0], [1,0,1], [0,1,1], [1,1,1], [2,1,0], 
-        [2,0,1], [0,2,1], [0,1,2]]
+GRID = np.array([[1,0,0], [0,1,0], [0,0,1], [1,1,0], [1,0,1], [0,1,1], [1,1,1],
+                 [2,1,0], [2,0,1], [0,2,1], [0,1,2], [0,1,-1], [1,-1,0]])
 
 
 class SymmetryOperation():
@@ -1716,6 +1716,8 @@ class SpaceGroup():
 
     def conv_from_prim(self):
 
+        global GRID
+
         symmetries = [sym for sym in self.symmetries if not sym.d]
         print('Lattice prim:\n',self.Lattice)
 
@@ -1773,7 +1775,10 @@ class SpaceGroup():
             # Solve S.v = 0 to determine secondary direction
             print(f'S:{S}')
             found = False
-            for vec in grid:
+            if self.number in [146, 148, 155, 160, 161, 166, 167]:  # rhombo.
+                GRID = np.roll(GRID, -11, axis=0)
+
+            for vec in GRID:
 
                 # Find component perpendicular to dir1
                 print(f'VEC: {vec}')
@@ -1819,6 +1824,7 @@ class SpaceGroup():
         M = np.array(M)
         M_float = np.array(M.copy(), dtype=float)
         #print(f'Before integerization: {M.round(4)}')
+
         for i in range(3):
             print(f'vector {i}: {M[i]}')
             components = [Fraction(v).limit_denominator().denominator for v in M[i]]
