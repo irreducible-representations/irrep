@@ -914,10 +914,7 @@ class SpaceGroup():
 
             for isym in range(self.order):
                 
-                print(f'ISYM {isym}')
-                print(spin_repr[isym].round(4))
                 angle, axis, d = self.identify_from_spinrep(spin_repr[isym])
-                print(angle, axis, d, parities[isym])
                 if d:
                     continue
                 self.symmetries.append(SymmetryOperation(angle=angle,
@@ -946,7 +943,6 @@ class SpaceGroup():
                                         )
                     # Sort symmetries like in tables
                     args = np.argsort(ind)
-                    print('args=', args)
                     for i,i_ind in enumerate(args):
                         self.symmetries[i_ind].ind = i+1
                         self.symmetries[i_ind].sign = signs[i_ind]
@@ -970,44 +966,6 @@ class SpaceGroup():
                             "tables, try not specifying refUC and shiftUC.")
                         log_message(msg, verbosity, 1)
                         pass
-                        
-
-            ## Test
-            ## Identify the space group from O(3) matrices of primitive cell
-            #rotations_refUC = [sym.rotation_refUC(self.refUC) for sym in self.symmetries]
-            #translations_refUC = [sym.translation_refUC(self.refUC, np.zeros(3)) for sym in self.symmetries]
-            #Lattice_refUC = np.dot(self.Lattice.T, self.refUC).T
-            #spgtype = spglib.get_spacegroup_type_from_symmetry(rotations_refUC,
-            #                                                  translations_refUC,
-            #                                                  lattice=self.Lattice)
-            #print(spgtype.number);exit()
-            #for sym in self.symmetries:
-            #    sym.show()
-
-            #if spgtype is None:
-            #    msg = ('WARNING: Identification of space group from O(3) '
-            #           'matrices via spglib failed. Stopping until a '
-            #           'robust algorithm is written :S')
-            #    log_message(msg, v, 1)  # change to 2 when implemented
-            #    raise RuntimeError()
-
-            #print(spgtype)
-            #self.number = spgtype.number
-            #self.name = spgtype.international
-            #hall_number = spgtype.hall_number
-            #cell = (self.Lattice, [[0,0,0], [0.5,0.5,0.0],[0.5,0,0],[0,0.5,0]], [1,1,1,1])  # making up a cell
-            #dataset = spglib.get_symmetry_dataset(cell, hall_number=hall_number)
-            #print(dataset);exit()
-            #transformation_matrix = dataset.transformation_matrix
-            #origin_shift = dataset.origin_shift
-            #print(self.number, self.name)
-            #print(transformation_matrix)
-            #print(origin_shift)
-            #exit()
-            # End test
-
-
-
 
         else:  # vasp, espresso, abinit, w90 and gpaw
 
@@ -1331,7 +1289,6 @@ class SpaceGroup():
             raise RuntimeError('Counting of types of symmetries does not match '
                                'with any crystal class: {}'.format(count_types))
 
-        print(f'Crystal class: {crystal_class}')  # test
         return crystal_class
 
     @cached_property
@@ -1366,7 +1323,6 @@ class SpaceGroup():
         else:
             raise RuntimeError('Point group {} has no laue group associated'
                                .format(self.crystal_class))
-        print(f'Laue group: {laue}')  # test
         return laue
 
     def json(self, symmetries=None):
@@ -1719,7 +1675,6 @@ class SpaceGroup():
         global GRID
 
         symmetries = [sym for sym in self.symmetries if not sym.d]
-        print('Lattice prim:\n',self.Lattice)
 
         # Determine primary direction and primary rotation's order
         if self.laue_group == '-1':
@@ -1761,9 +1716,7 @@ class SpaceGroup():
             for sym in symmetries:
                 if sym.order == n_prim and sym.angle > 0.0:  # counter-clock
                     axis1 = sym.axis
-                    print(f'axis1:{axis1}')
                     dir1 = sym.axis_direct
-                    print(f'dir1:{dir1}')
                     Wp = sym.rotation.copy()
                     if sym.inversion:
                         Wp *= -1
@@ -1773,7 +1726,6 @@ class SpaceGroup():
                     break
 
             # Solve S.v = 0 to determine secondary direction
-            print(f'S:{S}')
             found = False
             if self.number in [146, 148, 155, 160, 161, 166, 167]:  # rhombo.
                 GRID = np.roll(GRID, -11, axis=0)
@@ -1781,72 +1733,48 @@ class SpaceGroup():
             for vec in GRID:
 
                 # Find component perpendicular to dir1
-                print(f'VEC: {vec}')
                 if parallel(vec, dir1):
-                    print(f'vec: {vec} parallel to axis {dir1.round(4)} -> discarded')
                     continue
                 dir2 = vec - (S @ vec) / n_prim
-                print(f'vec after orthogonalization: {dir2}')
                 if self.laue_group != '2/m': # Obtain dir3 by rotating dir2
-                    print(f'Wp:\n{Wp}')
                     dir3 = Wp @ dir2
                     break
                 else:  # Obtain dir3 by solving again S.e=0
                     if not found:
                         dir2_tmp = dir2
-                        print(f'valid dir2: {dir2}')
                         found = True
                     elif not parallel(dir2, dir2_tmp):
-                        print(f'valid dir3: {dir2}')
                         dir3 = dir2.copy()
                         dir2 = dir2_tmp
                         break
-                    else:
-                        print(f'dir2: {dir2} parallel to dir2_tmp {dir2_tmp} -> discarded for dir3')
-
-        print(f'dir1:{dir1}')
-        print(f'dir2:{dir2}')
-        print(f'dir3:{dir3}')
 
         # Save directions in an array and make sure axes are right-handed
         if self.laue_group == '2/m':
             M = [dir2, dir1, dir3]
             if np.linalg.det(M) < 0:
-                print('fix handedness')
                 M[0], M[2] = M[2], M[0]
         else:
             M = [dir2, dir3, dir1]
             if np.linalg.det(M) < 0:
-                print('fix handedness')
                 M[0], M[1] = M[1], M[0]
 
         # Make sure that all components are integers
         M = np.array(M)
         M_float = np.array(M.copy(), dtype=float)
-        #print(f'Before integerization: {M.round(4)}')
 
         for i in range(3):
-            print(f'vector {i}: {M[i]}')
             components = [Fraction(v).limit_denominator().denominator for v in M[i]]
-            print(f'components: {components}')
             M_float[i] *= lcm(*components)
             absolute = np.abs(M_float)
             #smallest_nonzero = np.min(M_float[i,np.where(M_float[i]>1e-3)[0]])
             smallest_nonzero = np.min(absolute[i,np.where(absolute[i]>1e-3)[0]])
-            print(f'smallest_nonzero: {smallest_nonzero}')
             M_float[i] /= smallest_nonzero
-            print(f'{M_float[i]}')
-        print(f'After integerization (cols):\n{np.round(M_float.T,4)}')
 
-        print(M_float.T)
-        print(np.rint(M_float.T))
         M = np.array(np.rint(M_float.T), dtype=int)
         #M = M.T  # vectors by columns
 
         # Determine centering and fix it to the one in tables
         det = np.linalg.det(M)
-        print(M)
-        print(f'det: {det}')
 
         msg = ('The preliminary transformation to the '
                'conventional cell via the matrix M '
@@ -1855,8 +1783,6 @@ class SpaceGroup():
                'developers')
 
         if abs(det) - int(abs(det)) > 1e-3:
-            print(f'M: {M}')  # test line
-            print(f'det(M): {det}')  # test line
             raise RuntimeError(msg)
 
         elif int(abs(det)) == 4:
@@ -1875,21 +1801,16 @@ class SpaceGroup():
 
             else:  # A, B or C
 
-                print(f'v: {v}')
                 irow = np.where(v == 1)[0][0]
                 icol = np.where(np.abs(np.abs(M)[irow] - 1.0) < 1e-5)[0][0]
-                print(irow,icol)
                 centering = ['A', 'B', 'C'][icol]
 
         elif int(abs(det)) == 1:
             centering = 'P'
 
         else:
-            print(f'M: {M}')  # test line
-            print(f'det(M): {det}')  # test line
             raise RuntimeError(msg)
 
-        print(f'centering in preliminary conventional:\n{centering}')
 
         # Set centering to that in tables
         sg_svd = SpaceGroup_SVD(self.number, mode='parse')
@@ -1956,7 +1877,6 @@ class SpaceGroup():
         else:  # cubic, hexagonal, rhombohedral and triclinic
             M_fixcent = np.eye(3)
 
-        print(f'centering: {centering},  conv centering: {sg_svd.centering},  matrix fixing centering:\n{M_fixcent}')
 
         M = M @ M_fixcent
 
@@ -1993,33 +1913,16 @@ class SpaceGroup():
                                               [1, 0, 0],
                                               [0, 0, -1]]))
 
-        # TEST
-        #print('SYMS IN PRELIMINARY CONVENTIONAL CELL')
-        #for i,sym in enumerate(symmetries):
-        #    print(f'\n# SYM {i}')
-        #    print(sym.rotation)
-        #    print(sym.rotation_refUC(M))
-        #    print('----')
-        #    print(sym.translation_refUC(M, np.zeros(3)) % 1)
-
         found = False
         for S in permutations: 
 
             # Take symmetries to the "standard" primitive cell
-            print('S:\n',TO_PRIMITIVE[sg_svd.centering])
             P = M @ S @ TO_PRIMITIVE[sg_svd.centering]
             rotations = []
             translations = []
             for sym in symmetries:
                 rotations.append(sym.rotation_refUC(P))
                 translations.append(sym.translation_refUC(P, np.zeros(3)) % 1)
-
-            # TEST
-            for i,rot in enumerate(rotations):
-                print(f'\n# SYM {i}')
-                print(rot)
-                print(translations[i])
-                print('----')
 
             # Identify the generators by comparing to SVD matrices
             inds_generators = []
@@ -2034,8 +1937,6 @@ class SpaceGroup():
                         break
 
                 if not found:
-                    print(f'R(table):\n{W_svd}')
-                    print(f't(table):\n{sg_svd.translations[isvd]}')
                     break
                     raise RuntimeError(
                         'Could not match generator #{} with a symmetry from the '
@@ -2060,9 +1961,6 @@ class SpaceGroup():
 
         if not found:
             raise RuntimeError('No permutation found to match symmetry elements')
-        else:  # test lines
-            print(f'CONVENTIONAL CELL FOUND!\nS=\n{S}')
-            print(M.round(4), shiftUC);exit()
 
         return refUC, shiftUC
 
@@ -2357,7 +2255,7 @@ class SpaceGroup():
                               cent + [1/2,1/2,0],
                               )
                              )
-        elif self.name[0] == 'A':  # test this
+        elif self.name[0] == 'A':
             cent = np.vstack((cent, cent + [0,1/2,1/2]))
         else:  # R-centered
             cent = np.vstack((cent,
