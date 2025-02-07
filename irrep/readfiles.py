@@ -1347,47 +1347,60 @@ class ParserFPLO:
 
         num_bands, _, _ = self.parse_header()
 
-        if indices is None:
-            indices = np.arange(num_bands)
+        if indices is None:  # all symmetries
+            indices = np.arange(100)
 
         indices_in_symmetries = []
-        if save_matrices:
-            rep = np.zeros((len(indices), num_bands, num_bands), dtype=complex)
-        else:
-            rep =np.zeros((len(indices), num_bands), dtype=complex)
+        rep = []
 
         f = open(self.file_reps, 'r')
         f.seek(self.offsets_kpoints[ik])
-        print('indices:', indices, len(indices))
 
         for line in f:
 
+            # Order of little cogroup
             if self._record(line, 'size of little group'):
-                num_syms = int(f.readline())
-            elif self._record(line, 'size of little group'):
-                inds_parsed = list(map(int, f.readline().split()))
+                num_syms = int(int(f.readline()) / 2)  # don't count +2pi syms
+
+            # Band energies
             elif self._record(line, 'band energies'):
                 energies = np.array(f.readline().split(), dtype=float)
+
+            # Block with matrix of rep.
             elif self._record(line, 'little group element'):
+
+                if save_matrices:
+                    rep_sym = np.zeros((num_bands, num_bands), dtype=complex)
+                else:
+                    rep_sym = np.zeros(num_bands, dtype=complex)
+
                 isym = int(f.readline())
+                if isym in indices:  # not +2pi symmetry
+                    ind = np.where(indices == isym)[0][0]  # index of sym in tables
+                    indices_in_symmetries.append(ind)
+
                 for line in f:
                     if self._record(line, 'rep matrix'):
                         break
+
                 for i in range(num_bands):
                     line = np.array(f.readline().split(), dtype=float)
                     if isym not in indices:  # +2pi symmetry, skip it
                         continue
-                    ind = np.where(indices == isym)[0][0]  # index of sym in tables
-                    indices_in_symmetries.append(ind)
                     if save_matrices:
-                        rep[ind,i,:] = line[::2] + 1.0j * line[1::2]
+                        rep_sym[i,:] = line[::2] + 1.0j * line[1::2]
                     else:
-                        rep[ind,i] = line[2*i] + 1.0j * line[2*i+1]
+                        rep_sym[i] = line[2*i] + 1.0j * line[2*i+1]
 
-                if isym == num_syms - 1:
+                if isym in indices:
+                    rep.append(rep_sym)
+
+                if len(rep) == num_syms:
                     break
 
+
         f.close()
+        rep = np.array(rep, dtype=complex)
         indices_in_symmetries = np.array(indices_in_symmetries) + 1
         if save_matrices:
             rep = csr_matrix(rep)
@@ -1411,8 +1424,9 @@ class ParserFPLO:
         for i in range(5+ik):
             line = f.readline()
         f.close()
+        kpt = np.array(line.split(), dtype=float) / BOHR
 
-        return np.array(line.split(), dtype=float)
+        return kpt
 
     def _record(self, line, label):
 
