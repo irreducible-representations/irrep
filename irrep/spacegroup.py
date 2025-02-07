@@ -930,10 +930,11 @@ class SpaceGroup():
 
             self.refUC, self.shiftUC = self.conv_from_prim()
 
-            self.name = 'FAKE'
 
             # TODO: Implement identification of space group number
-            self.symmetries_tables = IrrepTable(sg, self.spinor, v=verbosity).symmetries
+            irreptable = IrrepTable(sg, self.spinor, v=verbosity)
+            self.symmetries_tables = irreptable.symmetries
+            self.name = irreptable.name
 
             if not no_match_symmetries:
                 try:
