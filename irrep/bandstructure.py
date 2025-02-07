@@ -444,6 +444,7 @@ class BandStructure:
 
             elif code == 'fplo':
                 kpt = parser.parse_k_from_groupoutput(ik)   # to do: ask Klaus Koepernik to add k points to +groupreps and parse from there
+                kpt = kpt @ self.Lattice.T  # coords in primitive setting
                 Energy, inds_syms, rep = parser.parse_kpoint(
                                               ik,
                                               self.spacegroup.inds_fplo,
