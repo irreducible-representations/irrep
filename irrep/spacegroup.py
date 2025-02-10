@@ -1930,16 +1930,16 @@ class SpaceGroup():
             # Identify the generators by comparing to SVD matrices
             inds_generators = []
             for isvd, W_svd in enumerate(sg_svd.rotations):
-                found = False
+                matched_sym = False
 
                 for i, W_dft in enumerate(rotations):
 
                     if np.allclose(W_dft, W_svd):
                         inds_generators.append(i)
-                        found = True
+                        matched_sym = True
                         break
 
-                if not found:
+                if not matched_sym:
                     break
                     raise RuntimeError(
                         'Could not match generator #{} with a symmetry from the '
@@ -1961,6 +1961,10 @@ class SpaceGroup():
             if np.allclose(vec_ref, diff_t):
                 refUC = M @ S
                 found = True
+            else:
+                print('NOT')
+                print(vec_ref)
+                print(diff_t)
 
         if not found:
             raise RuntimeError('No permutation found to match symmetry elements')
@@ -2298,6 +2302,17 @@ class SpaceGroup():
                         )
         vecs = np.vstack([vecs + r for r in self.vecs_centering()])
         return vecs
+
+    @property
+    def fplo_list_kpoints(self):
+
+        kpoints = IrrepTable(self.number, self.spinor, v=0).kpoints
+        Lattice = self.Lattice / BOHR
+        kpoints_cart = (kpoints 
+                        @ np.linalg.inv(self.refUC) 
+                        @ np.linalg.inv(Lattice.T))
+
+        return kpoints_cart
 
 
 class Cell:

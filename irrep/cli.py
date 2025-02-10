@@ -306,6 +306,12 @@ do not hesitate to contact the author:
                     help="File to save the output in JSON format. (without "
                     "extension, the '.json' will be added automatically)"
 )
+@click.option(
+    "-kfplo",
+    flag_value=True,
+    default=False,
+    help="Print coordinates of maximal k points in FPLO's cartesian basis",
+)
 @click.option("-sg",
                 default=None,
                  type=int,
@@ -347,6 +353,7 @@ def cli(
     trans_thresh,
     v,
     json_file,
+    kfplo,
     sg
 ):
     """
@@ -399,6 +406,11 @@ def cli(
     else:
         save_wf = False
 
+    if onlysym or kfplo:
+        stop = True
+    else:
+        stop = False
+
     bandstr = BandStructure(
         fWAV=fwav,
         fWFK=fwfk,
@@ -415,7 +427,7 @@ def cli(
         calculate_traces=True,
         code=code,
         EF=ef,
-        onlysym=onlysym,
+        onlysym=stop,
         refUC = refuc,
         shiftUC = shiftuc,
         search_cell = searchcell,
@@ -425,6 +437,14 @@ def cli(
         from_sym_file=from_sym_file,
         sg=sg
     )
+
+    if kfplo:
+        kpoints_cart = bandstr.spacegroup.fplo_list_kpoints
+        print('Coordinates of maximal k points in the cartesian basis adopted '
+              'by FPLO:')
+        for k in kpoints_cart.round(10):
+            print(" ".join([f'{x:14.10f}' for x in k]))
+        exit()
 
     if code.lower() == 'fplo':
         bandstr.spacegroup.show(print_crystal=False)
