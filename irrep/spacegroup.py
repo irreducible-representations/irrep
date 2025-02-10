@@ -1349,7 +1349,9 @@ class SpaceGroup():
              "spinor": self.spinor,
              "num symmetries": self.order,
              "cells match": cells_match,
-             "symmetries": {}
+             "symmetries": {},
+             "refUC": self.refUC,
+             "shiftUC": self.shiftUC
              }
 
         for sym in self.symmetries:
