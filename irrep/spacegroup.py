@@ -1724,9 +1724,6 @@ class SpaceGroup():
                     for i in range (n_prim):
                         S += np.linalg.matrix_power(Wp, i)
                     break
-            print(f'axis 1:\n{axis1}')
-            print(f'dir 1:\n{dir1}')
-            print(f'Wp"\n{Wp}')
 
             found = False
 
@@ -1743,11 +1740,9 @@ class SpaceGroup():
             for vec in GRID:
 
                 # Find component perpendicular to dir1
-                print(f'vec:\n{vec}')
                 if parallel(vec, dir1):
                     continue
                 dir2 = vec - (S @ vec) / n_prim
-                print(f'vec orthog:\n{dir2}')
                 if self.laue_group != '2/m': # Obtain dir3 by rotating dir2
                     dir3 = Wp @ dir2
                     break
@@ -1759,12 +1754,6 @@ class SpaceGroup():
                         dir3 = dir2.copy()
                         dir2 = dir2_tmp
                         break
-            print(f'dir1: {dir1}, cart: {self.to_cartesian(dir1)}')
-            print(f'dir2: {dir2}, cart: {self.to_cartesian(dir2)}')
-            print(f'dir3: {dir3}, cart: {self.to_cartesian(dir3)}')
-            print(f'M in cartesian:\n{np.array([self.to_cartesian(dir1), self.to_cartesian(dir2), self.to_cartesian(dir3)]).T.round(5)}')
-            print(f'det:\n{np.linalg.det(np.array([self.to_cartesian(dir1), self.to_cartesian(dir2), self.to_cartesian(dir3)]).T.round(5))}')
-
 
         # Save directions in an array and make sure axes are right-handed
         if self.laue_group == '2/m':
@@ -1793,8 +1782,6 @@ class SpaceGroup():
             M_float[i] /= smallest_nonzero
 
         M = np.array(np.rint(M_float.T), dtype=int)
-        #M = M.T  # vectors by columns
-        print(f'M prest:\n{M}')
 
         # Determine centering and fix it to the one in tables
         det = np.linalg.det(M)
@@ -1941,41 +1928,16 @@ class SpaceGroup():
                 permutations.append(np.array([[0, -1, 0],
                                               [1, 0, 0],
                                               [0, 0, 1]]))
-                #permutations.append(np.array([[0, 1, 0],
-                #                              [1, 0, 0],
-                #                              [0, 0, -1]]))
         elif self.laue_group == '-3m':
             permutations.append(np.array([[0, 1, 0],
                                           [1, 0, 0],
                                           [0, 0, -1]]))
 
-
-        print(f'M:\n{M}')
-        for sym in symmetries:
-            print(f'## ISYM: {sym.ind}')
-            print(sym.rotation)
-            print(sym.rotation_refUC(M))
-            print(sym.translation)
-            print(sym.translation_refUC(M, np.zeros(3))%1)
-        print('centering:',TO_PRIMITIVE[sg_svd.centering])
-
         found = False
         for S in permutations: 
-            print('---------------')
-            print(f'S:\n{S}')
 
             # Take symmetries to the "standard" primitive cell
             P = M @ S @ TO_PRIMITIVE[sg_svd.centering]
-            print(f'P:\n{P}')
-            #print()
-            #for sym in symmetries:
-            #    print(f'## ISYM: {sym.ind}')
-            #    print(sym.rotation)
-            #    print(sym.rotation_refUC(P))
-            #    print(sym.translation)
-            #    print(sym.translation_refUC(P, np.zeros(3))%1)
-
-
             rotations = []
             translations = []
             for sym in symmetries:
@@ -2004,42 +1966,16 @@ class SpaceGroup():
                         .format(isvd)
                         )
 
-            print()
-            print('Matched syms:')
-            for isvd,i in enumerate(inds_generators):
-                print()
-                print(f'#### ISYM: {i}')
-                print(f'{rotations[i]}')
-                print(f'dft:{translations[i]}')
-                print(f'svd:{sg_svd.translations[isvd]}')
-                print(f'diff:{translations[i]-sg_svd.translations[isvd]}')
-
             # Construct matrix of differences in translations (Delta omega)
             diff_t = np.zeros(sg_svd.num_gens*3, dtype=float)
             for i_svd, i_dft in enumerate(inds_generators):
                 diff_t[3*i_svd:3*(i_svd+1)] = (translations[i_dft]
                                               - sg_svd.translations[i_svd])
+
+            # Consider difference between translations mod. primitive vectors
             diff_t = diff_t.round(5)  # translations in tables have 5 decimals
-            print(f'diff_t={diff_t}')
-            #diff_t %= 1
             inds = np.where(np.abs(diff_t - np.rint(diff_t)) < 1e-3)[0]
             diff_t[inds] = 0.0
-            diff_t %= 1.0
-            print(f'diff_t%1={diff_t}')
-#            if np.allclose(diff_t, np.zeros(diff_t.shape)):
-#                shiftUC = np.zeros(3, dtype=float)
-#                refUC = M @ S
-#                found = True
-#                break
-#
-#            else:
-#                # Determine origin shift and check that it is valid
-#                shiftUC = sg_svd.lambda_matrix @ diff_t
-#                vec_ref = sg_svd.N_matrix @ shiftUC
-#                if np.allclose(vec_ref, diff_t):
-#                    refUC = M @ S
-#                    found = True
-#                    break
 
             # Determine origin shift and check that it is valid
             shiftUC = sg_svd.lambda_matrix @ diff_t
@@ -2048,18 +1984,25 @@ class SpaceGroup():
                 refUC = M @ S
                 found = True
                 break
-            else:
-                print(vec_ref)
-                print(diff_t)
 
         if not found:
-            #print(vec_ref)
-            #print(diff_t)
             raise RuntimeError('No permutation found to match symmetry elements')
 
         return refUC, shiftUC
 
     def to_cartesian(self, v):
+        '''
+        Take array from primitive to cartesian basis
+        
+        Parameters
+        ----------
+        v : array
+
+        Returns
+        -------
+        array
+        '''
+
         return self.Lattice.T @ v
 
     def determine_basis_transf(
