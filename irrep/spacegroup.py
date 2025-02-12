@@ -930,10 +930,10 @@ class SpaceGroup():
 
             self.refUC, self.shiftUC = self.conv_from_prim()
 
-            self.name = 'FAKE'
-
             # TODO: Implement identification of space group number
-            self.symmetries_tables = IrrepTable(sg, self.spinor, v=verbosity).symmetries
+            irreptable = IrrepTable(sg, self.spinor, v=verbosity)
+            self.symmetries_tables = irreptable.symmetries
+            self.name = irreptable.name
 
             if not no_match_symmetries:
                 try:
@@ -1644,13 +1644,12 @@ class SpaceGroup():
                 k2 = np.round(K, 5) % 1
                 if not all(np.isclose(k1, k2)):
                     raise RuntimeError(
-                        "the kpoint {0} does not correspond to the point {1} ({2} in refUC / {3} in primUC) in the table".format(
-                            K,
-                            kpname,
-                            np.round(
-                                irr.k,
-                                3),
-                            k1))
+                        'Error matching coordinates of point {}\n'
+                        'k from table in DFT setting: {}\n'
+                        'k from DFT:                  {}\n'
+                        'k from DFT in BCS setting:   {}'
+                        .format(irr.kpname, k1, k2, k2@self.refUC)
+                        )
                 tab[irr.name] = {}
                 for i,(sym1,sym2) in enumerate(zip(self.symmetries,table.symmetries)):
                     try:
