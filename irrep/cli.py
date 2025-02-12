@@ -361,6 +361,9 @@ def cli(
     """
     # TODO: later, this can be split up into separate sub-commands (e.g. for zak, etc.)
 
+    if kfplo:
+        code = 'fplo'
+
     # tmp, remove at some point
     if code.lower() != 'fplo':
         sg = None

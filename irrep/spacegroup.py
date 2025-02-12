@@ -1954,7 +1954,6 @@ class SpaceGroup():
                     if np.allclose(W_dft, W_svd):
                         inds_generators.append(i)
                         sym_matched = True
-                        print(f'matched {i}')
                         break
 
                 if not sym_matched:
@@ -2335,6 +2334,26 @@ class SpaceGroup():
                         )
         vecs = np.vstack([vecs + r for r in self.vecs_centering()])
         return vecs
+
+    @property
+    def fplo_list_kpoints(self):
+        '''
+        Get coords of maximal k points in FPLO's cartesian basis
+
+        Return
+        ------
+        array
+            Each row contains the coords of a maxima k point in FPLO's 
+            cartesian basis
+        '''
+
+        kpoints = IrrepTable(self.number, self.spinor, v=0).kpoints
+        Lattice = self.Lattice / BOHR
+        kpoints_cart = (kpoints
+                        @ np.linalg.inv(self.refUC)
+                        @ np.linalg.inv(Lattice.T)
+                        )
+        return kpoints_cart
 
 
 class Cell:
