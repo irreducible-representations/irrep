@@ -1359,7 +1359,6 @@ class ParserFPLO:
 
         f = open(self.file_reps, 'r')
         f.seek(self.offsets_kpoints[ik])
-        print('indices:', indices, len(indices))
 
         for line in f:
 
