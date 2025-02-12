@@ -746,10 +746,10 @@ class Kpoint:
         else:
             aux3 = aux2 + " "
 
-        print("   Energy  |   degeneracy  | {0} irreps {1} | sym. operations  ".format(aux2, aux3))
+        print("    Energy   |   degeneracy  | {0} irreps {1} | sym. operations  ".format(aux2, aux3))
 
         # Print indices of little-group symmetries
-        s = "           |               | {0}        {1} | ".format(aux2, aux3)
+        s = "             |               | {0}        {1} | ".format(aux2, aux3)
         inds = []
         for sym in self.little_group:
             inds.append(aux1 + "{0:4d}    ".format(sym.ind) + aux1)
@@ -774,13 +774,13 @@ class Kpoint:
             right_str2 = ' '.join(right_str2)
 
             # Energy, degeneracy, irrep's label and character in DFT cell
-            left_str = (" {0:8.4f}  |    {1:5d}      | {2:{3}s} |"
+            left_str = (" {0:10.4f}  |    {1:5d}      | {2:{3}s} |"
                         .format(e, d, ir, irreplen)
                         )
             print(left_str + " " + right_str1)
 
             # Line for character in reference cell
-            left_str = ("           |               | {0:{1}s} |"
+            left_str = ("             |               | {0:{1}s} |"
                         .format(len(ir)*" ", irreplen)
                         )
             print(left_str + " " + right_str2)  # line for character in DFT
