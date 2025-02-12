@@ -27,7 +27,7 @@ from .readfiles import (ParserAbinit, ParserVasp, ParserEspresso, ParserW90,
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .gvectors import sortIG, calc_gvectors, symm_matrix
-from .utility import get_block_indices, grid_from_kpoints, log_message, UniqueListMod1
+from .utility import get_block_indices, grid_from_kpoints, log_message, UniqueListMod1, BOHR
 
 
 class BandStructure:
@@ -444,7 +444,7 @@ class BandStructure:
 
             elif code == 'fplo':
                 kpt = parser.parse_k_from_groupoutput(ik)   # to do: ask Klaus Koepernik to add k points to +groupreps and parse from there
-                kpt = kpt @ self.Lattice.T  # coords in primitive setting
+                kpt = kpt @ self.Lattice.T / BOHR  # coords in primitive setting
                 Energy, inds_syms, rep = parser.parse_kpoint(
                                               ik,
                                               self.spacegroup.inds_fplo,
