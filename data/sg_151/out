@@ -1,15 +1,294 @@
 Warning: transformation to the convenctional unit cell will not be calculated, nor its validity checked (if given). See the description of flag -searchcell on:
 irrep --help
 Warning: -kpnames not specified. Only traces of symmetry operations will be calculated. Remember that -kpnames must be specified to identify irreps
-Lattice prim:
- [[ 6.03493990e+00 -3.48400798e+00 -1.54793016e-03]
- [ 0.00000000e+00  6.96845995e+00  1.42189678e-03]
- [ 0.00000000e+00  0.00000000e+00  2.07558563e+01]]
-Crystal class: 1
-Laue group: -1
-dir1:[1, 0, 0]
-dir2:[0, 1, 0]
-dir3:[0, 0, 1]
-[[0 1 0]
- [0 0 1]
- [1 0 0]]
+axis 1:
+[ 0.  0. -1.]
+dir 1:
+[ 0.          0.         -0.03118566]
+Wp"
+[[-1  1  0]
+ [-1  0  0]
+ [ 0  0  1]]
+vec:
+[0 1 0]
+vec orthog:
+[0. 1. 0.]
+dir1: [ 0.          0.         -0.03118566], cart: [ 0.  0. -1.]
+dir2: [0. 1. 0.], cart: [0.         5.30771336 0.        ]
+dir3: [1. 0. 0.], cart: [ 4.5966146  -2.65385668  0.        ]
+M in cartesian:
+[[ 0.       0.       4.59661]
+ [ 0.       5.30771 -2.65386]
+ [-1.       0.       0.     ]]
+det:
+24.397472863099996
+M prest:
+[[ 0  1  0]
+ [ 1  0  0]
+ [ 0  0 -1]]
+M:
+[[ 0.  1.  0.]
+ [ 1.  0.  0.]
+ [ 0.  0. -1.]]
+## ISYM: 0
+[[1 0 0]
+ [0 1 0]
+ [0 0 1]]
+[[1 0 0]
+ [0 1 0]
+ [0 0 1]]
+[0. 0. 0.]
+[0. 0. 0.]
+## ISYM: 1
+[[ 1  0  0]
+ [ 1 -1  0]
+ [ 0  0 -1]]
+[[-1  1  0]
+ [ 0  1  0]
+ [ 0  0 -1]]
+[0. 0. 0.]
+[0. 0. 0.]
+## ISYM: 2
+[[-1  1  0]
+ [-1  0  0]
+ [ 0  0  1]]
+[[ 0 -1  0]
+ [ 1 -1  0]
+ [ 0  0  1]]
+[0.         0.         0.66666667]
+[0.         0.         0.33333333]
+## ISYM: 3
+[[ 0 -1  0]
+ [ 1 -1  0]
+ [ 0  0  1]]
+[[-1  1  0]
+ [-1  0  0]
+ [ 0  0  1]]
+[0.         0.         0.33333333]
+[0.         0.         0.66666667]
+## ISYM: 4
+[[-1  1  0]
+ [ 0  1  0]
+ [ 0  0 -1]]
+[[ 1  0  0]
+ [ 1 -1  0]
+ [ 0  0 -1]]
+[0.         0.         0.33333333]
+[0.         0.         0.66666667]
+## ISYM: 5
+[[ 0 -1  0]
+ [-1  0  0]
+ [ 0  0 -1]]
+[[ 0 -1  0]
+ [-1  0  0]
+ [ 0  0 -1]]
+[0.         0.         0.66666667]
+[0.         0.         0.33333333]
+centering: [[1. 0. 0.]
+ [0. 1. 0.]
+ [0. 0. 1.]]
+---------------
+S:
+[[1. 0. 0.]
+ [0. 1. 0.]
+ [0. 0. 1.]]
+P:
+[[ 0.  1.  0.]
+ [ 1.  0.  0.]
+ [ 0.  0. -1.]]
+matched 2
+matched 5
+
+Matched syms:
+
+#### ISYM: 2
+[[ 0 -1  0]
+ [ 1 -1  0]
+ [ 0  0  1]]
+dft:[0.         0.         0.33333333]
+svd:[0.      0.      0.33333]
+diff:[0.00000000e+00 0.00000000e+00 3.33333333e-06]
+
+#### ISYM: 5
+[[ 0 -1  0]
+ [-1  0  0]
+ [ 0  0 -1]]
+dft:[0.         0.         0.33333333]
+svd:[0.      0.      0.66667]
+diff:[ 0.          0.         -0.33333667]
+diff_t=[ 0.       0.       0.       0.       0.      -0.33334]
+diff_t%1=[0.      0.      0.      0.      0.      0.66666]
+[ 0.       0.      -0.33333  0.       0.       0.33333]
+[0.      0.      0.      0.      0.      0.66666]
+---------------
+S:
+[[ 0  1  0]
+ [ 1  0  0]
+ [ 0  0 -1]]
+P:
+[[1. 0. 0.]
+ [0. 1. 0.]
+ [0. 0. 1.]]
+matched 3
+matched 5
+
+Matched syms:
+
+#### ISYM: 3
+[[ 0 -1  0]
+ [ 1 -1  0]
+ [ 0  0  1]]
+dft:[0.         0.         0.33333333]
+svd:[0.      0.      0.33333]
+diff:[0.00000000e+00 0.00000000e+00 3.33333333e-06]
+
+#### ISYM: 5
+[[ 0 -1  0]
+ [-1  0  0]
+ [ 0  0 -1]]
+dft:[0.         0.         0.66666667]
+svd:[0.      0.      0.66667]
+diff:[ 0.00000000e+00  0.00000000e+00 -3.33333333e-06]
+diff_t=[ 0.  0.  0.  0.  0. -0.]
+diff_t%1=[0. 0. 0. 0. 0. 0.]
+
+
+ ---------- SPACE GROUP ----------- 
+
+
+Space group: FAKE (# 151)
+Number of symmetries: 6 (mod. lattice translations)
+
+The transformation from the DFT cell to the reference cell of tables is given by: 
+        |   1.0000  0.0000  0.0000 |
+refUC = |   0.0000  1.0000  0.0000 |    shiftUC = [0. 0. 0.]
+        |   0.0000  0.0000  1.0000 |
+
+Cell vectors in angstroms:
+
+      Vectors of DFT cell       |      Vectors of REF. cell      
+a0 =  4.5966  -2.6539   0.0000  |  a0 =  4.5966  -2.6539   0.0000
+a1 =  0.0000   5.3077   0.0000  |  a1 =  0.0000   5.3077   0.0000
+a2 =  0.0000   0.0000  32.0660  |  a2 =  0.0000   0.0000  32.0660
+
+Lattice parameters in DFT cell:
+
+a =     5.3077 angs  |  alpha = 90.0000
+b =     5.3077 angs  |  beta = 90.0000
+c =    32.0660 angs  |  gamma = 120.0000
+
+
+Lattice parameters in conventional cell:
+
+a =     5.3077 angs  |  alpha = 90.0000
+b =     5.3077 angs  |  beta = 90.0000
+c =    32.0660 angs  |  gamma = 120.0000
+
+
+ ### 1 
+
+rotation : |  1   0   0 |
+           |  0   1   0 |
+           |  0   0   1 |
+
+
+ gk = [kx, ky, kz]
+
+spinor rot.         : | 1.000+0.000j  0.000+0.000j |
+                      | 0.000+0.000j  1.000+0.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0. -0. -0.] ; angle =  0 , inversion : False
+
+time-reversal : False
+
+ ### 2 
+
+rotation : |  0  -1   0 |
+           |  1  -1   0 |
+           |  0   0   1 |
+
+
+ gk = [-kx-ky, kx, kz]
+
+spinor rot.         : | 0.500-0.866j  0.000+0.000j |
+                      | 0.000+0.000j  0.500+0.866j |
+
+translation         :  [   0.0000   0.0000   0.3333 ] 
+
+axis: [-0. -0. -1.] ; angle = -2/3 pi, inversion : False
+
+time-reversal : False
+
+ ### 3 
+
+rotation : | -1   1   0 |
+           | -1   0   0 |
+           |  0   0   1 |
+
+
+ gk = [ky, -kx-ky, kz]
+
+spinor rot.         : | 0.500+0.866j  0.000+0.000j |
+                      | 0.000+0.000j  0.500-0.866j |
+
+translation         :  [   0.0000   0.0000   0.6667 ] 
+
+axis: [ 0.  0. -1.] ; angle = 2/3 pi, inversion : False
+
+time-reversal : False
+
+ ### 4 
+
+rotation : |  0  -1   0 |
+           | -1   0   0 |
+           |  0   0  -1 |
+
+
+ gk = [-ky, -kx, -kz]
+
+spinor rot.         : |-0.000+0.000j  0.866-0.500j |
+                      |-0.866-0.500j -0.000-0.000j |
+
+translation         :  [   0.0000   0.0000   0.6667 ] 
+
+axis: [ 0.5      -0.866025 -0.      ] ; angle = 1 pi, inversion : False
+
+time-reversal : False
+
+ ### 5 
+
+rotation : | -1   1   0 |
+           |  0   1   0 |
+           |  0   0  -1 |
+
+
+ gk = [-kx, kx+ky, -kz]
+
+spinor rot.         : | 0.000-0.000j -0.866-0.500j |
+                      | 0.866-0.500j -0.000+0.000j |
+
+translation         :  [   0.0000   0.0000   0.3333 ] 
+
+axis: [ 0.5       0.866025 -0.      ] ; angle = 1 pi, inversion : False
+
+time-reversal : False
+
+ ### 6 
+
+rotation : |  1   0   0 |
+           |  1  -1   0 |
+           |  0   0  -1 |
+
+
+ gk = [kx+ky, -ky, -kz]
+
+spinor rot.         : | 0.000+0.000j -0.000-1.000j |
+                      | 0.000-1.000j  0.000-0.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [ 1.  0. -0.] ; angle = 1 pi, inversion : False
+
+time-reversal : False

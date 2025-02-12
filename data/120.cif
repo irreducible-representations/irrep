@@ -1,16 +1,16 @@
 # generated using pymatgen
-data_BaSrV4(NiO4)4
+data_BeH8SO8
 _symmetry_space_group_name_H-M   I-4c2
-_cell_length_a   12.23697215
-_cell_length_b   12.23697215
-_cell_length_c   8.27867804
+_cell_length_a   7.93497334
+_cell_length_b   7.93497334
+_cell_length_c   10.66149276
 _cell_angle_alpha   90.00000000
 _cell_angle_beta   90.00000000
 _cell_angle_gamma   90.00000000
 _symmetry_Int_Tables_number   120
-_chemical_formula_structural   BaSrV4(NiO4)4
-_chemical_formula_sum   'Ba4 Sr4 V16 Ni16 O64'
-_cell_volume   1239.67812099
+_chemical_formula_structural   BeH8SO8
+_chemical_formula_sum   'Be4 H32 S4 O32'
+_cell_volume   671.28811817
 _cell_formula_units_Z   4
 loop_
  _symmetry_equiv_pos_site_id
@@ -34,10 +34,9 @@ loop_
 loop_
  _atom_type_symbol
  _atom_type_oxidation_number
-  Ba2+  2.0
-  Sr2+  2.0
-  V5+  5.0
-  Ni2+  2.0
+  Be2+  2.0
+  H+  1.0
+  S6+  6.0
   O2-  -2.0
 loop_
  _atom_site_type_symbol
@@ -47,12 +46,9 @@ loop_
  _atom_site_fract_y
  _atom_site_fract_z
  _atom_site_occupancy
-  Ba2+  Ba0  4  0.00000000  0.00000000  0.00000000  1
-  Sr2+  Sr1  4  0.00000000  0.50000000  0.25000000  1
-  V5+  V2  16  0.08001853  0.25248193  0.37451149  1
-  Ni2+  Ni3  8  0.16742635  0.33257365  0.00000000  1
-  Ni2+  Ni4  8  0.16918142  0.16918142  0.75000000  1
-  O2-  O5  16  0.00293009  0.34209589  0.97502491  1
-  O2-  O6  16  0.00389390  0.16488050  0.77193867  1
-  O2-  O7  16  0.16049544  0.32814550  0.24094842  1
-  O2-  O8  16  0.16096028  0.17574665  0.50720485  1
+  Be2+  Be0  4  0.00000000  0.00000000  0.00000000  1
+  H+  H1  16  0.04086210  0.23218798  0.11728767  1
+  H+  H2  16  0.12708006  0.21892046  0.38638055  1
+  S6+  S3  4  0.00000000  0.50000000  0.25000000  1
+  O2-  O4  16  0.08543831  0.37283794  0.67188391  1
+  O2-  O5  16  0.10486702  0.86144451  0.57777673  1

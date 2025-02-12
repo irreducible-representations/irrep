@@ -930,11 +930,10 @@ class SpaceGroup():
 
             self.refUC, self.shiftUC = self.conv_from_prim()
 
+            self.name = 'FAKE'
 
             # TODO: Implement identification of space group number
-            irreptable = IrrepTable(sg, self.spinor, v=verbosity)
-            self.symmetries_tables = irreptable.symmetries
-            self.name = irreptable.name
+            self.symmetries_tables = IrrepTable(sg, self.spinor, v=verbosity).symmetries
 
             if not no_match_symmetries:
                 try:
@@ -1349,9 +1348,7 @@ class SpaceGroup():
              "spinor": self.spinor,
              "num symmetries": self.order,
              "cells match": cells_match,
-             "symmetries": {},
-             "refUC": self.refUC,
-             "shiftUC": self.shiftUC
+             "symmetries": {}
              }
 
         for sym in self.symmetries:
@@ -1727,18 +1724,30 @@ class SpaceGroup():
                     for i in range (n_prim):
                         S += np.linalg.matrix_power(Wp, i)
                     break
+            print(f'axis 1:\n{axis1}')
+            print(f'dir 1:\n{dir1}')
+            print(f'Wp"\n{Wp}')
+
+            found = False
+
+            # For some groups, it's convenient to adapt the grid
+            if self.number in [146, 148, 155, 160, 161, 166, 167]:
+                # Rhombohedral groups
+                GRID = np.roll(GRID, -11, axis=0)
+            elif self.number in [151, 152, 153, 154]:
+                # Nonsymmorphic trigonal groups, Wp=C3z- is found
+                # so it's convenient to start from vec=(0,1,0)
+                GRID = np.roll(GRID, -1, axis=0)
 
             # Solve S.v = 0 to determine secondary direction
-            found = False
-            if self.number in [146, 148, 155, 160, 161, 166, 167]:  # rhombo.
-                GRID = np.roll(GRID, -11, axis=0)
-
             for vec in GRID:
 
                 # Find component perpendicular to dir1
+                print(f'vec:\n{vec}')
                 if parallel(vec, dir1):
                     continue
                 dir2 = vec - (S @ vec) / n_prim
+                print(f'vec orthog:\n{dir2}')
                 if self.laue_group != '2/m': # Obtain dir3 by rotating dir2
                     dir3 = Wp @ dir2
                     break
@@ -1750,15 +1759,25 @@ class SpaceGroup():
                         dir3 = dir2.copy()
                         dir2 = dir2_tmp
                         break
+            print(f'dir1: {dir1}, cart: {self.to_cartesian(dir1)}')
+            print(f'dir2: {dir2}, cart: {self.to_cartesian(dir2)}')
+            print(f'dir3: {dir3}, cart: {self.to_cartesian(dir3)}')
+            print(f'M in cartesian:\n{np.array([self.to_cartesian(dir1), self.to_cartesian(dir2), self.to_cartesian(dir3)]).T.round(5)}')
+            print(f'det:\n{np.linalg.det(np.array([self.to_cartesian(dir1), self.to_cartesian(dir2), self.to_cartesian(dir3)]).T.round(5))}')
+
 
         # Save directions in an array and make sure axes are right-handed
         if self.laue_group == '2/m':
             M = [dir2, dir1, dir3]
-            if np.linalg.det(M) < 0:
+            M_cart = np.array([self.to_cartesian(v) for v in M])
+            det = np.linalg.det(M_cart)
+            if det < 0:
                 M[0], M[2] = M[2], M[0]
         else:
             M = [dir2, dir3, dir1]
-            if np.linalg.det(M) < 0:
+            M_cart = np.array([self.to_cartesian(v) for v in M])
+            det = np.linalg.det(M_cart)
+            if det < 0:
                 M[0], M[1] = M[1], M[0]
 
         # Make sure that all components are integers
@@ -1775,6 +1794,7 @@ class SpaceGroup():
 
         M = np.array(np.rint(M_float.T), dtype=int)
         #M = M.T  # vectors by columns
+        print(f'M prest:\n{M}')
 
         # Determine centering and fix it to the one in tables
         det = np.linalg.det(M)
@@ -1911,36 +1931,71 @@ class SpaceGroup():
                 permutations.append(np.array([[0, 0, 1],
                                               [0, -1, 0],
                                               [1, 0, 0]]))
-        elif self.laue_group in ['4/m', '4/mmm']:  # P, I
                 permutations.append(np.array([[0, 1, 0],
+                                              [0, 0, 1],
+                                              [1, 0, 0]]))
+                permutations.append(np.array([[0, 0, 1],
                                               [1, 0, 0],
-                                              [0, 0, -1]]))
+                                              [0, 1, 0]]))
+        elif self.laue_group in ['4/m', '4/mmm']:  # P, I
+                permutations.append(np.array([[0, -1, 0],
+                                              [1, 0, 0],
+                                              [0, 0, 1]]))
+                #permutations.append(np.array([[0, 1, 0],
+                #                              [1, 0, 0],
+                #                              [0, 0, -1]]))
+        elif self.laue_group == '-3m':
+            permutations.append(np.array([[0, 1, 0],
+                                          [1, 0, 0],
+                                          [0, 0, -1]]))
+
+
+        print(f'M:\n{M}')
+        for sym in symmetries:
+            print(f'## ISYM: {sym.ind}')
+            print(sym.rotation)
+            print(sym.rotation_refUC(M))
+            print(sym.translation)
+            print(sym.translation_refUC(M, np.zeros(3))%1)
+        print('centering:',TO_PRIMITIVE[sg_svd.centering])
 
         found = False
         for S in permutations: 
+            print('---------------')
+            print(f'S:\n{S}')
 
             # Take symmetries to the "standard" primitive cell
             P = M @ S @ TO_PRIMITIVE[sg_svd.centering]
+            print(f'P:\n{P}')
+            #print()
+            #for sym in symmetries:
+            #    print(f'## ISYM: {sym.ind}')
+            #    print(sym.rotation)
+            #    print(sym.rotation_refUC(P))
+            #    print(sym.translation)
+            #    print(sym.translation_refUC(P, np.zeros(3))%1)
+
+
             rotations = []
             translations = []
             for sym in symmetries:
                 rotations.append(sym.rotation_refUC(P))
-                translations.append(sym.translation_refUC(P, np.zeros(3)) % 1)
+                translations.append(sym.translation_refUC(P, np.zeros(3)) % 1.0)
 
             # Identify the generators by comparing to SVD matrices
             inds_generators = []
             for isvd, W_svd in enumerate(sg_svd.rotations):
-                matched_sym = False
+                sym_matched = False
 
                 for i, W_dft in enumerate(rotations):
 
                     if np.allclose(W_dft, W_svd):
                         inds_generators.append(i)
-                        matched_sym = True
+                        sym_matched = True
+                        print(f'matched {i}')
                         break
 
-                if not matched_sym:
-                    break
+                if not sym_matched:
                     raise RuntimeError(
                         'Could not match generator #{} with a symmetry from the '
                         'candidate-primitive DFT cell. Please, open an issue on '
@@ -1949,11 +2004,42 @@ class SpaceGroup():
                         .format(isvd)
                         )
 
+            print()
+            print('Matched syms:')
+            for isvd,i in enumerate(inds_generators):
+                print()
+                print(f'#### ISYM: {i}')
+                print(f'{rotations[i]}')
+                print(f'dft:{translations[i]}')
+                print(f'svd:{sg_svd.translations[isvd]}')
+                print(f'diff:{translations[i]-sg_svd.translations[isvd]}')
+
             # Construct matrix of differences in translations (Delta omega)
             diff_t = np.zeros(sg_svd.num_gens*3, dtype=float)
             for i_svd, i_dft in enumerate(inds_generators):
                 diff_t[3*i_svd:3*(i_svd+1)] = (translations[i_dft]
                                               - sg_svd.translations[i_svd])
+            diff_t = diff_t.round(5)  # translations in tables have 5 decimals
+            print(f'diff_t={diff_t}')
+            #diff_t %= 1
+            inds = np.where(np.abs(diff_t - np.rint(diff_t)) < 1e-3)[0]
+            diff_t[inds] = 0.0
+            diff_t %= 1.0
+            print(f'diff_t%1={diff_t}')
+#            if np.allclose(diff_t, np.zeros(diff_t.shape)):
+#                shiftUC = np.zeros(3, dtype=float)
+#                refUC = M @ S
+#                found = True
+#                break
+#
+#            else:
+#                # Determine origin shift and check that it is valid
+#                shiftUC = sg_svd.lambda_matrix @ diff_t
+#                vec_ref = sg_svd.N_matrix @ shiftUC
+#                if np.allclose(vec_ref, diff_t):
+#                    refUC = M @ S
+#                    found = True
+#                    break
 
             # Determine origin shift and check that it is valid
             shiftUC = sg_svd.lambda_matrix @ diff_t
@@ -1961,16 +2047,20 @@ class SpaceGroup():
             if np.allclose(vec_ref, diff_t):
                 refUC = M @ S
                 found = True
+                break
             else:
-                print('NOT')
                 print(vec_ref)
                 print(diff_t)
 
         if not found:
+            #print(vec_ref)
+            #print(diff_t)
             raise RuntimeError('No permutation found to match symmetry elements')
 
         return refUC, shiftUC
 
+    def to_cartesian(self, v):
+        return self.Lattice.T @ v
 
     def determine_basis_transf(
             self,
@@ -2302,17 +2392,6 @@ class SpaceGroup():
                         )
         vecs = np.vstack([vecs + r for r in self.vecs_centering()])
         return vecs
-
-    @property
-    def fplo_list_kpoints(self):
-
-        kpoints = IrrepTable(self.number, self.spinor, v=0).kpoints
-        Lattice = self.Lattice / BOHR
-        kpoints_cart = (kpoints 
-                        @ np.linalg.inv(self.refUC) 
-                        @ np.linalg.inv(Lattice.T))
-
-        return kpoints_cart
 
 
 class Cell:

@@ -1,15 +1,209 @@
 Warning: transformation to the convenctional unit cell will not be calculated, nor its validity checked (if given). See the description of flag -searchcell on:
 irrep --help
 Warning: -kpnames not specified. Only traces of symmetry operations will be calculated. Remember that -kpnames must be specified to identify irreps
-Lattice prim:
- [[ 8.96815912 -2.7233542  -4.93216263]
- [ 0.          8.27695978  3.98329423]
- [ 0.          0.         10.59107002]]
-Crystal class: 1
-Laue group: -1
-dir1:[1, 0, 0]
-dir2:[0, 1, 0]
-dir3:[0, 0, 1]
-[[0 1 0]
- [0 0 1]
- [1 0 0]]
+M:
+[[0. 1. 1.]
+ [1. 0. 1.]
+ [1. 1. 0.]]
+## ISYM: 0
+[[1 0 0]
+ [0 1 0]
+ [0 0 1]]
+[[1 0 0]
+ [0 1 0]
+ [0 0 1]]
+[0. 0. 0.]
+[0. 0. 0.]
+## ISYM: 1
+[[ 0  1 -1]
+ [ 1  0 -1]
+ [ 0  0 -1]]
+[[-1  0  0]
+ [ 0 -1  0]
+ [ 0  0  1]]
+[0. 0. 0.]
+[0. 0. 0.]
+## ISYM: 2
+[[ 0  1 -1]
+ [ 0  1  0]
+ [-1  1  0]]
+[[ 1  0  0]
+ [ 0 -1  0]
+ [ 0  0  1]]
+[0.5 0.5 0. ]
+[0.  0.  0.5]
+## ISYM: 3
+[[ 1  0  0]
+ [ 1  0 -1]
+ [ 1 -1  0]]
+[[-1  0  0]
+ [ 0  1  0]
+ [ 0  0  1]]
+[0.5 0.5 0. ]
+[0.  0.  0.5]
+centering: [[-0.5  0.5  0.5]
+ [ 0.5 -0.5  0.5]
+ [ 0.5  0.5 -0.5]]
+---------------
+S:
+[[1. 0. 0.]
+ [0. 1. 0.]
+ [0. 0. 1.]]
+P:
+[[1. 0. 0.]
+ [0. 1. 0.]
+ [0. 0. 1.]]
+
+## ISYM: 0
+[[1 0 0]
+ [0 1 0]
+ [0 0 1]]
+[[1 0 0]
+ [0 1 0]
+ [0 0 1]]
+[0. 0. 0.]
+[0. 0. 0.]
+## ISYM: 1
+[[ 0  1 -1]
+ [ 1  0 -1]
+ [ 0  0 -1]]
+[[ 0  1 -1]
+ [ 1  0 -1]
+ [ 0  0 -1]]
+[0. 0. 0.]
+[0. 0. 0.]
+## ISYM: 2
+[[ 0  1 -1]
+ [ 0  1  0]
+ [-1  1  0]]
+[[ 0  1 -1]
+ [ 0  1  0]
+ [-1  1  0]]
+[0.5 0.5 0. ]
+[0.5 0.5 0. ]
+## ISYM: 3
+[[ 1  0  0]
+ [ 1  0 -1]
+ [ 1 -1  0]]
+[[ 1  0  0]
+ [ 1  0 -1]
+ [ 1 -1  0]]
+[0.5 0.5 0. ]
+[0.5 0.5 0. ]
+
+
+ ---------- SPACE GROUP ----------- 
+
+
+Space group: FAKE (# 45)
+Number of symmetries: 4 (mod. lattice translations)
+
+The transformation from the DFT cell to the reference cell of tables is given by: 
+        |   0.0000  1.0000  1.0000 |
+refUC = |   1.0000  0.0000  1.0000 |    shiftUC = [0. 0. 0.]
+        |   1.0000  1.0000  0.0000 |
+
+Cell vectors in angstroms:
+
+      Vectors of DFT cell       |      Vectors of REF. cell      
+a0 = -9.6016   6.0771   2.9535  |  a0 = 19.2031   0.0000   0.0000
+a1 =  9.6016  -6.0771   2.9535  |  a1 =  0.0000  12.1542   0.0000
+a2 =  9.6016   6.0771  -2.9535  |  a2 =  0.0000   0.0000   5.9070
+
+Lattice parameters in DFT cell:
+
+a =    11.7407 angs  |  alpha = 70.2695
+b =    11.7407 angs  |  beta = 117.6561
+c =    11.7407 angs  |  gamma = 150.8602
+
+
+Lattice parameters in conventional cell:
+
+a =    19.2031 angs  |  alpha = 90.0000
+b =    12.1542 angs  |  beta = 90.0000
+c =     5.9070 angs  |  gamma = 90.0000
+
+
+ ### 1 
+
+rotation : |  1   0   0 |     rotation : |  1   0   0 |
+           |  0   1   0 |      (refUC)   |  0   1   0 |
+           |  0   0   1 |                |  0   0   1 |
+
+
+ gk = [kx, ky, kz]  |   refUC:  gk = [kx, ky, kz]
+
+spinor rot.         : | 1.000+0.000j  0.000+0.000j |
+                      | 0.000+0.000j  1.000+0.000j |
+spinor rot. (refUC) : | 1.000+0.000j  0.000+0.000j |
+                      | 0.000+0.000j  1.000+0.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [-0. -0. -0.] ; angle =  0 , inversion : False
+
+time-reversal : False
+
+ ### 2 
+
+rotation : |  0   1  -1 |     rotation : | -1   0   0 |
+           |  1   0  -1 |      (refUC)   |  0  -1   0 |
+           |  0   0  -1 |                |  0   0   1 |
+
+
+ gk = [ky, kx, -kx-ky-kz]  |   refUC:  gk = [-kx, -ky, kz]
+
+spinor rot.         : | 0.000-1.000j  0.000+0.000j |
+                      | 0.000+0.000j  0.000+1.000j |
+spinor rot. (refUC) : | 0.000-1.000j  0.000+0.000j |
+                      | 0.000+0.000j  0.000+1.000j |
+
+translation         :  [   0.0000   0.0000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.0000 ] 
+
+axis: [0. 0. 1.] ; angle = 1 pi, inversion : False
+
+time-reversal : False
+
+ ### 3 
+
+rotation : |  0   1  -1 |     rotation : |  1   0   0 |
+           |  0   1   0 |      (refUC)   |  0  -1   0 |
+           | -1   1   0 |                |  0   0   1 |
+
+
+ gk = [-kz, kx+ky+kz, -kx]  |   refUC:  gk = [kx, -ky, kz]
+
+spinor rot.         : | 0.000+0.000j -1.000+0.000j |
+                      | 1.000+0.000j  0.000-0.000j |
+spinor rot. (refUC) : | 0.000+0.000j -1.000+0.000j |
+                      | 1.000+0.000j  0.000-0.000j |
+
+translation         :  [   0.5000   0.5000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.5000 ] 
+
+axis: [-0.  1. -0.] ; angle = 1 pi, inversion : True
+
+time-reversal : False
+
+ ### 4 
+
+rotation : |  1   0   0 |     rotation : | -1   0   0 |
+           |  1   0  -1 |      (refUC)   |  0   1   0 |
+           |  1  -1   0 |                |  0   0   1 |
+
+
+ gk = [kx+ky+kz, -kz, -ky]  |   refUC:  gk = [-kx, ky, kz]
+
+spinor rot.         : | 0.000+0.000j -0.000-1.000j |
+                      | 0.000-1.000j  0.000-0.000j |
+spinor rot. (refUC) : | 0.000+0.000j -0.000-1.000j |
+                      | 0.000-1.000j  0.000-0.000j |
+
+translation         :  [   0.5000   0.5000   0.0000 ] 
+translation (refUC) :  [   0.0000   0.0000   0.5000 ] 
+
+axis: [ 1.  0. -0.] ; angle = 1 pi, inversion : True
+
+time-reversal : False

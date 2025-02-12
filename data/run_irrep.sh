@@ -6,6 +6,10 @@ fi
 
 for i in $(seq 1 230); do
     
+    if [ $i -eq 168 ] || [ $i -eq 207 ]; then
+        continue
+    fi
+
     dir="sg_$i"
     cd $dir
     irrep -onlysym -spinor -code=fplo -sg=$i

@@ -1,16 +1,16 @@
 # generated using pymatgen
-data_Na2SrAl4(SiO4)4
+data_La4As2(S2O)3
 _symmetry_space_group_name_H-M   Iba2
-_cell_length_a   8.38982598
-_cell_length_b   9.86716646
-_cell_length_c   16.75732404
+_cell_length_a   12.15418400
+_cell_length_b   19.20313600
+_cell_length_c   5.90701600
 _cell_angle_alpha   90.00000000
 _cell_angle_beta   90.00000000
 _cell_angle_gamma   90.00000000
 _symmetry_Int_Tables_number   45
-_chemical_formula_structural   Na2SrAl4(SiO4)4
-_chemical_formula_sum   'Na8 Sr4 Al16 Si16 O64'
-_cell_volume   1387.23512131
+_chemical_formula_structural   La4As2(S2O)3
+_chemical_formula_sum   'La16 As8 S24 O12'
+_cell_volume   1378.68836861
 _cell_formula_units_Z   4
 loop_
  _symmetry_equiv_pos_site_id
@@ -26,10 +26,9 @@ loop_
 loop_
  _atom_type_symbol
  _atom_type_oxidation_number
-  Na+  1.0
-  Sr2+  2.0
-  Al3+  3.0
-  Si4+  4.0
+  La3+  3.0
+  As3+  3.0
+  S2-  -2.0
   O2-  -2.0
 loop_
  _atom_site_type_symbol
@@ -39,17 +38,11 @@ loop_
  _atom_site_fract_y
  _atom_site_fract_z
  _atom_site_occupancy
-  Na+  Na0  8  0.03745578  0.17731028  0.59560611  1
-  Sr2+  Sr1  4  0.00000000  0.00000000  0.34597021  1
-  Al3+  Al2  8  0.06915965  0.30809267  0.93678623  1
-  Al3+  Al3  8  0.22440019  0.45271226  0.68900511  1
-  Si4+  Si4  8  0.07580505  0.30033741  0.25413090  1
-  Si4+  Si5  8  0.23786321  0.44765265  0.50193889  1
-  O2-  O6  8  0.00265255  0.28151646  0.34200235  1
-  O2-  O7  8  0.05303638  0.64521454  0.18933481  1
-  O2-  O8  8  0.07775820  0.35758301  0.50424969  1
-  O2-  O9  8  0.11365443  0.14312308  0.96898140  1
-  O2-  O10  8  0.11927533  0.14633284  0.22612268  1
-  O2-  O11  8  0.21494769  0.00395817  0.09204367  1
-  O2-  O12  8  0.22583754  0.40514829  0.25207085  1
-  O2-  O13  8  0.22731783  0.57671065  0.44169120  1
+  La3+  La0  8  0.10096650  0.42553850  0.49774950  1
+  La3+  La1  8  0.10784450  0.27850450  0.99802850  1
+  As3+  As2  8  0.12422150  0.10483650  0.61633950  1
+  S2-  S3  8  0.13194550  0.22092950  0.50390050  1
+  S2-  S4  8  0.15859800  0.12315100  0.98661100  1
+  S2-  S5  8  0.20207700  0.42431800  0.00176600  1
+  O2-  O6  8  0.00004050  0.34369250  0.25335350  1
+  O2-  O7  4  0.00000000  0.50000000  0.25450100  1

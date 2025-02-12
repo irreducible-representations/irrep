@@ -1,16 +1,16 @@
 # generated using pymatgen
-data_AlInSe3
+data_Al2S3
 _symmetry_space_group_name_H-M   P6_1
-_cell_length_a   7.06971362
-_cell_length_b   7.06971362
-_cell_length_c   18.84396187
+_cell_length_a   6.54983813
+_cell_length_b   6.54983813
+_cell_length_c   17.15362972
 _cell_angle_alpha   90.00000000
 _cell_angle_beta   90.00000000
 _cell_angle_gamma   120.00000000
 _symmetry_Int_Tables_number   169
-_chemical_formula_structural   AlInSe3
-_chemical_formula_sum   'Al6 In6 Se18'
-_cell_volume   815.65497913
+_chemical_formula_structural   Al2S3
+_chemical_formula_sum   'Al12 S18'
+_cell_volume   637.30569206
 _cell_formula_units_Z   6
 loop_
  _symmetry_equiv_pos_site_id
@@ -25,8 +25,7 @@ loop_
  _atom_type_symbol
  _atom_type_oxidation_number
   Al3+  3.0
-  In3+  3.0
-  Se2-  -2.0
+  S2-  -2.0
 loop_
  _atom_site_type_symbol
  _atom_site_label
@@ -35,8 +34,8 @@ loop_
  _atom_site_fract_y
  _atom_site_fract_z
  _atom_site_occupancy
-  Al3+  Al0  6  0.01686244  0.68770772  0.02552096  1
-  In3+  In1  6  0.00627663  0.66936918  0.66278996  1
-  Se2-  Se2  6  0.00985003  0.29309814  0.65336161  1
-  Se2-  Se3  6  0.02351323  0.37113065  0.31280849  1
-  Se2-  Se4  6  0.04168237  0.67211974  0.51147852  1
+  Al3+  Al0  6  0.00588174  0.30614828  0.01726407  1
+  Al3+  Al1  6  0.01044306  0.35258452  0.38285208  1
+  S2-  S2  6  0.00333326  0.65978351  0.01495099  1
+  S2-  S3  6  0.04190241  0.70783605  0.37364917  1
+  S2-  S4  6  0.04610693  0.34717141  0.16196903  1

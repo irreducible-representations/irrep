@@ -1,17 +1,17 @@
 # generated using pymatgen
-data_LaB3F12
+data_Ba5(Ga3H)2
 _symmetry_space_group_name_H-M   P3c1
-_cell_length_a   11.17074306
-_cell_length_b   11.17074306
-_cell_length_c   11.34975000
+_cell_length_a   7.80747862
+_cell_length_b   7.80747862
+_cell_length_c   14.46809800
 _cell_angle_alpha   90.00000000
 _cell_angle_beta   90.00000000
 _cell_angle_gamma   120.00000000
 _symmetry_Int_Tables_number   158
-_chemical_formula_structural   LaB3F12
-_chemical_formula_sum   'La6 B18 F72'
-_cell_volume   1226.53812643
-_cell_formula_units_Z   6
+_chemical_formula_structural   Ba5(Ga3H)2
+_chemical_formula_sum   'Ba10 Ga12 H4'
+_cell_volume   763.77190751
+_cell_formula_units_Z   2
 loop_
  _symmetry_equiv_pos_site_id
  _symmetry_equiv_pos_as_xyz
@@ -22,12 +22,6 @@ loop_
   5  '-x+y, y, z+1/2'
   6  'x, x-y, z+1/2'
 loop_
- _atom_type_symbol
- _atom_type_oxidation_number
-  La3+  3.0
-  B3+  3.0
-  F-  -1.0
-loop_
  _atom_site_type_symbol
  _atom_site_label
  _atom_site_symmetry_multiplicity
@@ -35,23 +29,10 @@ loop_
  _atom_site_fract_y
  _atom_site_fract_z
  _atom_site_occupancy
-  La3+  La0  6  0.33335300  0.01061400  0.75016000  1
-  B3+  B1  6  0.01637700  0.30522100  0.09306700  1
-  B3+  B2  6  0.37797500  0.02847800  0.40709500  1
-  B3+  B3  2  0.00000000  0.00000000  0.35252700  1
-  B3+  B4  2  0.33333333  0.66666667  0.80033800  1
-  B3+  B5  2  0.66666667  0.33333333  0.64750000  1
-  F-  F6  6  0.01485900  0.41916400  0.13783500  1
-  F-  F7  6  0.02257700  0.31166600  0.96713900  1
-  F-  F8  6  0.08550800  0.34806400  0.36219000  1
-  F-  F9  6  0.12149200  0.00583700  0.80472500  1
-  F-  F10  6  0.13649700  0.30059300  0.13236200  1
-  F-  F11  6  0.21320200  0.54648400  0.75363600  1
-  F-  F12  6  0.28277100  0.10269000  0.12848500  1
-  F-  F13  6  0.37753700  0.02170300  0.53294800  1
-  F-  F14  6  0.38383900  0.15343600  0.37156900  1
-  F-  F15  6  0.50275600  0.03333000  0.36781100  1
-  F-  F16  6  0.54516900  0.21766200  0.69528700  1
-  F-  F17  2  0.00000000  0.00000000  0.47236200  1
-  F-  F18  2  0.33333333  0.66666667  0.42051500  1
-  F-  F19  2  0.66666667  0.33333333  0.52765300  1
+  Ba  Ba0  6  0.33200400  0.02284100  0.26308400  1
+  Ba  Ba1  2  0.00000000  0.00000000  0.49838600  1
+  Ba  Ba2  2  0.66666667  0.33333333  0.53088600  1
+  Ga  Ga3  6  0.12560500  0.47382600  0.93400500  1
+  Ga  Ga4  6  0.14145100  0.45888300  0.58940900  1
+  H  H5  2  0.00000000  0.00000000  0.31636700  1
+  H  H6  2  0.66666667  0.33333333  0.71870400  1

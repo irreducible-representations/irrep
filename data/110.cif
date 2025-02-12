@@ -1,17 +1,17 @@
 # generated using pymatgen
-data_SrMn2V2O8
+data_CuReO4
 _symmetry_space_group_name_H-M   I4_1cd
-_cell_length_a   12.64539600
-_cell_length_b   12.64539600
-_cell_length_c   8.82542400
+_cell_length_a   13.84526000
+_cell_length_b   13.84526000
+_cell_length_c   7.82860000
 _cell_angle_alpha   90.00000000
 _cell_angle_beta   90.00000000
 _cell_angle_gamma   90.00000000
 _symmetry_Int_Tables_number   110
-_chemical_formula_structural   SrMn2V2O8
-_chemical_formula_sum   'Sr8 Mn16 V16 O64'
-_cell_volume   1411.23860313
-_cell_formula_units_Z   8
+_chemical_formula_structural   CuReO4
+_chemical_formula_sum   'Cu16 Re16 O64'
+_cell_volume   1500.67391987
+_cell_formula_units_Z   16
 loop_
  _symmetry_equiv_pos_site_id
  _symmetry_equiv_pos_as_xyz
@@ -34,9 +34,8 @@ loop_
 loop_
  _atom_type_symbol
  _atom_type_oxidation_number
-  Sr2+  2.0
-  Mn2+  2.0
-  V5+  5.0
+  Cu2+  2.0
+  Re6+  6.0
   O2-  -2.0
 loop_
  _atom_site_type_symbol
@@ -46,10 +45,9 @@ loop_
  _atom_site_fract_y
  _atom_site_fract_z
  _atom_site_occupancy
-  Sr2+  Sr0  8  0.00000000  0.00000000  0.00369000  1
-  Mn2+  Mn1  16  0.16619300  0.33074600  0.95949300  1
-  V5+  V2  16  0.07894200  0.23585700  0.32783000  1
-  O2-  O3  16  0.00136600  0.32506400  0.92067000  1
-  O2-  O4  16  0.00289950  0.14062550  0.74297350  1
-  O2-  O5  16  0.15332550  0.31279550  0.19932450  1
-  O2-  O6  16  0.15688200  0.16790000  0.46326300  1
+  Re6+  Re0  16  0.09783900  0.35624500  0.75163100  1
+  Cu2+  Cu1  16  0.11550450  0.16289450  0.06623550  1
+  O2-  O2  16  0.02832750  0.36294050  0.21975450  1
+  O2-  O3  16  0.03436100  0.13878300  0.59166100  1
+  O2-  O4  16  0.12431250  0.25987950  0.89131950  1
+  O2-  O5  16  0.15549850  0.33843450  0.55140950  1
