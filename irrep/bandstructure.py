@@ -18,6 +18,8 @@
 
 import copy
 import functools
+import os
+import json
 
 import numpy as np
 import numpy.linalg as la
@@ -1043,3 +1045,213 @@ class BandStructure:
         #             kpt2kptirr, 
         #             d_band_blocks, 
         #             d_band_block_indices)
+
+    def get_irrep_counts(self, filter_valid=True):
+        """
+        Returns a dictionary with irrep labels as keys and multiplicity 
+        as values.
+
+        Parameters
+        ----------
+        filter_valid : bool, optional
+            count only integer multiplicities, by default True
+        """
+        
+        try:
+            irrep_data = [kpoint.irreps for kpoint in self.kpoints]
+        except AttributeError:
+            raise RuntimeError(
+                "Could not get the irrep counts because irreps must be identified."
+            )
+
+        # dictionary label : multiplicity
+        irrep_dict = {}
+        for point in irrep_data:
+            for irrep in point:
+                for label, multi in irrep.items():
+                    # only add valid multiplicities (filter out uncoverged bands)
+                    valid_multi = check_multiplicity(multi)
+                    if valid_multi or (filter_valid is False):
+                        multi = np.real(multi).round(0)
+                        irrep_dict.setdefault(label, 0)
+                        irrep_dict[label] += multi
+
+        return irrep_dict
+
+    def print_symmetry_indicators(self):
+        """Computes and prints the symmetry-indicator information.
+        """
+
+        print("\n---------- SYMMETRY INDICATORS ----------\n")
+        # identify_irreps must be used beforehand
+        try:
+            irrep_dict = self.get_irrep_counts()
+        except RuntimeError:
+            print(
+                "Could not compute the symmetry indicators "
+                "because irreps must be identified."
+            )
+        
+        # load symmetry indicators file
+        root = os.path.dirname(__file__)
+        filename = (
+            f"{'double' if self.spinor else 'single'}_indicators"
+            f"{'_magnetic' if self.magnetic else ''}.json"
+            )
+        si_table = json.load(open(root + "/data/symmetry_indicators/" + filename, 'r'))
+
+        # if SG not in table, all SIs are trivial
+        # {
+        #     sg: {
+        #         "indicators": {
+        #             indicator : {
+        #                 "factors" : {
+        #                     irrep : factor
+        #                 },
+        #                 "mod": value
+        #             }
+        #         }
+        #     }
+        # }
+        if self.spacegroup.number not in si_table:
+            print("There are no non-trivial symmetry indicators for this space group.")
+
+        else:
+            si_table = si_table[self.spacegroup.number]["indicators"]
+
+            for indicator in si_table:
+                si_factors = si_table[indicator]["factors"]
+                # terms for definition string
+                terms = [
+                    f"{factor} x {label}" for label, factor in 
+                    si_factors.items() if factor != 0
+                ]
+                definition_str = " + ".join(terms)
+                
+                # count irrep multiplicities by formula factors
+                total = 0
+                for label, value in si_factors.items():
+                    total += value * irrep_dict.get(label, 0)
+
+                print(f"{indicator} =", total % si_table[indicator]["mod"])
+                print(f"\tDefinition: ({definition_str}) mod {si_table[indicator]['mod']}")
+
+    def print_ebr_decomposition(self):
+        """
+        Computes and prints the EBR decomposition information. If the bands are
+        trivial or fragile-topological, it tries to find EBR decompositions using
+        ORtools if installed.
+        """
+        from .ebrs import (
+            compose_irrep_string,
+            compute_topological_classification_vector,
+            ORTOOLS_AVAILABLE,
+            compute_ebr_decomposition,
+            get_ebr_names_and_positions,
+            compose_ebr_string
+        )
+        from .utility import vector_pprint
+
+        def print_symmetry_info():
+            basis_labels = ebr_data["basis"]["irrep_labels"]
+            print(
+            f"Irrep decomposition at high-symmetry points:\n\n{compose_irrep_string(irrep_counts)}"
+            f"\n\nIrrep basis:\n{vector_pprint(basis_labels, fmt='s')}"
+            f"\n\nSymmetry vector:\n{vector_pprint(symmetry_vector, fmt='d')}"
+            f"\n\nTransformed symmetry vector:\n{vector_pprint(vec_prime, fmt='d')}"
+            f"\n\nSmith singular values:\n{vector_pprint(smith_diagonal, fmt='d')}"
+            )
+
+
+
+        print("\n---------- EBR DECOMPOSITION ----------\n")
+
+        root = os.path.dirname(__file__)
+        filename = f"{self.spacegroup.number}_ebrs.json"
+        ebr_data = json.load(open(root + "/data/ebrs/" + filename, 'r'))
+        
+        ebr_data = ebr_data["double" if self.spinor else "single"]
+        
+        try:
+            irrep_counts = self.get_irrep_counts()
+        except RuntimeError:
+            print(
+                "Could not compute the EBR decomposition because irreps must "
+                "be identified."
+            )
+
+        (
+            symmetry_vector,
+            vec_prime,
+            smith_diagonal,
+            nontrivial
+        ) = compute_topological_classification_vector(irrep_counts, ebr_data)
+
+        # if stable non-trivial topology
+        if nontrivial:
+            print("The set of bands is classified as TOPOLOGICAL\n")
+            print_symmetry_info() 
+        # its fragile or trivial, but cannot compute the EBRs
+        elif not ORTOOLS_AVAILABLE:
+            print(
+                "There exists integer-valued solutions to the EBR decomposition "
+                "problem, so the set of bands is TRIVIAL or displays FRAGILE TOPOLOGY. "
+                "Install OR-Tools to compute decompositions."
+                )
+            print_symmetry_info()
+        # is fragile or trivial and EBRs can be computed
+        else:
+            solutions, is_positive = compute_ebr_decomposition(ebr_data, symmetry_vector)
+
+            # positive solutions found -> trivial
+            if is_positive:
+                print("The set of bands is toplogically TRIVIAL")
+                print_symmetry_info()
+                print(
+                    "\nThere are positive, integer-valued linear combinations "
+                    "of EBRs that reproduce the set of bands."
+                    )
+            # positive solutions not found -> fragile
+            else:
+                print("The set of bands displays FRAGILE TOPOLOGY.")
+                print_symmetry_info()
+                print(
+                    "There are no positive, integer-valued linear combinations "
+                    "of EBRs that reproduce the bands."
+                    )
+
+            if solutions is None:
+                print(
+                    "\nAlthough they exist, OR-Tools could not find an EBR"
+                    " decomposition."
+                    )
+            else:
+                # print EBR decomposition
+                ebr_list = get_ebr_names_and_positions(ebr_data)
+                for i, sol in enumerate(solutions):
+                    print("Solution", i + 1, "\n")
+                    print(compose_ebr_string(sol, ebr_list), "\n")
+
+        
+def check_multiplicity(multi):
+    """Checks if an irrep multiplicity is correct, i.e. integer.
+
+    Parameters
+    ----------
+    multi : float
+        irrep multiplicity
+
+    Returns
+    -------
+    bool
+        True if correct, else False
+    """
+    
+    # is real
+    if not np.isclose(np.imag(multi), 0, rtol=0, atol=1e-3):
+        return False
+    # is integer
+    if not np.isclose(multi, np.round(multi), rtol=0, atol=1e-3):
+        return False
+
+    return True

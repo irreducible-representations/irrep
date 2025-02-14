@@ -13,7 +13,7 @@ setuptools.setup(
     install_requires=[
         "numpy",
         "scipy>=1.0",
-        "spglib>=1.14",
+        "spglib>=2.5.0",
         "Click",
         "monty",
         "ruamel.yaml",

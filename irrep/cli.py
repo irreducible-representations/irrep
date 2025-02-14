@@ -295,9 +295,9 @@ do not hesitate to contact the author:
                     "don't set this tag, you will get the basic info.")
 )
 @click.option("-json_file",
-                 type=str,
-                    default="irrep-output.json",
-                    help="File to save the output in JSON format. (without "
+                type=str,
+                default="irrep-output.json",
+                help="File to save the output in JSON format. (without "
                     "extension, the '.json' will be added automatically)"
 )
 @click.option(
@@ -306,6 +306,23 @@ do not hesitate to contact the author:
     default=False, 
     help=("Consider TRS a symmetry and use the corresponding gray group.")
     )
+@click.option("--print-hs-kpoints",
+                flag_value=True,
+                default=False,
+                help="Print high-symmetry k-points in the calculation and reference cell."
+)
+@click.option("--symmetry-indicators",
+                flag_value=True,
+                default=False,
+                help="Compute symmetry indicators if they are non-trivial. "
+                    "Irreps must be identified in the process."
+)
+@click.option("--ebr-decomposition",
+                flag_value=True,
+                default=False,
+                help="Compute the EBR decomposition and topological classification "
+                    "according to TQC. Irresp must be identified in the process."
+)
 def cli(
     ecut,
     fwav,
@@ -341,7 +358,10 @@ def cli(
     magmom,
     time_reversal,
     v,
-    json_file
+    json_file,
+    print_hs_kpoints,
+    symmetry_indicators,
+    ebr_decomposition
 ):
     """
     Defines the "irrep" command-line tool interface.
@@ -434,10 +454,16 @@ def cli(
 
     bandstr.spacegroup.show()
 
+    if print_hs_kpoints:
+        bandstr.spacegroup.print_hs_kpoints()
+
     if writesym:
         bandstr.spacegroup.write_sym_file(filename=prefix+".sym", alat=alat)
 
     if onlysym:
+        json_data = {}
+        json_data ["spacegroup"] = bandstr.spacegroup.json(symmetries=symmetries)
+        dumpfn(json_data, json_file, indent=4)
         exit()
 
     with open("irreptable-template", "w") as f:
@@ -450,6 +476,12 @@ def cli(
 
     # Temporary, until we make it valid for isymsep
     bandstr.write_characters()
+
+    if ebr_decomposition:
+        bandstr.print_ebr_decomposition()
+
+    if symmetry_indicators:
+        bandstr.print_symmetry_indicators()
 
     # Write irreps.dat file
     if kpnames is not None:

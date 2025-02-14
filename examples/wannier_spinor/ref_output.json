@@ -1,7 +1,7 @@
 {
     "spacegroup": {
         "name": "P4/mmm",
-        "number": 123,
+        "number": "123",
         "spinor": true,
         "num symmetries": 16,
         "cells match": true,

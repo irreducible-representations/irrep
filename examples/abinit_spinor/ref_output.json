@@ -1,7 +1,7 @@
 {
     "spacegroup": {
         "name": "R-3m",
-        "number": 166,
+        "number": "166",
         "spinor": true,
         "num symmetries": 12,
         "cells match": false,

@@ -316,14 +316,13 @@ def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
             raise RuntimeError(
                     "Error in the transformation of plane-waves in k-point={}: "
                     .format(kpt) +
-                    "Not pair found for the g-vector igTr[{i}]={igtr}"
+                    "No pair found for the g-vector igTr[{i}]={igtr}"
                     .format(i=i, igtr=igTr[:,i]) +
                     "obtained when transforming the g-vector ig[{i}]={ig} "
-                    .format(i=i, ig=ig_other[:3,i] +
+                    .format(i=i, ig=ig_other[:3,i]) +
                     "with the matrix {B}, where B=inv(A).T with A={A}"
                     .format(B=B, A=A)
                 )
-            )
     return rotind
 
 
