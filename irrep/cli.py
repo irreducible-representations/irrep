@@ -380,20 +380,6 @@ def cli(
     if kpnames is not None:
         searchcell = True
 
-    elif not searchcell:
-        msg = ("Warning: transformation to the convenctional unit "
-               "cell will not be calculated, nor its validity checked "
-               "(if given). See the description of flag -searchcell "
-               "on:\n"
-               "irrep --help"
-               )
-        log_message(msg, verbosity, 1)
-        msg = ("Warning: -kpnames not specified. Only traces of "
-               "symmetry operations will be calculated. Remember that "
-               "-kpnames must be specified to identify irreps"
-               )
-        log_message(msg, verbosity, 1)
-
     # parse input arguments into lists if supplied
     if symmetries:
         symmetries = str2list(symmetries)
@@ -443,10 +429,16 @@ def cli(
 
     if kfplo:
         kpoints_cart = bandstr.spacegroup.fplo_list_kpoints
-        print('Coordinates of maximal k points in the cartesian basis adopted '
-              'by FPLO:')
+        print('Writing =.groupoutput_phase2. Copy it to =.groupoutput and '
+              'run FPLO again.')
+        f = open('=.groupoutput_phase2', 'w')
+        f.write('# phase\n')
+        f.write('2\n')
+        f.write('# Number of maximal k points\n')
+        f.write(f'{len(kpoints_cart)}\n')
         for k in kpoints_cart.round(10):
-            print(" ".join([f'{x:14.10f}' for x in k]))
+            f.write(" ".join([f'{x:14.10f}' for x in k]) + '\n')
+        f.close()
         exit()
 
     if code.lower() == 'fplo':
@@ -461,6 +453,20 @@ def cli(
         json_data = {"spacegroup": bandstr.spacegroup.json(symmetries=symmetries)}
         dumpfn(json_data, json_file, indent=4)
         exit()
+
+    elif not searchcell:
+        msg = ("Warning: transformation to the convenctional unit "
+               "cell will not be calculated, nor its validity checked "
+               "(if given). See the description of flag -searchcell "
+               "on:\n"
+               "irrep --help"
+               )
+        log_message(msg, verbosity, 1)
+        msg = ("Warning: -kpnames not specified. Only traces of "
+               "symmetry operations will be calculated. Remember that "
+               "-kpnames must be specified to identify irreps"
+               )
+        log_message(msg, verbosity, 1)
 
     with open("irreptable-template", "w") as f:
         f.write(
