@@ -27,6 +27,7 @@ from monty.serialization import dumpfn, loadfn
 from .bandstructure import BandStructure
 from .utility import sort_vectors, str2list, short, log_message
 from . import __version__ as version
+from irreptables import IrrepTable
 
 
 class LoadContextFromConfig(click.Command):
@@ -312,6 +313,12 @@ do not hesitate to contact the author:
     default=False,
     help="Print coordinates of maximal k points in FPLO's cartesian basis",
 )
+@click.option(
+    "-print_kpnames",
+    flag_value=True,
+    default=False,
+    help="Print labels of maximal k points",
+)
 @click.option("-sg",
                 default=None,
                  type=int,
@@ -354,6 +361,7 @@ def cli(
     v,
     json_file,
     kfplo,
+    print_kpnames,
     sg
 ):
     """
@@ -365,7 +373,7 @@ def cli(
         code = 'fplo'
 
     # tmp, remove at some point
-    if code.lower() != 'fplo':
+    if code.lower() != 'fplo' and not print_kpnames:
         sg = None
 
     # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
@@ -400,6 +408,17 @@ def cli(
     else:
         stop = False
 
+    if print_kpnames:
+
+        if sg is None:
+            raise RuntimeError('If you use -print_kpnames, specify the number '
+                               'of the space group with -sg.')
+
+        irreptable = IrrepTable(sg, spinor=False)
+        print('Labels of maximal k points')
+        print(','.join([k.name for k in irreptable.kpoints]))
+        exit()
+
     bandstr = BandStructure(
         fWAV=fwav,
         fWFK=fwfk,
@@ -429,9 +448,8 @@ def cli(
 
     if kfplo:
         kpoints_cart = bandstr.spacegroup.fplo_list_kpoints
-        print('Writing =.groupoutput_phase2. Copy it to =.groupoutput and '
-              'run FPLO again.')
-        f = open('=.groupoutput_phase2', 'w')
+        print('Writing =.groupoutput for with maximal k points')
+        f = open('=.groupoutput', 'w')
         f.write('# phase\n')
         f.write('2\n')
         f.write('# Number of maximal k points\n')

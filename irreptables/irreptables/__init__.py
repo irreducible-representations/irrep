@@ -407,6 +407,8 @@ class IrrepTable:
     irreps : list
         Each component is an instance of class `IrRep` corresponding to an 
         irrep of the little group of a maximal k-point.
+    kpoints : list
+        Each element is an instance of class `KPoint` for a k point
     """
 
     def __init__(self, SGnumber, spinor, name=None, v=0):
@@ -459,7 +461,7 @@ class IrrepTable:
             l = lines.pop().strip()
             try:
                 kp = KPoint(line=l)
-                self.kpoints.append(kp.k)
+                self.kpoints.append(kp)
                 msg = f"k-point successfully read:\n{kp.str()}"
                 log_message(msg, v, 2)
             except Exception as err:

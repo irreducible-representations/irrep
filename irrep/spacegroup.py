@@ -2346,7 +2346,7 @@ class SpaceGroup():
             cartesian basis
         '''
 
-        kpoints = IrrepTable(self.number, self.spinor, v=0).kpoints
+        kpoints = [kp.k for kp in IrrepTable(self.number, self.spinor, v=0).kpoints]
         Lattice = self.Lattice / BOHR
         kpoints_cart = (kpoints
                         @ np.linalg.inv(self.refUC)
