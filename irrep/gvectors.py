@@ -20,11 +20,7 @@ import numpy as np
 import numpy.linalg as la
 Rydberg_eV = 13.605693  # eV
 Hartree_eV = 2 * Rydberg_eV
-<<<<<<< HEAD
-from .utility import log_message, orthogonolize
-=======
 from .utility import log_message, orthogonalize
->>>>>>> master
 
 
 class NotSymmetryError(RuntimeError):
