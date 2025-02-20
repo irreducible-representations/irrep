@@ -1,2 +1,3 @@
 prune examples
 prune irreptables
+include irrep/msg_numbers.data

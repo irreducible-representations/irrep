@@ -16,12 +16,15 @@
 ##################################################################
 
 
-import warnings
 import numpy as np
 import numpy.linalg as la
 Rydberg_eV = 13.605693  # eV
 Hartree_eV = 2 * Rydberg_eV
+<<<<<<< HEAD
 from .utility import log_message, orthogonolize
+=======
+from .utility import log_message, orthogonalize
+>>>>>>> master
 
 
 class NotSymmetryError(RuntimeError):
@@ -400,10 +403,13 @@ def symm_eigenvalues_blocks(K, WF, igall, A, S, T, spinor, block_ind):
 
 def symm_matrix(
     K, WF, igall, A, S, T, spinor,
+    time_reversal=False,
     WF_other=None, igall_other=None, K_other=None,
     block_ind=None,
     return_blocks=False,
-    ortogonalize=True
+    ortogonalize=True,
+    unitary=True,
+    unitary_params={}
 ):
     """
     Computes the matrix S_mn such that
@@ -435,6 +441,8 @@ def symm_matrix(
     T : array, shape=(3,)
         Translational part of the symmetry operation, in terms of the basis 
         vectors of the unit cell.
+    time_reversal : bool, default=False
+        If `True`, the time-reversal symmetry is applied.
     spinor : bool
         `True` if wave functions are spinors, `False` if they are scalars.
     block_ind : list( tuple(int,int) ), default=None
@@ -446,6 +454,9 @@ def symm_matrix(
         matrix composed of those blocks.
     ortogonalize : bool, default=True
         If `True`, the matrix is orthogonalized. Set to `False` for speedup. 
+        (in general it is not needed, but just in case)
+    unitary : bool, default=True
+        If `True`, the matrix is orthogonalized (made unitary). Set to `False` for speedup. 
         (in general it is not needed, but just in case)
     Returns
     -------
@@ -461,8 +472,22 @@ def symm_matrix(
     if block_ind is None:
         block_ind = np.array([(0, WF.shape[0])])
 
+    unitary_params_loc = {
+        "warning_threshold": 1e-3,
+        "error_threshold": 1e-2,
+        "check_upper" : False,
+    }
+    unitary_params_loc.update(unitary_params)
     npw1 = igall.shape[1]
     multZ = np.exp(-2j * np.pi * T.dot(igall_other[:3, :] + K_other[:, None])) [None,:]
+
+    if time_reversal:
+        A = -A
+        WF = WF.conj()
+        # multZ = multZ.conj() # this is not needed because igall_other and K_other are alreade reversed (because A=-A)
+        if spinor:
+            S =  np.array([[0,1],[-1,0]]) @ S.conj()
+
     igrot = transformed_g(kpt=K, ig=igall, A=A, ig_other=igall_other, kpt_other=K_other, inverse=True)
     if spinor:
         WFrot_up   = WF[:, igrot]*multZ
@@ -473,11 +498,19 @@ def symm_matrix(
     else:
         WFrot = WF[:, igrot]*multZ
     block_list = []
+    NB = WF.shape[0]
     for b1,b2 in block_ind:
         WFinv = right_inverse(WF_other[b1:b2])
         block = np.dot(WFrot[b1:b2,:], WFinv)
-        if ortogonalize:
-            block = orthogonolize(block)
+        if unitary:
+            if not unitary_params_loc["check_upper"] and b2==NB:
+                error_threshold = 10
+            else:
+                error_threshold = unitary_params_loc["error_threshold"]
+            block = orthogonalize(block, 
+                                  warning_threshold=unitary_params_loc["warning_threshold"],
+                                  error_threshold=error_threshold,
+                                  debug_msg=f"symm_matrix: block {b1}:{b2} of {WF.shape[0]}")
         block_list.append(block)
     if return_blocks:
         return block_list
@@ -485,13 +518,12 @@ def symm_matrix(
         nwfout = sum(b2-b1 for b1,b2 in block_ind)
         M = np.zeros( (nwfout, nwfout), dtype=complex)
         i=0
-        for (b1,b2),block in zip(block_ind, block_list):
+        for (b1,b2), block in zip(block_ind, block_list):
             b = b2-b1
             M[i:i+b,i:i+b] = block
             i+=b
         return M
-    
-    
+
 
 def right_inverse(A):
     """
