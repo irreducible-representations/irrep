@@ -1407,6 +1407,20 @@ class ParserFPLO:
 
         return energies, indices_in_symmetries, rep
 
+    @property
+    def spinor(self):
+        '''
+        Property getter for spinor
+
+        Returns
+        -------
+        bool
+            True if the calculation was full relativistic, false otherwise
+        '''
+
+        f = open(self.file_reps, 'r')
+        f.readline()
+        return int(f.readline()) == 1
 
     def parse_k_from_groupoutput(self, ik):
         '''

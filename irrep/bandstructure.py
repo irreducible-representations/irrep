@@ -199,6 +199,7 @@ class BandStructure:
 
             parser = ParserFPLO(fGROUP, fREP)
             self.Lattice, centering, order, spin_repr, translations, parities = parser.parse_group()
+            self.spinor = parser.spinor
 
             # Write translations in direct coords wrt DFT cell vectors
             translations = translations @ np.linalg.inv(self.Lattice)
@@ -208,7 +209,7 @@ class BandStructure:
                                   spin_repr=spin_repr,
                                   translations=translations,
                                   parities=parities,
-                                  spinor=spinor,
+                                  spinor=self.spinor,
                                   refUC=refUC,
                                   shiftUC=shiftUC,
                                   search_cell=search_cell,
@@ -325,6 +326,7 @@ class BandStructure:
 
             if onlysym:
                 return
+
             # Set cutoff to calculate traces
             if Ecut is None or Ecut > self.Ecut0 or Ecut <= 0:
                 self.Ecut = self.Ecut0

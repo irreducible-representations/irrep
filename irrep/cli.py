@@ -415,7 +415,6 @@ def cli(
                                'of the space group with -sg.')
 
         irreptable = IrrepTable(sg, spinor=False)
-        print('Labels of maximal k points')
         print(','.join([k.name for k in irreptable.kpoints]))
         exit()
 
