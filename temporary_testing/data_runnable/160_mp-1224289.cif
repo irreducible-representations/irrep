@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_HfTaCN
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.55373467
+_cell_length_b   5.55373467
+_cell_length_c   5.55373434
+_cell_angle_alpha   33.42226271
+_cell_angle_beta   33.42226271
+_cell_angle_gamma   33.42225157
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   HfTaCN
+_chemical_formula_sum   'Hf1 Ta1 C1 N1'
+_cell_volume   46.28047529
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Hf  Hf0  1  0.74707700  0.74707700  0.74707700  1
+  Ta  Ta1  1  0.25366100  0.25366100  0.25366100  1
+  C  C2  1  0.99752600  0.99752600  0.99752600  1
+  N  N3  1  0.50173600  0.50173600  0.50173600  1

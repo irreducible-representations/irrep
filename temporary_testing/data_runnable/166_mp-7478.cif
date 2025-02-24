@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_RbTmO2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   6.77805266
+_cell_length_b   6.77805266
+_cell_length_c   6.77805205
+_cell_angle_alpha   29.16733713
+_cell_angle_beta   29.16733713
+_cell_angle_gamma   29.16733098
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   RbTmO2
+_chemical_formula_sum   'Rb1 Tm1 O2'
+_cell_volume   65.43584265
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Rb  Rb0  1  0.00000000  0.00000000  -0.00000000  1
+  Tm  Tm1  1  0.50000000  0.50000000  0.50000000  1
+  O  O2  1  0.77558100  0.77558100  0.77558100  1
+  O  O3  1  0.22441900  0.22441900  0.22441900  1

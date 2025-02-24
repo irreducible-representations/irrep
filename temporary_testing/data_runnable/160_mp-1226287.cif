@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_CrCoPt2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   8.83912618
+_cell_length_b   8.83912618
+_cell_length_c   8.83912582
+_cell_angle_alpha   17.57077299
+_cell_angle_beta   17.57077299
+_cell_angle_gamma   17.57077098
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   CrCoPt2
+_chemical_formula_sum   'Cr1 Co1 Pt2'
+_cell_volume   54.93226076
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Cr  Cr0  1  0.74541700  0.74541700  0.74541700  1
+  Co  Co1  1  0.00571200  0.00571200  0.00571200  1
+  Pt  Pt2  1  0.49329100  0.49329100  0.49329100  1
+  Pt  Pt3  1  0.25558000  0.25558000  0.25558000  1

@@ -1,0 +1,32 @@
+# generated using pymatgen
+data_BeCl2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.24110556
+_cell_length_b   5.33088694
+_cell_length_c   6.23818560
+_cell_angle_alpha   115.29498996
+_cell_angle_beta   114.83980350
+_cell_angle_gamma   89.99998035
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   BeCl2
+_chemical_formula_sum   'Be2 Cl4'
+_cell_volume   139.53955492
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Be  Be0  1  0.25000000  0.00000000  0.00000000  1
+  Be  Be1  1  0.75000000  0.00000000  0.00000000  1
+  Cl  Cl2  1  0.61006045  0.90499845  0.22012090  1
+  Cl  Cl3  1  0.38993955  0.09500155  0.77987910  1
+  Cl  Cl4  1  0.11006045  0.31512145  0.22012090  1
+  Cl  Cl5  1  0.88993955  0.68487855  0.77987910  1

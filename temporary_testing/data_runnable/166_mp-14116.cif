@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_CuRhO2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.96093114
+_cell_length_b   5.96093148
+_cell_length_c   5.96093138
+_cell_angle_alpha   30.00302458
+_cell_angle_beta   30.00301307
+_cell_angle_gamma   30.00302394
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   CuRhO2
+_chemical_formula_sum   'Cu1 Rh1 O2'
+_cell_volume   46.91270234
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Cu  Cu0  1  -0.00000000  -0.00000000  0.00000000  1
+  Rh  Rh1  1  0.50000000  0.50000000  0.50000000  1
+  O  O2  1  0.89284100  0.89284100  0.89284100  1
+  O  O3  1  0.10715900  0.10715900  0.10715900  1

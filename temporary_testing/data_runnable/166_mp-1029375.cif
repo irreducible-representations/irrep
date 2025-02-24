@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_BaCN2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.71094124
+_cell_length_b   5.71093982
+_cell_length_c   5.71093971
+_cell_angle_alpha   44.45093098
+_cell_angle_beta   44.45093093
+_cell_angle_gamma   44.45092861
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   BaCN2
+_chemical_formula_sum   'Ba1 C1 N2'
+_cell_volume   83.04499920
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ba  Ba0  1  -0.00000000  -0.00000000  0.00000000  1
+  C  C1  1  0.50000000  0.50000000  0.50000000  1
+  N  N2  1  0.58010375  0.58010375  0.58010375  1
+  N  N3  1  0.41989625  0.41989625  0.41989625  1

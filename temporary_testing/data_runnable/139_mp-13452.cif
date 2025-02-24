@@ -1,0 +1,29 @@
+# generated using pymatgen
+data_BePd2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   2.75382519
+_cell_length_b   2.75382477
+_cell_length_c   5.28565009
+_cell_angle_alpha   105.09970884
+_cell_angle_beta   105.09973053
+_cell_angle_gamma   90.00000779
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   BePd2
+_chemical_formula_sum   'Be1 Pd2'
+_cell_volume   37.26475218
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Be  Be0  1  0.00000000  0.00000000  -0.00000000  1
+  Pd  Pd1  1  0.35609080  0.35609080  0.71218160  1
+  Pd  Pd2  1  0.64390920  0.64390920  0.28781840  1

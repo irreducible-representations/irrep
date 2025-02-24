@@ -1,0 +1,31 @@
+# generated using pymatgen
+data_LuAg4
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   4.16866158
+_cell_length_b   5.15704377
+_cell_length_c   5.15704458
+_cell_angle_alpha   80.59834294
+_cell_angle_beta   66.16079139
+_cell_angle_gamma   66.16076675
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LuAg4
+_chemical_formula_sum   'Lu1 Ag4'
+_cell_volume   92.75551926
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Lu  Lu0  1  -0.00000000  0.00000000  0.00000000  1
+  Ag  Ag1  1  0.59819069  0.59896533  0.20465229  1
+  Ag  Ag2  1  0.80284298  0.79534771  0.59896533  1
+  Ag  Ag3  1  0.19715702  0.20465229  0.40103467  1
+  Ag  Ag4  1  0.40180931  0.40103467  0.79534771  1

@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_MnMo3
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   6.55278603
+_cell_length_b   6.55278603
+_cell_length_c   6.55278661
+_cell_angle_alpha   118.33217033
+_cell_angle_beta   118.33217033
+_cell_angle_gamma   118.33215898
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   MnMo3
+_chemical_formula_sum   'Mn1 Mo3'
+_cell_volume   93.54680131
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Mn  Mn0  1  0.00000000  0.00000000  0.00000000  1
+  Mo  Mo1  1  0.00000000  0.79264200  0.20735800  1
+  Mo  Mo2  1  0.79264200  0.20735800  0.00000000  1
+  Mo  Mo3  1  0.20735800  0.00000000  0.79264200  1

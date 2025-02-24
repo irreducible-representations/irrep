@@ -1,0 +1,29 @@
+# generated using pymatgen
+data_MgZr2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   7.99739728
+_cell_length_b   7.99739728
+_cell_length_c   7.99739687
+_cell_angle_alpha   23.32322806
+_cell_angle_beta   23.32322806
+_cell_angle_gamma   23.32323882
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   MgZr2
+_chemical_formula_sum   'Mg1 Zr2'
+_cell_volume   70.39466636
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Mg  Mg0  1  0.00000000  0.00000000  -0.00000000  1
+  Zr  Zr1  1  0.21942677  0.21942677  0.21942677  1
+  Zr  Zr2  1  0.78057323  0.78057323  0.78057323  1

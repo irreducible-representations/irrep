@@ -1,0 +1,32 @@
+# generated using pymatgen
+data_KCuN
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   8.74053271
+_cell_length_b   4.64723448
+_cell_length_c   8.61510257
+_cell_angle_alpha   22.04237842
+_cell_angle_beta   90.07474914
+_cell_angle_gamma   90.06928830
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   KCuN
+_chemical_formula_sum   'K2 Cu2 N2'
+_cell_volume   131.32947165
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  K  K0  1  0.46563400  0.04181600  0.96897200  1
+  K  K1  1  0.96563400  0.95818400  0.01078900  1
+  Cu  Cu2  1  0.21562700  0.96772000  0.73225800  1
+  Cu  Cu3  1  0.71562700  0.03228000  0.69997800  1
+  N  N4  1  0.21574000  0.96703400  0.23448400  1
+  N  N5  1  0.71574000  0.03296600  0.20151800  1

@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_ZrNbCN
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.62040147
+_cell_length_b   5.62040147
+_cell_length_c   5.62040211
+_cell_angle_alpha   33.37721151
+_cell_angle_beta   33.37721151
+_cell_angle_gamma   33.37721397
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   ZrNbCN
+_chemical_formula_sum   'Zr1 Nb1 C1 N1'
+_cell_volume   47.84943437
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Zr  Zr0  1  0.25235100  0.25235100  0.25235100  1
+  Nb  Nb1  1  0.74677800  0.74677800  0.74677800  1
+  C  C2  1  0.00327600  0.00327600  0.00327600  1
+  N  N3  1  0.49759500  0.49759500  0.49759500  1

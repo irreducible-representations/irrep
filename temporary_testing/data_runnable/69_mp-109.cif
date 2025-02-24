@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_Si
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   3.59756044
+_cell_length_b   3.59756044
+_cell_length_c   5.23708898
+_cell_angle_alpha   108.14483113
+_cell_angle_beta   108.14483113
+_cell_angle_gamma   95.35414494
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Si
+_chemical_formula_sum   Si4
+_cell_volume   59.83270967
+_cell_formula_units_Z   4
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Si  Si0  1  0.72739428  0.27260572  0.00000000  1
+  Si  Si1  1  0.27260572  0.72739428  0.00000000  1
+  Si  Si2  1  0.77976930  0.77976930  0.55953860  1
+  Si  Si3  1  0.22023070  0.22023070  0.44046140  1

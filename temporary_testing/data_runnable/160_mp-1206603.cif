@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_RbCrSe2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   3.85460934
+_cell_length_b   3.85461032
+_cell_length_c   8.05720263
+_cell_angle_alpha   76.17257721
+_cell_angle_beta   76.17257579
+_cell_angle_gamma   60.00187497
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   RbCrSe2
+_chemical_formula_sum   'Rb1 Cr1 Se2'
+_cell_volume   99.65106952
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Rb  Rb0  1  0.83397009  0.83397037  0.49797489  1
+  Cr  Cr1  1  0.00212672  0.00212605  0.99347994  1
+  Se  Se2  1  0.61137797  0.61137759  0.16599876  1
+  Se  Se3  1  0.39252523  0.39252499  0.82254641  1

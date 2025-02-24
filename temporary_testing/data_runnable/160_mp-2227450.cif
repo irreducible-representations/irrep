@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_MgCoS2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   6.21172455
+_cell_length_b   6.21172412
+_cell_length_c   6.21172411
+_cell_angle_alpha   32.77666797
+_cell_angle_beta   32.77668645
+_cell_angle_gamma   32.77668178
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   MgCoS2
+_chemical_formula_sum   'Mg1 Co1 S2'
+_cell_volume   62.48990385
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Mg  Mg0  1  0.83343500  0.83343500  0.83343500  1
+  Co  Co1  1  0.99825900  0.99825900  0.99825900  1
+  S  S2  1  0.59814100  0.59814100  0.59814100  1
+  S  S3  1  0.40349800  0.40349800  0.40349800  1

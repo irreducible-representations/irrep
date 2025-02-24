@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_ErTlTe2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   4.41352571
+_cell_length_b   4.41352536
+_cell_length_c   8.55028799
+_cell_angle_alpha   75.04310598
+_cell_angle_beta   75.04310471
+_cell_angle_gamma   59.99999472
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   ErTlTe2
+_chemical_formula_sum   'Er1 Tl1 Te2'
+_cell_volume   137.68473796
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Er  Er0  1  0.00000000  0.00000000  -0.00000000  1
+  Tl  Tl1  1  0.50000000  0.50000000  0.50000000  1
+  Te  Te2  1  0.73686384  0.73686384  0.78940748  1
+  Te  Te3  1  0.26313616  0.26313616  0.21059252  1

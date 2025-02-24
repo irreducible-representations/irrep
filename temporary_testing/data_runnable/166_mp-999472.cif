@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_NaLaSe2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   4.37346675
+_cell_length_b   4.37346791
+_cell_length_c   7.32263501
+_cell_angle_alpha   72.62486489
+_cell_angle_beta   72.62486648
+_cell_angle_gamma   59.99999133
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   NaLaSe2
+_chemical_formula_sum   'Na1 La1 Se2'
+_cell_volume   113.85744027
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Na  Na0  1  -0.00000000  0.00000000  -0.00000000  1
+  La  La1  1  0.50000000  0.50000000  0.50000000  1
+  Se  Se2  1  0.75323913  0.75323913  0.74028360  1
+  Se  Se3  1  0.24676087  0.24676087  0.25971640  1

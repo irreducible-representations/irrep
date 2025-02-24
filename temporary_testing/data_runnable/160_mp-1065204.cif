@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_CrAgS2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   7.46347352
+_cell_length_b   7.46347352
+_cell_length_c   7.46347408
+_cell_angle_alpha   26.53864030
+_cell_angle_beta   26.53864030
+_cell_angle_gamma   26.53864597
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   CrAgS2
+_chemical_formula_sum   'Cr1 Ag1 S2'
+_cell_volume   73.15966386
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Cr  Cr0  1  0.85721000  0.85721000  0.85721000  1
+  Ag  Ag1  1  0.01401800  0.01401800  0.01401800  1
+  S  S2  1  0.12802900  0.12802900  0.12802900  1
+  S  S3  1  0.26074200  0.26074200  0.26074200  1

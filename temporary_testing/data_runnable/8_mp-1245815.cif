@@ -1,0 +1,29 @@
+# generated using pymatgen
+data_KCrN
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   3.20214191
+_cell_length_b   3.20153314
+_cell_length_c   5.90430859
+_cell_angle_alpha   90.91676215
+_cell_angle_beta   90.00000580
+_cell_angle_gamma   120.00629260
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   KCrN
+_chemical_formula_sum   'K1 Cr1 N1'
+_cell_volume   52.40787783
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  K  K0  1  0.96569400  0.93138700  0.97797000  1
+  Cr  Cr1  1  0.64639400  0.29278600  0.44491500  1
+  N  N2  1  0.31191400  0.62382700  0.37111500  1

@@ -1,0 +1,29 @@
+# generated using pymatgen
+data_KGeN
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   3.21029734
+_cell_length_b   3.20939361
+_cell_length_c   6.93542081
+_cell_angle_alpha   90.00000002
+_cell_angle_beta   62.46574094
+_cell_angle_gamma   60.00931821
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   KGeN
+_chemical_formula_sum   'K1 Ge1 N1'
+_cell_volume   52.33608731
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  K  K0  1  0.71392300  0.14303900  0.02135700  1
+  Ge  Ge1  1  0.71431500  0.14284300  0.52226200  1
+  N  N2  1  0.58976300  0.70511900  0.36538100  1
