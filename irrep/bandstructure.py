@@ -199,10 +199,13 @@ class BandStructure:
 
             parser = ParserFPLO(fGROUP, fREP)
             self.Lattice, centering, order, spin_repr, translations, parities = parser.parse_group()
-            self.spinor = parser.spinor
 
             # Write translations in direct coords wrt DFT cell vectors
             translations = translations @ np.linalg.inv(self.Lattice)
+            if onlysym:
+                self.spinor = False  # not used
+            else:
+                self.spinor = parser.spinor  # parsed from +groupreps
 
             self.spacegroup = SpaceGroup(
                                   Lattice=self.Lattice,
@@ -220,7 +223,7 @@ class BandStructure:
 
             if onlysym:
                 return
-            NBin, self.spinor, NK = parser.parse_header(verbosity)
+            NBin, NK = parser.parse_header(verbosity)
 
         else:
 
@@ -447,11 +450,11 @@ class BandStructure:
             elif code == 'fplo':
                 kpt = parser.parse_k_from_groupoutput(ik)   # to do: ask Klaus Koepernik to add k points to +groupreps and parse from there
                 kpt = kpt @ self.Lattice.T / BOHR  # coords in primitive setting
-                Energy, inds_syms, rep = parser.parse_kpoint(
-                                              ik,
-                                              self.spacegroup.inds_fplo,
-                                              save_wf
-                                              )
+                Energy, inds_littlegroup, rep = parser.parse_kpoint(
+                                                    ik,
+                                                    self.spacegroup.inds_fplo,
+                                                    save_wf
+                                                    )
 
             # Pick energy of IBend+1 band to calculate gaps
             try:
@@ -473,9 +476,9 @@ class BandStructure:
             # Preserve only bands in between IBstart and IBend
             Energy = Energy[IBstart:IBend] - self.efermi
             if code == 'fplo':
-                if save_wf:
+                if save_wf:  # rep contains matrices of symmetries
                     rep = rep[:,IBstart:IBend,IBstart:IBend]
-                else:
+                else:  # rep contains traces of symmetries
                     rep = rep[:,IBstart:IBend]
                 kp = Kpoint(
                     rep=rep,
@@ -489,7 +492,7 @@ class BandStructure:
                     spinor=self.spinor,
                     kwargs_kpoint=self.kwargs_kpoint,
                     normalize=False,
-                    symmetries=inds_syms
+                    symmetries=inds_littlegroup
                     )
             else:
                 WF = WF[IBstart:IBend]

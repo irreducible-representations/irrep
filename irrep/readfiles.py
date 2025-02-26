@@ -1177,7 +1177,7 @@ class ParserFPLO:
 
         log_message('Determining offsets of k-point blocks', self.verbosity, 2)
 
-        _, _, num_k = self.parse_header()
+        _, num_k = self.parse_header()
         list_offsets = []
         f = open(self.file_reps, 'r')
         i = 0
@@ -1306,9 +1306,7 @@ class ParserFPLO:
         f = open(self.file_reps, 'r')
         for line in f:
 
-            if self._record(line, 'full relativistic'):
-                spinor = int(f.readline()) == 1
-            elif self._record(line, 'nr of spins'):
+            if self._record(line, 'nr of spins'):
                 if int(f.readline()) > 1:
                     raise RuntimeError('Spin polarization not implemented yet :S')
             elif self._record(line, 'matrix size'):
@@ -1317,10 +1315,10 @@ class ParserFPLO:
                 num_k = int(f.readline())
                 break
 
-        return num_bands, spinor, num_k
+        return num_bands, num_k
 
 
-    def parse_kpoint(self, ik, indices=None, save_matrices=False):
+    def parse_kpoint(self, ik, inds_fplo=None, save_matrices=False):
         '''
         Parse block corresponding to a k point from +groupreps
 
@@ -1328,9 +1326,10 @@ class ParserFPLO:
         ----------
         ik : int
             Index of the k point to parse
-        indices : array
-            Indices of symmetries without +2pi rotation in FPLO's order. 
-            Only matrices of these symmetries will be parsed, and ordered 
+        inds_fplo : array
+            Indices of symmetries without +2pi rotation in FPLO. The first 
+            element is the index in FPLO for the first symmetry in tables,
+            etc. Only matrices of these symmetries will be parsed, and ordered 
             according to this array. By default, include all symmetries.
         save_matrices : bool
             If `False`, only traces will be returned. If `True`, matrices 
@@ -1339,17 +1338,20 @@ class ParserFPLO:
         Returns
         -------
         energies : array
-            Energy levels
-        inds_syms : list
-            Indices of symmetries in little group
+            Energy levels, without grouping them by degeneracy.
+        indices_in_symmetries : list
+            Indices of little-group symmetries in the tables
         rep : scr matrx
-            Sparse matrix with the matrices of little group operations
+            Sparse matrix with the matrices of little-group symmetries or 
+            their traces. If it contains matrices, the indices are 
+            `[isym,n,m]`, where `n` and `m` are band indices. If it 
+            contains traces, indices are `[isym,n]`.
         '''
 
-        num_bands, _, _ = self.parse_header()
+        num_bands, _ = self.parse_header()
 
-        if indices is None:
-            indices = np.arange(100)  # all symmetries
+        if inds_fplo is None:
+            inds_fplo = np.arange(100)  # all symmetries
 
         indices_in_symmetries = []
         rep = []
@@ -1376,9 +1378,12 @@ class ParserFPLO:
                     rep_sym = np.zeros(num_bands, dtype=complex)
 
                 isym = int(f.readline())
-                if isym in indices:  # not +2pi symmetry
-                    ind = np.where(indices == isym)[0][0]  # index of sym in tables
+                if isym in inds_fplo:  # not +2pi symmetry
+                    ind = np.where(inds_fplo == isym)[0][0]  # index of sym in tables
                     indices_in_symmetries.append(ind)
+                    # Don't break or continue because we need to get rid of the
+                    # lines corresponding to this symmetry before moving on to
+                    # the next symmetry
 
                 for line in f:
                     if self._record(line, 'rep matrix'):
@@ -1386,14 +1391,14 @@ class ParserFPLO:
 
                 for i in range(num_bands):
                     line = np.array(f.readline().split(), dtype=float)
-                    if isym not in indices:  # +2pi symmetry, skip it
+                    if isym not in inds_fplo:  # +2pi symmetry, skip it
                         continue
                     if save_matrices:
                         rep_sym[i,:] = line[::2] + 1.0j * line[1::2]
                     else:
                         rep_sym[i] = line[2*i] + 1.0j * line[2*i+1]
 
-                if isym in indices:
+                if isym in inds_fplo:
                     rep.append(rep_sym)
 
                 if len(rep) == num_syms:
@@ -1401,7 +1406,13 @@ class ParserFPLO:
 
         f.close()
         rep = np.array(rep, dtype=complex)
+
+        # Sort rep such that symmetries follow the order in tables
+        args = np.argsort(indices_in_symmetries)
+        rep = rep[args]
+
         indices_in_symmetries = np.array(indices_in_symmetries) + 1
+
         if save_matrices:
             rep = csr_matrix(rep)
 
