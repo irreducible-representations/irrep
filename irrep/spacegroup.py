@@ -887,13 +887,14 @@ class SpaceGroup():
         self.positions = positions  # None
         self.typat = typat  # None
         self.alat = alat  # not used for FPLO
-        self.spinor = spinor  # will be corrected after parsing +groupreps
+        #self.spinor = True  # will be corrected after parsing +groupreps
+        self.spinor = spinor
         self.magmom = magmom
         self.alat = alat
 
         if positions is None or typat is None:  # FPLO, determine space group from spin repr.
 
-            self.number = sg  # temporary until we parse it from DFT data
+            self.number = sg  # given as CLI arg, temporary until we parse it from DFT data
 
             if spin_repr is None or parities is None:
                 raise RuntimeError(
@@ -930,11 +931,12 @@ class SpaceGroup():
 
             self.refUC, self.shiftUC = self.conv_from_prim()
 
-            # TODO: Implement identification of space group number
-            irreptable = IrrepTable(sg, self.spinor, v=verbosity)
+            # Load symmetries from tables
+            irreptable = IrrepTable(sg, spinor, v=verbosity)
             self.symmetries_tables = irreptable.symmetries
             self.name = irreptable.name
 
+            # Match DFT symmetries with those from tables and sort them
             if not no_match_symmetries:
                 try:
                     ind, dt, signs = self.match_symmetries(
@@ -1976,10 +1978,11 @@ class SpaceGroup():
             diff_t[inds] = 0.0
 
             # Determine origin shift and check that it is valid
-            shiftUC = sg_svd.lambda_matrix @ diff_t
-            vec_ref = sg_svd.N_matrix @ shiftUC
+            p = sg_svd.lambda_matrix @ diff_t
+            vec_ref = sg_svd.N_matrix @ p
             if np.allclose(vec_ref, diff_t):
                 refUC = M @ S
+                shiftUC = - P @ p
                 found = True
                 break
 
@@ -2216,6 +2219,7 @@ class SpaceGroup():
             t = sym.translation_refUC(refUC, shiftUC)
             found = False
             for i, sym2 in enumerate(self.symmetries_tables):
+                t2 = shiftUC + refUC @ sym2.t - refUC @ sym2.R @ np.linalg.inv(refUC) @ shiftUC
                 t1 = refUC.dot(sym2.t - t) % 1
                 #t1 = np.dot(sym2.t - t, refUC) % 1
                 t1[1 - t1 < trans_thresh] = 0
@@ -2236,16 +2240,18 @@ class SpaceGroup():
                             "parts do not match:\n"
                             "R (found, in conv. cell)= \n{} \n"
                             "t(found) = {} \n"
-                            "t(table) = {} \n"
+                            "t(table, in prim. cell) = {}\n"
                             "t(found, in conv. cell) = {}\n"
+                            "t(table) = {} \n"
                             "t(table)-t(found) "
-                            "(in conv. cell, mod. lattice translation)= {}"
+                            "(in prim cell, mod. lattice translation)= {}"
                             .format(
                                 j+1, 
                                 R, 
                                 sym.translation, 
-                                sym2.t, 
+                                t2,
                                 t,
+                                sym2.t, 
                                 t1
                                 ))
                             )
