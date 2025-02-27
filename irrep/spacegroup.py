@@ -2353,6 +2353,12 @@ class SpaceGroup():
         '''
 
         kpoints = [kp.k for kp in IrrepTable(self.number, self.spinor, v=0).kpoints]
+        kpoints = np.array(kpoints)
+
+        # Temporary fix: append decimals to 0.3333 to make sure FPLO finds the 
+        # little group of the k point correctly
+        # To do: generate irreptables with more decimals
+        kpoints[np.isclose(kpoints, 0.3333, atol=1e-3)] = 0.333333333333
         Lattice = self.Lattice / BOHR
         kpoints_cart = (kpoints
                         @ np.linalg.inv(self.refUC)
