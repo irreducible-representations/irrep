@@ -932,17 +932,46 @@ class SpaceGroup():
             self.refUC, self.shiftUC = self.conv_from_prim()
 
             # Load symmetries from tables
-            irreptable = IrrepTable(sg, spinor, v=verbosity)
+            irreptable = IrrepTable(sg, True, v=verbosity)
             self.symmetries_tables = irreptable.symmetries
             self.name = irreptable.name
 
             # Match DFT symmetries with those from tables and sort them
             if not no_match_symmetries:
+                print("Matching symmetries")
+
                 try:
                     ind, dt, signs = self.match_symmetries(
-                                        signs=self.spinor,
+                                        find_spin_matrices=False,
                                         trans_thresh=trans_thresh
                                         )
+
+                    # Fix signs for SU2 matrices. Move this block inside 
+                    # match_symmetries once tested, ensuring compatibility 
+                    # with MGA's PR
+                    signs = []
+                    for i_dft, i_tab in enumerate(ind):
+                        axis_direct = self.symmetries[i_dft].axis_direct
+                        if np.allclose(axis_direct, np.zeros(3)):  # identity
+                            sign = 1.0
+                        else:
+                            axis_refUC = np.linalg.inv(self.refUC) @ axis_direct
+                            angle = self.symmetries[i_dft].angle
+                            spin_axes = get_spin_axes(get_crystal_system(self.number))
+                            axis_spin = axis_refUC @ spin_axes
+                            axis_spin /= np.linalg.norm(axis_spin)
+                            sigma_n = np.einsum('i,ijk->jk', axis_spin, pauli_sigma)
+                            so = expm(-0.5j * angle * sigma_n)
+
+                            # Check sign of SU2 matrix
+                            st = self.symmetries_tables[i_tab].S
+                            sign = np.linalg.solve(so, st).trace() / 2
+                            # check sign is +- 1
+                            if not np.isclose(np.imag(sign), 0) or not np.isclose(np.abs(sign), 1):
+                                raise RuntimeError("Could not match the spin matrices.")
+                        signs.append(sign)
+                    signs = np.round(np.real(signs), 0)
+
                     # Sort symmetries like in tables
                     args = np.argsort(ind)
                     for i,i_ind in enumerate(args):
@@ -951,6 +980,7 @@ class SpaceGroup():
                         self.symmetries.append(self.symmetries[i_ind])
                     self.symmetries = self.symmetries[i+1:]
                     self.inds_fplo = self.inds_fplo[args]
+
                 except RuntimeError:
                     if search_cell:  # symmetries must match to identify irreps
                         raise RuntimeError((
@@ -1873,11 +1903,13 @@ class SpaceGroup():
         elif self.laue_group in ['4/m', '4/mmm']:  # tetragonal, single fixing matrix
 
             if centering == 'C' and sg_svd.centering == 'P':
+                print('YES 1')
                 M_fixcent = np.array([[-1/2, 1/2, 0],
                                       [1/2, 1/2, 0],
                                       [0, 0, 1]])
 
             elif centering == 'F' and sg_svd.centering == 'I':
+                print('YES 2')
                 M_fixcent = np.array([[-1/2, 1/2, 0],
                                       [1/2, 1/2, 0],
                                       [0, 0, 1]])
@@ -2163,7 +2195,7 @@ class SpaceGroup():
             self,
             refUC=None,
             shiftUC=None,
-            signs=False,
+            find_spin_matrices=False,
             trans_thresh=1e-5
             ):
         """
@@ -2212,8 +2244,10 @@ class SpaceGroup():
             refUC = self.refUC
         if shiftUC is None:
             shiftUC = self.shiftUC
+
         ind = []
         dt = []
+
         for j, sym in enumerate(self.symmetries):
             R = sym.rotation_refUC(refUC)
             t = sym.translation_refUC(refUC, shiftUC)
@@ -2268,12 +2302,14 @@ class SpaceGroup():
                 "Error in matching symmetries detected by spglib with the \
                  symmetries in the tables. Try to modify the refUC and shiftUC \
                  parameters")
-        if signs:
+
+        if find_spin_matrices:
             S1 = [sym.spinor_rotation for sym in self.symmetries]
             S2 = [self.symmetries_tables[i].S for i in ind]
             signs_array = self.__match_spinor_rotations(S1, S2)
         else:
             signs_array = np.ones(len(ind), dtype=int)
+
         return ind, dt, signs_array
 
     def vecs_centering(self):
@@ -2475,3 +2511,58 @@ def cart_to_crystal(rot_cart, trans_cart, lattice, alat):
     rot_crystal = np.round(rot_crystal).astype(int)
     trans_crystal = - trans_cart @ lat_inv * alat * BOHR
     return rot_crystal , trans_crystal 
+
+def get_crystal_system(sg_num):
+    """Crystal system based on the number of the (M)SG
+
+    Parameters
+    ----------
+    sg_num : any
+        SG number (before dot if MSG), must be castable to int
+
+    Returns
+    -------
+    str
+        crystal system
+    """
+    sg_num = int(sg_num)
+    if sg_num <= 2:
+        return "triclinic"
+    elif 3 <= sg_num <= 15:
+        return "monoclinic"
+    elif 16 <= sg_num <= 74:
+        return "orthorhombic"
+    elif 75 <= sg_num <= 142:
+        return "tetragonal"
+    elif 143 <= sg_num <= 167:
+        return "trigonal"
+    elif 168 <= sg_num <= 194:
+        return "hexagonal"
+    elif sg_num >= 195:
+        return "cubic"
+
+def get_spin_axes(crystal_system):
+    """Spin axes in tables based on crystal system
+
+    Parameters
+    ----------
+    crystal_system : str
+        crystal system
+
+    Returns
+    -------
+    array
+        spin axis for spin matrix calculation
+    """
+    if crystal_system in ["trigonal", "hexagonal"]:
+        return np.array([
+            [0, -1, 0],
+            [-np.sqrt(3)/2, 0.5, 0],
+            [0, 0, -1]
+        ])
+    else:
+        return np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
