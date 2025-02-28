@@ -311,18 +311,6 @@ do not hesitate to contact the author:
                 default=False,
                 help="Print high-symmetry k-points in the calculation and reference cell."
 )
-@click.option("--symmetry-indicators",
-                flag_value=True,
-                default=False,
-                help="Compute symmetry indicators if they are non-trivial. "
-                    "Irreps must be identified in the process."
-)
-@click.option("--ebr-decomposition",
-                flag_value=True,
-                default=False,
-                help="Compute the EBR decomposition and topological classification "
-                    "according to TQC. Irresp must be identified in the process."
-)
 def cli(
     ecut,
     fwav,
@@ -360,8 +348,6 @@ def cli(
     v,
     json_file,
     print_hs_kpoints,
-    symmetry_indicators,
-    ebr_decomposition
 ):
     """
     Defines the "irrep" command-line tool interface.
@@ -476,12 +462,6 @@ def cli(
 
     # Temporary, until we make it valid for isymsep
     bandstr.write_characters()
-
-    if ebr_decomposition:
-        bandstr.print_ebr_decomposition()
-
-    if symmetry_indicators:
-        bandstr.print_symmetry_indicators()
 
     # Write irreps.dat file
     if kpnames is not None:

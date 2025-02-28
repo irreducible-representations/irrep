@@ -1,4 +1,3 @@
 prune examples
 prune irreptables
 include irrep/data/*
-include irrep/data/symmetry_indicators/*
