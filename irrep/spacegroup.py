@@ -916,6 +916,8 @@ class SpaceGroup():
             for isym in range(self.order):
                 
                 angle, axis, d = self.identify_from_spinrep(spin_repr[isym])
+                print(f'isym: {isym}, axis: {axis}, angle: {angle/np.pi}, d: {d}')
+                print(spin_repr[isym].round(4))
                 if d:
                     continue
                 self.symmetries.append(SymmetryOperation(angle=angle,
@@ -932,7 +934,7 @@ class SpaceGroup():
             self.refUC, self.shiftUC = self.conv_from_prim()
 
             # Load symmetries from tables
-            irreptable = IrrepTable(sg, True, v=verbosity)
+            irreptable = IrrepTable(sg, self.spinor, v=verbosity)
             self.symmetries_tables = irreptable.symmetries
             self.name = irreptable.name
 
@@ -946,31 +948,58 @@ class SpaceGroup():
                                         trans_thresh=trans_thresh
                                         )
 
+                    print('Index in FPLO, index in tables')
+                    for i, j in zip(self.inds_fplo, ind):
+                        print(i, j)
+
                     # Fix signs for SU2 matrices. Move this block inside 
                     # match_symmetries once tested, ensuring compatibility 
                     # with MGA's PR
-                    signs = []
-                    for i_dft, i_tab in enumerate(ind):
-                        axis_direct = self.symmetries[i_dft].axis_direct
-                        if np.allclose(axis_direct, np.zeros(3)):  # identity
-                            sign = 1.0
-                        else:
-                            axis_refUC = np.linalg.inv(self.refUC) @ axis_direct
-                            angle = self.symmetries[i_dft].angle
-                            spin_axes = get_spin_axes(get_crystal_system(self.number))
-                            axis_spin = axis_refUC @ spin_axes
-                            axis_spin /= np.linalg.norm(axis_spin)
-                            sigma_n = np.einsum('i,ijk->jk', axis_spin, pauli_sigma)
-                            so = expm(-0.5j * angle * sigma_n)
+                    #signs = []
+                    #for i_dft, i_tab in enumerate(ind):
+                    #    axis_direct = self.symmetries[i_dft].axis_direct
+                    #    if np.allclose(axis_direct, np.zeros(3)):  # identity
+                    #        sign = 1.0
+                    #    else:
+                    #        axis_refUC = np.linalg.inv(self.refUC) @ axis_direct
+                    #        angle = self.symmetries[i_dft].angle
+                    #        spin_axes = get_spin_axes(get_crystal_system(self.number))
+                    #        axis_spin = axis_refUC @ spin_axes
+                    #        axis_spin /= np.linalg.norm(axis_spin)
+                    #        sigma_n = np.einsum('i,ijk->jk', axis_spin, pauli_sigma)
+                    #        so = expm(-0.5j * angle * sigma_n)
 
-                            # Check sign of SU2 matrix
-                            st = self.symmetries_tables[i_tab].S
-                            sign = np.linalg.solve(so, st).trace() / 2
-                            # check sign is +- 1
-                            if not np.isclose(np.imag(sign), 0) or not np.isclose(np.abs(sign), 1):
-                                raise RuntimeError("Could not match the spin matrices.")
-                        signs.append(sign)
-                    signs = np.round(np.real(signs), 0)
+                    #        # Check sign of SU2 matrix
+                    #        st = self.symmetries_tables[i_tab].S
+                    #        sign = np.linalg.solve(so, st).trace() / 2
+                    #        # check sign is +- 1
+                    #        if not np.isclose(np.imag(sign), 0) or not np.isclose(np.abs(sign), 1):
+                    #            raise RuntimeError("Could not match the spin matrices.")
+                    #    signs.append(sign)
+                    #signs = np.round(np.real(signs), 0)
+
+                    # After applying refUC, the rotation axis of a 2-fold may 
+                    # be inverted, while the angle is kept unchanged. Then, 
+                    # the 2-fold may have become its +2pi relative. For 
+                    # dihedral axes it's not any problem because they are 
+                    # chosen consistently, but if the axis hosts higher order 
+                    # rotations, we have to correct the sign of the C2 rotation
+                    for isym, sym in enumerate(self.symmetries):
+                        if sym.order == 2:
+                            print(f'sym fplo {self.inds_fplo[isym]} is 2-fold')
+                            axis_prim = sym.axis_direct
+                            axis_conv = np.linalg.inv(self.refUC) @ axis_prim
+                            print(f'axis: {sym.axis.round(4)}, axis_prim: {axis_prim.round(4)}, axis_conv: {axis_conv.round(4)}')
+                            print(axis_prim + axis_conv)
+                            if np.allclose(axis_prim + axis_conv, np.zeros(3, dtype=float)):
+                                order_axis = len(np.where(np.all(self.axes == sym.axis, axis=1))[0])
+                                print(f'order axis: {order_axis}')
+                                if order_axis > 1:
+                                    signs[isym] = -1
+
+                    print('signs')
+                    for i, ifplo in enumerate(self.inds_fplo):
+                        print(ifplo, self.symmetries[i].sign)
 
                     # Sort symmetries like in tables
                     args = np.argsort(ind)
