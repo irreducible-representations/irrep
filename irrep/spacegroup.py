@@ -916,8 +916,8 @@ class SpaceGroup():
             for isym in range(self.order):
                 
                 angle, axis, d = self.identify_from_spinrep(spin_repr[isym])
-                print(f'isym: {isym}, axis: {axis}, angle: {angle/np.pi}, d: {d}')
-                print(spin_repr[isym].round(4))
+                #print(f'isym: {isym}, axis: {axis}, angle: {angle/np.pi}, d: {d}')
+                #print(spin_repr[isym].round(4))
                 if d:
                     continue
                 self.symmetries.append(SymmetryOperation(angle=angle,
@@ -948,9 +948,9 @@ class SpaceGroup():
                                         trans_thresh=trans_thresh
                                         )
 
-                    print('Index in FPLO, index in tables')
-                    for i, j in zip(self.inds_fplo, ind):
-                        print(i, j)
+                    #print('Index in FPLO, index in tables')
+                    #for i, j in zip(self.inds_fplo, ind):
+                    #    print(i, j)
 
                     # Fix signs for SU2 matrices. Move this block inside 
                     # match_symmetries once tested, ensuring compatibility 
@@ -986,20 +986,20 @@ class SpaceGroup():
                     # rotations, we have to correct the sign of the C2 rotation
                     for isym, sym in enumerate(self.symmetries):
                         if sym.order == 2:
-                            print(f'sym fplo {self.inds_fplo[isym]} is 2-fold')
+                            #print(f'sym fplo {self.inds_fplo[isym]} is 2-fold')
                             axis_prim = sym.axis_direct
                             axis_conv = np.linalg.inv(self.refUC) @ axis_prim
-                            print(f'axis: {sym.axis.round(4)}, axis_prim: {axis_prim.round(4)}, axis_conv: {axis_conv.round(4)}')
-                            print(axis_prim + axis_conv)
+                            #print(f'axis: {sym.axis.round(4)}, axis_prim: {axis_prim.round(4)}, axis_conv: {axis_conv.round(4)}')
+                            #print(axis_prim + axis_conv)
                             if np.allclose(axis_prim + axis_conv, np.zeros(3, dtype=float)):
                                 order_axis = len(np.where(np.all(self.axes == sym.axis, axis=1))[0])
-                                print(f'order axis: {order_axis}')
+                                #print(f'order axis: {order_axis}')
                                 if order_axis > 1:
                                     signs[isym] = -1
 
-                    print('signs')
-                    for i, ifplo in enumerate(self.inds_fplo):
-                        print(ifplo, self.symmetries[i].sign)
+                    #print('signs')
+                    #for i, ifplo in enumerate(self.inds_fplo):
+                    #    print(ifplo, self.symmetries[i].sign)
 
                     # Sort symmetries like in tables
                     args = np.argsort(ind)
