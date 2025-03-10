@@ -1756,34 +1756,6 @@ class SpaceGroup(SpaceGroupBare):
             k_dft = np.round(refUC_kspace.dot(coords), 6) % 1
             print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *k_dft))
 
-    def kpoints_to_calculation_cell(self, kpoints):
-        """Transforms kpoints form standard cell to calculation cell
-
-        Parameters
-        ----------
-        kpoints : np.NDArray
-            kpoints in standard cell
-        """
-        refUC_kspace = np.linalg.inv(self.refUC.T)
-
-        kpoints = np.array([refUC_kspace.dot(k) for k in kpoints]) % 1
-
-        return kpoints
-
-    def kpoints_to_standard_cell(self, kpoints):
-        """Transforms kpoints form standard cell to calculation cell
-
-        Parameters
-        ----------
-        kpoints : np.NDArray
-            kpoints in standard cell
-        """
-        refUC_kspace = self.refUC.T
-
-        kpoints = np.array([refUC_kspace.dot(k) for k in kpoints]) % 1
-
-        return kpoints
-
 
 def read_sym_file(fname):
     """
