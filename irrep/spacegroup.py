@@ -108,8 +108,7 @@ class SymmetryOperation():
         self.angle_str = self.get_angle_str()
         self.spinor = spinor
         #to be matched with tables
-        self.spinor_rotation = expm(-0.5j * self.angle *
-                                    np.einsum('i,ijk->jk', self.axis, pauli_sigma))
+        self.spinor_rotation = su2_formula(self.axis, self.angle)
         self.spin_matrix_refUC = self.spinor_rotation.copy()
         self.sign = 1  # To be matched with tables
 
@@ -1206,7 +1205,21 @@ class SpaceGroup(SpaceGroupBare):
         ------
         RuntimeError
             Some matrix does not differ only by a sign
+
+        Notes
+        -----
+        The method is the following:
+
+        1. From the O(3) matrix given in the basis of vectors of the 
+        conventional cell, determine the rotation axis and angle
+        2. Calculate the coords of the axis in the cartesian frame 
+        adopted to write generate the SU(2) matrices in the tables
+        3. Generate the SU(2) matrix according to the convention of 
+        :math:`S(\phi, \hat{n})=exp(-i \phi \vec{\sigma} \cdot \hat{n} / 2)`.
+        4. Compare this matrix with the one parsed from the table, and 
+        determine if they differ by a sign.
         """
+
         # rotation axes in standard cell
         axes = []
         # rotation angles
@@ -1217,7 +1230,7 @@ class SpaceGroup(SpaceGroupBare):
         for R in rotations_table:
 
             # find angle and direct coords of the axis in the setting of tables
-            axis, angle = get_axis_and_angle(R) 
+            axis, angle = get_axis_and_angle(R)
 
             # get axis in spin setting
             axis_spin = axis @ self.spin_axes
