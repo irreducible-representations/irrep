@@ -1753,7 +1753,7 @@ class SpaceGroup(SpaceGroupBare):
         for i in kp_index:
             name = table.irreps[i].kpname
             coords = table.irreps[i].k
-            k_dft = np.round(refUC_kspace.dot(coords), 6) % 1
+            k_dft = np.round(refUC_kspace.dot(coords), 6)
             print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *k_dft))
 
 
