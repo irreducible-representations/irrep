@@ -390,6 +390,10 @@ def cli(
     if kpnames:
         kpnames = kpnames.split(",")
 
+    # Avoid parsing wave functions if user only wants k-points in DFT setting
+    if print_hs_kpoints:
+        onlysym = True
+
     # Decide if wave functions should be kept in memory after calculating trace
     if isymsep or wcc or zak:
         save_wf = True
@@ -442,6 +446,7 @@ def cli(
 
     if print_hs_kpoints:
         bandstr.spacegroup.print_hs_kpoints()
+        exit()
 
     if writesym:
         bandstr.spacegroup.write_sym_file(filename=prefix+".sym", alat=alat)
