@@ -57,7 +57,7 @@ class SymopTable:
         # len is 13 if time reversal is specified
         # len is > 13 everytime there is spin
         line_length = len(numbers)
-        if line_length > 12:
+        if line_length > 13:
             self.S = (
                 np.array(numbers[12:16], dtype=float)
                 * np.exp(1j * np.pi * np.array(numbers[16:20], dtype=float))
@@ -356,13 +356,13 @@ class IrrepTable:
             msg = f"Reading a user-defined irrep table <{name}>"
             log_message(msg, v, 2)
 
+
         log_message("\n---------- DATA FROM THE TABLE ----------\n", v, 2)
         lines = open(name).readlines()[-1::-1]
         while len(lines) > 0:
             l = lines.pop().strip().split("=")
-            # logger.debug(l,l[0].lower())
-            if l[0].lower() == "SG":
-                assert int(l[1]) == self.number
+            if l[0].lower() == "sg":
+                assert l[1].strip() == self.number
             elif l[0].lower() == "name":
                 self.name = l[1]
             elif l[0].lower() == "nsym":
@@ -379,7 +379,6 @@ class IrrepTable:
                         self.symmetries.append(SymopTable(l))
                     except Exception as err:
                         logger.debug(err)
-                        pass
                 break
 
         msg = "Symmetries are:\n" + "\n".join(s.str() for s in self.symmetries)

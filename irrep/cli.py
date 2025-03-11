@@ -295,9 +295,9 @@ do not hesitate to contact the author:
                     "don't set this tag, you will get the basic info.")
 )
 @click.option("-json_file",
-                 type=str,
-                    default="irrep-output.json",
-                    help="File to save the output in JSON format. (without "
+                type=str,
+                default="irrep-output.json",
+                help="File to save the output in JSON format. (without "
                     "extension, the '.json' will be added automatically)"
 )
 @click.option(
@@ -306,6 +306,11 @@ do not hesitate to contact the author:
     default=False, 
     help=("Consider TRS a symmetry and use the corresponding gray group.")
     )
+@click.option("--print-hs-kpoints",
+                flag_value=True,
+                default=False,
+                help="Print high-symmetry k-points in the calculation and reference cell."
+)
 def cli(
     ecut,
     fwav,
@@ -341,7 +346,8 @@ def cli(
     magmom,
     time_reversal,
     v,
-    json_file
+    json_file,
+    print_hs_kpoints,
 ):
     """
     Defines the "irrep" command-line tool interface.
@@ -383,6 +389,10 @@ def cli(
         isymsep = str2list(isymsep)
     if kpnames:
         kpnames = kpnames.split(",")
+
+    # Avoid parsing wave functions if user only wants k-points in DFT setting
+    if print_hs_kpoints:
+        onlysym = True
 
     # Decide if wave functions should be kept in memory after calculating trace
     if isymsep or wcc or zak:
@@ -434,10 +444,17 @@ def cli(
 
     bandstr.spacegroup.show()
 
+    if print_hs_kpoints:
+        bandstr.spacegroup.print_hs_kpoints()
+        exit()
+
     if writesym:
         bandstr.spacegroup.write_sym_file(filename=prefix+".sym", alat=alat)
 
     if onlysym:
+        json_data = {}
+        json_data ["spacegroup"] = bandstr.spacegroup.json(symmetries=symmetries)
+        dumpfn(json_data, json_file, indent=4)
         exit()
 
     with open("irreptable-template", "w") as f:

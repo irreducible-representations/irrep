@@ -18,6 +18,8 @@
 
 import copy
 import functools
+import os
+import json
 
 import numpy as np
 import numpy.linalg as la
@@ -1043,3 +1045,35 @@ class BandStructure:
         #             kpt2kptirr, 
         #             d_band_blocks, 
         #             d_band_block_indices)
+
+    def get_irrep_counts(self, filter_valid=True):
+        """
+        Returns a dictionary with irrep labels as keys and multiplicity 
+        as values.
+
+        Parameters
+        ----------
+        filter_valid : bool, optional
+            count only integer multiplicities, by default True
+        """
+        
+        try:
+            irrep_data = [kpoint.irreps for kpoint in self.kpoints]
+        except AttributeError:
+            raise RuntimeError(
+                "Could not get the irrep counts because irreps must be identified."
+            )
+
+        # dictionary label : multiplicity
+        irrep_dict = {}
+        for point in irrep_data:
+            for irrep in point:
+                for label, multi in irrep.items():
+                    # only add valid multiplicities (filter out uncoverged bands)
+                    valid_multi = check_multiplicity(multi)
+                    if valid_multi or (filter_valid is False):
+                        multi = np.real(multi).round(0)
+                        irrep_dict.setdefault(label, 0)
+                        irrep_dict[label] += multi
+
+        return irrep_dict
