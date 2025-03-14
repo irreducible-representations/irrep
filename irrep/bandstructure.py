@@ -100,6 +100,8 @@ class BandStructure:
     include_TR : bool
         If `True`, the symmetries involving time-reversal will be included in the spacegroup.
         if magmom is None and include_TR is True, the magnetic moments will be set to zero (non-magnetic calculation with TR)
+    unk_formatted : bool
+        If `True`, the input files are expected to be formatted text files. If False, the input files are expected to be binary files.
 
     Attributes
     ----------
@@ -173,6 +175,7 @@ class BandStructure:
         normalize=True,
         magmom=None,
         include_TR=False,
+        unk_formatted=False,
     ):
 
         code = code.lower()
@@ -241,7 +244,7 @@ class BandStructure:
                 raise RuntimeError("Ecut mandatory for Wannier90")
 
             self.Ecut0 = Ecut
-            parser = ParserW90(prefix)
+            parser = ParserW90(prefix, unk_formatted=unk_formatted)
             NK, NBin, self.spinor, EF_in = parser.parse_header()
             self.Lattice, positions, typat, kpred = parser.parse_lattice()
             Energies = parser.parse_energies()

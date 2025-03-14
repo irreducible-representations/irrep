@@ -206,6 +206,13 @@ do not hesitate to contact the author:
     help="Only calculate the symmetry operations",
 )
 @click.option(
+    "-unk_formatted",
+    flag_value=True,
+    default=False,
+    help="expect UNK files to be formatted (only relevant when -code=wannier90 )",
+)
+
+@click.option(
     "-writesym",
     flag_value=True,
     default=False,
@@ -341,7 +348,8 @@ def cli(
     magmom,
     time_reversal,
     v,
-    json_file
+    json_file,
+    unk_formatted,
 ):
     """
     Defines the "irrep" command-line tool interface.
@@ -427,6 +435,7 @@ def cli(
         degen_thresh=degenthresh,
         magmom=magnetic_moments,
         save_wf=save_wf,
+        unk_formatted=unk_formatted,
         verbosity=verbosity,
         from_sym_file=from_sym_file,
         include_TR=True  # if magnetic, include TR 

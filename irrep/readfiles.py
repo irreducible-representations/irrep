@@ -778,7 +778,7 @@ class ParserW90:
         Number of k-points in DFT calculation
     '''
 
-    def __init__(self, prefix):
+    def __init__(self, prefix, unk_formatted=False):
 
         self.prefix = prefix
         self.fwin = [l.strip().lower() for l in open(prefix + ".win").readlines()]
@@ -789,7 +789,9 @@ class ParserW90:
         ]
         self.ind = np.array([l[0] for l in self.fwin])
         self.iterwin = iter(self.fwin)
+        self.unk_formatted = unk_formatted
 
+    # TODO : use wannier90io instead
     def parse_header(self):
         '''
         Parse universal properties of the band structure
@@ -939,7 +941,6 @@ class ParserW90:
             raise RuntimeError(" error reading {} : {}".format(feig,err))
         return Energy
 
-
     def parse_kpoint(self, ik, selectG):
         '''
         Parse wave functions' file of a k-point
@@ -957,14 +958,40 @@ class ParserW90:
             Each row contains the coefficients of the expansion of a wave 
             function in plane waves
         '''
-
+        if self.unk_formatted:
+            return self.parse_kpoint_formatted(ik, selectG)
+        else:
+            return self.parse_kpoint_unformatted(ik, selectG)
+    
+    
+    def parse_kpoint_formatted(self, ik, selectG):
         fname = "UNK{:05d}.{}".format(ik, "NC" if self.spinor else "1")
-        fUNK = FF(fname, "r")
-        ngx, ngy, ngz, ik_in, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
+        print (f"parse_kpoint_formatted: {fname}")
+        fUNK = open(fname, "r")
+        ngx, ngy, ngz, ik_in, nbnd = (int(x) for x in fUNK.readline().split())
         ngtot = ngx * ngy * ngz
         nspinor = 2 if self.spinor else 1
+        self.check_ik_nb(ik_in, ik, nbnd, fname)
+        # Parse WF coefficients
+        WF_in = np.loadtxt(fUNK, dtype = complex)
+        WF_in = WF_in[:,0] + 1.0j * WF_in[:,1]
+        fUNK.close()
+        WF = []
+        for ib in range(self.NBin):
+            WF_tmp = []
+            for i in range(nspinor):
+                i_start = ib*nspinor*ngtot + i*ngtot
+                cg_tmp = WF_in[i_start:i_start+ngtot]
+                cg_tmp = cg_tmp.reshape((ngx, ngy, ngz), order="F")
+                cg_tmp = np.fft.fftn(cg_tmp)
+                WF_tmp.append(cg_tmp[selectG])
+            WF.append(np.hstack(WF_tmp))
+        WF = np.array(WF)
+        return WF
 
-        # Checks of consistency between UKN and .win
+                
+    def check_ik_nb(self,ik_in, ik, nbnd, fname):
+        """Checks of consistency between UNK and .win"""
         if ik_in != ik:
             raise RuntimeError(
                 "file {} contains point number {}, expected {}".format(
@@ -972,8 +999,18 @@ class ParserW90:
                 ))
         if nbnd != self.NBin:
             raise RuntimeError(
-                "file {} contains {} bands , expected {}".format(fname, nbnd, self.NBin)
+                "file {} contains {} bands , expected {}".format(fname, nbnd, NBin)
             )
+
+
+    def parse_kpoint_unformatted(self, ik, selectG):
+        fname = "UNK{:05d}.{}".format(ik, "NC" if self.spinor else "1")
+        fUNK = FF(fname, "r")
+        ngx, ngy, ngz, ik_in, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
+        ngtot = ngx * ngy * ngz
+        nspinor = 2 if self.spinor else 1
+
+        self.check_ik_nb(ik_in, ik, nbnd, fname)
 
         # Parse WF coefficients
         WF = []
@@ -1011,9 +1048,14 @@ class ParserW90:
         '''
 
         fname = "UNK{:05d}.{}".format(ik, "NC" if self.spinor else "1")
-        fUNK = FF(fname, "r")
-        ngx, ngy, ngz, ik_in, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
-        fUNK.close()
+        if self.unk_formatted:
+            fUNK = open(fname, "r")
+            ngx, ngy, ngz, ik_in, nbnd = (int(x) for x in fUNK.readline().split())
+            fUNK.close()
+        else:
+            fUNK = FF(fname, "r")
+            ngx, ngy, ngz, ik_in, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
+            fUNK.close()
         return ngx, ngy, ngz
 
     def check_end(self, name):
