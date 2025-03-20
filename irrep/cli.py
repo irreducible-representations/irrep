@@ -321,7 +321,7 @@ do not hesitate to contact the author:
                 flag_value=True,
                 default=False,
                 help="Compute the EBR decomposition and topological classification "
-                    "according to TQC. Irresp must be identified in the process."
+                    "according to TQC. Irreps must be identified in the process."
 )
 def cli(
     ecut,
@@ -425,6 +425,8 @@ def cli(
     else:
         magnetic_moments = None
 
+    if print_hs_kpoints:  # don't read wave functions, only identify SG
+        onlysym = True
 
     bandstr = BandStructure(
         fWAV=fwav,
