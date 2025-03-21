@@ -42,7 +42,7 @@ def get_smith_form(ebr_data, return_all=True):
     Returns
     -------
     array or tuple of arrays
-        Smith normal form
+        Matrices involved in the Smith normal form
     """
     #U^{-1}RV^{-1}
     u = np.array(ebr_data["smith_form"]["u"], dtype=int)
