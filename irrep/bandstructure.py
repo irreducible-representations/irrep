@@ -22,7 +22,6 @@ import os
 import json
 
 import numpy as np
-import numpy.linalg as la
 
 from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
@@ -1064,7 +1063,7 @@ class BandStructure:
                 "Could not get the irrep counts because irreps must be identified."
             )
 
-        # dictionary label : multiplicity
+        # dictionary: {label of irrep: total multiplicity}
         irrep_dict = {}
         for point in irrep_data:
             for irrep in point:
@@ -1073,6 +1072,7 @@ class BandStructure:
                     valid_multi = check_multiplicity(multi)
                     if valid_multi or (filter_valid is False):
                         multi = np.real(multi).round(0)
+                        # If the irrep's label doesn't exist yet, create it
                         irrep_dict.setdefault(label, 0)
                         irrep_dict[label] += multi
 
