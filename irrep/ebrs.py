@@ -85,7 +85,8 @@ def create_symmetry_vector(irrep_counts, basis_labels):
     Returns
     -------
     np.ndarray
-        symmetry vector
+        symmetry vector. Elements are multiplicities of the irreps in the 
+        table of EBRs and are sorted accordingly
     """
     basis_index = {name : i for i, name in enumerate(basis_labels)}
 
