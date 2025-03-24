@@ -171,6 +171,15 @@ def compute_ebr_decomposition(ebr_data, y):
     y : array
         symmetry vector
 
+    Returns
+    -------
+    solutions : list
+        Solutions found for the EBR decomposition. `None` if no solution was 
+        found
+    is_positive : bool
+        Whether solutions involve only positive coefficients of EBRs. If no 
+        solution was found, it is also returns `False`
+
     Notes
     -----
     The Smith decomposition follows this notation:
@@ -200,6 +209,8 @@ def compute_ebr_decomposition(ebr_data, y):
         -------
         list    
             list of solutions in form of lists of integers
+        str
+            status of the search of solutions
         """
 
         lb, ub = bounds
