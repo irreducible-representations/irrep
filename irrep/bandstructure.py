@@ -1216,30 +1216,27 @@ class BandStructure:
         else:
             solutions, is_positive = compute_ebr_decomposition(ebr_data, y)
 
-            # positive solutions found -> trivial
-            if is_positive:
-                print("The set of bands is TRIVIAL")
-                print_symmetry_info()
-                print(
-                    "\nThere are positive, integer-valued linear combinations "
-                    "of EBRs that reproduce the set of bands."
-                    )
-            # positive solutions not found -> fragile
-            else:
-                print("The set of bands displays FRAGILE TOPOLOGY.")
-                print_symmetry_info()
-                print(
-                    "There are no positive, integer-valued linear combinations "
-                    "of EBRs that reproduce the bands."
-                    )
-
             if solutions is None:
                 print(
                     "\nAlthough they exist, OR-Tools could not find an EBR"
                     " decomposition."
                     )
-
             else:
+                if is_positive:
+                    print("The set of bands is TRIVIAL")
+                    print_symmetry_info()
+                    print(
+                        "\nThere are positive, integer-valued linear combinations "
+                        "of EBRs that reproduce the set of bands."
+                        )
+                # positive solutions not found -> fragile
+                else:
+                    print("The set of bands displays FRAGILE TOPOLOGY.")
+                    print_symmetry_info()
+                    print(
+                        "There are no positive, integer-valued linear combinations "
+                        "of EBRs that reproduce the bands."
+                        )
                 # print EBR decomposition
                 ebr_list = get_ebr_names_and_positions(ebr_data)
                 for i, sol in enumerate(solutions):
