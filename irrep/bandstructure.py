@@ -1141,7 +1141,20 @@ class BandStructure:
         Computes and prints the EBR decomposition information. If the bands are
         trivial or fragile-topological, it tries to find EBR decompositions using
         ORtools if installed.
+
+        Notes
+        -----
+        The Smith decomposition follows this notation:
+
+        .. math::
+
+            EBR \cdot x = y, \\
+            EBR = U^{-1} \cdot R \cdot R^{-1},\\
+            R \cdot Y = C, \\
+            x' = V^{-1} \cdot x,\\
+            y' = U \cdot y.
         """
+
         from .ebrs import (
             compose_irrep_string,
             compute_topological_classification_vector,
@@ -1157,40 +1170,39 @@ class BandStructure:
             print(
             f"Irrep decomposition at high-symmetry points:\n\n{compose_irrep_string(irrep_counts)}"
             f"\n\nIrrep basis:\n{vector_pprint(basis_labels, fmt='s')}"
-            f"\n\nSymmetry vector:\n{vector_pprint(symmetry_vector, fmt='d')}"
-            f"\n\nTransformed symmetry vector:\n{vector_pprint(vec_prime, fmt='d')}"
+            f"\n\nSymmetry vector (y):\n{vector_pprint(y, fmt='d')}"
+            f"\n\nTransformed symmetry vector (y'):\n{vector_pprint(y_prime, fmt='d')}"
             f"\n\nSmith singular values:\n{vector_pprint(smith_diagonal, fmt='d')}"
+            f"\n\nNotation: EBR.x=y,  EBR=U^{-1}.R.V^{-1},  y'=U.y"
             )
-
-
 
         print("\n---------- EBR DECOMPOSITION ----------\n")
 
+        # Load data from EBR files
         root = os.path.dirname(__file__)
         filename = f"{self.spacegroup.number}_ebrs.json"
         ebr_data = json.load(open(root + "/data/ebrs/" + filename, 'r'))
-        
         ebr_data = ebr_data["double" if self.spinor else "single"]
         
         try:
             irrep_counts = self.get_irrep_counts()
         except RuntimeError:
             print(
-                "Could not compute the EBR decomposition because irreps must "
-                "be identified."
+                "Could not compute the EBR decomposition because counting of "
+                "irreps failed."
             )
 
-        (
-            symmetry_vector,
-            vec_prime,
-            smith_diagonal,
-            nontrivial
+        (y,
+         y_prime,
+         smith_diagonal,
+         nontrivial
         ) = compute_topological_classification_vector(irrep_counts, ebr_data)
 
         # if stable non-trivial topology
         if nontrivial:
             print("The set of bands is classified as TOPOLOGICAL\n")
             print_symmetry_info() 
+
         # its fragile or trivial, but cannot compute the EBRs
         elif not ORTOOLS_AVAILABLE:
             print(
@@ -1199,13 +1211,14 @@ class BandStructure:
                 "Install OR-Tools to compute decompositions."
                 )
             print_symmetry_info()
+
         # is fragile or trivial and EBRs can be computed
         else:
-            solutions, is_positive = compute_ebr_decomposition(ebr_data, symmetry_vector)
+            solutions, is_positive = compute_ebr_decomposition(ebr_data, y)
 
             # positive solutions found -> trivial
             if is_positive:
-                print("The set of bands is toplogically TRIVIAL")
+                print("The set of bands is TRIVIAL")
                 print_symmetry_info()
                 print(
                     "\nThere are positive, integer-valued linear combinations "
@@ -1225,6 +1238,7 @@ class BandStructure:
                     "\nAlthough they exist, OR-Tools could not find an EBR"
                     " decomposition."
                     )
+
             else:
                 # print EBR decomposition
                 ebr_list = get_ebr_names_and_positions(ebr_data)
