@@ -4,8 +4,19 @@ import numpy as np
 class varArraySolutionObtainer(cp_model.CpSolverSolutionCallback):
     """A class representing a solution callback for the solver.
 
-    Args:
-        cp_model (list): list of variables defined in your model.
+    Parameters
+    ----------
+    variables : list
+        List of variables of type `cp_model.IntVar` defined in the model
+
+    Attributes
+    ----------
+    __variables : list
+        List of variables of type `cp_model.IntVar` defined in the model
+    __x : list
+        Each element is list of values for the variables in a solution
+    __solutionCount : int
+        Number of discovered solutions
     """
 
     def __init__(self, variables: cp_model.IntVar) -> None:
@@ -35,12 +46,27 @@ class varArraySolutionObtainer(cp_model.CpSolverSolutionCallback):
     def solutions(self) -> np.ndarray:
         """Returns all solutions of the model in a matrix form, where each row is a particular solution.
 
-        Returns:
-            numpy.ndarray: Numpy array which rows represent a solution to the model.
+        Returns
+        -------
+        numpy.ndarray
+            Each row contains a solution
         """
         return np.array(self.__x)
     
     def n_smallest_solutions(self, n=5):
+        '''
+        Get the first `n` solutions
+
+        Parameters
+        ----------
+        n : int
+            Number of solutions to be retrieved
+
+        Returns
+        -------
+        list : 
+            Contains `n` elements, and each element is a solution
+        '''
         solutions = [(x, np.linalg.norm(x)) for x in self.__x]
         solutions = sorted(solutions, key=lambda x: x[1])
 
