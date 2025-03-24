@@ -43,6 +43,14 @@ def get_smith_form(ebr_data, return_all=True):
     -------
     array or tuple of arrays
         Matrices involved in the Smith normal form
+
+    Notes
+    -----
+    Notation for the Smith decomposition:
+
+    .. math::
+
+        EBR = U^{-1} \cdot R \cdot V^{-1}
     """
     #U^{-1}RV^{-1}
     u = np.array(ebr_data["smith_form"]["u"], dtype=int)
@@ -78,7 +86,7 @@ def create_symmetry_vector(irrep_counts, basis_labels):
     Parameters
     ----------
     irrep_counts : dict
-        irrep multiplicities
+        Keys are labels of irreps, values are their multiplicities
     basis_labels : list
         basis irrep labels
 
@@ -107,26 +115,46 @@ def compute_topological_classification_vector(irrep_counts, ebr_data):
     Parameters
     ----------
     irrep_counts : dict
-        irrep multiplicities
+        Keys are labels of irreps, values are their multiplicities
     ebr_data : dict
         EBR data loaded from files
 
     Returns
     -------
-    np.ndarray, np.ndarray, np.ndarray, bool
-        symmetry_vector, transformed symmetry vector, Smith divisors, non-triviality of bands
+    y : np.ndarray
+        Symmetry-data vector with multiplicities of irreps sorted as in EBRs' 
+        tables
+    y_prime : np.ndarray
+        Symmetry-data vector labeled as :math:`y'`
+    d : np.ndarray
+        Smith divisors
+    nontrivial : bool
+        Whether the bands host a nontrivial phase
+
+    Notes
+    -----
+    The Smith decomposition follows this notation:
+
+    .. math::
+
+        EBR \cdot x = y, \\
+        EBR = U^{-1} \cdot R \cdot R^{-1},\\
+        R \cdot Y = C, \\
+        x' = V^{-1} \cdot x,\\
+        y' = U \cdot y.
     """
-    symmetry_vector = create_symmetry_vector(irrep_counts, ebr_data["basis"]["irrep_labels"])
+
+    y = create_symmetry_vector(irrep_counts, ebr_data["basis"]["irrep_labels"])
 
     u, r, _ = get_smith_form(ebr_data)
     d = r.diagonal()
     d_pos = d[d > 0]
 
-    vec_prime = u @ symmetry_vector
+    y_prime = u @ y
     # check if the entries of vec_prime divide the elementary divisors
-    nontrivial = ((vec_prime[:len(d_pos)] % d_pos != 0)).any()
+    nontrivial = ((y_prime[:len(d_pos)] % d_pos != 0)).any()
 
-    return symmetry_vector, vec_prime, d, nontrivial
+    return y_vector, y_prime, d, nontrivial
 
 
 
