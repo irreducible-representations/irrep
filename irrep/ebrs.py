@@ -159,7 +159,7 @@ def compute_topological_classification_vector(irrep_counts, ebr_data):
 
 
 
-def compute_ebr_decomposition(ebr_data, vec):
+def compute_ebr_decomposition(ebr_data, y):
     from .or_solutions_obtainer import varArraySolutionObtainer 
     """
     Compute the decomposition of the symmetry vector into EBRs
@@ -167,9 +167,21 @@ def compute_ebr_decomposition(ebr_data, vec):
     Parameters
     ----------
     ebr_data : dict
-        Dictionary with EBR data as save in the package files.
-    vec : array
+        Dictionary with EBR data loaded from the package files.
+    y : array
         symmetry vector
+
+    Notes
+    -----
+    The Smith decomposition follows this notation:
+
+    .. math::
+
+        EBR \cdot x = y, \\
+        EBR = U^{-1} \cdot R \cdot R^{-1},\\
+        R \cdot Y = C, \\
+        x' = V^{-1} \cdot x,\\
+        y' = U \cdot y.
     """
 
     def get_solutions(bounds=(0,15), n_smallest=5):
@@ -189,23 +201,30 @@ def compute_ebr_decomposition(ebr_data, vec):
         list    
             list of solutions in form of lists of integers
         """
+
         lb, ub = bounds
         model = cp_model.CpModel()
         solver = cp_model.CpSolver()
+
+        # Add the coefficients of EBRs as variables
         x = [model.NewIntVar(lb, ub, f"x{i}") for i in range(n_ebr)]
 
+        # Construct a callback that will be called each time a new solution is 
+        # found
         solution_obtainer = varArraySolutionObtainer(x)
 
+        # Add constraint: multiplicities of irreps in the solution must match 
+        # the multiplicities in the symmetry-data vector y
         for i in range(n_ir):
-            model.Add(A[i] @ x == vec[i])
+            model.Add(EBR[i] @ x == y[i])
 
         solver.SearchForAllSolutions(model, solution_obtainer)
 
         return solution_obtainer.n_smallest_solutions(n_smallest), solver.status_name()
 
-    A = get_ebr_matrix(ebr_data)
+    EBR = get_ebr_matrix(ebr_data)
 
-    n_ir, n_ebr = A.shape
+    n_ir, n_ebr = EBR.shape
 
     # first check positive coefficients only
     is_positive = True
