@@ -235,14 +235,15 @@ def compose_irrep_string(irrep_counts):
 
     Parameters
     ----------
-    labels : list
-        list of irrep labels
+    irrep_counts : dict
+        Keys are irrep labels and values are multiplicities
 
     Returns
     -------
     str
-        string with direct sum of irreps with multiplicities.
+        String with direct sum of irreps with multiplicities.
     """
+
     terms = [f"{multi} x {name}" for name, multi in irrep_counts.items() if multi != 0]
     s = " + ".join(terms)
 
