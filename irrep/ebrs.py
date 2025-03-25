@@ -154,7 +154,7 @@ def compute_topological_classification_vector(irrep_counts, ebr_data):
     # check if the entries of vec_prime divide the elementary divisors
     nontrivial = ((y_prime[:len(d_pos)] % d_pos != 0)).any()
 
-    return y_vector, y_prime, d, nontrivial
+    return y, y_prime, d, nontrivial
 
 
 
