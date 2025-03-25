@@ -1079,7 +1079,12 @@ class BandStructure:
         return irrep_dict
 
     def print_symmetry_indicators(self):
-        """Computes and prints the symmetry-indicator information.
+        """
+        Computes and prints the symmetry-indicator information.
+
+        Notes
+        -----
+        Method identify_irreps must have been called beforehand
         """
 
         print("\n---------- SYMMETRY INDICATORS ----------\n")
@@ -1100,19 +1105,6 @@ class BandStructure:
             )
         si_table = json.load(open(root + "/data/symmetry_indicators/" + filename, 'r'))
 
-        # if SG not in table, all SIs are trivial
-        # {
-        #     sg: {
-        #         "indicators": {
-        #             indicator : {
-        #                 "factors" : {
-        #                     irrep : factor
-        #                 },
-        #                 "mod": value
-        #             }
-        #         }
-        #     }
-        # }
         if self.spacegroup.number not in si_table:
             print("There are no non-trivial symmetry indicators for this space group.")
 
