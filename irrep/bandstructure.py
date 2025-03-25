@@ -1056,12 +1056,14 @@ class BandStructure:
             count only integer multiplicities, by default True
         """
         
-        try:
-            irrep_data = [kpoint.irreps for kpoint in self.kpoints]
-        except AttributeError:
-            raise RuntimeError(
-                "Could not get the irrep counts because irreps must be identified."
-            )
+        irrep_data = []
+        for kpoint in self.kpoints:
+            if 'None' in kpoint.irreps:
+                raise RuntimeError(
+                    "Could not get the irrep counts because irreps must be identified."
+                )
+            else:
+                irrep_data.append(kpoint.irreps)
 
         # dictionary: {label of irrep: total multiplicity}
         irrep_dict = {}
@@ -1092,9 +1094,9 @@ class BandStructure:
         try:
             irrep_dict = self.get_irrep_counts()
         except RuntimeError:
-            print(
+            raise RuntimeError(
                 "Could not compute the symmetry indicators "
-                "because irreps must be identified."
+                "because irreps must be identified. Try specifying -kpnames"
             )
         
         # load symmetry indicators file
@@ -1206,6 +1208,8 @@ class BandStructure:
 
         # is fragile or trivial and EBRs can be computed
         else:
+            print('Calculating decomposition in terms of EBRs.'
+                  'This can take some time...')
             solutions, is_positive = compute_ebr_decomposition(ebr_data, y)
 
             if solutions is None:
