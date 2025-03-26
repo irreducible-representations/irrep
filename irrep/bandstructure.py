@@ -554,6 +554,11 @@ class BandStructure:
         else:
             json_data["number of inversion-odd states"]  = self.num_bandinvs
 
+        try:
+            json_data['symmetry indicators'] = self.symmetry_indicators
+        except RuntimeError:  # irreps not identified beforehand
+            pass
+
         return json_data
 
     @property
