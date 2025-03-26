@@ -422,6 +422,14 @@ def cli(
             print("Error reading magnetic moments file: {}".format(magmom))
     elif time_reversal:
         magnetic_moments = True
+        print("WARNING: --time-reversal set without providing magnetic moments "
+              "via --magmom. Magnetic grey groups will be used. Results are "
+              "still valid.")
+    elif symmetry_indicators:
+        magnetic_moments = True
+        print("WARNING:\nusing --symmetry-indicators with a non-magnetic "
+              "crystal invariant under time-reversal. Switching to the "
+              "grey group with time-reversal. Results are still valid.")
     else:
         magnetic_moments = None
 
