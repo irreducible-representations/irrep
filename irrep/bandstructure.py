@@ -22,13 +22,13 @@ import os
 import json
 
 import numpy as np
+from functools import cached_property
 
 from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .gvectors import sortIG, calc_gvectors, symm_matrix
 from .utility import get_block_indices, grid_from_kpoints, log_message, UniqueListMod1
-
 
 class BandStructure:
     """
@@ -1080,6 +1080,56 @@ class BandStructure:
 
         return irrep_dict
 
+    @cached_property
+    def symmetry_indicators(self):
+        '''
+        Lazy getter to return the symmetry indicators. 
+
+        Returns
+        -------
+        indicators_dict : dict
+            Keys and values are labels of indicators and their values, 
+            respectively. If the space group doesn't have nontrivial 
+            indicators, `None` is returned
+
+        Raises
+        ------
+        RuntimeError
+            If the irreps have not been identified beforehand via 
+            `identify_irreps`
+        '''
+
+        # Identify_irreps must be used beforehand
+        try:
+            irrep_dict = self.get_irrep_counts()
+        except RuntimeError:
+            raise RuntimeError(
+                "Could not compute the symmetry indicators "
+                "because irreps must be identified. Try specifying -kpnames "
+                "in the CLI (or run BandStructure.identify_irreps if you are "
+                "using IrRep as a package"
+            )
+
+        # Load symmetry indicators file
+        si_table = self.load_si_table()
+        if self.spacegroup.number not in si_table:
+            print("There are no non-trivial symmetry indicators for this space "
+                  "group")
+            indicators_dict = None
+
+        else:
+            si_table = si_table[self.spacegroup.number]["indicators"]
+
+            indicators_dict = {}
+            for indicator in si_table:
+                si_factors = si_table[indicator]["factors"]
+                total = 0
+                for label, value in si_factors.items():
+                    total += value * irrep_dict.get(label, 0)
+                indicators_dict[indicator] = total % si_table[indicator]['mod']
+
+        return indicators_dict
+
     def print_symmetry_indicators(self):
         """
         Computes and prints the symmetry-indicator information.
@@ -1090,44 +1140,26 @@ class BandStructure:
         """
 
         print("\n---------- SYMMETRY INDICATORS ----------\n")
-        # identify_irreps must be used beforehand
-        try:
-            irrep_dict = self.get_irrep_counts()
-        except RuntimeError:
-            raise RuntimeError(
-                "Could not compute the symmetry indicators "
-                "because irreps must be identified. Try specifying -kpnames"
-            )
-        
-        # load symmetry indicators file
-        root = os.path.dirname(__file__)
-        filename = (
-            f"{'double' if self.spinor else 'single'}_indicators"
-            f"{'_magnetic' if self.magnetic else ''}.json"
-            )
-        si_table = json.load(open(root + "/data/symmetry_indicators/" + filename, 'r'))
 
-        if self.spacegroup.number not in si_table:
-            print("There are no non-trivial symmetry indicators for this space group.")
+        if self.symmetry_indicators is None:
+            print(f"Space group {self.spacegroup.name} has no nontrivial "
+                    "indicators")
 
         else:
+            si_table = self.load_si_table()
             si_table = si_table[self.spacegroup.number]["indicators"]
 
             for indicator in si_table:
+
+                # String for the formula to calculate the indicator
                 si_factors = si_table[indicator]["factors"]
-                # terms for definition string
                 terms = [
                     f"{factor} x {label}" for label, factor in 
                     si_factors.items() if factor != 0
                 ]
                 definition_str = " + ".join(terms)
                 
-                # count irrep multiplicities by formula factors
-                total = 0
-                for label, value in si_factors.items():
-                    total += value * irrep_dict.get(label, 0)
-
-                print(f"{indicator} =", total % si_table[indicator]["mod"])
+                print(f"{indicator} =", self.symmetry_indicators[indicator])
                 print(f"\tDefinition: ({definition_str}) mod {si_table[indicator]['mod']}")
 
     def print_ebr_decomposition(self):
@@ -1167,7 +1199,7 @@ class BandStructure:
             f"\n\nSymmetry vector (y):\n{vector_pprint(y, fmt='d')}"
             f"\n\nTransformed symmetry vector (y'):\n{vector_pprint(y_prime, fmt='d')}"
             f"\n\nSmith singular values:\n{vector_pprint(smith_diagonal, fmt='d')}"
-            f"\n\nNotation: EBR.x=y,  EBR=U^{-1}.R.V^{-1},  y'=U.y"
+            f"\n\nNotation: EBR.x=y,  U.EBR.V=R,  y'=U.y"
             )
 
         print("\n---------- EBR DECOMPOSITION ----------\n")
@@ -1194,7 +1226,7 @@ class BandStructure:
 
         # if stable non-trivial topology
         if nontrivial:
-            print("The set of bands is classified as TOPOLOGICAL\n")
+            print("The set of bands is classified as STABLE TOPOLOGICAL\n")
             print_symmetry_info() 
 
         # its fragile or trivial, but cannot compute the EBRs
@@ -1238,6 +1270,24 @@ class BandStructure:
                 for i, sol in enumerate(solutions):
                     print("Solution", i + 1, "\n")
                     print(compose_ebr_string(sol, ebr_list), "\n")
+
+    def load_si_table(self):
+        '''
+        Load table of symmetry indicators
+
+        Returns
+        -------
+        dict
+            Data loaded from the file of symmetry indicators
+        '''
+
+        root = os.path.dirname(__file__)
+        filename = (
+            f"{'double' if self.spinor else 'single'}_indicators"
+            f"{'_magnetic' if self.magnetic else ''}.json"
+            )
+        si_table = json.load(open(root+"/data/symmetry_indicators/"+filename, 'r'))
+        return si_table
 
         
 def check_multiplicity(multi):
