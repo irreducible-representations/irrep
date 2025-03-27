@@ -1,6 +1,8 @@
 """Module to compute EBR decompositions.
 """
 import numpy as np
+import os
+import json
 
 # Actual EBR decomposition requires OR-Tool's SAT problem solver.
 try:
@@ -126,8 +128,6 @@ def compute_topological_classification_vector(irrep_counts, ebr_data):
         tables
     y_prime : np.ndarray
         Symmetry-data vector labeled as :math:`y'`
-    d : np.ndarray
-        Smith divisors
     nontrivial : bool
         Whether the bands host a nontrivial phase
 
@@ -154,7 +154,7 @@ def compute_topological_classification_vector(irrep_counts, ebr_data):
     # check if the entries of vec_prime divide the elementary divisors
     nontrivial = ((y_prime[:len(d_pos)] % d_pos != 0)).any()
 
-    return y, y_prime, d, nontrivial
+    return y, y_prime, nontrivial
 
 
 
@@ -303,3 +303,26 @@ def compose_ebr_string(vec, ebrs):
     s = " + ".join(terms)
 
     return s
+
+def load_ebr_data(sg_number, spinor):
+    '''
+    Load data from file of EBRs
+
+    Parameters
+    ----------
+    sg_number : int
+        Number of the space group
+    spinor : bool
+        Whether wave functions are spinors (SOC) or not
+
+    Returns
+    -------
+    dict
+        EBR data
+    '''
+
+    root = os.path.dirname(__file__)
+    filename = f"{sg_number}_ebrs.json"
+    ebr_data = json.load(open(root + "/data/ebrs/" + filename, 'r'))
+    ebr_data = ebr_data["double" if spinor else "single"]
+    return ebr_data

@@ -1167,6 +1167,66 @@ class BandStructure:
                 print(f"{indicator} =", self.symmetry_indicators[indicator])
                 print(f"\tDefinition: ({definition_str}) mod {si_table[indicator]['mod']}")
 
+    def compute_ebr_decomposition(self):
+        '''
+        Compute EBR decomposition. Sets values for attributes `classification`, 
+        `ebr_decompositions`, `y` and `y_prime`
+
+        Raises
+        ------
+        RuntimeError
+            Irreps were not identified beforehand by running `identify_irreps`
+        '''
+
+        from .ebrs import (
+            compute_topological_classification_vector,
+            ORTOOLS_AVAILABLE,
+            compute_ebr_decomposition,
+            load_ebr_data
+        )
+
+        # Load data from EBR files
+        ebr_data = load_ebr_data(self.spacegroup.number, self.spinor)
+
+        try:
+            irrep_counts = self.get_irrep_counts()
+        except RuntimeError:
+            print(
+                "Could not compute the EBR decomposition because counting of "
+                "irreps failed."
+            )
+
+        (self.y,
+         self.y_prime,
+         nontrivial
+        ) = compute_topological_classification_vector(irrep_counts, ebr_data)
+
+
+        # Stable topological, don't compute EBR decompositions
+        if nontrivial:
+            self.classification = 'STABLE TOPOLOGICAL'
+            self.ebr_decompositions = None
+            return
+
+        # Fragile or trivial, but cannot ortools not installed
+        elif not ORTOOLS_AVAILABLE:
+            self.ebr_decomposition = None
+            print(
+                "There exists integer-valued solutions to the EBR decomposition "
+                "problem, so the set of bands is TRIVIAL or displays FRAGILE TOPOLOGY. "
+                "Install OR-Tools to compute decompositions."
+                )
+
+        else:
+            print('Calculating decomposition in terms of EBRs. '
+                  'This can take some time...')
+            self.ebr_decompositions, is_positive = compute_ebr_decomposition(ebr_data, self.y)
+            if is_positive:
+                self.classification = 'ATOMIC LIMIT'
+            else:
+                self.classification = 'FRAGILE TOPOLOGICAL'
+
+
     def print_ebr_decomposition(self):
         """
         Computes and prints the EBR decomposition information. If the bands are
@@ -1184,37 +1244,26 @@ class BandStructure:
             R \cdot Y = C, \\
             x' = V^{-1} \cdot x,\\
             y' = U \cdot y.
+
+        Raises
+        ------
+        RuntimeError
+            Irreps were not identified beforehand by running `identify_irreps`
         """
 
         from .ebrs import (
             compose_irrep_string,
-            compute_topological_classification_vector,
-            ORTOOLS_AVAILABLE,
-            compute_ebr_decomposition,
             get_ebr_names_and_positions,
-            compose_ebr_string
+            compose_ebr_string,
+            get_smith_form,
+            load_ebr_data
         )
         from .utility import vector_pprint
 
-        def print_symmetry_info():
-            basis_labels = ebr_data["basis"]["irrep_labels"]
-            print(
-            f"Irrep decomposition at high-symmetry points:\n\n{compose_irrep_string(irrep_counts)}"
-            f"\n\nIrrep basis:\n{vector_pprint(basis_labels, fmt='s')}"
-            f"\n\nSymmetry vector (y):\n{vector_pprint(y, fmt='d')}"
-            f"\n\nTransformed symmetry vector (y'):\n{vector_pprint(y_prime, fmt='d')}"
-            f"\n\nSmith singular values:\n{vector_pprint(smith_diagonal, fmt='d')}"
-            f"\n\nNotation: EBR.x=y,  U.EBR.V=R,  y'=U.y"
-            )
-
+        # General block printed always
         print("\n---------- EBR DECOMPOSITION ----------\n")
+        print(f'Classification: {self.classification}')
 
-        # Load data from EBR files
-        root = os.path.dirname(__file__)
-        filename = f"{self.spacegroup.number}_ebrs.json"
-        ebr_data = json.load(open(root + "/data/ebrs/" + filename, 'r'))
-        ebr_data = ebr_data["double" if self.spinor else "single"]
-        
         try:
             irrep_counts = self.get_irrep_counts()
         except RuntimeError:
@@ -1222,59 +1271,36 @@ class BandStructure:
                 "Could not compute the EBR decomposition because counting of "
                 "irreps failed."
             )
+        ebr_data = load_ebr_data(self.spacegroup.number, self.spinor)
+        basis_labels = ebr_data["basis"]["irrep_labels"]
+        _, d, _ = get_smith_form(ebr_data)
+        smith_diagonal = d.diagonal()
+        print(
+        f"Irrep decomposition at high-symmetry points:\n\n{compose_irrep_string(irrep_counts)}"
+        f"\n\nIrrep basis:\n{vector_pprint(basis_labels, fmt='s')}"
+        f"\n\nSymmetry vector (y):\n{vector_pprint(self.y, fmt='d')}"
+        f"\n\nTransformed symmetry vector (y'):\n{vector_pprint(self.y_prime, fmt='d')}"
+        f"\n\nSmith singular values:\n{vector_pprint(smith_diagonal, fmt='d')}"
+        f"\n\nNotation: EBR.x=y,  U.EBR.V=R,  y'=U.y"
+        )
 
-        (y,
-         y_prime,
-         smith_diagonal,
-         nontrivial
-        ) = compute_topological_classification_vector(irrep_counts, ebr_data)
-
-        # if stable non-trivial topology
-        if nontrivial:
-            print("The set of bands is classified as STABLE TOPOLOGICAL\n")
-            print_symmetry_info() 
-
-        # its fragile or trivial, but cannot compute the EBRs
-        elif not ORTOOLS_AVAILABLE:
+        # If EBR decomposition wasn't computed because ortools isn't installed
+        if (self.classification != 'STABLE TOPOLOGICAL' 
+            and self.ebr_decompositions is None):
             print(
                 "There exists integer-valued solutions to the EBR decomposition "
                 "problem, so the set of bands is TRIVIAL or displays FRAGILE TOPOLOGY. "
-                "Install OR-Tools to compute decompositions."
+                "Install OR-Tools and compute decompositions again"
                 )
-            print_symmetry_info()
 
-        # is fragile or trivial and EBRs can be computed
-        else:
-            print('Calculating decomposition in terms of EBRs.'
-                  'This can take some time...')
-            solutions, is_positive = compute_ebr_decomposition(ebr_data, y)
+        # If EBR decomposition was computed
+        elif self.classification in ['ATOMIC LIMIT', 'FRAGILE TOPOLOGIVAL']:
+            print('Printing EBR decompositions:')
+            ebr_list = get_ebr_names_and_positions(ebr_data)
+            for i, sol in enumerate(self.ebr_decompositions):
+                print("Solution", i + 1, "\n")
+                print(compose_ebr_string(sol, ebr_list), "\n")
 
-            if solutions is None:
-                print(
-                    "\nAlthough they exist, OR-Tools could not find an EBR"
-                    " decomposition."
-                    )
-            else:
-                if is_positive:
-                    print("The set of bands is TRIVIAL")
-                    print_symmetry_info()
-                    print(
-                        "\nThere are positive, integer-valued linear combinations "
-                        "of EBRs that reproduce the set of bands."
-                        )
-                # positive solutions not found -> fragile
-                else:
-                    print("The set of bands displays FRAGILE TOPOLOGY.")
-                    print_symmetry_info()
-                    print(
-                        "There are no positive, integer-valued linear combinations "
-                        "of EBRs that reproduce the bands."
-                        )
-                # print EBR decomposition
-                ebr_list = get_ebr_names_and_positions(ebr_data)
-                for i, sol in enumerate(solutions):
-                    print("Solution", i + 1, "\n")
-                    print(compose_ebr_string(sol, ebr_list), "\n")
 
     def load_si_table(self):
         '''
