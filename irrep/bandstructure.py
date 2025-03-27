@@ -559,6 +559,13 @@ class BandStructure:
         except RuntimeError:  # irreps not identified beforehand
             pass
 
+        if hasattr(self, 'classification'):  # compute_ebr_decomposition was run
+            json_data['classification'] = self.classification
+            json_data['ebr decomposition'] = {}
+            json_data['ebr decomposition']['y'] = self.y
+            json_data['ebr decomposition']['y_prime'] = self.y_prime
+            json_data['ebr decomposition']['solutions'] = self.ebr_decompositions
+
         return json_data
 
     @property
