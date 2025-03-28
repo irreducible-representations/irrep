@@ -38,3 +38,12 @@ def test_ebr_decomposition_stable_topology():
         assert run_ebrs["solutions"] is None
     else:
         assert np.allclose(run_ebrs["solutions"], ref_ebrs["solutions"])
+
+    # Remove output files created during run
+    for test_output_file in (
+            "irreps.dat",
+            "irreptable-template",
+            "trace.txt",
+            "irrep-output.json"
+    ):
+        os.remove(test_output_file)

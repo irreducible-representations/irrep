@@ -34,3 +34,12 @@ def test_symmetry_indicators_stable_topology():
     for indicator_run, indicator_ref in zip(data_run, data_ref):
         assert indicator_run == indicator_ref
         assert data_run[indicator_run] == data_ref[indicator_ref]
+
+    # Remove output files created during run
+    for test_output_file in (
+            "irreps.dat",
+            "irreptable-template",
+            "trace.txt",
+            "irrep-output.json"
+    ):
+        os.remove(test_output_file)
