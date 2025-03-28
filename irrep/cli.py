@@ -206,6 +206,13 @@ do not hesitate to contact the author:
     help="Only calculate the symmetry operations",
 )
 @click.option(
+    "-unk_formatted",
+    flag_value=True,
+    default=False,
+    help="expect UNK files to be formatted (only relevant when -code=wannier90 )",
+)
+
+@click.option(
     "-writesym",
     flag_value=True,
     default=False,
@@ -321,7 +328,7 @@ do not hesitate to contact the author:
                 flag_value=True,
                 default=False,
                 help="Compute the EBR decomposition and topological classification "
-                    "according to TQC. Irresp must be identified in the process."
+                    "according to TQC. Irreps must be identified in the process."
 )
 def cli(
     ecut,
@@ -359,6 +366,7 @@ def cli(
     time_reversal,
     v,
     json_file,
+    unk_formatted,
     print_hs_kpoints,
     symmetry_indicators,
     ebr_decomposition
@@ -422,9 +430,19 @@ def cli(
             print("Error reading magnetic moments file: {}".format(magmom))
     elif time_reversal:
         magnetic_moments = True
+        print("WARNING: --time-reversal set without providing magnetic moments "
+              "via --magmom. Magnetic grey groups will be used. Results are "
+              "still valid.")
+    elif symmetry_indicators:
+        magnetic_moments = True
+        print("WARNING:\nusing --symmetry-indicators with a non-magnetic "
+              "crystal invariant under time-reversal. Switching to the "
+              "grey group with time-reversal. Results are still valid.")
     else:
         magnetic_moments = None
 
+    if print_hs_kpoints:  # don't read wave functions, only identify SG
+        onlysym = True
 
     bandstr = BandStructure(
         fWAV=fwav,
@@ -447,6 +465,7 @@ def cli(
         degen_thresh=degenthresh,
         magmom=magnetic_moments,
         save_wf=save_wf,
+        unk_formatted=unk_formatted,
         verbosity=verbosity,
         from_sym_file=from_sym_file,
         include_TR=True  # if magnetic, include TR 
@@ -478,6 +497,7 @@ def cli(
     bandstr.write_characters()
 
     if ebr_decomposition:
+        bandstr.compute_ebr_decomposition()
         bandstr.print_ebr_decomposition()
 
     if symmetry_indicators:

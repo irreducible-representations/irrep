@@ -1,6 +1,8 @@
 """Module to compute EBR decompositions.
 """
 import numpy as np
+import os
+import json
 
 # Actual EBR decomposition requires OR-Tool's SAT problem solver.
 try:
@@ -42,7 +44,15 @@ def get_smith_form(ebr_data, return_all=True):
     Returns
     -------
     array or tuple of arrays
-        Smith normal form
+        Matrices involved in the Smith normal form
+
+    Notes
+    -----
+    Notation for the Smith decomposition:
+
+    .. math::
+
+        EBR = U^{-1} \cdot R \cdot V^{-1}
     """
     #U^{-1}RV^{-1}
     u = np.array(ebr_data["smith_form"]["u"], dtype=int)
@@ -78,14 +88,15 @@ def create_symmetry_vector(irrep_counts, basis_labels):
     Parameters
     ----------
     irrep_counts : dict
-        irrep multiplicities
+        Keys are labels of irreps, values are their multiplicities
     basis_labels : list
         basis irrep labels
 
     Returns
     -------
     np.ndarray
-        symmetry vector
+        symmetry vector. Elements are multiplicities of the irreps in the 
+        table of EBRs and are sorted accordingly
     """
     basis_index = {name : i for i, name in enumerate(basis_labels)}
 
@@ -106,31 +117,49 @@ def compute_topological_classification_vector(irrep_counts, ebr_data):
     Parameters
     ----------
     irrep_counts : dict
-        irrep multiplicities
+        Keys are labels of irreps, values are their multiplicities
     ebr_data : dict
         EBR data loaded from files
 
     Returns
     -------
-    np.ndarray, np.ndarray, np.ndarray, bool
-        symmetry_vector, transformed symmetry vector, Smith divisors, non-triviality of bands
+    y : np.ndarray
+        Symmetry-data vector with multiplicities of irreps sorted as in EBRs' 
+        tables
+    y_prime : np.ndarray
+        Symmetry-data vector labeled as :math:`y'`
+    nontrivial : bool
+        Whether the bands host a nontrivial phase
+
+    Notes
+    -----
+    The Smith decomposition follows this notation:
+
+    .. math::
+
+        EBR \cdot x = y, \\
+        EBR = U^{-1} \cdot R \cdot R^{-1},\\
+        R \cdot Y = C, \\
+        x' = V^{-1} \cdot x,\\
+        y' = U \cdot y.
     """
-    symmetry_vector = create_symmetry_vector(irrep_counts, ebr_data["basis"]["irrep_labels"])
+
+    y = create_symmetry_vector(irrep_counts, ebr_data["basis"]["irrep_labels"])
 
     u, r, _ = get_smith_form(ebr_data)
     d = r.diagonal()
     d_pos = d[d > 0]
 
-    vec_prime = u @ symmetry_vector
+    y_prime = u @ y
     # check if the entries of vec_prime divide the elementary divisors
-    nontrivial = ((vec_prime[:len(d_pos)] % d_pos != 0)).any()
+    nontrivial = ((y_prime[:len(d_pos)] % d_pos != 0)).any()
 
-    return symmetry_vector, vec_prime, d, nontrivial
-
-
+    return y, y_prime, nontrivial
 
 
-def compute_ebr_decomposition(ebr_data, vec):
+
+
+def compute_ebr_decomposition(ebr_data, y):
     from .or_solutions_obtainer import varArraySolutionObtainer 
     """
     Compute the decomposition of the symmetry vector into EBRs
@@ -138,9 +167,30 @@ def compute_ebr_decomposition(ebr_data, vec):
     Parameters
     ----------
     ebr_data : dict
-        Dictionary with EBR data as save in the package files.
-    vec : array
+        Dictionary with EBR data loaded from the package files.
+    y : array
         symmetry vector
+
+    Returns
+    -------
+    solutions : list
+        Solutions found for the EBR decomposition. `None` if no solution was 
+        found
+    is_positive : bool
+        Whether solutions involve only positive coefficients of EBRs. If no 
+        solution was found, it is also returns `False`
+
+    Notes
+    -----
+    The Smith decomposition follows this notation:
+
+    .. math::
+
+        EBR \cdot x = y, \\
+        EBR = U^{-1} \cdot R \cdot R^{-1},\\
+        R \cdot Y = C, \\
+        x' = V^{-1} \cdot x,\\
+        y' = U \cdot y.
     """
 
     def get_solutions(bounds=(0,15), n_smallest=5):
@@ -159,24 +209,33 @@ def compute_ebr_decomposition(ebr_data, vec):
         -------
         list    
             list of solutions in form of lists of integers
+        str
+            status of the search of solutions
         """
+
         lb, ub = bounds
         model = cp_model.CpModel()
         solver = cp_model.CpSolver()
+
+        # Add the coefficients of EBRs as variables
         x = [model.NewIntVar(lb, ub, f"x{i}") for i in range(n_ebr)]
 
+        # Construct a callback that will be called each time a new solution is 
+        # found
         solution_obtainer = varArraySolutionObtainer(x)
 
+        # Add constraint: multiplicities of irreps in the solution must match 
+        # the multiplicities in the symmetry-data vector y
         for i in range(n_ir):
-            model.Add(A[i] @ x == vec[i])
+            model.Add(EBR[i] @ x == y[i])
 
         solver.SearchForAllSolutions(model, solution_obtainer)
 
         return solution_obtainer.n_smallest_solutions(n_smallest), solver.status_name()
 
-    A = get_ebr_matrix(ebr_data)
+    EBR = get_ebr_matrix(ebr_data)
 
-    n_ir, n_ebr = A.shape
+    n_ir, n_ebr = EBR.shape
 
     # first check positive coefficients only
     is_positive = True
@@ -206,14 +265,15 @@ def compose_irrep_string(irrep_counts):
 
     Parameters
     ----------
-    labels : list
-        list of irrep labels
+    irrep_counts : dict
+        Keys are irrep labels and values are multiplicities
 
     Returns
     -------
     str
-        string with direct sum of irreps with multiplicities.
+        String with direct sum of irreps with multiplicities.
     """
+
     terms = [f"{multi} x {name}" for name, multi in irrep_counts.items() if multi != 0]
     s = " + ".join(terms)
 
@@ -243,3 +303,26 @@ def compose_ebr_string(vec, ebrs):
     s = " + ".join(terms)
 
     return s
+
+def load_ebr_data(sg_number, spinor):
+    '''
+    Load data from file of EBRs
+
+    Parameters
+    ----------
+    sg_number : int
+        Number of the space group
+    spinor : bool
+        Whether wave functions are spinors (SOC) or not
+
+    Returns
+    -------
+    dict
+        EBR data
+    '''
+
+    root = os.path.dirname(__file__)
+    filename = f"{sg_number}_ebrs.json"
+    ebr_data = json.load(open(root + "/data/ebrs/" + filename, 'r'))
+    ebr_data = ebr_data["double" if spinor else "single"]
+    return ebr_data

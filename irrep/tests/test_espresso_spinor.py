@@ -91,6 +91,7 @@ def test_espresso_write_sym():
 
     compare_sym_files("Bi.sym", "Bi.sym.ref")
     os.remove("Bi.sym")
+    os.remove("irrep-output.json")
 
 
 def test_espresso_read_sym():
@@ -112,6 +113,7 @@ def test_espresso_read_sym():
 
     compare_sym_files("Bi.sym", "Bi.sym.reordered.ref")
     os.remove("Bi.sym")
+    os.remove("irrep-output.json")
 
 def readfile(filename):
     with open(filename, "r") as f:
