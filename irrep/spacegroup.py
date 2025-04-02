@@ -157,12 +157,6 @@ class SymmetryOperation():
         raise RuntimeError(
             "{0} pi rotation cannot be in the space group".format(api))
 
-    @cached_property
-    def rotation_cart(self):
-        """
-        Calculate the rotation matrix in cartesian coordinates.
-        """
-        return self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
 
     def _get_operation_type(self):
         """
