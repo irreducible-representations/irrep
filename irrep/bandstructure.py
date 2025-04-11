@@ -1127,13 +1127,13 @@ class BandStructure:
 
         # Load symmetry indicators file
         si_table = self.load_si_table()
-        if self.spacegroup.number not in si_table:
+        if self.spacegroup.number_str not in si_table:
             print("There are no non-trivial symmetry indicators for this space "
                   "group")
             indicators_dict = None
 
         else:
-            si_table = si_table[self.spacegroup.number]["indicators"]
+            si_table = si_table[self.spacegroup.number_str]["indicators"]
 
             indicators_dict = {}
             for indicator in si_table:
@@ -1162,7 +1162,7 @@ class BandStructure:
 
         else:
             si_table = self.load_si_table()
-            si_table = si_table[self.spacegroup.number]["indicators"]
+            si_table = si_table[self.spacegroup.number_str]["indicators"]
 
             for indicator in si_table:
 
@@ -1196,7 +1196,7 @@ class BandStructure:
         )
 
         # Load data from EBR files
-        ebr_data = load_ebr_data(self.spacegroup.number, self.spinor)
+        ebr_data = load_ebr_data(self.spacegroup.number_str, self.spinor)
 
         try:
             irrep_counts = self.get_irrep_counts()
@@ -1281,7 +1281,7 @@ class BandStructure:
                 "Could not compute the EBR decomposition because counting of "
                 "irreps failed."
             )
-        ebr_data = load_ebr_data(self.spacegroup.number, self.spinor)
+        ebr_data = load_ebr_data(self.spacegroup.number_str, self.spinor)
         basis_labels = ebr_data["basis"]["irrep_labels"]
         _, d, _ = get_smith_form(ebr_data)
         smith_diagonal = d.diagonal()
