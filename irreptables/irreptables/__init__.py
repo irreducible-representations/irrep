@@ -301,7 +301,7 @@ class IrrepTable:
 
     Parameters
     ----------
-    SGnumber : int
+    SGnumber : str
         Number of the space-group.
     spinor : bool
         `True` if the matrix describing the transformation of spinor components 
@@ -337,18 +337,18 @@ class IrrepTable:
     """
 
     def __init__(self, SGnumber, spinor, name=None, v=0, magnetic=False):
-        self.number = SGnumber
+        self.number_str = SGnumber
         self.spinor = spinor
         if name is None:
             if magnetic is False:
                 name = "{root}/tables/irreps-SG={SG}-{spinor}.dat".format(
-                    SG=self.number,
+                    SG=self.number_str,
                     spinor="spin" if self.spinor else "scal",
                     root=os.path.dirname(__file__),
                 )
             else:
                 name = "{root}/correptables/irreps-SG={SG}-{spinor}.dat".format(
-                    SG=self.number,
+                    SG=self.number_str,
                     spinor="spin" if self.spinor else "scal",
                     root=os.path.dirname(__file__),
                 )
@@ -364,7 +364,7 @@ class IrrepTable:
             l = lines.pop().strip().split("=")
             # logger.debug(l,l[0].lower())
             if l[0].lower() == "sg":
-                assert l[1].strip() == self.number
+                assert l[1].strip() == self.number_str
             elif l[0].lower() == "name":
                 self.name = l[1]
             elif l[0].lower() == "nsym":
