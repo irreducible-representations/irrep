@@ -1,0 +1,23 @@
+SYS = Na
+ISTART   = 0
+ICHARG   = 11
+LWAVE    = .TRUE.
+LCHARG = .TRUE.
+LSORBIT = .TRUE.
+
+ALGO = Normal
+ISMEAR   = 0
+SIGMA    = 0.2
+LASPH    = .FALSE.
+ENCUT    = 350
+EDIFF    = 1E-5 
+NELM     = 250
+SAXIS    = 0 0 1 
+
+LREAL    = Auto
+
+PREC = Normal
+AMIX     = 0.2 
+BMIX     = 0.0001
+AMIX_MAG = 0.8 
+BMIX_MAG = 0.0001
