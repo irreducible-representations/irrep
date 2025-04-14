@@ -2,6 +2,7 @@ import pickle
 from pathlib import Path
 import numpy as np
 from irrep.bandstructure import BandStructure
+import os
 
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 REF_FILES_PATH = Path(__file__).parent / "ref_data"
@@ -50,6 +51,7 @@ def check_Fe_qe(include_TR):
                                              data_ref["d_band_blocks"][ik][isym], 
                                              key=f"{k}, ik={ik}, isym={isym}, factor=-1",
                                              factor=-1)
+    os.remove(TMP_FILES_PATH/fname)
                     
 def test_Fe_qe_TR():
     check_Fe_qe(include_TR=True)

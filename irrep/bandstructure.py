@@ -18,16 +18,17 @@
 
 import copy
 import functools
+import os
+import json
 
 import numpy as np
-import numpy.linalg as la
+from functools import cached_property
 
 from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .gvectors import sortIG, calc_gvectors, symm_matrix
 from .utility import get_block_indices, grid_from_kpoints, log_message, UniqueListMod1
-
 
 class BandStructure:
     """
@@ -556,6 +557,18 @@ class BandStructure:
         else:
             json_data["number of inversion-odd states"]  = self.num_bandinvs
 
+        try:
+            json_data['symmetry indicators'] = self.symmetry_indicators
+        except RuntimeError:  # irreps not identified beforehand
+            pass
+
+        if hasattr(self, 'classification'):  # compute_ebr_decomposition was run
+            json_data['classification'] = self.classification
+            json_data['ebr decomposition'] = {}
+            json_data['ebr decomposition']['y'] = self.y
+            json_data['ebr decomposition']['y_prime'] = self.y_prime
+            json_data['ebr decomposition']['solutions'] = self.ebr_decompositions
+
         return json_data
 
     @property
@@ -1046,3 +1059,297 @@ class BandStructure:
         #             kpt2kptirr, 
         #             d_band_blocks, 
         #             d_band_block_indices)
+
+    def get_irrep_counts(self, filter_valid=True):
+        """
+        Returns a dictionary with irrep labels as keys and multiplicity 
+        as values.
+
+        Parameters
+        ----------
+        filter_valid : bool, optional
+            count only integer multiplicities, by default True
+        """
+        
+        irrep_data = []
+        for kpoint in self.kpoints:
+            if 'None' in kpoint.irreps:
+                raise RuntimeError(
+                    "Could not get the irrep counts because irreps must be identified."
+                )
+            else:
+                irrep_data.append(kpoint.irreps)
+
+        # dictionary: {label of irrep: total multiplicity}
+        irrep_dict = {}
+        for point in irrep_data:
+            for irrep in point:
+                for label, multi in irrep.items():
+                    # only add valid multiplicities (filter out uncoverged bands)
+                    valid_multi = check_multiplicity(multi)
+                    if valid_multi or (filter_valid is False):
+                        multi = np.real(multi).round(0)
+                        # If the irrep's label doesn't exist yet, create it
+                        irrep_dict.setdefault(label, 0)
+                        irrep_dict[label] += multi
+
+        return irrep_dict
+
+    @cached_property
+    def symmetry_indicators(self):
+        '''
+        Lazy getter to return the symmetry indicators. 
+
+        Returns
+        -------
+        indicators_dict : dict
+            Keys and values are labels of indicators and their values, 
+            respectively. If the space group doesn't have nontrivial 
+            indicators, `None` is returned
+
+        Raises
+        ------
+        RuntimeError
+            If the irreps have not been identified beforehand via 
+            `identify_irreps`
+        '''
+
+        # Identify_irreps must be used beforehand
+        try:
+            irrep_dict = self.get_irrep_counts()
+        except RuntimeError:
+            raise RuntimeError(
+                "Could not compute the symmetry indicators "
+                "because irreps must be identified. Try specifying -kpnames "
+                "in the CLI (or run BandStructure.identify_irreps if you are "
+                "using IrRep as a package"
+            )
+
+        # Load symmetry indicators file
+        si_table = self.load_si_table()
+        if self.spacegroup.number_str not in si_table:
+            print("There are no non-trivial symmetry indicators for this space "
+                  "group")
+            indicators_dict = None
+
+        else:
+            si_table = si_table[self.spacegroup.number_str]["indicators"]
+
+            indicators_dict = {}
+            for indicator in si_table:
+                si_factors = si_table[indicator]["factors"]
+                total = 0
+                for label, value in si_factors.items():
+                    total += value * irrep_dict.get(label, 0)
+                indicators_dict[indicator] = total % si_table[indicator]['mod']
+
+        return indicators_dict
+
+    def print_symmetry_indicators(self):
+        """
+        Computes and prints the symmetry-indicator information.
+
+        Notes
+        -----
+        Method identify_irreps must have been called beforehand
+        """
+
+        print("\n---------- SYMMETRY INDICATORS ----------\n")
+
+        if self.symmetry_indicators is None:
+            print(f"Space group {self.spacegroup.name} has no nontrivial "
+                    "indicators")
+
+        else:
+            si_table = self.load_si_table()
+            si_table = si_table[self.spacegroup.number_str]["indicators"]
+
+            for indicator in si_table:
+
+                # String for the formula to calculate the indicator
+                si_factors = si_table[indicator]["factors"]
+                terms = [
+                    f"{factor} x {label}" for label, factor in 
+                    si_factors.items() if factor != 0
+                ]
+                definition_str = " + ".join(terms)
+                
+                print(f"{indicator} =", self.symmetry_indicators[indicator])
+                print(f"\tDefinition: ({definition_str}) mod {si_table[indicator]['mod']}")
+
+    def compute_ebr_decomposition(self):
+        '''
+        Compute EBR decomposition. Sets values for attributes `classification`, 
+        `ebr_decompositions`, `y` and `y_prime`
+
+        Raises
+        ------
+        RuntimeError
+            Irreps were not identified beforehand by running `identify_irreps`
+        '''
+
+        from .ebrs import (
+            compute_topological_classification_vector,
+            ORTOOLS_AVAILABLE,
+            compute_ebr_decomposition,
+            load_ebr_data
+        )
+
+        # Load data from EBR files
+        ebr_data = load_ebr_data(self.spacegroup.number_str, self.spinor)
+
+        try:
+            irrep_counts = self.get_irrep_counts()
+        except RuntimeError:
+            print(
+                "Could not compute the EBR decomposition because counting of "
+                "irreps failed."
+            )
+
+        (self.y,
+         self.y_prime,
+         nontrivial
+        ) = compute_topological_classification_vector(irrep_counts, ebr_data)
+
+
+        # Stable topological, don't compute EBR decompositions
+        if nontrivial:
+            self.classification = 'STABLE TOPOLOGICAL'
+            self.ebr_decompositions = None
+            return
+
+        # Fragile or trivial, but cannot ortools not installed
+        elif not ORTOOLS_AVAILABLE:
+            self.ebr_decomposition = None
+            print(
+                "There exists integer-valued solutions to the EBR decomposition "
+                "problem, so the set of bands is TRIVIAL or displays FRAGILE TOPOLOGY. "
+                "Install OR-Tools to compute decompositions."
+                )
+
+        else:
+            print('Calculating decomposition in terms of EBRs. '
+                  'This can take some time...')
+            self.ebr_decompositions, is_positive = compute_ebr_decomposition(ebr_data, self.y)
+            if is_positive:
+                self.classification = 'ATOMIC LIMIT'
+            else:
+                self.classification = 'FRAGILE TOPOLOGICAL'
+
+
+    def print_ebr_decomposition(self):
+        """
+        Computes and prints the EBR decomposition information. If the bands are
+        trivial or fragile-topological, it tries to find EBR decompositions using
+        ORtools if installed.
+
+        Notes
+        -----
+        The Smith decomposition follows this notation:
+
+        .. math::
+
+            EBR \cdot x = y, \\
+            EBR = U^{-1} \cdot R \cdot R^{-1},\\
+            R \cdot Y = C, \\
+            x' = V^{-1} \cdot x,\\
+            y' = U \cdot y.
+
+        Raises
+        ------
+        RuntimeError
+            Irreps were not identified beforehand by running `identify_irreps`
+        """
+
+        from .ebrs import (
+            compose_irrep_string,
+            get_ebr_names_and_positions,
+            compose_ebr_string,
+            get_smith_form,
+            load_ebr_data
+        )
+        from .utility import vector_pprint
+
+        # General block printed always
+        print("\n---------- EBR DECOMPOSITION ----------\n")
+        print(f'Classification: {self.classification}')
+
+        try:
+            irrep_counts = self.get_irrep_counts()
+        except RuntimeError:
+            print(
+                "Could not compute the EBR decomposition because counting of "
+                "irreps failed."
+            )
+        ebr_data = load_ebr_data(self.spacegroup.number_str, self.spinor)
+        basis_labels = ebr_data["basis"]["irrep_labels"]
+        _, d, _ = get_smith_form(ebr_data)
+        smith_diagonal = d.diagonal()
+        print(
+        f"Irrep decomposition at high-symmetry points:\n\n{compose_irrep_string(irrep_counts)}"
+        f"\n\nIrrep basis:\n{vector_pprint(basis_labels, fmt='s')}"
+        f"\n\nSymmetry vector (y):\n{vector_pprint(self.y, fmt='d')}"
+        f"\n\nTransformed symmetry vector (y'):\n{vector_pprint(self.y_prime, fmt='d')}"
+        f"\n\nSmith singular values:\n{vector_pprint(smith_diagonal, fmt='d')}"
+        f"\n\nNotation: EBR.x=y,  U.EBR.V=R,  y'=U.y"
+        )
+
+        # If EBR decomposition wasn't computed because ortools isn't installed
+        if (self.classification != 'STABLE TOPOLOGICAL' 
+            and self.ebr_decompositions is None):
+            print(
+                "There exists integer-valued solutions to the EBR decomposition "
+                "problem, so the set of bands is TRIVIAL or displays FRAGILE TOPOLOGY. "
+                "Install OR-Tools and compute decompositions again"
+                )
+
+        # If EBR decomposition was computed
+        elif self.classification in ['ATOMIC LIMIT', 'FRAGILE TOPOLOGIVAL']:
+            print('Printing EBR decompositions:')
+            ebr_list = get_ebr_names_and_positions(ebr_data)
+            for i, sol in enumerate(self.ebr_decompositions):
+                print("Solution", i + 1, "\n")
+                print(compose_ebr_string(sol, ebr_list), "\n")
+
+
+    def load_si_table(self):
+        '''
+        Load table of symmetry indicators
+
+        Returns
+        -------
+        dict
+            Data loaded from the file of symmetry indicators
+        '''
+
+        root = os.path.dirname(__file__)
+        filename = (
+            f"{'double' if self.spinor else 'single'}_indicators"
+            f"{'_magnetic' if self.magnetic else ''}.json"
+            )
+        si_table = json.load(open(root+"/data/symmetry_indicators/"+filename, 'r'))
+        return si_table
+
+        
+def check_multiplicity(multi):
+    """Checks if an irrep multiplicity is correct, i.e. integer.
+
+    Parameters
+    ----------
+    multi : float
+        irrep multiplicity
+
+    Returns
+    -------
+    bool
+        True if correct, else False
+    """
+    
+    # is real
+    if not np.isclose(np.imag(multi), 0, rtol=0, atol=1e-3):
+        return False
+    # is integer
+    if not np.isclose(multi, np.round(multi), rtol=0, atol=1e-3):
+        return False
+
+    return True

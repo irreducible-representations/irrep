@@ -157,6 +157,7 @@ class SymmetryOperation():
         raise RuntimeError(
             "{0} pi rotation cannot be in the space group".format(api))
 
+
     def _get_operation_type(self):
         """
         Calculates the rotation axis and angle of the symmetry and if it 
@@ -690,7 +691,7 @@ class SpaceGroupBare():
         print()
         print('\n ---------- SPACE GROUP ----------- \n')
         print()
-        print('Space group: {} (# {})'.format(self.name, self.number))
+        print('Space group: {} (# {})'.format(self.name, self.number_str))
         print('Number of symmetries: {} (mod. lattice translations)'.format(self.size))
         
         for symop in self.symmetries:
@@ -834,14 +835,14 @@ class SpaceGroup(SpaceGroupBare):
             dataset = spglib.get_symmetry_dataset(cell)
             if version.parse(spglib.__version__) < version.parse('2.5.0'):
                 self.name = dataset['international']
-                self.number = dataset['number']
+                self.number_str = str(dataset['number'])
                 refUC_tmp = dataset['transformation_matrix']
                 shiftUC_tmp = dataset['origin_shift']
                 rotations = dataset['rotations']
                 translations = dataset['translations']
             else:
                 self.name = dataset.international
-                self.number = dataset.number
+                self.number_str = str(dataset.number)
                 refUC_tmp = dataset.transformation_matrix
                 shiftUC_tmp = dataset.origin_shift
                 rotations = dataset.rotations
@@ -867,8 +868,8 @@ class SpaceGroup(SpaceGroupBare):
 
             uni_number = dataset.uni_number
             root = os.path.dirname(__file__)                                    
-            with open(root + "/msg_numbers.data", 'r') as f:                    
-                self.number, self.name = f.readlines()[uni_number].strip().split(" ") 
+            with open(root + "/data/msg_numbers.data", 'r') as f:                    
+                self.number_str, self.name = f.readlines()[uni_number].strip().split(" ") 
 
         # Read syms from .sym file (useful for Wannier interface)
         if from_sym_file is not None:
@@ -896,7 +897,7 @@ class SpaceGroup(SpaceGroupBare):
                                                     time_reversal=time_reversal_list[isym]))
 
         # Load symmetries from the space group's table
-        irreptable = IrrepTable(self.number, self.spinor, magnetic=self.magnetic, v=verbosity)
+        irreptable = IrrepTable(self.number_str, self.spinor, magnetic=self.magnetic, v=verbosity)
         self.u_symmetries_tables = irreptable.u_symmetries
         self.au_symmetries_tables = irreptable.au_symmetries
 
@@ -952,6 +953,18 @@ class SpaceGroup(SpaceGroupBare):
             self.symmetries = sorted_symmetries
 
     @property
+    def number(self):
+        '''
+        To get the number of the space group as an int. Used in WannierBerri. 
+        Returns -1 for magnetic spacegroups
+        '''
+        numbers = self.number_str.split('.')
+        if len(numbers) > 1:  # magnetic SG
+            return -1
+        else:
+            return int(numbers[0])
+
+    @property
     def u_symmetries(self):
         '''
         List of unitary symmetries
@@ -988,7 +1001,7 @@ class SpaceGroup(SpaceGroupBare):
             cells_match = False
 
         d = {"name": self.name,
-             "number": self.number,
+             "number": self.number_str,
              "spinor": self.spinor,
              "num symmetries": self.size,
              "cells match": cells_match,
@@ -1048,7 +1061,7 @@ class SpaceGroup(SpaceGroupBare):
         print()
         print('\n ---------- SPACE GROUP ----------- \n')
         print()
-        print('Space group: {} (# {})'.format(self.name, self.number))
+        print('Space group: {} (# {})'.format(self.name, self.number_str))
         print('Number of unitary symmetries: {} (mod. lattice translations)'
               .format(len(self.u_symmetries)))
         if self.magnetic:
@@ -1066,7 +1079,6 @@ class SpaceGroup(SpaceGroupBare):
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
                 symop.show(refUC=self.refUC, shiftUC=self.shiftUC, U=self.spin_transf)
-
 
     def write_sym_file(self, filename, alat=None):
         """
@@ -1125,7 +1137,7 @@ class SpaceGroup(SpaceGroupBare):
         """
         return (
             "SG={SG}\n name={name} \n nsym= {nsym}\n spinor={spinor}\n".format(
-                SG=self.number,
+                SG=self.number_str,
                 name=self.name,
                 nsym=self.size,
                 spinor=self.spinor) +
@@ -1262,7 +1274,7 @@ class SpaceGroup(SpaceGroupBare):
             given in parameter `kpname`.
         """
 
-        table = IrrepTable(self.number, self.spinor, magnetic=self.magnetic, v=verbosity)
+        table = IrrepTable(self.number_str, self.spinor, magnetic=self.magnetic, v=verbosity)
         tab = {}
         for irr in table.irreps:
             if irr.kpname == kpname:
@@ -1288,7 +1300,7 @@ class SpaceGroup(SpaceGroupBare):
         if len(tab) == 0:
             raise RuntimeError(
                 "the k-point with name {0} is not found in the spacegroup {1}. found only :\n{2}".format(
-                    kpname, table.number, "\n ".join(
+                    kpname, table.number_str, "\n ".join(
                         "{0}({1}/{2})".format(
                             irr.kpname, irr.k, np.linalg.inv(self.refUC).dot(
                                 irr.k) %
@@ -1636,6 +1648,69 @@ class SpaceGroup(SpaceGroupBare):
                         )
         vecs = np.vstack([vecs + r for r in self.vecs_centering()])
         return vecs
+    
+    def print_hs_kpoints(self):
+        """
+        Give the kpoint coordinates of the symmetry tables transformed to 
+        the DFT calculation cell.
+
+        """
+
+        table = IrrepTable(self.number_str, self.spinor, magnetic=self.magnetic)
+        refUC_kspace = np.linalg.inv(self.refUC.T)
+
+        matrix_format = ("\t\t| {: .2f} {: .2f} {: .2f} |\n" 
+                        "\t\t| {: .2f} {: .2f} {: .2f} |\n" 
+                        "\t\t| {: .2f} {: .2f} {: .2f} |\n\n")
+
+        print("\n---------- HS-KPOINTS FOR IRREP IDENTIFICATION ----------\n")
+
+        print("\nChange of coordinates from conventional to DFT cell:\n")
+        print(matrix_format.format(*refUC_kspace.ravel()))
+
+        print("\nChange of coordinates from DFT to conventional cell:\n")
+        print(matrix_format.format(*np.linalg.inv(refUC_kspace).ravel()))
+
+        _, kp_index = np.unique([irr.kpname for irr in table.irreps], return_index=True)
+        print("Coordinates in symmetry tables:\n")
+        for i in kp_index:
+            name = table.irreps[i].kpname
+            coords = table.irreps[i].k
+            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *coords))
+        print("\nCoordinates for DFT calculation:\n")
+        for i in kp_index:
+            name = table.irreps[i].kpname
+            coords = table.irreps[i].k
+            k_dft = np.round(refUC_kspace.dot(coords), 6) % 1
+            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *k_dft))
+
+    def kpoints_to_calculation_cell(self, kpoints):
+        """Transforms kpoints form standard cell to calculation cell
+
+        Parameters
+        ----------
+        kpoints : np.NDArray
+            kpoints in standard cell
+        """
+        refUC_kspace = np.linalg.inv(self.refUC.T)
+
+        kpoints = np.array([refUC_kspace.dot(k) for k in kpoints]) % 1
+
+        return kpoints
+
+    def kpoints_to_standard_cell(self, kpoints):
+        """Transforms kpoints form standard cell to calculation cell
+
+        Parameters
+        ----------
+        kpoints : np.NDArray
+            kpoints in standard cell
+        """
+        refUC_kspace = self.refUC.T
+
+        kpoints = np.array([refUC_kspace.dot(k) for k in kpoints]) % 1
+
+        return kpoints
 
 
 def read_sym_file(fname):

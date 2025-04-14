@@ -16,7 +16,9 @@
 
 __version__="2.0.0"
 
+import copy
 import os
+import sys
 import logging
 import numpy as np
 from irrep.utility import str2bool, str2list_space, str_, log_message
@@ -57,7 +59,7 @@ class SymopTable:
         # len is 13 if time reversal is specified
         # len is > 13 everytime there is spin
         line_length = len(numbers)
-        if line_length > 12:
+        if line_length > 13:
             self.S = (
                 np.array(numbers[12:16], dtype=float)
                 * np.exp(1j * np.pi * np.array(numbers[16:20], dtype=float))
@@ -299,7 +301,7 @@ class IrrepTable:
 
     Parameters
     ----------
-    SGnumber : int
+    SGnumber : str
         Number of the space-group.
     spinor : bool
         `True` if the matrix describing the transformation of spinor components 
@@ -335,18 +337,18 @@ class IrrepTable:
     """
 
     def __init__(self, SGnumber, spinor, name=None, v=0, magnetic=False):
-        self.number = SGnumber
+        self.number_str = SGnumber
         self.spinor = spinor
         if name is None:
             if magnetic is False:
                 name = "{root}/tables/irreps-SG={SG}-{spinor}.dat".format(
-                    SG=self.number,
+                    SG=self.number_str,
                     spinor="spin" if self.spinor else "scal",
                     root=os.path.dirname(__file__),
                 )
             else:
                 name = "{root}/correptables/irreps-SG={SG}-{spinor}.dat".format(
-                    SG=self.number,
+                    SG=self.number_str,
                     spinor="spin" if self.spinor else "scal",
                     root=os.path.dirname(__file__),
                 )
@@ -361,8 +363,8 @@ class IrrepTable:
         while len(lines) > 0:
             l = lines.pop().strip().split("=")
             # logger.debug(l,l[0].lower())
-            if l[0].lower() == "SG":
-                assert int(l[1]) == self.number
+            if l[0].lower() == "sg":
+                assert l[1].strip() == self.number_str
             elif l[0].lower() == "name":
                 self.name = l[1]
             elif l[0].lower() == "nsym":
