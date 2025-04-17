@@ -26,7 +26,7 @@ from functools import cached_property
 
 from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
-from .spacegroup import SpaceGroup
+from .spacegroup import SpaceGroupIrreps
 from .gvectors import sortIG, calc_gvectors, symm_matrix
 from .utility import get_block_indices, grid_from_kpoints, log_message, UniqueListMod1
 
@@ -268,7 +268,7 @@ class BandStructure:
 
         cell = (self.Lattice, positions, typat)
 
-        self.spacegroup = SpaceGroup(
+        self.spacegroup = SpaceGroupIrreps(
                               cell=cell,
                               spinor=self.spinor,
                               refUC=refUC,
@@ -279,7 +279,7 @@ class BandStructure:
                               alat=alat,
                               from_sym_file=from_sym_file,
                               magmom=magmom,
-                              include_TR=include_TR
+                              include_TR=include_TR,
                               )
         self.magnetic = self.spacegroup.magnetic
 
