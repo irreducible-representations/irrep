@@ -296,7 +296,7 @@ def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosit
     if np.any(np.abs(s - 1) > error_threshold):
         raise ValueError(f"Matrix is not orthogonal \n {A} \n {debug_msg}")
     elif np.any(np.abs(s - 1) > warning_threshold):
-        log_message(f"Warning: Matrix is not orthogonal \n {A} \n {debug_msg}", 1)
+        log_message(f"Warning: Matrix is not orthogonal \n {A} \n {debug_msg}", verbosity, 1)
     return u @ vh
 
 def sort_vectors(list_of_vectors):

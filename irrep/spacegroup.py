@@ -804,16 +804,11 @@ class SpaceGroup(SpaceGroupBare):
             self,
             cell,
             spinor=True,
-            refUC=None,
-            shiftUC=None,
-            search_cell=False,
-            trans_thresh=1e-5,
             alat=None,
             from_sym_file=None,
-            no_match_symmetries=False,
             magmom=None,
+            include_TR=True,
             verbosity=0,
-            include_TR=True
             ):
 
         self.spinor = spinor
@@ -824,11 +819,7 @@ class SpaceGroup(SpaceGroupBare):
         self.magmom = magmom
         self.include_TR = include_TR
 
-        if from_sym_file is not None or not search_cell:
-            no_match_symmetries = True
-        else:
-            no_match_symmetries = False
-
+        
         if magmom is None:  # No magnetic moments magmom = None
 
             self.magnetic = False
@@ -836,15 +827,15 @@ class SpaceGroup(SpaceGroupBare):
             if version.parse(spglib.__version__) < version.parse('2.5.0'):
                 self.name = dataset['international']
                 self.number_str = str(dataset['number'])
-                refUC_tmp = dataset['transformation_matrix']
-                shiftUC_tmp = dataset['origin_shift']
+                self.refUC = dataset['transformation_matrix']
+                self.shiftUC = dataset['origin_shift']
                 rotations = dataset['rotations']
                 translations = dataset['translations']
             else:
                 self.name = dataset.international
                 self.number_str = str(dataset.number)
-                refUC_tmp = dataset.transformation_matrix
-                shiftUC_tmp = dataset.origin_shift
+                self.refUC = dataset.transformation_matrix
+                self.shiftUC = dataset.origin_shift
                 rotations = dataset.rotations
                 translations = dataset.translations
             time_reversal_list = [False] * len(rotations)  # to do: change it to implement grey groups
@@ -856,15 +847,14 @@ class SpaceGroup(SpaceGroupBare):
             magmom = np.zeros((len(self.positions), 3), dtype=float)
 
         if self.magnetic:
-            dataset = spglib.get_magnetic_symmetry_dataset((*cell,
-                                                            magmom))
+            dataset = spglib.get_magnetic_symmetry_dataset((*cell, magmom))
             if dataset is None:                                                 
                 raise ValueError("No magnetic space group could be detected!")  
             rotations = dataset.rotations
             translations = dataset.translations
             time_reversal_list = dataset.time_reversals
-            refUC_tmp = dataset.transformation_matrix
-            shiftUC_tmp = dataset.origin_shift
+            self.refUC = dataset.transformation_matrix
+            self.shiftUC = dataset.origin_shift
 
             uni_number = dataset.uni_number
             root = os.path.dirname(__file__)                                    
@@ -896,17 +886,92 @@ class SpaceGroup(SpaceGroupBare):
                                                     translation_mod1=translation_mod_1,
                                                     time_reversal=time_reversal_list[isym]))
 
+
+    @property
+    def number(self):
+        '''
+        To get the number of the space group as an int. Used in WannierBerri. 
+        Returns -1 for magnetic spacegroups
+        '''
+        numbers = self.number_str.split('.')
+        if len(numbers) > 1:  # magnetic SG
+            return -1
+        else:
+            return int(numbers[0])
+
+    @property
+    def u_symmetries(self):
+        '''
+        List of unitary symmetries
+        '''
+        return [x for x in self.symmetries if not x.time_reversal]
+
+    @property
+    def au_symmetries(self):
+        '''
+        List of antiunitary symmetries
+        '''
+        if self.magnetic and self.include_TR:
+            return [x for x in self.symmetries if x.time_reversal]
+        else:
+            return []
+
+
+
+    def write_sym_file(self, filename, alat=None):
+        """
+        Write symmetry operations to a file.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file.
+        alat : float, default=None
+            Lattice parameter in angstroms. If not specified, the lattice 
+            parameter is not written to the file.
+        """
+
+        if alat is None:
+            if hasattr(self, 'alat'):
+                alat = self.alat
+        if alat is None:
+            warnings.warn("Lattice parameter not specified. Symmetry operations will be written assuming A=1")
+            alat = 1
+        with open(filename, "w") as f:
+            f.write(" {0} \n".format(len(self.symmetries)))
+            for symop in self.symmetries:
+                f.write(symop.str_sym(alat))
+
+
+class SpaceGroupIrreps(SpaceGroup):
+    """
+    This class is for internal usage of irrep. While the parent class is for wider use (e.g. in wannierberri)
+    """
+    def __init__(self,      
+            refUC=None,
+            shiftUC=None,
+            search_cell=False,
+            trans_thresh=1e-5,
+            no_match_symmetries=False,
+            verbosity=0,
+            **kwargs):
+        super().__init__(verbosity=verbosity, **kwargs)
         # Load symmetries from the space group's table
         irreptable = IrrepTable(self.number_str, self.spinor, magnetic=self.magnetic, v=verbosity)
         self.u_symmetries_tables = irreptable.u_symmetries
         self.au_symmetries_tables = irreptable.au_symmetries
 
+        if not search_cell:
+            no_match_symmetries = True
+        else:
+            no_match_symmetries = False
+
         # Determine refUC and shiftUC according to entries in CLI
         self.refUC, self.shiftUC = self.determine_basis_transf(
                                             refUC_cli=refUC, 
                                             shiftUC_cli=shiftUC,
-                                            refUC_lib=refUC_tmp, 
-                                            shiftUC_lib=shiftUC_tmp,
+                                            refUC_lib=self.refUC, 
+                                            shiftUC_lib=self.shiftUC,
                                             search_cell=search_cell,
                                             trans_thresh=trans_thresh,
                                             verbosity=verbosity
@@ -952,68 +1017,6 @@ class SpaceGroup(SpaceGroupBare):
                     log_message(msg, verbosity, 1)
             self.symmetries = sorted_symmetries
 
-    @property
-    def number(self):
-        '''
-        To get the number of the space group as an int. Used in WannierBerri. 
-        Returns -1 for magnetic spacegroups
-        '''
-        numbers = self.number_str.split('.')
-        if len(numbers) > 1:  # magnetic SG
-            return -1
-        else:
-            return int(numbers[0])
-
-    @property
-    def u_symmetries(self):
-        '''
-        List of unitary symmetries
-        '''
-        return [x for x in self.symmetries if not x.time_reversal]
-
-    @property
-    def au_symmetries(self):
-        '''
-        List of antiunitary symmetries
-        '''
-        if self.magnetic and self.include_TR:
-            return [x for x in self.symmetries if x.time_reversal]
-        else:
-            return []
-
-
-    def json(self, symmetries=None):
-        '''
-        Prepare dictionary with info of space group to save in JSON
-
-        Returns
-        -------
-        d : dict
-            Dictionary with info about space group
-        '''
-
-        d = {}
-
-        if (np.allclose(self.refUC, np.eye(3)) and
-            np.allclose(self.shiftUC, np.zeros(3))):
-            cells_match = True
-        else:
-            cells_match = False
-
-        d = {"name": self.name,
-             "number": self.number_str,
-             "spinor": self.spinor,
-             "num symmetries": self.size,
-             "cells match": cells_match,
-             "symmetries": {},
-             "magnetic": self.magnetic
-             }
-
-        for sym in self.symmetries:
-            if symmetries is None or sym.ind in symmetries:
-                d["symmetries"][sym.ind] = sym.json_dict(self.refUC, self.shiftUC)
-
-        return d
 
     def show(self, symmetries=None):
         """
@@ -1080,29 +1083,39 @@ class SpaceGroup(SpaceGroupBare):
             if symmetries is None or symop.ind in symmetries:
                 symop.show(refUC=self.refUC, shiftUC=self.shiftUC, U=self.spin_transf)
 
-    def write_sym_file(self, filename, alat=None):
-        """
-        Write symmetry operations to a file.
 
-        Parameters
-        ----------
-        filename : str
-            Name of the file.
-        alat : float, default=None
-            Lattice parameter in angstroms. If not specified, the lattice 
-            parameter is not written to the file.
-        """
+    def json(self, symmetries=None):
+        '''
+        Prepare dictionary with info of space group to save in JSON
 
-        if alat is None:
-            if hasattr(self, 'alat'):
-                alat = self.alat
-        if alat is None:
-            warnings.warn("Lattice parameter not specified. Symmetry operations will be written assuming A=1")
-            alat = 1
-        with open(filename, "w") as f:
-            f.write(" {0} \n".format(len(self.symmetries)))
-            for symop in self.symmetries:
-                f.write(symop.str_sym(alat))
+        Returns
+        -------
+        d : dict
+            Dictionary with info about space group
+        '''
+
+        d = {}
+
+        if (np.allclose(self.refUC, np.eye(3)) and
+            np.allclose(self.shiftUC, np.zeros(3))):
+            cells_match = True
+        else:
+            cells_match = False
+
+        d = {"name": self.name,
+             "number": self.number_str,
+             "spinor": self.spinor,
+             "num symmetries": self.size,
+             "cells match": cells_match,
+             "symmetries": {},
+             "magnetic": self.magnetic
+             }
+
+        for sym in self.symmetries:
+            if symmetries is None or sym.ind in symmetries:
+                d["symmetries"][sym.ind] = sym.json_dict(self.refUC, self.shiftUC)
+
+        return d
 
 
     def write_trace(self):
@@ -1460,6 +1473,7 @@ class SpaceGroup(SpaceGroupBare):
                                     "to the expressions for the symmetries "
                                     "found in the tables. Enter refUC and "
                                     "shiftUC in command line"))
+
 
 
     def match_symmetries(
