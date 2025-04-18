@@ -622,7 +622,7 @@ class SpaceGroupBare():
             self.Lattice = Lattice
             self.spinor = spinor
             self.name = name
-            self.number = number
+            self.number_str = str(number)
             self.symmetries = []
             if spinor_rotations is None:
                 spinor_rotations = [None]*len(rotations)
