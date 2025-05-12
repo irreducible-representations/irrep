@@ -468,7 +468,7 @@ def cli(
         unk_formatted=unk_formatted,
         verbosity=verbosity,
         from_sym_file=from_sym_file,
-        include_TR=True  # if magnetic, include TR 
+        include_TR=(magnetic_moments is not None)  # if magnetic, include TR 
     )
 
     bandstr.spacegroup.show()
