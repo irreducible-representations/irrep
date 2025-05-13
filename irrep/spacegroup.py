@@ -622,7 +622,7 @@ class SpaceGroupBare():
             self.Lattice = Lattice
             self.spinor = spinor
             self.name = name
-            self.number = number
+            self.number_str = str(number)
             self.symmetries = []
             if spinor_rotations is None:
                 spinor_rotations = [None]*len(rotations)
@@ -746,7 +746,8 @@ class SpaceGroup(SpaceGroupBare):
     verbosity : int, default=0
         Verbosity level. Default set to minimalistic printing
     magmom : array
-        Each element is the magnetic moment of an ion.
+        Each element is the magnetic moment of an ion. if None - non-magnetic calculation
+        if True - magnetic moments are set to zero, i.e. time-reversal symmetry is included in the spacegroup
 
     Attributes
     ----------
@@ -820,9 +821,13 @@ class SpaceGroup(SpaceGroupBare):
         self.include_TR = include_TR
 
         
-        if magmom is None:  # No magnetic moments magmom = None
-
+        if magmom is not None or include_TR:
+            self.magnetic = True
+        else:
             self.magnetic = False
+        
+        if not self.magnetic:  # No magnetic moments magmom = None
+
             dataset = spglib.get_symmetry_dataset(cell)
             if version.parse(spglib.__version__) < version.parse('2.5.0'):
                 self.name = dataset['international']
@@ -840,13 +845,11 @@ class SpaceGroup(SpaceGroupBare):
                 translations = dataset.translations
             time_reversal_list = [False] * len(rotations)  # to do: change it to implement grey groups
 
-        elif hasattr(magmom, "__len__"):  # Magnetic moments from input magmom is array
-            self.magnetic = True
-        else: # --time-reversal set means magmom = True
-            self.magnetic = True
-            magmom = np.zeros((len(self.positions), 3), dtype=float)
+        else:  # Magnetic group
+            if magmom is None or magmom is True:
+                magmom = np.zeros((len(self.positions), 3), dtype=float)
+        
 
-        if self.magnetic:
             dataset = spglib.get_magnetic_symmetry_dataset((*cell, magmom))
             if dataset is None:                                                 
                 raise ValueError("No magnetic space group could be detected!")  
