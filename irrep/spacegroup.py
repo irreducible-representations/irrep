@@ -931,7 +931,9 @@ class SpaceGroup():
             self.inds_fplo = np.array(self.inds_fplo)
             self.order = int(self.order/2)  # only d=False symmetries
 
-            self.refUC, self.shiftUC = self.conv_from_prim()
+            self.refUC, self.shiftUC = self.conv_from_prim(verbosity=verbosity)
+            #self.refUC = np.array([[0,1,1], [1,0,1], [1,1,0]])
+            #self.shiftUC = np.array([0,1/2,1/8], float)
 
             # Load symmetries from tables
             irreptable = IrrepTable(sg, self.spinor, v=verbosity)
@@ -1070,7 +1072,7 @@ class SpaceGroup():
             # matching of symmetries was checked in determine_basis_transf
             if not no_match_symmetries:
                 try:
-                    ind, dt, signs = self.match_symmetries(signs=self.spinor,
+                    ind, dt, signs = self.match_symmetries(find_spin_matrices=self.spinor,
                                                         trans_thresh=trans_thresh
                                                         )
                     # Sort symmetries like in tables
@@ -1730,13 +1732,14 @@ class SpaceGroup():
         return tab
 
 
-    def conv_from_prim(self):
+    def conv_from_prim(self, verbosity=0):
 
         global GRID
 
         symmetries = [sym for sym in self.symmetries if not sym.d]
 
         # Determine primary direction and primary rotation's order
+        log_message(f'Laue group: {self.laue_group}', verbosity, 2)
         if self.laue_group == '-1':
             dir1 = [1,0,0]
             dir2 = [0,1,0]
@@ -1771,6 +1774,7 @@ class SpaceGroup():
                 n_prim = 4
             else:
                 n_prim = 3
+            log_message(f'Order of primary rotation: {n_prim}', verbosity, 2)
 
             # Define primary direction and matrix S
             for sym in symmetries:
@@ -1785,6 +1789,14 @@ class SpaceGroup():
                         S += np.linalg.matrix_power(Wp, i)
                     break
 
+            msg = (f'Rotation axis (dir1, primitive coords):{dir1.round(4)}\n'
+                   f'Rotation axis (dir1, cartesian coords):{axis1.round(4)}\n'
+                   f'Rotation matrix (Wp):\n{Wp}\n'
+                   f'Wp^{n_prim} (S):\n{S}\n'
+                   f'Used symmetry was proper: {sym.inversion}\n'
+                   )
+            log_message(msg, verbosity, 2)
+
             found = False
 
             # For some groups, it's convenient to adapt the grid
@@ -1795,25 +1807,43 @@ class SpaceGroup():
                 # Nonsymmorphic trigonal groups, Wp=C3z- is found
                 # so it's convenient to start from vec=(0,1,0)
                 GRID = np.roll(GRID, -1, axis=0)
+            #elif self.number in [108]:
+            #    GRID = np.roll(GRID, -3, axis=0)
 
             # Solve S.v = 0 to determine secondary direction
             for vec in GRID:
+
+                log_message(f'vector from grid: {vec}\n', verbosity, 2)
 
                 # Find component perpendicular to dir1
                 if parallel(vec, dir1):
                     continue
                 dir2 = vec - (S @ vec) / n_prim
+                log_message(f'After removing projection into rot. ax.: {vec}\n',
+                            verbosity,
+                            2)
                 if self.laue_group != '2/m': # Obtain dir3 by rotating dir2
                     dir3 = Wp @ dir2
+                    log_message(f'Rotating to get 3rd direction',
+                                verbosity,
+                                2)
                     break
                 else:  # Obtain dir3 by solving again S.e=0
                     if not found:
                         dir2_tmp = dir2
                         found = True
+                        msg = ('2nd direction valid. Search for 3rd direction '
+                               'by trying next vector in the grid')
+                        log_message(msg, verbosity, 2)
                     elif not parallel(dir2, dir2_tmp):
                         dir3 = dir2.copy()
                         dir2 = dir2_tmp
+                        log_message('3rd direction valid', verbosity, 2)
                         break
+            msg = (f'Direction 1: {dir1.round(4)}\n'
+                   f'Direction 2: {dir2.round(4)}\n'
+                   f'Direction 3: {dir3.round(4)}\n')
+            log_message(msg, verbosity, 2)
 
         # Save directions in an array and make sure axes are right-handed
         if self.laue_group == '2/m':
@@ -1821,17 +1851,22 @@ class SpaceGroup():
             M_cart = np.array([self.to_cartesian(v) for v in M])
             det = np.linalg.det(M_cart)
             if det < 0:
+                msg = 'Frame has negative chirality. Switching dirs 1 and 3.'
+                log_message(msg, verbosity, 2)
                 M[0], M[2] = M[2], M[0]
         else:
             M = [dir2, dir3, dir1]
             M_cart = np.array([self.to_cartesian(v) for v in M])
             det = np.linalg.det(M_cart)
             if det < 0:
+                msg = 'Frame has negative chirality. Switching dirs 1 and 2.'
+                log_message(msg, verbosity, 2)
                 M[0], M[1] = M[1], M[0]
 
         # Make sure that all components are integers
         M = np.array(M)
         M_float = np.array(M.copy(), dtype=float)
+        log_message(f'Matrix M:\n{M}', verbosity, 2)
 
         for i in range(3):
             components = [Fraction(v).limit_denominator().denominator for v in M[i]]
@@ -1842,6 +1877,7 @@ class SpaceGroup():
             M_float[i] /= smallest_nonzero
 
         M = np.array(np.rint(M_float.T), dtype=int)
+        log_message(f'Matrix (M) after integerization:\n{M}', verbosity, 2)
 
         # Determine centering and fix it to the one in tables
         det = np.linalg.det(M)
@@ -1881,6 +1917,7 @@ class SpaceGroup():
         else:
             raise RuntimeError(msg)
 
+        log_message(f'Matrix M takes to {centering} centering', verbosity, 2)
 
         # Set centering to that in tables
         sg_svd = SpaceGroup_SVD(self.number, mode='parse')
@@ -1920,7 +1957,7 @@ class SpaceGroup():
                 M_fixcent = np.array([[1, 0, 0],
                                       [0, 1, 0],
                                       [1, 0, 1]])
-                print(msg)
+                log_message(msg, verbosity, 1)
             if centering == 'F' and sg_svd.centering == 'C':
                 raise RuntimeError('This case is strange. Aborting... Please, '
                                    'report to developers by opening an issue '
@@ -1932,15 +1969,13 @@ class SpaceGroup():
         elif self.laue_group in ['4/m', '4/mmm']:  # tetragonal, single fixing matrix
 
             if centering == 'C' and sg_svd.centering == 'P':
-                print('YES 1')
                 M_fixcent = np.array([[-1/2, 1/2, 0],
                                       [1/2, 1/2, 0],
                                       [0, 0, 1]])
 
             elif centering == 'F' and sg_svd.centering == 'I':
-                print('YES 2')
                 M_fixcent = np.array([[-1/2, 1/2, 0],
-                                      [1/2, 1/2, 0],
+                                      [-1/2, -1/2, 0],
                                       [0, 0, 1]])
 
             else:
@@ -1949,8 +1984,10 @@ class SpaceGroup():
         else:  # cubic, hexagonal, rhombohedral and triclinic
             M_fixcent = np.eye(3)
 
-
         M = M @ M_fixcent
+        msg = (f'Matrix to fix centering:\n{M_fixcent}\n'
+               f'Matrix (M) after fixing centering:\n{M}')
+        log_message(msg, verbosity, 2)
 
         # Try all permutations of vectors to fix the orientation of symmetry
         # elements w.r.t. to the conventional basis vectors (at this point, 
@@ -1995,11 +2032,17 @@ class SpaceGroup():
                                           [1, 0, 0],
                                           [0, 0, -1]]))
 
+        log_message('Trying permutations of axes', verbosity, 2)
         found = False
         for S in permutations: 
 
             # Take symmetries to the "standard" primitive cell
             P = M @ S @ TO_PRIMITIVE[sg_svd.centering]
+            msg = (f'Permutation (S):\n{S}'
+                   f'Matrix M after permutation: {M@S}'
+                   f'Transformation from primitive to primitive (P): {P}')
+            log_message(msg, verbosity, 2)
+
             rotations = []
             translations = []
             for sym in symmetries:
@@ -2007,6 +2050,7 @@ class SpaceGroup():
                 translations.append(sym.translation_refUC(P, np.zeros(3)) % 1.0)
 
             # Identify the generators by comparing to SVD matrices
+            log_message('Matching syms', verbosity, 2)
             inds_generators = []
             for isvd, W_svd in enumerate(sg_svd.rotations):
                 sym_matched = False
@@ -2026,6 +2070,7 @@ class SpaceGroup():
                         'share this error message and the =.in file with us'
                         .format(isvd)
                         )
+            log_message('All syms matched', verbosity, 2)
 
             # Construct matrix of differences in translations (Delta omega)
             diff_t = np.zeros(sg_svd.num_gens*3, dtype=float)
@@ -2045,10 +2090,16 @@ class SpaceGroup():
                 refUC = M @ S
                 shiftUC = - P @ p
                 found = True
+                log_message('Origin shift is valid', verbosity, 2)
                 break
 
         if not found:
             raise RuntimeError('No permutation found to match symmetry elements')
+
+        msg = (f'Found matrix M:\n{refUC}\n',
+               f'Found origin shift:{shiftUC}\n',
+               f'Used permutation matrix:\n{M}')
+        log_message(msg, verbosity, 2)
 
         return refUC, shiftUC
 
@@ -2429,6 +2480,8 @@ class SpaceGroup():
                         @ np.linalg.inv(self.refUC)
                         @ np.linalg.inv(Lattice.T)
                         )
+
+
         return kpoints_cart
 
 
