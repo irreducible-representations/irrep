@@ -340,7 +340,11 @@ class Irrep:
                 * np.array(line[2 + self.nsym : 2 + 2 * self.nsym], dtype=float)
             )
         self.characters = {k_point.isym[i]: ch[i] for i in range(self.nsym)}
-        log_message(f"## Irrep {self.name}\nCharacter:\n{self.characters}", v, 2)
+        log_message(f"## Irrep {self.name}", v, 2)
+        log_message("Character:", v, 2)
+        for i in self.characters:
+            log_message(f"sym {i}: {self.characters[i]}", v, 2)
+
         assert len(self.characters) == self.nsym
 
     def show(self):
@@ -656,8 +660,8 @@ class SpaceGroup_SVD:
             return 'A'
         elif self.number in (22,42,43,69,70,196,216,226,202,227,203,228,209,219,210,225):
             return 'F'
-        elif self.number in (46,71,121,72,82,87,97,107,122,23,73,88,98,24,44,74,79,109,
-                             119,139,45,80,110,120,140,141,206,211,142,197,217,199,214,229,220,230):
+        elif self.number in (46,71,121,72,82,87,97,107,122,23,73,88,98,108,24,44,74,79,109,
+                             119,139,45,80,110,120,140,141,206,211,142,197,217,199,204,214,229,220,230):
             return 'I'
         elif self.number in (146, 148, 155, 160, 161, 166, 167):
             return 'R'
