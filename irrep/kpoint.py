@@ -61,10 +61,7 @@ class Kpoint:
     upper : float
         Energy of the state `IBend`+1. Used to calculate the gap with upper 
         bands.
-    kwargs_kpoint : dict, default={}
-        Additional arguments to be passed to the method `__init__traces`.
     
-
     
     Attributes
     ----------
@@ -149,12 +146,6 @@ class Kpoint:
         upper=None,
         symmetries=None,
         refUC=np.eye(3),
-        shiftUC=np.zeros(3),
-        symmetries_tables=None,  # calculate_traces needs it
-        save_wf=True,
-        v=0,
-        magnetic=False,
-        kwargs_kpoint={},
         normalize=True,
         ):
 
@@ -189,14 +180,12 @@ class Kpoint:
             if np.allclose(dkpt, k_rotated - self.k):
                 self.little_group.append(symop)
         
-        self.__init__traces(**kwargs_kpoint)
 
-    def __init__traces(self, degen_thresh=1e-8, verbosity=0, calculate_traces=True, refUC=np.eye(3), shiftUC=np.zeros(3), 
+    def init_traces(self, degen_thresh=1e-8, verbosity=0, calculate_traces=True, refUC=np.eye(3), shiftUC=np.zeros(3), 
                        symmetries_tables=None, save_wf=True):
         """
         Continuation of __init__ method. Calculates traces of symmetry eigenvalues and irreps, when asked. 
         Separated because it is used in the `copy_sub` method.
-
 
         Parameters
         ----------
@@ -308,8 +297,9 @@ class Kpoint:
         other.Energy_raw = E[sortE]
         other.WF = WF[sortE]
         other.num_bands = len(E)
-        other.__init__traces(**kwargs_kpoint)
-        other.identify_irreps()	
+        if kwargs_kpoint is not None:
+            other.init_traces(**kwargs_kpoint)
+            other.identify_irreps()	
         return other
 
 
