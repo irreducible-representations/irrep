@@ -468,7 +468,8 @@ def cli(
         unk_formatted=unk_formatted,
         verbosity=verbosity,
         from_sym_file=from_sym_file,
-        include_TR=(magnetic_moments is not None)  # if magnetic, include TR 
+        include_TR=(magnetic_moments is not None) , # if magnetic, include TR 
+        irreps= True,  # always identify irreps when called from irrep code
     )
 
     bandstr.spacegroup.show()

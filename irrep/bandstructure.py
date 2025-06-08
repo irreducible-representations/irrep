@@ -26,7 +26,7 @@ from functools import cached_property
 
 from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
-from .spacegroup import SpaceGroupIrreps
+from .spacegroup import SpaceGroup, SpaceGroupIrreps
 from .gvectors import sortIG, calc_gvectors, symm_matrix
 from .utility import get_block_indices, grid_from_kpoints, log_message, UniqueListMod1
 
@@ -103,6 +103,8 @@ class BandStructure:
         if magmom is None and include_TR is True, the magnetic moments will be set to zero (non-magnetic calculation with TR)
     unk_formatted : bool
         If `True`, the input files are expected to be formatted text files. If False, the input files are expected to be binary files.
+    irreps : bool
+        If `True`, the irreducible representations of the wave functions will be identified.
 
     Attributes
     ----------
@@ -177,6 +179,7 @@ class BandStructure:
         magmom=None,
         include_TR=False,
         unk_formatted=False,
+        irreps = False
     ):
 
         code = code.lower()
@@ -193,10 +196,10 @@ class BandStructure:
                 )
             self.spinor = spinor
             parser = ParserVasp(fPOS, fWAV, onlysym)
-            self.Lattice, positions, typat = parser.parse_poscar(verbosity)
+            Lattice, positions, typat = parser.parse_poscar(verbosity)
             if not onlysym:
-                NK, NBin, self.Ecut0, lattice = parser.parse_header()
-                if not np.allclose(self.Lattice, lattice):
+                NK, NBin, self.Ecut0, lattice_wavecar = parser.parse_header()
+                if not np.allclose(Lattice, lattice_wavecar):
                     raise RuntimeError("POSCAR and WAVECAR contain different lattices")
                 EF_in = None  # not written in WAVECAR
 
@@ -205,7 +208,7 @@ class BandStructure:
             parser = ParserAbinit(fWFK)
             (nband,
              NK,
-             self.Lattice,
+             Lattice,
              self.Ecut0,
              self.spinor,
              typat,
@@ -218,7 +221,7 @@ class BandStructure:
             parser = ParserEspresso(prefix)
             self.spinor = parser.spinor
             # alat is saved to be used to write the prefix.sym file
-            self.Lattice, positions, typat, _alat = parser.parse_lattice()
+            Lattice, positions, typat, _alat = parser.parse_lattice()
             if alat is None:
                 alat = _alat
             spinpol, self.Ecut0, EF_in, NK, NBin_list = parser.parse_header()
@@ -247,14 +250,14 @@ class BandStructure:
             self.Ecut0 = Ecut
             parser = ParserW90(prefix, unk_formatted=unk_formatted)
             NK, NBin, self.spinor, EF_in = parser.parse_header()
-            self.Lattice, positions, typat, kpred = parser.parse_lattice()
+            Lattice, positions, typat, kpred = parser.parse_lattice()
             Energies = parser.parse_energies()
         elif code == "gpaw":
             parser = ParserGPAW(calculator=calculator_gpaw,
                                 spinor=False if spinor is None else spinor)
             (NBin,
              kpred,
-             self.Lattice,
+             Lattice,
              self.spinor,
              typat,
              positions,
@@ -266,9 +269,10 @@ class BandStructure:
         else:
             raise RuntimeError(f"Unknown/unsupported code :{code}")
 
-        cell = (self.Lattice, positions, typat)
+        cell = (Lattice, positions, typat)
 
-        self.spacegroup = SpaceGroupIrreps(
+        if irreps:
+            self.spacegroup = SpaceGroupIrreps(
                               cell=cell,
                               spinor=self.spinor,
                               refUC=refUC,
@@ -281,6 +285,16 @@ class BandStructure:
                               magmom=magmom,
                               include_TR=include_TR,
                               )
+        else:
+            self.spacegroup = SpaceGroup(
+                              cell=cell,
+                              spinor=self.spinor,
+                              alat=alat,
+                              from_sym_file=from_sym_file,
+                              magmom=magmom,
+                              include_TR=include_TR
+                              )
+
         self.magnetic = self.spacegroup.magnetic
 
         if onlysym:
@@ -320,11 +334,6 @@ class BandStructure:
         else:
             self.Ecut = Ecut
 
-        # Calculate vectors of reciprocal lattice
-        self.RecLattice = np.zeros((3,3), dtype=float)
-        for i in range(3):
-            self.RecLattice[i] = np.cross(self.Lattice[(i + 1) % 3], self.Lattice[(i + 2) % 3])
-        self.RecLattice *= (2.0*np.pi/np.linalg.det(self.Lattice))
 
         # To do: create writer of description for this class
         msg = ("WAVECAR contains {} k-points and {} bands.\n"
@@ -411,37 +420,50 @@ class BandStructure:
             WF = WF[IBstart:IBend]
             Energy = Energy[IBstart:IBend] - self.efermi
 
-            # saved to further use in Separate()
-            self.kwargs_kpoint=dict(
-                degen_thresh=degen_thresh,
-                refUC=self.spacegroup.refUC,
-                shiftUC=self.spacegroup.shiftUC,
-                symmetries_tables=self.spacegroup.u_symmetries_tables,
-                save_wf=save_wf,
-                verbosity=verbosity,
-                calculate_traces=calculate_traces,
-                )
-
+            
             kp = Kpoint(
-                ik=ik,
-                kpt=kpt,
-                WF=WF,
-                Energy=Energy,
-                ig=kg,
-                upper=upper,
-                num_bands=NBout,
-                RecLattice=self.RecLattice,
-                symmetries_SG=self.spacegroup.u_symmetries,
-                spinor=self.spinor,
-                kwargs_kpoint=self.kwargs_kpoint,
-                normalize=normalize,
-                )
+                    ik=ik,
+                    kpt=kpt,
+                    WF=WF,
+                    Energy=Energy,
+                    ig=kg,
+                    upper=upper,
+                    num_bands=NBout,
+                    RecLattice=self.RecLattice,
+                    symmetries_SG=self.spacegroup.u_symmetries,
+                    spinor=self.spinor,
+                    normalize=normalize,
+                    )
+            
+            if irreps:
+                # saved to further use in Separate()
+                self.kwargs_kpoint=dict(
+                    degen_thresh=degen_thresh,
+                    refUC=self.spacegroup.refUC,
+                    shiftUC=self.spacegroup.shiftUC,
+                    symmetries_tables=self.spacegroup.u_symmetries_tables,
+                    save_wf=save_wf,
+                    verbosity=verbosity,
+                    calculate_traces=calculate_traces,
+                    )
+                kp.init_traces(**self.kwargs_kpoint)
+            else:
+                self.kwargs_kpoint = None
             self.kpoints.append(kp)
         del WF
 
+
     @property 
     def lattice(self):
-        return self.Lattice
+        return self.spacegroup.real_lattice
+    
+    @property
+    def Lattice(self):
+        return self.spacegroup.real_lattice
+    
+    @property 
+    def RecLattice(self):
+        return self.spacegroup.reciprocal_lattice
 
     @property
     def num_k(self):

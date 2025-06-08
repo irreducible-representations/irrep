@@ -98,7 +98,7 @@ class SymmetryOperation():
         self.ind = ind
         self.rotation = rot
         self.time_reversal = bool(time_reversal)
-        self.Lattice = Lattice
+        self.real_lattice = Lattice
         self.translation_mod1 = translation_mod1
         self.translation = self.get_transl_mod1(trans)
         self.axis, self.angle, self.inversion = self._get_operation_type()
@@ -117,7 +117,15 @@ class SymmetryOperation():
 
     @property
     def lattice(self):
-        return self.Lattice
+        return self.real_lattice
+    
+    @property
+    def Lattice(self):
+        """
+        Lattice vectors in the DFT cell setting. For backward compatibility.
+        """
+        return self.real_lattice
+
 
     def get_transl_mod1(self, t):
         """
@@ -503,8 +511,8 @@ class SymmetryOperation():
             1 line : cartesian translation in units of alat
         """
 
-        Rcart  = self.Lattice.T.dot(self.rotation).dot(np.linalg.inv(self.Lattice).T)
-        t =  - self.translation @ self.Lattice/alat/BOHR   
+        Rcart  = self.real_lattice.T.dot(self.rotation).dot(np.linalg.inv(self.real_lattice).T)
+        t =  - self.translation @ self.real_lattice/alat/BOHR   
 
         arr = np.vstack((Rcart, [t]))
         return "\n"+"".join("   ".join(f"{x:20.15f}" for x in r) + "\n" for r in arr  )
@@ -561,20 +569,20 @@ class SymmetryOperation():
         """
         Calculate the rotation matrix in cartesian coordinates.
         """
-        return self.Lattice.T @ self.rotation @ self.lattice_inv.T
+        return self.real_lattice.T @ self.rotation @ self.lattice_inv.T
     
     @cached_property
     def translation_cart(self):
-        return self.Lattice.T @ self.translation @ self.lattice_inv.T
+        return self.real_lattice.T @ self.translation @ self.lattice_inv.T
     
     @cached_property
     def lattice_inv(self):
-        return np.linalg.inv(self.Lattice)
+        return np.linalg.inv(self.real_lattice)
     
     @cached_property
     def reciprocal_lattice(self):
         return self.lattice_inv.T
-    
+        
     @cached_property
     def det_cart(self):
         return np.linalg.det(self.rotation_cart)
@@ -619,7 +627,7 @@ class SpaceGroupBare():
     def __init__(self, Lattice, spinor, rotations, translations, time_reversals, number=0, name="",
                  spinor_rotations=None):
             
-            self.Lattice = Lattice
+            self.real_lattice = Lattice
             self.spinor = spinor
             self.name = name
             self.number_str = str(number)
@@ -634,7 +642,7 @@ class SpaceGroupBare():
                 self.symmetries.append(SymmetryOperation(rot=rot,
                                                          trans=trans,
                                                          ind=i+1,
-                                                         Lattice=self.Lattice,
+                                                         Lattice=self.real_lattice,
                                                          time_reversal=tr,
                                                          spinor=self.spinor,
                                                          translation_mod1=False,
@@ -646,7 +654,7 @@ class SpaceGroupBare():
         return dictionary with info essential about the spacegroup
         """
         return dict(
-                 Lattice=self.Lattice, 
+                 Lattice=self.real_lattice, 
                  spinor=self.spinor,
                  rotations=[s.rotation for s in self.symmetries],
                  translations=[s.translation for s in self.symmetries],
@@ -683,7 +691,7 @@ class SpaceGroupBare():
         print('Cell vectors in angstroms:\n')
         print('{:^32}'.format('Vectors of DFT cell'))
         for i in range(3):
-            vec1 = self.Lattice[i]
+            vec1 = self.real_lattice[i]
             s = 'a{:1d} = {:7.4f}  {:7.4f}  {:7.4f}  '.format(i, vec1[0], vec1[1], vec1[2])
             print(s)
         print()
@@ -700,11 +708,20 @@ class SpaceGroupBare():
 
     @property
     def lattice(self):
-        return self.Lattice
+        return self.real_lattice
+    
+    @property
+    def Lattice(self):
+        return self.real_lattice
+    
     
     @cached_property
     def lattice_inv(self):
         return np.linalg.inv(self.lattice)
+    
+    @cached_property
+    def reciprocal_lattice(self):
+        return self.lattice_inv.T*(2*np.pi)
 
 
 class SpaceGroup(SpaceGroupBare):
@@ -813,7 +830,7 @@ class SpaceGroup(SpaceGroupBare):
             ):
 
         self.spinor = spinor
-        self.Lattice = np.array(cell[0])
+        self.real_lattice = np.array(cell[0])
         self.positions = np.array(cell[1])
         self.typat = cell[2]
         self.alat=alat
@@ -870,7 +887,7 @@ class SpaceGroup(SpaceGroupBare):
             rot_cart, trans_cart = read_sym_file(from_sym_file)
             rotations, translations = cart_to_crystal(rot_cart,
                                                       trans_cart,
-                                                      self.Lattice,
+                                                      self.real_lattice,
                                                       alat)
             translation_mod_1 = False
         else:
@@ -883,7 +900,7 @@ class SpaceGroup(SpaceGroupBare):
                 self.symmetries.append(SymmetryOperation(
                                                     rotations[isym],
                                                     translations[isym],
-                                                    self.Lattice,
+                                                    self.real_lattice,
                                                     ind=isym+1,
                                                     spinor=self.spinor,
                                                     translation_mod1=translation_mod_1,
@@ -1038,12 +1055,11 @@ class SpaceGroupIrreps(SpaceGroup):
         print('')
 
         # Print cell vectors in DFT and reference cells
-        vecs_refUC = np.dot(self.Lattice, self.refUC).T
-        #vecs_refUC = np.dot(self.refUC, self.Lattice)
+        vecs_refUC = np.dot(self.real_lattice, self.refUC).T
         print('Cell vectors in angstroms:\n')
         print('{:^32}|{:^32}'.format('Vectors of DFT cell', 'Vectors of REF. cell'))
         for i in range(3):
-            vec1 = self.Lattice[i]
+            vec1 = self.real_lattice[i]
             vec2 = vecs_refUC[i]
             s = 'a{:1d} = {:7.4f}  {:7.4f}  {:7.4f}  '.format(i, vec1[0], vec1[1], vec1[2])
             s += '|  '
