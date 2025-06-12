@@ -539,7 +539,7 @@ class SymmetryOperation():
         # Print translation part
         trastr = ("\ntranslation         :  [ " 
                   + " ".join("{0:8.4f}"
-                             .format(x) for x in self.get_transl_mod1(self.translation.round(6))
+                             .format(x) for x in self.translation.round(6)
                              ) 
                   + " ] "
                   )
@@ -549,7 +549,7 @@ class SymmetryOperation():
             _t=self.translation_refUC(refUC,shiftUC)
             trastr = ("translation (refUC) :  [ " 
                       + " ".join("{0:8.4f}"
-                                 .format(x) for x in self.get_transl_mod1(_t.round(6))
+                                 .format(x) for x in _t.round(6)
                                  )
                   + " ] "
                   )
