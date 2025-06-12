@@ -913,11 +913,12 @@ class SpaceGroup():
             self.symmetries = []
             self.inds_fplo = []  # indices of syms with d=False in FPLO
 
+            log_message('Identifying syms from SU2 matrices\n', verbosity, 2)
+
             for isym in range(self.order):
                 
-                angle, axis, d = self.identify_from_spinrep(spin_repr[isym])
-                #print(f'isym: {isym}, axis: {axis}, angle: {angle/np.pi}, d: {d}')
-                #print(spin_repr[isym].round(4))
+                log_message(f'\n## Sym {isym}  ##\n', verbosity, 2)
+                angle, axis, d = self.identify_from_spinrep(spin_repr[isym], verbosity)
                 if d:
                     continue
                 self.symmetries.append(SymmetryOperation(angle=angle,
@@ -930,13 +931,20 @@ class SpaceGroup():
 
             self.inds_fplo = np.array(self.inds_fplo)
             self.order = int(self.order/2)  # only d=False symmetries
+            log_message(f'FPLO indices of d=False symmetries kept: {self.inds_fplo}',
+                        verbosity, 
+                        2)
 
-            self.refUC, self.shiftUC = self.conv_from_prim(verbosity=verbosity)
+            if search_cell:
+                self.refUC, self.shiftUC = self.conv_from_prim(verbosity=verbosity)
+            else:
+                self.refUC = np.eye(3)
+                self.shiftUC = np.zeros(3)
             #self.refUC = np.array([[0,1,1], [1,0,1], [1,1,0]])
             #self.shiftUC = np.array([0,1/2,1/8], float)
 
             # Load symmetries from tables
-            irreptable = IrrepTable(sg, self.spinor, v=verbosity)
+            irreptable = IrrepTable(sg, self.spinor, v=0)
             self.symmetries_tables = irreptable.symmetries
             self.name = irreptable.name
 
@@ -1012,6 +1020,18 @@ class SpaceGroup():
                     self.symmetries = self.symmetries[i+1:]
                     self.inds_fplo = self.inds_fplo[args]
 
+                    if verbosity > 1:
+                        log_message('\nCorrespondence between indices of symmetries',
+                                    verbosity,
+                                    2)
+                        log_message(('\nIndex in +groupinfo | Index in tables\n'
+                                     '-------------------------------------'),
+                                     verbosity,
+                                     2)
+                        for i,j in enumerate(self.inds_fplo):
+                            msg = '{:^20d}|{:^16d}'.format(i,j)
+                            log_message(msg, verbosity, 2)
+
                 except RuntimeError:
                     if search_cell:  # symmetries must match to identify irreps
                         raise RuntimeError((
@@ -1054,7 +1074,7 @@ class SpaceGroup():
                 return
 
             # Determine refUC and shiftUC according to entries in CLI
-            self.symmetries_tables = IrrepTable(self.number, self.spinor, v=verbosity).symmetries
+            self.symmetries_tables = IrrepTable(self.number, self.spinor, v=0).symmetries
             self.refUC, self.shiftUC = self.determine_basis_transf(
                                                 refUC_cli=refUC, 
                                                 shiftUC_cli=shiftUC,
@@ -1242,7 +1262,9 @@ class SpaceGroup():
         '''
 
         # Identify angle
+        log_message(f'SU2 matrix parsed:\n{S.round(4)}', verbosity, 2)
         c = 0.5 * np.trace(S)
+        log_message(f'c: {c}', verbosity, 2)
         if np.abs(c) < 1e-2:  # C2
             angle = np.pi
         elif c < -1e-2:  # +2pi operation
@@ -1253,20 +1275,28 @@ class SpaceGroup():
         else:  # E, C3, C4 or C6
             d = False
             angle = 2.0 * np.arccos(c)
+        log_message(f'angle: {angle/np.pi}Pi', verbosity, 2)
+        log_message(f'S:\n{S.round(4)}', verbosity, 2)
 
         # Identify axis and reverse it if the reverse angle was found
         axis = 0.5j * np.einsum('jk,ikj->i', S, pauli_sigma)
         if np.abs(angle) > 1e-2:  # axis is zero for E
             axis /= np.linalg.norm(axis)
+        log_message(f'axis: {axis}', verbosity, 2)
         is_inverse_in = np.any(np.all(np.isclose(self.axes, -axis), axis=1))
+        log_message(f'inverse found before: {is_inverse_in}', verbosity, 2)
         if is_inverse_in:
             axis *= -1
+            log_message('Reversing axis', verbosity, 2)
             if np.abs(angle - np.pi) < 1e-2:  # pi + 2pi operation
                 d = True
+                log_message('2-fold, setting d=True', verbosity, 2)
             else:
                 angle *= -1
+                log_message('Reversing angle', verbosity, 2)
         elif np.abs(angle - np.pi) < 1e-2:
             d = False
+            log_message('2-fold, setting d=False', verbosity, 2)
 
         # Check angle and axis are real
         if np.abs(np.imag(angle)) > 1e-3:
@@ -1282,6 +1312,8 @@ class SpaceGroup():
 
         angle = angle.real
         axis = axis.real
+
+        log_message(f'angle: {angle},  axis:{axis}, d:{d}', verbosity, 2)
 
         return angle, axis, d
 
@@ -2038,9 +2070,9 @@ class SpaceGroup():
 
             # Take symmetries to the "standard" primitive cell
             P = M @ S @ TO_PRIMITIVE[sg_svd.centering]
-            msg = (f'Permutation (S):\n{S}'
-                   f'Matrix M after permutation: {M@S}'
-                   f'Transformation from primitive to primitive (P): {P}')
+            msg = (f'Permutation (S):\n{S}\n'
+                   f'Matrix M after permutation:\n{M@S}\n'
+                   f'Transformation within primitive cell (P):\n{P}')
             log_message(msg, verbosity, 2)
 
             rotations = []
@@ -2054,9 +2086,11 @@ class SpaceGroup():
             inds_generators = []
             for isvd, W_svd in enumerate(sg_svd.rotations):
                 sym_matched = False
+                log_message(f'Matching sym #{isvd}:\n{W_svd}', verbosity, 2)
 
                 for i, W_dft in enumerate(rotations):
 
+                    log_message(f'Sym parsed:\n{W_dft}', verbosity, 2)
                     if np.allclose(W_dft, W_svd):
                         inds_generators.append(i)
                         sym_matched = True

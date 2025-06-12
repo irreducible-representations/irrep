@@ -149,6 +149,45 @@ class SymopTable:
         else:
             self.S = np.eye(2)
 
+    def show(self):
+        '''Print info about the symmetry'''
+        # Work in progress. To do: unify the classes SymmetryOperation in 
+        # spacegroup.py and SymopTable and remove all this class here and 
+        # this method
+
+        # Print rotation part
+        rotstr = [s +
+                  " ".join("{0:3d}".format(x) for x in row) +
+                  t for s, row, t in zip(["rotation : |", " " *
+                                          11 +
+                                          "|", " " *
+                                          11 +
+                                          "|"], self.R, [" |", " |", " |"])]
+
+        print("\n".join(rotstr))
+
+        # Print spinor transformation matrix
+        spinstr = [s +
+                   " ".join("{0:6.3f}{1:+6.3f}j".format(x.real, x.imag) for x in row) +
+                   t 
+                   for s, row, t in zip(["\nspinor rot.         : |",
+                                         " " * 22 + "|",
+                                         ], 
+                                         self.S, 
+                                         [" |", " |"]
+                                       )
+                   ]
+        print("\n".join(spinstr))
+
+        # Print translation part
+        trastr = ("\ntranslation         :  [ " 
+                  + " ".join("{0:8.4f}"
+                             .format(x) for x in self.t.round(6)
+                             ) 
+                  + " ] "
+                  )
+        print(trastr)
+
     def str(self, spinor=True):
         """
         Create a `str` describing the symmetry operation as implemented in the 
@@ -264,7 +303,7 @@ class KPoint:
         str
             Line showing the values of all attributes.
         """
-        return "{0} : {1}  symmetries : {2}".format(self.name, self.k, self.isym)
+        print("{0} : {1}  symmetries : {2}".format(self.name, self.k, self.isym))
 
     def str(self):
         '''
@@ -340,18 +379,28 @@ class Irrep:
                 * np.array(line[2 + self.nsym : 2 + 2 * self.nsym], dtype=float)
             )
         self.characters = {k_point.isym[i]: ch[i] for i in range(self.nsym)}
-        log_message(f"## Irrep {self.name}", v, 2)
-        log_message("Character:", v, 2)
-        for i in self.characters:
-            log_message(f"sym {i}: {self.characters[i]}", v, 2)
 
         assert len(self.characters) == self.nsym
+
+    def print_header(self):
+        print(f"\n## Irrep {self.name}\n")
+        print(f'dimension: {self.dim}')
+        print(f'type: {self.reality}')
+
+    def print_characters(self):
+        print('Character:')
+        for i in self.characters:
+            print(f"sym {i}: {np.round(self.characters[i], 4)}")
 
     def show(self):
         """
         Print label of the k-point and info about the irrep.
         """
-        print(self.kpname, self.name, self.dim, self.reality)
+        self.print_header()
+        self.print_character()
+
+    def print_table_row(self):
+        pass
 
     def str(self):
         """
@@ -406,8 +455,6 @@ class IrrepTable:
     symmetries : list
         Each component is an instance of class `SymopTable` corresponding to a 
         symmetry operation in the "point-group" of the space-group.
-    NK : int
-        Number of maximal k-points in the Brillouin zone.
     irreps : list
         Each component is an instance of class `IrRep` corresponding to an 
         irrep of the little group of a maximal k-point.
@@ -430,9 +477,9 @@ class IrrepTable:
             msg = f"Reading a user-defined irrep table <{name}>"
             log_message(msg, v, 2)
 
-        log_message("\n---------- DATA FROM THE TABLE ----------\n", v, 2)
         lines = open(name).readlines()[-1::-1]
         while len(lines) > 0:
+            log_message("Reading header of table", v, 2)
             l = lines.pop().strip().split("=")
             # logger.debug(l,l[0].lower())
             if l[0].lower() == "SG":
@@ -456,9 +503,6 @@ class IrrepTable:
                         pass
                 break
 
-        msg = "Symmetries are:\n" + "\n".join(s.str() for s in self.symmetries)
-        log_message(msg, v, 2)
-
         self.irreps = []
         self.kpoints = []
         while len(lines) > 0:
@@ -480,14 +524,59 @@ class IrrepTable:
                     else:
                         pass
 
+        if v >= 2:
+            self.show()
+            self.check_orthogonality_irreps()
+
+    def check_orthogonality_irreps(self):
+        '''
+        Checks orthogonality between irreps. Useful for debugging.
+        '''
+        # To do: convert it into a method of Kpoint
+
+        print('\nChecking orthogonality between irreps')
+        for k in self.kpoints:
+            kname = k.name
+            print(f'\n## k-point: {kname}\n')
+            for i, irrep1 in enumerate(self.irreps):
+                if irrep1.kpname != kname:
+                    continue
+                ch1 = np.array(list(irrep1.characters.values()))
+                for j,irrep2 in enumerate(self.irreps[i:]):
+                    if irrep2.kpname != kname:
+                        continue
+                    ch2 = np.array(list(irrep2.characters.values()))
+                    prod = np.conj(ch1) @ ch2 / len(self.symmetries)
+                    print(f'{irrep1.name} x {irrep2.name} = {prod}')
+
     def show(self):
         '''
-        Print info about symmetry operations and irreps.  
+        Print info about table of irrep
         '''
-        for i, s in enumerate(self.symmetries):
-            print(i + 1, "\n", s.R, "\n", s.t, "\n", s.S, "\n\n")
+        
+        print('------ Table of irreps ------\n')
+        print(f'Space group: {self.name} (# {self.number})')
+        x = 'Double-valued' if self.spinor else 'Single-valued'
+        print(f'{x} irreps parsed')
+        print(f'Number of symmetries (mod. lattice translations): {self.nsym}\n')
+        for i,sym in enumerate(self.symmetries):
+            print(f'\n\n## Sym (table): {i+1}\n')
+            sym.show()
+        print(f'\nNumber of maximal k-points read: {len(self.kpoints)}\n')
+        for k in self.kpoints:
+            k.show()
+        print(f'\nNumber of irreps: {len(self.irreps)}\n')
         for irr in self.irreps:
-            irr.show()
+            irr.print_header()
+            irr.print_characters()
+
+    def print_characters(self):
+        '''
+        Print table of characters of irreps
+        '''
+        pass
+        # Work in progress. Convenient to group irreps by k point and create a 
+        # table for each k point
 
 
 class SpaceGroup_SVD:

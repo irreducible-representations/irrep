@@ -324,6 +324,12 @@ do not hesitate to contact the author:
                  type=int,
                     help="SG number (temporary)"
 )
+@click.option(
+    "-print_irreptable",
+    flag_value=True,
+    default=False,
+    help="Print table of irreps and exit",
+)
 def cli(
     ecut,
     fwav,
@@ -362,7 +368,8 @@ def cli(
     json_file,
     kfplo,
     print_kpnames,
-    sg
+    sg,
+    print_irreptable
 ):
     """
     Defines the "irrep" command-line tool interface.
@@ -370,11 +377,12 @@ def cli(
     # TODO: later, this can be split up into separate sub-commands (e.g. for zak, etc.)
 
     if kfplo:
+        searchcell = True
         code = 'fplo'
 
     # tmp, remove at some point
-    if code.lower() != 'fplo' and not print_kpnames:
-        sg = None
+    #if code.lower() != 'fplo' and not print_kpnames:
+    #    sg = None
 
     # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
     if refuc:
@@ -403,7 +411,7 @@ def cli(
     else:
         save_wf = False
 
-    if onlysym or kfplo:
+    if onlysym or kfplo or print_irreptable:
         stop = True
     else:
         stop = False
@@ -416,6 +424,11 @@ def cli(
 
         irreptable = IrrepTable(sg, spinor=False)
         print(','.join([k.name for k in irreptable.kpoints]))
+        exit()
+
+    if print_irreptable and sg is not None:
+        irreptable = IrrepTable(sg, spinor=False, v=verbosity)
+        irreptable.show()
         exit()
 
     bandstr = BandStructure(
@@ -456,6 +469,11 @@ def cli(
         for k in kpoints_cart.round(10):
             f.write(" ".join([f'{x:14.10f}' for x in k]) + '\n')
         f.close()
+        exit()
+
+    if print_irreptable:
+        irreptable = IrrepTable(bandstr.spacegroup.number, spinor=False, v=0)
+        irreptable.show()
         exit()
 
     if code.lower() == 'fplo':
