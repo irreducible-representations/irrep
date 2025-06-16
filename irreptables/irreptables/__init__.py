@@ -188,7 +188,7 @@ class KPoint:
         str
             Line showing the values of all attributes.
         """
-        return "{0} : {1}  symmetries : {2}".format(self.name, self.k, self.isym)
+        return f"{self.name} : {self.k}  symmetries : {self.isym}"
 
     def str(self):
         '''
@@ -200,10 +200,10 @@ class KPoint:
             Line that, when parsed, would lead to an instance of class `KPoint` 
             with identical values of attributes.
         '''
-        return "{0} : {1}  : {2}".format(
-            self.name,
-            " ".join(str(x) for x in self.k),
-            " ".join(str(x) for x in sorted(self.isym)),
+        return "{name} : {k}  : {isym}".format(
+            name=self.name,
+            k=" ".join(str(x) for x in self.k),
+            isym=" ".join(str(x) for x in sorted(self.isym)),
         )
 
 
@@ -248,7 +248,7 @@ class Irrep:
     """
 
     def __init__(self, line, k_point, v=0):
-        logger.debug("reading irrep line <{0}> for KP=<{1}> ".format(line, k_point.str()))
+        logger.debug(f"reading irrep line <{line}> for KP=<{k_point.str()}>")
         self.k = k_point.k
         self.kpname = k_point.name
         line = line.split()
@@ -291,7 +291,7 @@ class Irrep:
             str_ch += "   " + "  ".join(str_(x) for x in np.angle(ch) / np.pi)
         else:
             str_ch = "   " + "  ".join(str_(x) for x in np.real(ch))
-        return self.name + " {} ".format(self.dim) + str_ch
+        return f"{self.name} {self.dim} {str_ch}"
 
 
 class IrrepTable:
@@ -399,10 +399,7 @@ class IrrepTable:
                     self.irreps.append(Irrep(line=l, k_point=kp, v=v))
                 except Exception as err:
                     if len(l.split()) > 0:
-                        msg = ("WARNING: could not parse k-point nor irrep from the "
-                               "following line <\n{}>"
-                               .format(l))
-                        log_message(msg, v, 2)
+                        log_message(f"WARNING: could not parse k-point nor irrep from the following line <\n{l}>", v, 2)
                     else:
                         pass
 

@@ -57,10 +57,8 @@ class WAVECARFILE:
         if iprec != 45200:
             raise RuntimeError("double precision WAVECAR is not supported")
         if ispin != 1:
-            raise RuntimeError(
-                "WAVECAR contains spin-polarized non-spinor wavefunctions. "
-                + "ISPIN={0}  this is not supported yet".format(ispin)
-            )
+            raise RuntimeError("WAVECAR contains spin-polarized non-spinor wavefunctions."
+                               f"ISPIN={ispin}  this is not supported yet")
 
     def record(self, irec, cnt=np.inf, dtype=float):
         """An auxilary function to get records from WAVECAR"""
@@ -171,14 +169,11 @@ class ParserAbinit():
         headform, fform = record[0][1]
         defversion = ['8.6.3', '9.6.2', '8.4.4', '8.10.3']
         if codsvn not in defversion:
-            msg = ("WARNING, the version {0} of abinit is not in {1} "
-                   "and may not be fully tested"
-                   .format(codsvn, defversion))
+            msg = (f"WARNING, the version {codsvn} of abinit is not in {defversion} "
+                   "and may not be fully tested")
             log_message(msg, verbosity, 1)
         if headform < 80:
-            raise ValueError(
-                "Head form {0}<80 is not supported".format(headform)
-                )
+            raise ValueError(f"Head form {headform}<80 is not supported")
 
         # 2nd record
             # write(unit=header) bantot,date,intxc,ixc,natom,ngfft(1:3), nkpt,&
@@ -204,9 +199,7 @@ class ParserAbinit():
 
         # Check spin-polarization and if wave functions are spinors
         if nsppol != 1:
-            raise RuntimeError(
-                "Only nsppol=1 is supported. found {0}".format(nsppol)
-                )
+            raise RuntimeError(f"Only nsppol=1 is supported. found {nsppol}")
         if occopt == 9:  # extra records since Abinit v9
             raise RuntimeError("occopt=9 is not supported.")
         if nspinor == 2:
@@ -214,9 +207,7 @@ class ParserAbinit():
         elif nspinor == 1:
             spinor = False
         else:
-            raise RuntimeError(
-                "Unexpected value nspinor = {0}".format(nspinor)
-                )
+            raise RuntimeError(f"Unexpected value nspinor = {nspinor}")
 
         # 3rd record
             # write(unit=header) istwfk(1:nkpt),nband(1:nkpt*nsppol),&
@@ -224,18 +215,11 @@ class ParserAbinit():
             # & symrel(1:3,1:3,1:nsym),typat(1:natom), kpt(1:3,1:nkpt), &
             # & occ(1:bantot),tnons(1:3,1:nsym),znucltypat(1:ntypat), &
             # & wtk(1:nkpt)
-        fmt = ('{nkpt}i4,{n2}i4,{nkpt}i4,{npsp}i4,{nsym}i4,({nsym},3,3)i4,'
-               '{natom}i4,({nkpt},3)f8,{bandtot}f8,({nsym},3)f8,{ntypat}f8,'
-               '{nkpt}f8'
-               .format(
-                    nkpt=nkpt,
-                    n2=nkpt * nsppol,
-                    npsp=npsp,
-                    nsym=nsym,
-                    natom=natom,
-                    bandtot=bandtot,
-                    ntypat=ntypat)
-               )
+        fmt = (
+            f"{nkpt}i4,{nkpt * nsppol}i4,{nkpt}i4,{npsp}i4,{nsym}i4,"
+            f"({nsym},3,3)i4,{natom}i4,({nkpt},3)f8,{bandtot}f8,"
+            f"({nsym},3)f8,{ntypat}f8,{nkpt}f8"
+        )
         record = record_abinit(self.fWFK, fmt)[0]
         typat = record[6]
         kpt = record[7]
@@ -253,20 +237,13 @@ class ParserAbinit():
 
         # Check that istwfk was 1 and consistency of number of bands
         if istwfk != {1}:
-            raise ValueError(("istwfk should be 1 for all kpoints. Found {0}"
-                              .format(istwfk))
-                             )
+            raise ValueError(f"istwfk should be 1 for all kpoints. Found {istwfk}")
         assert np.sum(nband) == bandtot, "Probably a bug in Abinit"
 
         # 4th record
             # write(unit,err=10, iomsg=errmsg) hdr%residm, hdr%xred(:,:), &
             # & hdr%etot, hdr%fermie, hdr%amu(:)
-        record = record_abinit(
-                    self.fWFK,
-                    'f8,({natom},3)f8,f8,f8,{ntypat}f8'.format(natom=natom,
-                                                               ntypat=ntypat
-                                                               )
-                    )[0]
+        record = record_abinit(self.fWFK, f"f8,({natom},3)f8,f8,f8,{ntypat}f8")[0]
         xred = record[1]
         efermi = record[3] * Hartree_eV
 
@@ -276,11 +253,8 @@ class ParserAbinit():
             # & hdr%icoulomb, hdr%kptrlatt,hdr%kptrlatt_orig, &
             # & hdr%shiftk_orig(:,1:hdr%nshiftk_orig), &
             # & hdr%shiftk(:,1:hdr%nshiftk)
-        fmt = ('i4,i4,f8,f8,i4,(3,3)i4,(3,3)i4,({nshiftkorig},3)f8,'
-               '({nshiftk},3)f8'
-               .format(nshiftkorig=nshiftk_orig, nshiftk=nshiftk)
-               )
-        record = record_abinit(self.fWFK,fmt)[0]
+        fmt =f"i4,i4,f8,f8,i4,(3,3)i4,(3,3)i4,({nshiftk_orig},3)f8,({nshiftk},3)f8"
+        record = record_abinit(self.fWFK, fmt)[0]
 
         # 6th record: skip it
             # read(unit, err=10, iomsg=errmsg) hdr%title(ipsp), &
@@ -452,9 +426,7 @@ class ParserVasp:
                 log_message(err, msg, 1)
                 pass
         if sum(nat) != i:
-            raise RuntimeError(
-                "not all atomic positions were read : {0} of {1}".format(
-                    i, sum(nat)))
+            raise RuntimeError(f"not all atomic positions were read : {i} of {sum(nat)}")
         if cartesian:
             positions = positions.dot(np.linalg.inv(lattice))
         return lattice, positions, typat
@@ -511,8 +483,7 @@ class ParserVasp:
         # Check if number of plane waves is even for spinors
         npw = int(r[0])
         if spinor and npw % 2 != 0:
-            raise RuntimeError("odd number of coefs {0} for spinor "
-                               "wavefunctions".format(npw))
+            raise RuntimeError(f"odd number of coefs {npw} for spinor wavefunctions")
         kpt = r[1:4]
         Energy = np.array(r[4 : 4 + NBin * 3]).reshape(NBin, 3)[:, 0]
         WF = np.zeros((NBin, npw), dtype=np.complex64)
@@ -588,8 +559,7 @@ class ParserEspresso:
             NBin_dw=int(self.bandstr.find('nbnd_dw').text)
             NBin_up=int(self.bandstr.find('nbnd_up').text)
             spinpol=True
-            print("spin-polarised bandstructure composed of {} up and {} dw "
-                  "states".format(NBin_up,NBin_dw))
+            print(f"spin-polarised bandstructure composed of {NBin_up} up and {NBin_dw} dw states")
             NBin_dw+NBin_up
         except AttributeError:
             spinpol=False
@@ -633,7 +603,7 @@ class ParserEspresso:
         # Parse lattice vectors
         lattice = []
         for i in range(3):
-            lattice.append(struct.find("cell").find("a{}".format(i + 1)).text.strip().split())
+            lattice.append(struct.find("cell").find(f"a{i + 1}").text.strip().split())
         lattice = BOHR * np.array(lattice, dtype=float)
 
         # Parse atomic positions in cartesian coordinates
@@ -698,7 +668,7 @@ class ParserEspresso:
         npwtot = npw * (2 if self.spinor else 1)
 
         # Open file with the wave functions
-        wfcname="wfc{}{}".format({None:"","dw":"dw","up":"up"}[spin_channel], ik+1)
+        wfcname = f"wfc{'' if spin_channel is None else spin_channel}{ik+1}"
         fWFC = None
         checked_files = []
         for extension in ["hdf5","dat"]:
@@ -721,7 +691,6 @@ class ParserEspresso:
                         # Parse coefficients of wave functions
                         evc = np.array(fWFC['evc'],dtype=float)
                         WF = evc[:,0::2] + 1.0j * evc[:,1::2]
-                        return WF, Energy, kg, kpt
                     else:
                         fWFC=FF(filename,"r")
                         rec = record_abinit(fWFC, "i4,3f8,i4,i4,f8")[0]
@@ -733,17 +702,17 @@ class ParserEspresso:
                         # Determine direct coords of k-point
                         rec = record_abinit(fWFC, "(3,3)f8")
                         B = np.array(rec)
-                        rec = record_abinit(fWFC, "({},3)i4".format(igwx))
+                        rec = record_abinit(fWFC, f"({igwx},3)i4")
                         kg = np.array(rec)
-                        msg = 'npwtot: {}, igwx: {}'.format(npwtot, igwx)
+                        msg = f'npwtot: {npwtot}, igwx: {igwx}'
                         log_message(msg, verbosity, 2)
                         kpt = kpt.dot(np.linalg.inv(B))
                         # Parse coefficients of wave functions
                         WF = np.zeros((NBin, npwtot), dtype=complex)
                         for ib in range(NBin):
-                            rec = record_abinit(fWFC, "{}f8".format(npwtot * 2))
+                            rec = record_abinit(fWFC, f"{npwtot * 2}f8")
                             WF[ib] = rec[0::2] + 1.0j * rec[1::2]
-                        return WF, Energy, kg, kpt
+                    return WF, Energy, kg, kpt
                 checked_files.append(filename)
         raise RuntimeError(f"Wavefunction file not found. Tried files: {checked_files}")
         
@@ -848,10 +817,7 @@ class ParserW90:
                 # Parse lattice vectors
                 if l[1] == "unit_cell_cart":
                     if lattice is not None:
-                        raise RuntimeError(
-                            "'begin unit_cell_cart' found more then once  in {}.win".format(
-                                self.prefix
-                            ))
+                        raise RuntimeError(f"'begin unit_cell_cart' found more than once in {self.prefix}.win")
                     l1 = next(self.iterwin)
                     if l1[0] in ("bohr", "ang"):
                         units = l1[0]
@@ -867,10 +833,7 @@ class ParserW90:
                 # Parse k-points
                 elif l[1] == "kpoints":
                     if kpred is not None:
-                        raise RuntimeError(
-                            "'begin kpoints' found more then once  in {}.win".format(
-                                self.prefix
-                            ))
+                        raise RuntimeError(f"'begin kpoints' found more then once in {self.prefix}.win")
                     kpred = np.zeros((self.NK, 3), dtype=float)
                     for i in range(self.NK):
                         kpred[i] = next(self.iterwin)[:3]
@@ -879,12 +842,9 @@ class ParserW90:
                 # Parse atomic positions
                 elif l[1].startswith("atoms_"):
                     if l[1][6:10] not in ("cart", "frac"):
-                        raise RuntimeError("unrecognised block :  '{}' ".format(l[0]))
+                        raise RuntimeError(f"unrecognised block :  '{l[0]}' ")
                     if found_atoms:
-                        raise RuntimeError(
-                            "'begin atoms_***' found more then once  in {}.win".format(
-                                self.prefix
-                            ))
+                        raise RuntimeError(f"'begin atoms_***' found more then once  in {self.prefix}.win")
                     found_atoms = True
                     positions = []
                     nameat = []
@@ -892,11 +852,7 @@ class ParserW90:
                         l1 = next(self.iterwin)
                         if l1[0] == "end":
                             if l1[1] != l[1]:
-                                raise RuntimeError(
-                                    "'{}' ended with 'end {}'".format(
-                                        " ".join(l), l1[1]
-                                    )
-                                )
+                                raise RuntimeError(f"'{ ' '.join(l) }' ended with 'end {l1[1]}'")
                             else:
                                 break
                         nameat.append(l1[0])
@@ -938,7 +894,7 @@ class ParserW90:
                 raise RuntimeError("wrong band indices")
             Energy = Energy[:, 2].reshape(self.NK, self.NBin)
         except Exception as err:
-            raise RuntimeError(" error reading {} : {}".format(feig,err))
+            raise RuntimeError(f" error reading {feig} : {err}")
         return Energy
 
     def parse_kpoint(self, ik, selectG):
@@ -965,7 +921,7 @@ class ParserW90:
     
     
     def parse_kpoint_formatted(self, ik, selectG):
-        fname = "UNK{:05d}.{}".format(ik, "NC" if self.spinor else "1")
+        fname = f"UNK{ik:05d}.{'NC' if self.spinor else '1'}"
         print (f"parse_kpoint_formatted: {fname}")
         fUNK = open(fname, "r")
         ngx, ngy, ngz, ik_in, nbnd = (int(x) for x in fUNK.readline().split())
@@ -993,18 +949,13 @@ class ParserW90:
     def check_ik_nb(self,ik_in, ik, nbnd, fname):
         """Checks of consistency between UNK and .win"""
         if ik_in != ik:
-            raise RuntimeError(
-                "file {} contains point number {}, expected {}".format(
-                    fname, ik_in, ik
-                ))
+            raise RuntimeError(f"file {fname} contains point number {ik_in}, expected {ik}")
         if nbnd != self.NBin:
-            raise RuntimeError(
-                "file {} contains {} bands , expected {}".format(fname, nbnd, NBin)
-            )
+            raise RuntimeError(f"file {fname} contains {nbnd} bands, expected {self.NBin}")
 
 
     def parse_kpoint_unformatted(self, ik, selectG):
-        fname = "UNK{:05d}.{}".format(ik, "NC" if self.spinor else "1")
+        fname = f"UNK{ik:05d}.{'NC' if self.spinor else '1'}"
         fUNK = FF(fname, "r")
         ngx, ngy, ngz, ik_in, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
         ngtot = ngx * ngy * ngz
@@ -1017,7 +968,7 @@ class ParserW90:
         for ib in range(self.NBin):
             WF_tmp = []
             for i in range(nspinor):
-                cg_tmp = record_abinit(fUNK, "{}f8".format(ngtot * 2))
+                cg_tmp = record_abinit(fUNK, f"{ngtot * 2}f8")
                 cg_tmp = (cg_tmp[0::2] + 1.0j * cg_tmp[1::2]).reshape(
                     (ngx, ngy, ngz), order="F")
                 cg_tmp = np.fft.fftn(cg_tmp)
@@ -1047,7 +998,7 @@ class ParserW90:
             Number of k-point along 3rd direction in reciprocal space 
         '''
 
-        fname = "UNK{:05d}.{}".format(ik, "NC" if self.spinor else "1")
+        fname = f"UNK{ik:05d}.{'NC' if self.spinor else '1'}"
         if self.unk_formatted:
             fUNK = open(fname, "r")
             ngx, ngy, ngz, ik_in, nbnd = (int(x) for x in fUNK.readline().split())
@@ -1074,9 +1025,7 @@ class ParserW90:
         """
         s = next(self.iterwin)
         if " ".join(s) != "end " + name:
-            raise RuntimeError(
-                "expected 'end {}, found {}'".format(name, " ".join(s))
-            )
+            raise RuntimeError(f"expected 'end {name}', found {' '.join(s)}")
 
 
 
@@ -1114,28 +1063,18 @@ class ParserW90:
         i = np.where(self.ind == key)[0]
         if len(i) == 0:
             if default is None:
-                raise RuntimeError(
-                    "parameter {} was not found in {}.win".format(key, self.prefix)
-                )
+                raise RuntimeError(f"parameter {key} was not found in {self.prefix}.win")
             else:
                 return default
         if len(i) > 1:
-            raise RuntimeError(
-                "parameter {} was found {} times in {}.win".format(
-                    key, len(i), self.prefix
-                )
-            )
+            raise RuntimeError( f"parameter {key} was found {len(i)} times in {self.prefix}.win")
 
         x = self.fwin[i[0]][1:]  # mp_grid should work
         if len(x) > 1:
             if join:
                 x = " ".join(x)
             else:
-                raise RuntimeError(
-                    "length {} found for parameter {}, rather than lenght 1 in {}.win".format(
-                        len(x), key, self.prefix
-                    )
-                )
+                raise RuntimeError(f"length {len(x)} found for parameter {key}, rather than length 1 in {self.prefix}.win")
         else:
             x = self.fwin[i[0]][1]
         return tp(x)

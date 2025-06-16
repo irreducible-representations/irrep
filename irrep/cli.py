@@ -58,7 +58,7 @@ class LoadContextFromConfig(click.Command):
 @click.version_option(version)
 @click.command(
     cls=LoadContextFromConfig,
-    help="""
+    help=f"""
 
 \b
             # ###   ###   #####  ###
@@ -86,7 +86,7 @@ do not hesitate to contact the author:
 > Stepan S. Tsirkin  
 > University of Zurich  
 > stepan.tsirkin@physik.uzh.ch
-""".format(version=version)
+"""
 )
 @click.option(
     "-Ecut",
@@ -425,9 +425,9 @@ def cli(
             if magnetic_moments.ndim == 1:
                 magnetic_moments = np.expand_dims(magnetic_moments, axis=0)
         except FileNotFoundError:
-            print("The magnetic moments file was not found: {}".format(magmom))
+            print(f"The magnetic moments file was not found: {magmom}")
         except ValueError:
-            print("Error reading magnetic moments file: {}".format(magmom))
+            print(f"Error reading magnetic moments file: {magmom}")
     elif time_reversal:
         magnetic_moments = True
         print("WARNING: --time-reversal set without providing magnetic moments "
@@ -525,7 +525,7 @@ def cli(
         json_data["separating symmetries"]=isymsep
         tmp_subbands = {}
         for isym in isymsep:
-            print("\n-------- SEPARATING BY SYMMETRY # {} --------".format(isym))
+            print(f"\n-------- SEPARATING BY SYMMETRY # {isym} --------")
             for s_old, bs in subbands.items():
                 separated = bs.Separate(isym, groupKramers=groupkramers, verbosity=verbosity)
                 for s_new, bs_separated in separated.items():
@@ -546,12 +546,11 @@ def cli(
             if isymsep is not None:
                 print(
                     "\n\n\n\n ################################################ \n\n\n NEXT SUBSPACE:  ",
-                    " , ".join(
-                        "sym # {0} -> eigenvalue {1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
-                    ),
+                    " , ".join(f"sym # {s} -> eigenvalue {short(ev)}" for s, ev in zip(isymsep, k) ),
                 )
                 sub.write_characters()
-                json_data["characters and irreps"].append({"symmetry eigenvalues": np.array(k) , "subspace": sub.json(symmetries)})
+                json_data["characters and irreps"].append({"symmetry eigenvalues": np.array(k) , 
+                                                           "subspace": sub.json(symmetries)})
     else :
         json_data["separated by symmetry"]=False
         
@@ -560,49 +559,33 @@ def cli(
 
     if zak:
         for k in subbands:
-            print("symmetry eigenvalue : {0} \n Traces are : ".format(k))
+            print(f"symmetry eigenvalue : {k} \n Traces are : ")
             subbands[k].write_characters()
-            print("symmetry eigenvalue : {0} \n Zak phases are : ".format(k))
+            print(f"symmetry eigenvalue : {k} \n Zak phases are : ")
             zak = subbands[k].zakphase()
             for n, (z, gw, gc, lgw) in enumerate(zip(*zak)):
-                print(
-                    "   {n:4d}    {z:8.5f} pi gapwidth = {gap:8.4f} gapcenter = {cent:8.3f} localgap= {lg:8.4f}".format(
-                        n=n + 1, z=z / np.pi, gap=gw, cent=gc, lg=lgw
-                    )
-                )
+                print(f"   {n + 1:4d}    {z / np.pi:8.5f} pi gapwidth = {gw:8.4f}"
+                        f" gapcenter = {gc:8.3f} localgap= {lgw:8.4f}")
             exit()
 
     if wcc:
         for k in subbands:
-            print("symmetry eigenvalue {0}".format(k))
+            print(f"symmetry eigenvalue {k}")
             # subbands[k].write_characters(degen_thresh=0.001,refUC=refUC,symmetries=symmetries)
-            wcc = subbands[k].wcc()
-            print(
-                "symmetry eigenvalue : {0} \n  WCC are : {1} \n sumWCC={2}".format(
-                    k, wcc, np.sum(wcc) % 1
-                )
-            )
+            wcc_val = subbands[k].wcc()
+            print(f"symmetry eigenvalue : {k} \n  WCC are : {wcc_val} \n sumWCC={np.sum(wcc_val) % 1}")
         exit()
 
     if plotbands:
         print("\nplotbands = True --> writing bands")
         for k, sub in subbands.items():
             if isymsep is not None:
-                print(
-                    "\n\n\n\n ################################################ \n\n\n next subspace:  ",
-                    " , ".join(
-                        "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
-                    ),
-                )
+                print("\n\n\n\n ################################################ \n\n\n next subspace:  ",
+                    " , ".join(f"{s}:{short(ev)}" for s, ev in zip(isymsep, k)), )
                 fname = (
-                    "bands-"
-                    + suffix
-                    + "-"
-                    + "-".join(
-                        "{0}:{1}".format(s, short(ev)) for s, ev in zip(isymsep, k)
-                    )
-                    + ".dat"
-                )
+                    "bands-" + suffix+ "-"
+                    + "-".join(f"{s}:{short(ev)}" for s, ev in zip(isymsep, k))
+                    + ".dat")
             else:
-                fname = "bands-{0}.dat".format(suffix)
+                fname = f"bands-{suffix}.dat"
             sub.write_plotfile(fname)

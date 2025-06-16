@@ -96,7 +96,7 @@ class Kpoint:
     Energy_raw : array
         energy levels of each state (1 energy for every row in WF)
     Energy_mean : array
-        Energy-levels of degenerate froups of bands whose traces should be calculated.
+        Energy-levels of degenerate groups of bands whose traces should be calculated.
     upper : float
         Energy of the first band above the set of bands whose traces should be 
         calculated. It will be set to `numpy.NaN` if the last band matches the 
@@ -331,13 +331,8 @@ class Kpoint:
             Sx, Sy, Sz - Spin components projected onto the PBZ kpoint.
         """
         if not self.k_close_mod1(kptPBZ.dot(supercell.T), prec=1e-5):
-            raise RuntimeError(
-                "unable to unfold {} to {}, withsupercell={}".format(
-                    self.k, kptPBZ, supercell
-                )
-            )
+            raise RuntimeError(f"unable to unfold {self.k} to {kptPBZ}, with supercell={supercell}")
         g_shift = kptPBZ - self.k.dot(np.linalg.inv(supercell.T))
-        #        print ("g_shift={}".format(g_shift))
         selectG = np.array(
             np.where(
                 [
@@ -454,9 +449,9 @@ class Kpoint:
         norms = self.WF.conj().dot(self.WF.T)
         check = np.max(abs(norms - np.eye(norms.shape[0])))
         if check > 1e-5:
-            msg = ("orthogonality (largest of diag. <psi_nk|psi_mk>): "
-                   "{0:7.5} > 1e-5   \n".format(check))
-            log_message(msg, verbosity      , 1)
+            log_message(f"orthogonality (largest of diag. <psi_nk|psi_mk>): {check:7.5f} > 1e-5   \n", 
+                        verbosity, 1)
+            
 
         S = symm_matrix(
             self.k,
@@ -507,7 +502,7 @@ class Kpoint:
         if np.abs((np.abs(w) - 1.0)).max() > 1e-4:
             log_message(f"WARNING: some eigenvalues are not unitary: {w}",verbosity      ,1)
         if np.abs((np.abs(w) - 1.0)).max() > 3e-1:
-            raise RuntimeError(" some eigenvalues are not unitary :{0} ".format(w))
+            raise RuntimeError(f" some eigenvalues are not unitary :{w} ")
         w /= np.abs(w)
 
         subspaces = {}
@@ -678,14 +673,10 @@ class Kpoint:
         '''
 
         # Print header for k-point
-        print(("\n\n k-point {0:3d} : {1} (in DFT cell)\n"
-               "               {2} (after cell trasformation)\n\n"
-               " number of states : {3}\n"
-               .format(self.ik0,
-                       vector_pprint(np.round(self.k, 5)),
-                       vector_pprint(np.round(self.k_refUC, 5)),
-                       self.num_bands)
-              ))
+        print(f"\n\n k-point {self.ik0:3d} : {vector_pprint(np.round(self.k, 5))} (in DFT cell)\n"
+              f"               {vector_pprint(np.round(self.k_refUC, 5))} (after cell trasformation)\n\n"
+              f" number of states : {self.num_bands}\n"
+              )
 
         # Generate str describing irrep corresponding to sets of states
         str_irreps = []
@@ -698,9 +689,9 @@ class Kpoint:
                     if s != '':
                         s += ', '  # separation between labels for irreps
                     s += ir
-                    s += '({0:.5}'.format(irreps[ir].real)
+                    s += f'({irreps[ir].real:.5}'
                     if abs(irreps[ir].imag) > 1e-4:
-                        s += '{0:+.5f}i'.format(irreps[ir].imag)
+                        s += f'{irreps[ir].imag:+.5f}i'
                     s += ')'
             str_irreps.append(s)
 
@@ -721,43 +712,38 @@ class Kpoint:
         else:
             aux3 = aux2 + " "
 
-        print("   Energy  |   degeneracy  | {0} irreps {1} | sym. operations  ".format(aux2, aux3))
+        print(f"   Energy  |   degeneracy  | {aux2} irreps {aux3} | sym. operations  ")
 
         # Print indices of little-group symmetries
-        s = "           |               | {0}        {1} | ".format(aux2, aux3)
+        s = f"           |               | {aux2}        {aux3} | "
         inds = []
         for sym in self.little_group:
-            inds.append(aux1 + "{0:4d}    ".format(sym.ind) + aux1)
+            inds.append(f"{aux1}{sym.ind:4d}    {aux1}")
         s += " ".join(inds)
         print(s)
 
         # Print line associated to a set of degenerate states
         for e, d, ir, ch1, ch2 in zip(self.Energy_mean, self.degeneracies, str_irreps, self.char, self.char_refUC):
-
             # Traces in DFT unit cell
             right_str1 = []
             right_str2 = []
             for tr1, tr2 in zip(ch1, ch2):
-                s1 = "{0:8.4f}".format(tr1.real)
-                s2 = "{0:8.4f}".format(tr2.real)
+                s1 = f"{tr1.real:8.4f}"
+                s2 = f"{tr2.real:8.4f}"
                 if writeimaginary:
-                    s1 += "{0:+7.4f}j".format(tr1.imag)
-                    s2 += "{0:+7.4f}j".format(tr2.imag)
+                    s1 += f"{tr1.imag:+7.4f}j"
+                    s2 += f"{tr2.imag:+7.4f}j"
                 right_str1.append(s1)
                 right_str2.append(s2)
             right_str1 = ' '.join(right_str1)
             right_str2 = ' '.join(right_str2)
 
             # Energy, degeneracy, irrep's label and character in DFT cell
-            left_str = (" {0:8.4f}  |    {1:5d}      | {2:{3}s} |"
-                        .format(e, d, ir, irreplen)
-                        )
+            left_str = f" {e:8.4f}  |    {d:5d}      | {ir:{irreplen}s} |"
             print(left_str + " " + right_str1)
 
             # Line for character in reference cell
-            left_str = ("           |               | {0:{1}s} |"
-                        .format(len(ir)*" ", irreplen)
-                        )
+            left_str = f"           |               | {' ' * len(ir):{irreplen}s} |"
             print(left_str + " " + right_str2)  # line for character in DFT
 
 
@@ -816,7 +802,7 @@ class Kpoint:
 
         for energy, irrep_dict in zip(self.Energy_mean, self.irreps):
             irrep = ''.join(irrep_dict.keys())
-            s = '{:15.7f}    {:15s}\n'.format(energy, irrep)
+            s = f'{energy:15.7f}    {irrep:15s}\n'
             file.write(s)
 
 
@@ -825,11 +811,11 @@ class Kpoint:
         writeimaginary = np.abs(self.character.imag).max() > 1e-4
         s = []
         for e, dim, char in zip(self.Energy_mean, self.degeneracies, self.character):
-            s_loc = '{2:8.4f}   {0:8.4f}      {1:5d}   '.format(e-efermi, dim, kpl)
+            s_loc = f'{kpl:8.4f}   {e-efermi:8.4f}      {dim:5d}   '
             for tr in char:
-                s_loc += "{0:8.4f}".format(tr.real)
+                s_loc += f"{tr.real:8.4f}"
                 if writeimaginary:
-                    s_loc += "{0:+7.4f}j ".format(tr.imag)
+                    s_loc += f"{tr.imag:+7.4f}j "
             s.append(s_loc)
         s = '\n'.join(s)
         s += '\n\n'
@@ -843,10 +829,7 @@ class Kpoint:
                 try:
                     weight = abs(compstr(irrep.split("(")[1].strip(")")))
                     if weight > 0.3:
-                        file.write(
-                            " {0:10s} ".format(irrep.split("(")[0])
-                            + "  {0:10.5f}\n".format(e)
-                        )
+                        file.write(f" {irrep.split('(')[0]:10s}   {e:10.5f}\n")
                 except IndexError:
                     pass
         file.close()
@@ -881,18 +864,16 @@ class Kpoint:
         # (3) energy and eigenvalues (real part, imaginary part) for each 
         # symmetry operation of the little group (listed above).
         indices = [symop.ind for symop in self.little_group]
-        res = ("{0} \n {1} \n".format(len(self.little_group), "  ".join(str(x) for x in indices)))
+        res = (f"{len(self.little_group)} \n {'  '.join(str(x) for x in indices)} \n")
 
         IB = np.cumsum(np.hstack(([0], self.degeneracies[:-1]))) + 1
         res += (
             "\n".join(
-                (" {ib:8d}  {d:8d}   {E:8.4f} ").format(E=e, d=d, ib=ib)
-                + "  ".join("{0:10.6f}   {1:10.6f} ".format(c.real, c.imag) for c in ch)
-                for e, d, ib, ch in zip(self.Energy_mean, self.degeneracies, IB, self.char)
-            )
+                f" {ib:8d}  {d:8d}   {e:8.4f} " + "  ".join(f"{c.real:10.6f}   {c.imag:10.6f} " for c in ch)
+                    for e, d, ib, ch in zip(self.Energy_mean, self.degeneracies, IB, self.char)
+                    )
             + "\n"
         )
-
         return res
 
     def overlap(self, other):

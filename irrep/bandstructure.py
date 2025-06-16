@@ -240,7 +240,7 @@ class BandStructure:
             else:
                 NBin = NBin_list[0]
                 if spin_channel is not None:
-                    raise ValueError("Found a non-polarized bandstructure, but spin channel is set to {}".format(spin_channel))
+                    raise ValueError(f"Found a non-polarized bandstructure, but spin channel is set to {spin_channel}")
 
         elif code == "wannier90":
 
@@ -336,9 +336,8 @@ class BandStructure:
 
 
         # To do: create writer of description for this class
-        msg = ("WAVECAR contains {} k-points and {} bands.\n"
-               "Saving {} bands starting from {} in the output"
-               .format(NK, NBin, NBout, IBstart + 1))
+        msg = (f"WAVECAR contains {NK} k-points and {NBin} bands.\n"
+               f"Saving {NBout} bands starting from {IBstart + 1} in the output")
         log_message(msg, verbosity, 1)
         msg = f"Energy cutoff in WAVECAR : {self.Ecut0}"
         log_message(msg, verbosity, 1)
@@ -513,12 +512,9 @@ class BandStructure:
             else:
                 print("\nInvariant under inversion: Yes")
                 if self.spinor and not self.magnetic:
-                    print("Number of inversions-odd Kramers pairs : {}"
-                          .format(int(KP.num_bandinvs / 2))
-                          )
+                    print(f"Number of inversions-odd Kramers pairs : {int(KP.num_bandinvs / 2)}")
                 else:
-                    print("Number of inversions-odd states : {}"
-                          .format(KP.num_bandinvs))
+                    print(f"Number of inversions-odd states : {KP.num_bandinvs}")
 
             # Print gap with respect to next band
             if not np.isnan(KP.upper):
@@ -526,19 +522,16 @@ class BandStructure:
         
         # Print total number of band inversions
         if self.spinor and not self.magnetic:
-            print("\nTOTAL number of inversions-odd Kramers pairs : {}"
-                  .format(int(self.num_bandinvs/2)))
+            print(f"\nTOTAL number of inversions-odd Kramers pairs : {int(self.num_bandinvs/2)}")
         else:
-            print("TOTAL number of inversions-odd states : {}"
-                  .format(self.num_bandinvs))
-        
+            print(f"TOTAL number of inversions-odd states : {self.num_bandinvs}")    
         if not self.magnetic:
-            print('Z2 invariant: {}'.format(int(self.num_bandinvs/2 % 2)))
-            print('Z4 invariant: {}'.format(int(self.num_bandinvs/2 % 4)))
+            print(f'Z2 invariant: {int(self.num_bandinvs/2 % 2)}')
+            print(f'Z4 invariant: {int(self.num_bandinvs/2 % 4)}')
 
-        # Print indirect gap and smalles direct gap
-        print('Indirect gap: {}'.format(self.gap_indirect))
-        print('Smallest direct gap in the given set of k-points: {}'.format(self.gap_direct))
+        # Print indirect gap and smallest direct gap
+        print(f'Indirect gap: {self.gap_indirect}')
+        print(f'Smallest direct gap in the given set of k-points: {self.gap_direct}')
     
 
     def json(self, kpnames=None):
@@ -669,17 +662,9 @@ class BandStructure:
         """
         nbarray = [k.num_bands for k in self.kpoints]
         if len(set(nbarray)) > 1:
-            raise RuntimeError(
-                "the numbers of bands differs over k-points:{0} \n cannot write trace.txt \n".format(
-                    nbarray
-                )
-            )
+            raise RuntimeError(f"the numbers of bands differs over k-points: {nbarray} \n cannot write trace.txt \n")
         if len(nbarray) == 0:
-            raise RuntimeError(
-                "do we have any k-points??? NB={0} \n cannot write trace.txt \n".format(
-                    nbarray
-                )
-            )
+            raise RuntimeError(f"do we have any k-points??? NB={nbarray} \n cannot write trace.txt \n")
         return nbarray[0]
 
     def write_trace(self,):
@@ -689,27 +674,14 @@ class BandStructure:
         """
 
         f = open("trace.txt", "w")
-        f.write(
-            (
-                " {0}  \n"
-                + " {1}  \n"  # Number of bands below the Fermi level  # Spin-orbit coupling. No: 0, Yes: 1
-            ).format(self.num_bands, 1 if self.spinor else 0)
-        )
+        f.write(f"{self.num_bands}  \n{1 if self.spinor else 0}  \n")
 
-        f.write(
-                self.spacegroup.write_trace()
-                )
+        f.write(self.spacegroup.write_trace())
         # Number of maximal k-vectors in the space group. In the next files
-        # introduce the components of the maximal k-vectors))
-        f.write("  {0}  \n".format(len(self.kpoints)))
+        # introduce the components of the maximal k-vectors
+        f.write(f"  {len(self.kpoints)}  \n")
         for KP in self.kpoints:
-            f.write(
-                "   ".join(
-                    "{0:10.6f}".format(x)
-                    for x in KP.k
-                )
-                + "\n"
-            )
+            f.write("   ".join(f"{x:10.6f}" for x in KP.k) + "\n")
         for KP in self.kpoints:
             f.write(
                 KP.write_trace()
@@ -900,8 +872,7 @@ class BandStructure:
         for iband in range(self.num_bands):
             file.write('\n')  # blank line separating blocks of k points
             for k, energy in zip(kpline, energies_expanded[iband]):
-                s = '{:8.4f}    {:8.4f}\n'.format(k, energy)
-                file.write(s)
+                file.write(f"{k:8.4f}    {energy:8.4f}\n")
         file.close()
 
     def KPOINTSline(self, kpred=None, supercell=None, breakTHRESH=0.1):

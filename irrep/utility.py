@@ -50,9 +50,7 @@ class FortranFileR(fortio.FortranFile):
 			     )
             print("Long records not found in ", filename)
         except ValueError:  # there are subrecords, allow negative markers
-            print(("File '{}' contains subrecords - using header_dtype='int32'"
-		   .format(filename)
-		  ))
+            print(f"File '{filename}' contains subrecords - using header_dtype='int32'")
             super().__init__(filename,
 			     mode='r',
 			     header_dtype='int32',
@@ -154,9 +152,7 @@ def str2bool(v1):
         return False
     elif v[0] == "t":
         return True
-    else:
-        raise RuntimeError(
-            " unrecognized value of bool parameter :{0}".format(v1))
+    raise RuntimeError(f" unrecognized value of bool parameter :{v1}")
 
 
 def str_(x):
@@ -209,7 +205,7 @@ def short(x, nd=3):
     str
         Formatted number, with `nd` decimals saved.
     """
-    fmt = "{{0:+.{0}f}}".format(nd)
+    fmt = f"{{0:+.{nd}f}}"
     if abs(x.imag) < 10 ** (-nd):
         return fmt.format(x.real)
     if abs(x.real) < 10 ** (-nd):
@@ -248,11 +244,8 @@ def format_matrix(A):
     str
         Description of the matrix. Ready to be printed.
     """
-    return "".join(
-        "   ".join("{0:+5.2f} {1:+5.2f}j".format(x.real, x.imag) for x in a)
-        + "\n"
-        for a in A
-    )
+    return "".join("   ".join(f"{x.real:+5.2f} {x.imag:+5.2f}j" for x in a) + "\n"
+                        for a in A)
 
 
 def log_message(msg, verbosity, level):
@@ -539,5 +532,4 @@ def vector_pprint(vector, fmt=None):
         fmt = " .5f"
     elif "s" not in fmt:
         fmt = " " + fmt if fmt[0] != " " else fmt
-
     return ("[" + ("{:{fmt}} " * len(vector)) + "]").format(*vector, fmt=fmt)

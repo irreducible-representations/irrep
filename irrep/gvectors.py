@@ -92,8 +92,7 @@ def calc_gvectors(
     
 """
 
-    msg = ('Generating plane waves at k: ({} )'
-           .format(' '.join([f'{x:6.3f}' for x in K])))
+    msg = f"Generating plane waves at k: ({' '.join(f'{x:6.3f}' for x in K)})"
     log_message(msg, verbosity, 2)
     if Ecut1 <= 0:
         Ecut1 = Ecut
@@ -116,11 +115,9 @@ def calc_gvectors(
                     break
                 elif np.all(memory): # probably spinor wrong set as spinor=F
                     raise RuntimeError(
-                          "calc_gvectors is stuck "
-                          "calculating plane waves of energy larger "
-                          "than cutoff Ecut = {}. Make sure that the "
-                          "VASP calculation does not include SOC and "
-                          "set -spinor if it does.".format(Ecut)
+                        "calc_gvectors is stuck calculating plane waves of energy larger "
+                        f"than cutoff Ecut = {Ecut}. Make sure that the "
+                        "VASP calculation does not include SOC and set -spinor if it does."
                     )
 
         for ig3 in range(-N, N + 1):
@@ -139,18 +136,10 @@ def calc_gvectors(
     if nplane < np.inf: # vasp
         if spinor:
             if 2 * ncnt != nplane:
-                raise RuntimeError(
-                    "*** error - computed 2*ncnt={0} != input nplane={1}".format(
-                        2 * ncnt, nplane
-                    )
-                )
+                raise RuntimeError(f"*** error - computed 2*ncnt={2 * ncnt} != input nplane={nplane}")
         else:
             if ncnt != nplane:
-                raise RuntimeError(
-                    "*** error - computed ncnt={0} != input nplane={1}".format(
-                        ncnt, nplane
-                    )
-                )
+                raise RuntimeError(f"*** error - computed ncnt={ncnt} != input nplane={nplane}")
     igall = np.array(igall, dtype=int)
     ng = igall.max(axis=0) - igall.min(axis=0)
     igall1 = igall % ng[None, :]
@@ -169,7 +158,6 @@ def calc_gvectors(
     for i in range(len(wall) - 1):
         igall[4, wall[i] : wall[i + 1]] = wall[i]
         igall[5, wall[i] : wall[i + 1]] = wall[i + 1]
-    #    print ("K={0}\n E={1}\nigall=\n{2}".format(K,Eg,igall.T))
     return igall
 
 def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
@@ -314,15 +302,11 @@ def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
     for i in range(ng):
         if rotind[i] == -1:
             raise RuntimeError(
-                    "Error in the transformation of plane-waves in k-point={}: "
-                    .format(kpt) +
-                    "No pair found for the g-vector igTr[{i}]={igtr}"
-                    .format(i=i, igtr=igTr[:,i]) +
-                    "obtained when transforming the g-vector ig[{i}]={ig} "
-                    .format(i=i, ig=ig_other[:3,i]) +
-                    "with the matrix {B}, where B=inv(A).T with A={A}"
-                    .format(B=B, A=A)
-                )
+                f"Error in the transformation of plane-waves in k-point={kpt}: "
+                f"No pair found for the g-vector igTr[{i}]={igTr[:,i]} "
+                f"obtained when transforming the g-vector ig[{i}]={ig_other[:3,i]} "
+                f"with the matrix {B}, where B=inv(A).T with A={A}"
+            )
     return rotind
 
 
