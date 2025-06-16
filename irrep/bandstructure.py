@@ -26,7 +26,8 @@ from functools import cached_property
 
 from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
-from .spacegroup import SpaceGroup, SpaceGroupIrreps
+from .spacegroup import SpaceGroup
+from .spacegroup_irreps import SpaceGroupIrreps
 from .gvectors import sortIG, calc_gvectors, symm_matrix
 from .utility import get_block_indices, grid_from_kpoints, log_message, UniqueListMod1
 
@@ -266,29 +267,37 @@ class BandStructure:
 
         cell = (Lattice, positions, typat)
 
+
         if irreps:
-            self.spacegroup = SpaceGroupIrreps(
-                cell=cell,
+            cls = SpaceGroupIrreps
+        else:
+            cls = SpaceGroup
+
+        self.spacegroup = cls.from_cell(cell=cell,
                 spinor=self.spinor,
+                alat=alat,
+                from_sym_file=from_sym_file,
+                magmom=magmom,
+                include_TR=include_TR,
+                verbosity=verbosity,
+            )
+        if irreps:
+            self.spacegroup.set_irreptables(
                 refUC=refUC,
                 shiftUC=shiftUC,
                 search_cell=search_cell,
                 trans_thresh=trans_thresh,
                 verbosity=verbosity,
-                alat=alat,
-                from_sym_file=from_sym_file,
-                magmom=magmom,
-                include_TR=include_TR,
             )
-        else:
-            self.spacegroup = SpaceGroup(
-                cell=cell,
-                spinor=self.spinor,
-                alat=alat,
-                from_sym_file=from_sym_file,
-                magmom=magmom,
-                include_TR=include_TR
-            )
+        # else:
+        #     self.spacegroup = SpaceGroup.from_cell(
+        #         cell=cell,
+        #         spinor=self.spinor,
+        #         alat=alat,
+        #         from_sym_file=from_sym_file,
+        #         magmom=magmom,
+        #         include_TR=include_TR
+        #     )
 
         self.magnetic = self.spacegroup.magnetic
 

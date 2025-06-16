@@ -475,8 +475,7 @@ class Kpoint:
             log_message(f"Printing matrix of symmetry at k={self.k}", verbosity, 1)
             log_message(format_matrix(Sblock), verbosity, 1)
             log_message("The diagonal blocks", verbosity, 1)
-            log_message(", ".join([f"{b1}:{b2} \n: {format_matrix(S[b1:b2, b1:b2])}" for b1, b2 in self.block_indices])
-                        , verbosity, 1)
+            log_message(", ".join([f"{b1}:{b2} \n: {format_matrix(S[b1:b2, b1:b2])}" for b1, b2 in self.block_indices]), verbosity, 1)
 
 
         # Calculate eigenvalues and eigenvectors in each block
@@ -582,6 +581,8 @@ class Kpoint:
                     block_ind=self.block_indices if use_blocks else None
                 ))
         char = np.array(char)
+
+        log_message(f"char.shape = {char.shape}, Energy_raw.shape = {self.Energy_raw.shape}, block_indices = {self.block_indices}", verbosity, 2)
 
         # Check that number of irreps is int
         Nirrep = np.linalg.norm(char.sum(axis=1)) ** 2 / char.shape[0]
