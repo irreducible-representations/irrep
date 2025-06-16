@@ -1,9 +1,9 @@
 
-            # ###   ###   #####  ###
-            # #  #  #  #  #      #  #
-            # ###   ###   ###    ###
-            # #  #  #  #  #      #
-            # #   # #   # #####  #
+# ###   ###   #####  ###
+# #  #  #  #  #      #  #
+# ###   ###   ###    ###
+# #  #  #  #  #      #
+# #   # #   # #####  #
 
 
 ##################################################################
@@ -121,7 +121,7 @@ class ParserAbinit():
     """
 
     def __init__(self, filename):
-        #fWFK = FF(fname, "r")
+        # fWFK = FF(fname, "r")
         self.fWFK = FFR(filename)  # temporary
         self.kpt_count = 0  # index of the next k-point to be read
 
@@ -156,10 +156,10 @@ class ParserAbinit():
         '''
 
         # 1st record
-            # write(unit=header) codvsn,headform,fform
+        # write(unit=header) codvsn,headform,fform
         try:  # version < 9.0.0
             record = record_abinit(self.fWFK, 'a6,2i4')
-        except:  # version > 9.0.0
+        except Exception:  # version > 9.0.0
             self.fWFK.goto_record(0)
             record = record_abinit(self.fWFK, 'a8,2i4')
         stdout.flush()
@@ -231,7 +231,7 @@ class ParserAbinit():
         if nkpt == 1:
             istwfk = set([int(istwfk)])
             npwarr = np.array([npwarr])
-            nband  = np.array([nband])
+            nband = np.array([nband])
         else:
             istwfk = set(istwfk)
 
@@ -241,33 +241,33 @@ class ParserAbinit():
         assert np.sum(nband) == bandtot, "Probably a bug in Abinit"
 
         # 4th record
-            # write(unit,err=10, iomsg=errmsg) hdr%residm, hdr%xred(:,:), &
-            # & hdr%etot, hdr%fermie, hdr%amu(:)
+        # write(unit,err=10, iomsg=errmsg) hdr%residm, hdr%xred(:,:), &
+        # & hdr%etot, hdr%fermie, hdr%amu(:)
         record = record_abinit(self.fWFK, f"f8,({natom},3)f8,f8,f8,{ntypat}f8")[0]
         xred = record[1]
         efermi = record[3] * Hartree_eV
 
         # 5th record: skip it
-            # write(unit,err=10, iomsg=errmsg) &
-            # & hdr%kptopt, hdr%pawcpxocc, hdr%nelect, hdr%charge, &
-            # & hdr%icoulomb, hdr%kptrlatt,hdr%kptrlatt_orig, &
-            # & hdr%shiftk_orig(:,1:hdr%nshiftk_orig), &
-            # & hdr%shiftk(:,1:hdr%nshiftk)
-        fmt =f"i4,i4,f8,f8,i4,(3,3)i4,(3,3)i4,({nshiftk_orig},3)f8,({nshiftk},3)f8"
+        # write(unit,err=10, iomsg=errmsg) &
+        # & hdr%kptopt, hdr%pawcpxocc, hdr%nelect, hdr%charge, &
+        # & hdr%icoulomb, hdr%kptrlatt,hdr%kptrlatt_orig, &
+        # & hdr%shiftk_orig(:,1:hdr%nshiftk_orig), &
+        # & hdr%shiftk(:,1:hdr%nshiftk)
+        fmt = f"i4,i4,f8,f8,i4,(3,3)i4,(3,3)i4,({nshiftk_orig},3)f8,({nshiftk},3)f8"
         record = record_abinit(self.fWFK, fmt)[0]
 
         # 6th record: skip it
-            # read(unit, err=10, iomsg=errmsg) hdr%title(ipsp), &
-            # & hdr%znuclpsp(ipsp), hdr%zionpsp(ipsp), hdr%pspso(ipsp), &
-            # & hdr%pspdat(ipsp), hdr%pspcod(ipsp), hdr%pspxc(ipsp), &
-            # & hdr%lmn_size(ipsp), hdr%md5_pseudos(ipsp)
+        # read(unit, err=10, iomsg=errmsg) hdr%title(ipsp), &
+        # & hdr%znuclpsp(ipsp), hdr%zionpsp(ipsp), hdr%pspso(ipsp), &
+        # & hdr%pspdat(ipsp), hdr%pspcod(ipsp), hdr%pspxc(ipsp), &
+        # & hdr%lmn_size(ipsp), hdr%md5_pseudos(ipsp)
         for ipsp in range(npsp):
             record = record_abinit(self.fWFK, "a132,f8,f8,5i4,a32")[0]
 
         # 7th record: additional records if usepaw=1
         if usepaw == 1:
-            record_abinit(self.fWFK,"i4")
-            record_abinit(self.fWFK,"i4")
+            record_abinit(self.fWFK, "i4")
+            record_abinit(self.fWFK, "i4")
 
         # Set as attributes quantities that need to be retrieved by the rest of methods
         self.nband = nband
@@ -295,7 +295,7 @@ class ParserAbinit():
         nspinor = 2 if self.spinor else 1
 
         # We need to skip lines in fWFK until we reach the lines of ik
-        for i in range(self.kpt_count, ik+1):
+        for i in range(self.kpt_count, ik + 1):
 
             if self.kpt_count < ik:
                 skip = True
@@ -338,7 +338,7 @@ class ParserAbinit():
         return CG, eigen, kg
 
         # Check orthonormality for norm-conserving pseudos
-        #if self.usepaw == 0:
+        # if self.usepaw == 0:
         #    largest_value = np.max(np.abs(CG.conj().dot(CG.T)
         #                                  - np.eye(IBend - IBstart)))
         #    assert largest_value < 1e-10, "Wave functions are not orthonormal"
@@ -408,10 +408,10 @@ class ParserVasp:
         l = next(fpos)
         if l[0] in ['s', 'S']:
             l = next(fpos)
-        cartesian=False
-        if l[0].lower()=='c':
-            cartesian=True
-        elif l[0].lower()!='d':
+        cartesian = False
+        if l[0].lower() == 'c':
+            cartesian = True
+        elif l[0].lower() != 'd':
             raise RuntimeError(
                 'only "direct" or "cartesian"atomic coordinates are supproted')
         positions = np.zeros((np.sum(nat), 3))
@@ -485,11 +485,12 @@ class ParserVasp:
         if spinor and npw % 2 != 0:
             raise RuntimeError(f"odd number of coefs {npw} for spinor wavefunctions")
         kpt = r[1:4]
-        Energy = np.array(r[4 : 4 + NBin * 3]).reshape(NBin, 3)[:, 0]
+        Energy = np.array(r[4: 4 + NBin * 3]).reshape(NBin, 3)[:, 0]
         WF = np.zeros((NBin, npw), dtype=np.complex64)
         for ib in range(NBin):
             WF[ib] = self.fWAV.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)
         return WF, Energy, kpt, npw
+
 
 class ParserEspresso:
     '''
@@ -556,18 +557,18 @@ class ParserEspresso:
 
         # Parse number of bands
         try:
-            NBin_dw=int(self.bandstr.find('nbnd_dw').text)
-            NBin_up=int(self.bandstr.find('nbnd_up').text)
-            spinpol=True
+            NBin_dw = int(self.bandstr.find('nbnd_dw').text)
+            NBin_up = int(self.bandstr.find('nbnd_up').text)
+            spinpol = True
             print(f"spin-polarised bandstructure composed of {NBin_up} up and {NBin_dw} dw states")
-            NBin_dw+NBin_up
+            NBin_dw + NBin_up
         except AttributeError:
-            spinpol=False
-            NBin=int(self.bandstr.find('nbnd').text)
+            spinpol = False
+            NBin = int(self.bandstr.find('nbnd').text)
 
         try:
             EF = float(self.bandstr.find("fermi_energy").text) * Hartree_eV
-        except:
+        except Exception:
             EF = None
 
         if spinpol:
@@ -610,7 +611,7 @@ class ParserEspresso:
         positions = []
         for at in struct.find("atomic_positions").findall("atom"):
             positions.append(at.text.split())
-        positions = np.dot(np.array(positions, dtype=float)*BOHR,
+        positions = np.dot(np.array(positions, dtype=float) * BOHR,
                       np.linalg.inv(lattice))
 
         # Parse indices denoting type of atom
@@ -643,7 +644,7 @@ class ParserEspresso:
             `up` for spin up, `dw` for spin down, `None` if not spin polarized
         verbosity : int, default=0
             Verbosity level. Default set to minimalistic printing
-       
+
 
         Returns
         -------
@@ -668,31 +669,31 @@ class ParserEspresso:
         npwtot = npw * (2 if self.spinor else 1)
 
         # Open file with the wave functions
-        wfcname = f"wfc{'' if spin_channel is None else spin_channel}{ik+1}"
+        wfcname = f"wfc{'' if spin_channel is None else spin_channel}{ik + 1}"
         fWFC = None
         checked_files = []
-        for extension in ["hdf5","dat"]:
-            for strcase in [str.lower,str.upper]:
+        for extension in ["hdf5", "dat"]:
+            for strcase in [str.lower, str.upper]:
                 filename = f"{self.prefix}.save/{strcase(wfcname)}.{extension}"
                 if os.path.exists(filename):
-                    if extension=="hdf5":
-                        fWFC = h5py.File(filename,'r')
+                    if extension == "hdf5":
+                        fWFC = h5py.File(filename, 'r')
                         attrnames = ['gamma_only', 'igwx', 'ik', 'ispin', 'nbnd', 'ngw', 'npol', 'scale_factor', 'xk']
-                        attributes =  []
+                        attributes = []
                         for atr in attrnames:
                             attributes.append(fWFC.attrs[atr])
 
                         _gamma_only, _igwx, ik, _ispin, _nbnd, _ngw, _npol, _scale_factor, xk = attributes
                         kpt = np.array(xk)
-                        Miller_Indices =  fWFC['MillerIndices']
-                        B = np.array([Miller_Indices.attrs[f'bg{i}'] for i in range(1,4)])
+                        Miller_Indices = fWFC['MillerIndices']
+                        B = np.array([Miller_Indices.attrs[f'bg{i}'] for i in range(1, 4)])
                         kg = np.array(Miller_Indices[::])
                         kpt = kpt.dot(np.linalg.inv(B))
                         # Parse coefficients of wave functions
-                        evc = np.array(fWFC['evc'],dtype=float)
-                        WF = evc[:,0::2] + 1.0j * evc[:,1::2]
+                        evc = np.array(fWFC['evc'], dtype=float)
+                        WF = evc[:, 0::2] + 1.0j * evc[:, 1::2]
                     else:
-                        fWFC=FF(filename,"r")
+                        fWFC = FF(filename, "r")
                         rec = record_abinit(fWFC, "i4,3f8,i4,i4,f8")[0]
                         kpt = rec[1]  # cartesian coords of k-point
 
@@ -715,7 +716,7 @@ class ParserEspresso:
                     return WF, Energy, kg, kpt
                 checked_files.append(filename)
         raise RuntimeError(f"Wavefunction file not found. Tried files: {checked_files}")
-        
+
 
 class ParserW90:
     '''
@@ -727,7 +728,7 @@ class ParserW90:
         Part of the path that serves as prefix for the `wannier90.win` file.
         For example: if the path is `./foo/bar.win`, then `prefix` is 
         `foo/bar`
-    
+
     Attributes
     ----------
     prefix : str
@@ -852,7 +853,7 @@ class ParserW90:
                         l1 = next(self.iterwin)
                         if l1[0] == "end":
                             if l1[1] != l[1]:
-                                raise RuntimeError(f"'{ ' '.join(l) }' ended with 'end {l1[1]}'")
+                                raise RuntimeError(f"'{' '.join(l)}' ended with 'end {l1[1]}'")
                             else:
                                 break
                         nameat.append(l1[0])
@@ -918,26 +919,26 @@ class ParserW90:
             return self.parse_kpoint_formatted(ik, selectG)
         else:
             return self.parse_kpoint_unformatted(ik, selectG)
-    
-    
+
+
     def parse_kpoint_formatted(self, ik, selectG):
         fname = f"UNK{ik:05d}.{'NC' if self.spinor else '1'}"
-        print (f"parse_kpoint_formatted: {fname}")
+        print(f"parse_kpoint_formatted: {fname}")
         fUNK = open(fname, "r")
         ngx, ngy, ngz, ik_in, nbnd = (int(x) for x in fUNK.readline().split())
         ngtot = ngx * ngy * ngz
         nspinor = 2 if self.spinor else 1
         self.check_ik_nb(ik_in, ik, nbnd, fname)
         # Parse WF coefficients
-        WF_in = np.loadtxt(fUNK, dtype = complex)
-        WF_in = WF_in[:,0] + 1.0j * WF_in[:,1]
+        WF_in = np.loadtxt(fUNK, dtype=complex)
+        WF_in = WF_in[:, 0] + 1.0j * WF_in[:, 1]
         fUNK.close()
         WF = []
         for ib in range(self.NBin):
             WF_tmp = []
             for i in range(nspinor):
-                i_start = ib*nspinor*ngtot + i*ngtot
-                cg_tmp = WF_in[i_start:i_start+ngtot]
+                i_start = ib * nspinor * ngtot + i * ngtot
+                cg_tmp = WF_in[i_start:i_start + ngtot]
                 cg_tmp = cg_tmp.reshape((ngx, ngy, ngz), order="F")
                 cg_tmp = np.fft.fftn(cg_tmp)
                 WF_tmp.append(cg_tmp[selectG])
@@ -945,8 +946,8 @@ class ParserW90:
         WF = np.array(WF)
         return WF
 
-                
-    def check_ik_nb(self,ik_in, ik, nbnd, fname):
+
+    def check_ik_nb(self, ik_in, ik, nbnd, fname):
         """Checks of consistency between UNK and .win"""
         if ik_in != ik:
             raise RuntimeError(f"file {fname} contains point number {ik_in}, expected {ik}")
@@ -1017,7 +1018,7 @@ class ParserW90:
         ----------
         name : str
             Name of the block in .win file.
-        
+
         Raises
         ------
         RuntimeError
@@ -1067,7 +1068,7 @@ class ParserW90:
             else:
                 return default
         if len(i) > 1:
-            raise RuntimeError( f"parameter {key} was found {len(i)} times in {self.prefix}.win")
+            raise RuntimeError(f"parameter {key} was found {len(i)} times in {self.prefix}.win")
 
         x = self.fwin[i[0]][1:]  # mp_grid should work
         if len(x) > 1:
@@ -1078,7 +1079,8 @@ class ParserW90:
         else:
             x = self.fwin[i[0]][1]
         return tp(x)
-    
+
+
 class ParserGPAW:
 
     """
@@ -1090,13 +1092,13 @@ class ParserGPAW:
         instance of GPAW class or the name of the file containing it
     """
 
-    def __init__(self, calculator,spinor=False):
+    def __init__(self, calculator, spinor=False):
         from gpaw import GPAW
         if isinstance(calculator, str):
             calculator = GPAW(calculator)
         self.calculator = calculator
         self.nband = self.calculator.get_number_of_bands()
-        print ("spinor",spinor)
+        print("spinor", spinor)
         self.spinor = spinor
         if self.spinor:
             from gpaw import spinorbit
@@ -1108,26 +1110,26 @@ class ParserGPAW:
         Lattice = self.calculator.atoms.cell
         typat = self.calculator.atoms.get_atomic_numbers()
         positions = self.calculator.atoms.get_scaled_positions()
-        EF_in = self.calculator.get_fermi_level() 
-        return (self.nband*(1+int(self.spinor)), kpred, Lattice, self.spinor, typat, positions, EF_in)
+        EF_in = self.calculator.get_fermi_level()
+        return (self.nband * (1 + int(self.spinor)), kpred, Lattice, self.spinor, typat, positions, EF_in)
 
-    def parse_kpoint(self,ik, RecLattice, Ecut):
+    def parse_kpoint(self, ik, RecLattice, Ecut):
         WF = np.array([
-            self.calculator.get_pseudo_wave_function(kpt=ik,band=ib, periodic=True) for ib in range(self.nband)])
+            self.calculator.get_pseudo_wave_function(kpt=ik, band=ib, periodic=True) for ib in range(self.nband)])
         ngx, ngy, ngz = WF.shape[1:]
         WF = np.fft.fftn(WF, axes=(1, 2, 3))
         kpt = self.calculator.get_ibz_k_points()[ik]
         kg = calc_gvectors(kpt,
                            RecLattice,
-                            Ecut,
-                            spinor=False,
-                            nplanemax=np.max([ngx, ngy, ngz]) // 2
+                           Ecut,
+                           spinor=False,
+                           nplanemax=np.max([ngx, ngy, ngz]) // 2
                             )
         selectG = tuple(kg[0:3])
-        WF=np.array([wf[selectG] for wf in WF])
+        WF = np.array([wf[selectG] for wf in WF])
         if self.spinor:
-            v_kmn = self.soc.eigenvectors() 
-            psit0_mG = v_kmn[ik, :,  ::2] @ WF
+            v_kmn = self.soc.eigenvectors()
+            psit0_mG = v_kmn[ik, :, ::2] @ WF
             psit1_mG = v_kmn[ik, :, 1::2] @ WF
             WF = np.hstack([psit0_mG, psit1_mG])
             energies = self.soc.eigenvalues()[ik]

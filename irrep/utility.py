@@ -43,20 +43,21 @@ class FortranFileR(fortio.FortranFile):
 
         try:  # assuming there are not subrecords
             super().__init__(filename,
-			     mode='r',
-			     header_dtype='uint32',
-			     auto_endian=True,
-			     check_file=True
-			     )
+                             mode='r',
+                             header_dtype='uint32',
+                             auto_endian=True,
+                             check_file=True
+                             )
             print("Long records not found in ", filename)
         except ValueError:  # there are subrecords, allow negative markers
             print(f"File '{filename}' contains subrecords - using header_dtype='int32'")
             super().__init__(filename,
-			     mode='r',
-			     header_dtype='int32',
-			     auto_endian=True,
-			     check_file=True
-			     )
+                             mode='r',
+                             header_dtype='int32',
+                             auto_endian=True,
+                             check_file=True
+                             )
+
 
 def str2list(string):
     """
@@ -137,7 +138,7 @@ def str2bool(v1):
     ---------
     v1 : str
         String to convert.
-    
+
     Returns
     -------
     bool
@@ -186,9 +187,9 @@ def is_round(A, prec=1e-14):
     bool
         `True` if all elements are integers, `False` otherwise.
     """
-    return(np.linalg.norm(A - np.round(A)) < prec)
+    return (np.linalg.norm(A - np.round(A)) < prec)
 
-    
+
 def short(x, nd=3):
     """
     Format `float` or `complex` number.
@@ -245,7 +246,7 @@ def format_matrix(A):
         Description of the matrix. Ready to be printed.
     """
     return "".join("   ".join(f"{x.real:+5.2f} {x.imag:+5.2f}j" for x in a) + "\n"
-                        for a in A)
+                   for a in A)
 
 
 def log_message(msg, verbosity, level):
@@ -266,11 +267,11 @@ def log_message(msg, verbosity, level):
         print(msg)
 
 
-def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosity=1,
+def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf, verbosity=1,
                   debug_msg=""):
     """
     Orthogonalize a square matrix, using SVD
-    
+
     Parameters
     ----------
     A : array( (M,M), dtype=complex)
@@ -292,12 +293,14 @@ def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf , verbosit
         log_message(f"Warning: Matrix is not orthogonal \n {A} \n {debug_msg}", verbosity, 1)
     return u @ vh
 
+
 def sort_vectors(list_of_vectors):
     list_of_vectors = list(list_of_vectors)
-    print (list_of_vectors)
+    print(list_of_vectors)
     srt = arg_sort_vectors(list_of_vectors)
-    print (list_of_vectors, srt)
+    print(list_of_vectors, srt)
     return [list_of_vectors[i] for i in srt]
+
 
 def arg_sort_vectors(list_of_vectors):
     """
@@ -305,24 +308,26 @@ def arg_sort_vectors(list_of_vectors):
     First, the longer vector is "larger"
     second, we go element-by-element to compare
     first compare the angle of the complex number (clockwise from the x-axis), then the absolute value
-    
+
     Returns
     -------
     bool
         True if v1>v2, False otherwise
     """
-    if all( np.all(abs(np.array(key).imag)<1e-4) for key in list_of_vectors):
+    if all(np.all(abs(np.array(key).imag) < 1e-4) for key in list_of_vectors):
         def key(x):
             return np.real(x)
     else:
         def key(x):
-            return (np.angle(x)/(2*np.pi)+0.01)%1
+            return (np.angle(x) / (2 * np.pi) + 0.01) % 1
+
     def serialize(x, lenmax):
-        return [len(x)]+ [key(y) for y in x] + [0]*(lenmax-len(x))
+        return [len(x)] + [key(y) for y in x] + [0] * (lenmax - len(x))
     lenmax = max([len(x) for x in list_of_vectors])
     sort_key = [serialize(x, lenmax) for x in list_of_vectors]
     srt = np.lexsort(np.array(sort_key).T, axis=0)
     return srt
+
 
 def get_borders(E, thresh=1e-5, cyclic=False):
     """
@@ -347,10 +352,11 @@ def get_borders(E, thresh=1e-5, cyclic=False):
         return np.where(abs(E - np.roll(E, 1)) > thresh)[0]
     else:
         return np.hstack([
-                [0],
-                np.where(abs(E[1:] - E[:-1]) > thresh)[0] + 1,
-                [len(E)],
-            ])
+            [0],
+            np.where(abs(E[1:] - E[:-1]) > thresh)[0] + 1,
+            [len(E)],
+        ])
+
 
 def get_block_indices(E, thresh=1e-5, cyclic=False):
     """
@@ -376,6 +382,7 @@ def get_block_indices(E, thresh=1e-5, cyclic=False):
         return np.array([borders, np.roll(borders, -1)]).T
     else:
         return np.array([borders[:-1], borders[1:]]).T
+
 
 def grid_from_kpoints(kpoints, grid=None):
     """
@@ -420,6 +427,7 @@ def grid_from_kpoints(kpoints, grid=None):
     if len(kpoints_unique) < len(kpoints):
         warnings.warn("Some k-points are not on the grid or are repeated")
     return grid, selected_kpoints
+
 
 class UniqueList(list):
     """	
@@ -511,6 +519,7 @@ def all_close_mod1(a, b, tol=1e-5):
         return False
     diff = a - b
     return np.allclose(np.round(diff), diff, atol=tol)
+
 
 def vector_pprint(vector, fmt=None):
     """

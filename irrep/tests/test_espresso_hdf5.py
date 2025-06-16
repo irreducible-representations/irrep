@@ -6,6 +6,7 @@ import numpy as np
 
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 
+
 def test_espresso_hdf5():
 
     os.chdir(TEST_FILES_PATH / "espresso_hdf5")
@@ -54,7 +55,7 @@ def test_espresso_hdf5():
     assert np.allclose(kp_ref['characters'], kp_run['characters'], rtol=0., atol=1e-4)
     assert kp_ref['characters refUC is the same'] == kp_run['characters refUC is the same']
     assert np.allclose(kp_ref['dimensions'], kp_run['dimensions'], rtol=0., atol=1e-4)
-   
+
     # Remove output files created during run
     for test_output_file in (
             "irreptable-template",
@@ -62,4 +63,3 @@ def test_espresso_hdf5():
             "irrep-output.json"
     ):
         os.remove(test_output_file)
-

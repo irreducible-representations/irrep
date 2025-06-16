@@ -6,6 +6,7 @@ import numpy as np
 
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 
+
 def test_vasp_spinor():
 
     os.chdir(TEST_FILES_PATH / "vasp_spinor")

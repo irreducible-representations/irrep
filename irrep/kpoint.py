@@ -1,9 +1,9 @@
 
-            # ###   ###   #####  ###
-            # #  #  #  #  #      #  #
-            # ###   ###   ###    ###
-            # #  #  #  #  #      #
-            # #   # #   # #####  #
+# ###   ###   #####  ###
+# #  #  #  #  #      #  #
+# ###   ###   ###    ###
+# #  #  #  #  #      #
+# #   # #   # #####  #
 
 
 ##################################################################
@@ -22,6 +22,7 @@ import numpy.linalg as la
 import copy
 from .gvectors import symm_eigenvalues, symm_matrix
 from .utility import compstr, get_block_indices, is_round, format_matrix, log_message, orthogonalize, vector_pprint
+
 
 class Kpoint:
     """
@@ -61,8 +62,8 @@ class Kpoint:
     upper : float
         Energy of the state `IBend`+1. Used to calculate the gap with upper 
         bands.
-    
-    
+
+
     Attributes
     ----------
     spinor : bool
@@ -147,7 +148,7 @@ class Kpoint:
         symmetries=None,
         refUC=np.eye(3),
         normalize=True,
-        ):
+    ):
 
         self.spinor = spinor
         self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
@@ -179,10 +180,10 @@ class Kpoint:
             dkpt = np.array(np.round(k_rotated - self.k), dtype=int)
             if np.allclose(dkpt, k_rotated - self.k):
                 self.little_group.append(symop)
-        
 
-    def init_traces(self, degen_thresh=1e-8, verbosity=0, calculate_traces=True, refUC=np.eye(3), shiftUC=np.zeros(3), 
-                       symmetries_tables=None, save_wf=True):
+
+    def init_traces(self, degen_thresh=1e-8, verbosity=0, calculate_traces=True, refUC=np.eye(3), shiftUC=np.zeros(3),
+                    symmetries_tables=None, save_wf=True):
         """
         Continuation of __init__ method. Calculates traces of symmetry eigenvalues and irreps, when asked. 
         Separated because it is used in the `copy_sub` method.
@@ -210,9 +211,9 @@ class Kpoint:
         verbosity : int
             Verbosity level. Default set to minimalistic printing
         """
-        
+
         self.k_refUC = np.dot(refUC.T, self.k)
-        
+
         # Sort symmetries based on their indices
         argsort = np.argsort([symop.ind for symop in self.little_group])
         self.little_group = [self.little_group[ind] for ind in argsort]
@@ -227,17 +228,16 @@ class Kpoint:
 
             # Determine number of band inversions based on parity
             found = False
-            for i,sym in enumerate(self.little_group):
+            for i, sym in enumerate(self.little_group):
                 if (
-                    sum(abs(sym.translation)) < 1e-6
-                    and
+                    sum(abs(sym.translation)) < 1e-6 and
                     abs(sym.rotation + np.eye(3)).sum() < 1e-6
                 ):
                     found = True
                     break
             if found:
                 # Number of inversion odd states (not pairs!)
-                self.num_bandinvs = int(round(sum(self.degeneracies - self.char[:,i].real) / 2))
+                self.num_bandinvs = int(round(sum(self.degeneracies - self.char[:, i].real) / 2))
             else:
                 self.num_bandinvs = None
 
@@ -248,12 +248,12 @@ class Kpoint:
     def K(self):
         """Getter for the redfuced coordinates of the k-point
         needed to keep compatibility with banduppy
-        
+
         ACCESSED BY BANDUPPY.NEEDED TO PRESERVE COMPATIBILITY WITH 
         BANDUPPY<=0.3.3. AVOID CHANGING UNLESS NECESSARY.
         """
         return self.k
-    
+
     def k_close_mod1(self, kpt, prec=1e-6):
         """
         Check if the k-point is close to another k-point modulo 1. (in reduced 
@@ -269,7 +269,7 @@ class Kpoint:
         prec : float, default=1e-6
             Threshold to consider the k-points as equal.
         """
-        return is_round(self.k - kpt, prec = prec)
+        return is_round(self.k - kpt, prec=prec)
 
     def copy_sub(self, E, WF, kwargs_kpoint={}):
         """
@@ -291,7 +291,7 @@ class Kpoint:
             Instance of `Kpoints` corresponding to the group of states passed. 
             They are shorted by energy-levels.
         """
-        other = copy.copy(self) # copy of whose class
+        other = copy.copy(self)  # copy of whose class
         # Sort energy levels
         sortE = np.argsort(E)
         other.Energy_raw = E[sortE]
@@ -299,7 +299,7 @@ class Kpoint:
         other.num_bands = len(E)
         if kwargs_kpoint is not None:
             other.init_traces(**kwargs_kpoint)
-            other.identify_irreps()	
+            other.identify_irreps()
         return other
 
 
@@ -362,7 +362,7 @@ class Kpoint:
 
     @lru_cache
     def get_rho_spin(self, degen_thresh=1e-4):
-        """
+        r"""
         Evaluates the matrix <i|M|j> in every group of degenerate 
         bands labeled by i and j, where M is :math:`\sigma_0`, 
         :math:`\sigma_x`, :math:`\sigma_y` or :math:`\sigma_z` for 
@@ -401,9 +401,9 @@ class Kpoint:
                         np.array(
                             [
                                 [
-                                    self.WF[i, ng * s : ng * (s + 1)]
+                                    self.WF[i, ng * s: ng * (s + 1)]
                                     .conj()
-                                    .dot(self.WF[j, ng * t : ng * (t + 1)])
+                                    .dot(self.WF[j, ng * t: ng * (t + 1)])
                                     for j in range(b1, b2)
                                 ]
                                 for i in range(b1, b2)
@@ -421,7 +421,7 @@ class Kpoint:
                 result.append((b1, b2, E, (W,)))
         return result
 
-    def Separate(self, symop, groupKramers=True, verbosity=0, 
+    def Separate(self, symop, groupKramers=True, verbosity=0,
                  kwargs_kpoint={}):
         """
         Separate the band structure in a particular k-point according to the 
@@ -449,9 +449,9 @@ class Kpoint:
         norms = self.WF.conj().dot(self.WF.T)
         check = np.max(abs(norms - np.eye(norms.shape[0])))
         if check > 1e-5:
-            log_message(f"orthogonality (largest of diag. <psi_nk|psi_mk>): {check:7.5f} > 1e-5   \n", 
+            log_message(f"orthogonality (largest of diag. <psi_nk|psi_mk>): {check:7.5f} > 1e-5   \n",
                         verbosity, 1)
-            
+
 
         S = symm_matrix(
             self.k,
@@ -472,20 +472,20 @@ class Kpoint:
         if check > 0.001:
             msg = ("WARNING: matrix of symmetry has non-zero elements between "
                    "states of different energy:  \n", check)
-            log_message(msg, verbosity      , 1)
+            log_message(msg, verbosity, 1)
             msg = (f"Printing matrix of symmetry at k={self.k}")
-            log_message(msg, verbosity      , 1)
-            log_message(format_matrix(Sblock), verbosity      , 1)
-            log_message("The diagonal blocks", verbosity      , 1)
-            msg = ", ".join([f"{b1}:{b2} \n: {format_matrix(S[b1:b2,b1:b2])}" for b1, b2 in self.block_indices])
-            log_message(msg, verbosity      , 1)
-            
+            log_message(msg, verbosity, 1)
+            log_message(format_matrix(Sblock), verbosity, 1)
+            log_message("The diagonal blocks", verbosity, 1)
+            msg = ", ".join([f"{b1}:{b2} \n: {format_matrix(S[b1:b2, b1:b2])}" for b1, b2 in self.block_indices])
+            log_message(msg, verbosity, 1)
+
 
         # Calculate eigenvalues and eigenvectors in each block
         eigenvalues = []
         eigenvectors = []
         Eloc = []
-        for istate, (b1,b2) in  enumerate(self.block_indices):
+        for istate, (b1, b2) in enumerate(self.block_indices):
             S_loc = orthogonalize(S[b1:b2, b1:b2], verbosity=verbosity, error_threshold=1e-2, warning_threshold=1e-3)
             W, V = la.eig(S_loc)
             for w, v in zip(W, V.T):
@@ -495,12 +495,12 @@ class Kpoint:
                     np.hstack((np.zeros(b1), v, np.zeros(self.num_bands - b2)))
                 )
         w = np.array(eigenvalues)
-        v = np.array(eigenvectors).T # each col an eigenvector
+        v = np.array(eigenvectors).T  # each col an eigenvector
         Eloc = np.array(Eloc)
 
         # Check unitarity of the symmetry
         if np.abs((np.abs(w) - 1.0)).max() > 1e-4:
-            log_message(f"WARNING: some eigenvalues are not unitary: {w}",verbosity      ,1)
+            log_message(f"WARNING: some eigenvalues are not unitary: {w}", verbosity, 1)
         if np.abs((np.abs(w) - 1.0)).max() > 3e-1:
             raise RuntimeError(f" some eigenvalues are not unitary :{w} ")
         w /= np.abs(w)
@@ -519,12 +519,12 @@ class Kpoint:
             for b1, b2 in block_indices:
                 v1 = v[:, b1:b2]
                 subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.conj().dot(self.WF), kwargs_kpoint=kwargs_kpoint)
-            
+
         else:  # don't group Kramers pairs
-            
+
             # Sort based on the argument of eigenvalues
             # arg = np.argsort( (np.angle(w)/(2*np.pi)+0.01)%1 ) # to make sure that we start from the +1 and go anti-clockwise
-            arg = np.argsort( np.angle(w)) 
+            arg = np.argsort(np.angle(w))
             w = w[arg]
             v = v[:, arg]
             Eloc = Eloc[arg]
@@ -533,7 +533,7 @@ class Kpoint:
             for b1, b2 in block_indices:
                 v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
                 subspaces[np.roll(w, -b1)[: (b2 - b1) % self.num_bands].mean()] = self.copy_sub(
-                    E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands],  WF=v1.T.conj().dot(self.WF),  
+                    E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands], WF=v1.T.conj().dot(self.WF),
                     kwargs_kpoint=kwargs_kpoint
                 )
 
@@ -557,7 +557,7 @@ class Kpoint:
             Attribute `symmetries` of class `IrrepTable`. Each component is an 
             instance of class `SymopTable` corresponding to a symmetry operation
             in the "point-group" of the space-group.
-        
+
         Returns
         -------
         char : array
@@ -573,16 +573,16 @@ class Kpoint:
         char = []
         for symop in self.little_group:
             char.append(
-                    symm_eigenvalues(
-                        self.k,
-                        self.WF,
-                        self.ig,
-                        symop.rotation,
-                        symop.spinor_rotation,
-                        symop.translation,
-                        self.spinor,
-                        block_ind=self.block_indices if use_blocks else None
-                    ))
+                symm_eigenvalues(
+                    self.k,
+                    self.WF,
+                    self.ig,
+                    symop.rotation,
+                    symop.spinor_rotation,
+                    symop.translation,
+                    self.spinor,
+                    block_ind=self.block_indices if use_blocks else None
+                ))
         char = np.array(char)
 
         # Check that number of irreps is int
@@ -595,7 +595,7 @@ class Kpoint:
         # Sum traces of degenerate states. Rows (cols) correspond to states (syms)
         char = np.array(
             [char[:, start:end].sum(axis=1) for start, end in self.block_indices]
-            )
+        )
 
         # Take average of energies over degenerate states
         Energy_mean = np.array(
@@ -605,13 +605,13 @@ class Kpoint:
         # Transfer traces in calculational cell to refUC
         char_refUC = char.copy()
         if (not np.allclose(refUC, np.eye(3, dtype=float)) or
-            not np.allclose(shiftUC, np.zeros(3, dtype=float))):
+                not np.allclose(shiftUC, np.zeros(3, dtype=float))):
             # Calculational and reference cells are not identical
-            for i,sym in enumerate(self.little_group):
-                dt = (symmetries_tables[sym.ind-1].t 
-                      - sym.translation_refUC(refUC, shiftUC))
-                char_refUC[:,i] *= (sym.sign 
-                                     * np.exp(-2j*np.pi*dt.dot(self.k_refUC)))
+            for i, sym in enumerate(self.little_group):
+                dt = (symmetries_tables[sym.ind - 1].t -
+                      sym.translation_refUC(refUC, shiftUC))
+                char_refUC[:, i] *= (sym.sign *
+                                     np.exp(-2j * np.pi * dt.dot(self.k_refUC)))
 
         return char, char_refUC, Energy_mean
 
@@ -637,12 +637,12 @@ class Kpoint:
         self.onlytraces = irreptable is None
         if self.onlytraces:
             # irreps = ["None"] * (len(self.degeneracies) - 1)  # here was a -1, IDK why
-            irreps = ["None"] * (len(self.degeneracies) )  # removed the -1
+            irreps = ["None"] * (len(self.degeneracies))  # removed the -1
 
         else:
 
-            # irreps is a list. Each element is a dict corresponding to a 
-            # group of degen. states. Every key is an irrep and its value 
+            # irreps is a list. Each element is a dict corresponding to a
+            # group of degen. states. Every key is an irrep and its value
             # the multiplicity of the irrep in the rep. of degen. states
             try:
                 irreps = []
@@ -702,13 +702,13 @@ class Kpoint:
         else:
             aux1 = ''
         irreplen = max(len(irr) for irr in str_irreps)
-        #if irreplen % 2 == 1:
+        # if irreplen % 2 == 1:
         #    irreplen += 1
-        #aux2 = " " * int(irreplen / 2 - 3)
-        num_spaces = (irreplen-8) / 2
+        # aux2 = " " * int(irreplen / 2 - 3)
+        num_spaces = (irreplen - 8) / 2
         aux2 = " " * int(num_spaces)
         if irreplen % 2 == 0:
-            aux3 = aux2 
+            aux3 = aux2
         else:
             aux3 = aux2 + " "
 
@@ -762,7 +762,7 @@ class Kpoint:
         json_data['k_refUC'] = self.k_refUC
 
         indices_symmetries = [sym.ind for sym in self.little_group]
-        json_data ['symmetries'] = list(indices_symmetries)
+        json_data['symmetries'] = list(indices_symmetries)
 
         # Energy levels and degeneracies
         json_data['energies_mean'] = self.Energy_mean
@@ -771,7 +771,7 @@ class Kpoint:
 
         # Irreps and multiplicities
         if self.onlytraces:
-            json_data['irreps'] = None 
+            json_data['irreps'] = None
         else:
             json_data['irreps'] = []
             for state in self.irreps:
@@ -787,9 +787,9 @@ class Kpoint:
             json_data['characters refUC is the same'] = True
         else:
             json_data['characters refUC is the same'] = False
-        
+
         return json_data
-        
+
     def write_irrepsfile(self, file):
         '''
         Write the irreps of this k point into `irreps.dat` file.
@@ -811,7 +811,7 @@ class Kpoint:
         writeimaginary = np.abs(self.character.imag).max() > 1e-4
         s = []
         for e, dim, char in zip(self.Energy_mean, self.degeneracies, self.character):
-            s_loc = f'{kpl:8.4f}   {e-efermi:8.4f}      {dim:5d}   '
+            s_loc = f'{kpl:8.4f}   {e - efermi:8.4f}      {dim:5d}   '
             for tr in char:
                 s_loc += f"{tr.real:8.4f}"
                 if writeimaginary:
@@ -861,7 +861,7 @@ class Kpoint:
         # Line 2: indices of syms in the little cogroup
         # Line 3: for each band introduce a row with the followind data:
         # (1) 1+number of bands below, (2) dimension (degeneracy) of the band,
-        # (3) energy and eigenvalues (real part, imaginary part) for each 
+        # (3) energy and eigenvalues (real part, imaginary part) for each
         # symmetry operation of the little group (listed above).
         indices = [symop.ind for symop in self.little_group]
         res = (f"{len(self.little_group)} \n {'  '.join(str(x) for x in indices)} \n")
@@ -870,9 +870,9 @@ class Kpoint:
         res += (
             "\n".join(
                 f" {ib:8d}  {d:8d}   {e:8.4f} " + "  ".join(f"{c.real:10.6f}   {c.imag:10.6f} " for c in ch)
-                    for e, d, ib, ch in zip(self.Energy_mean, self.degeneracies, IB, self.char)
-                    )
-            + "\n"
+                for e, d, ib, ch in zip(self.Energy_mean, self.degeneracies, IB, self.char)
+            ) +
+            "\n"
         )
         return res
 
@@ -898,7 +898,7 @@ class Kpoint:
         #        print (self.ig.T)
         #        print (igsize)
         res = np.zeros((self.num_bands, other.num_bands), dtype=complex)
-        
+
         # short again coefficients of expansions
         for s in [0, 1] if self.spinor else [0]:
             WF1 = np.zeros((self.num_bands, igsize[0], igsize[1], igsize[2]), dtype=complex)
@@ -926,8 +926,8 @@ class Kpoint:
             for i, ig in enumerate(self.ig.T):
                 WF1[:, ig[0], ig[1], ig[2]] = self.WF[:, i + s * self.ig.shape[1]]
             #            print ("wfsum",WF1.sum()," shape ",WF1.shape,loc_grid.shape)
-            res += np.array([ np.sum(np.abs(np.fft.ifftn(WF1[ib])) ** 2 * loc_grid).real
-                                for ib in range(self.num_bands)])
+            res += np.array([np.sum(np.abs(np.fft.ifftn(WF1[ib])) ** 2 * loc_grid).real
+                             for ib in range(self.num_bands)])
         print("    ", loc_grid.shape)
         return res * (np.prod(loc_grid.shape))
 

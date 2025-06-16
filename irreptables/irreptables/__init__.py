@@ -1,8 +1,13 @@
-            # ###   ###   #####  ###
-            # #  #  #  #  #      #  #
-            # ###   ###   ###    ###
-            # #  #  #  #  #      #
-            # #   # #   # #####  #
+from irrep.utility import str2bool, str2list_space, str_, log_message
+import numpy as np
+import logging
+import os
+
+# ###   ###   #####  ###
+# #  #  #  #  #      #  #
+# ###   ###   ###    ###
+# #  #  #  #  #      #
+# #   # #   # #####  #
 
 
 ##################################################################
@@ -10,18 +15,12 @@
 ## "IrRep" code and under terms of GNU General Public license v3 #
 ## see LICENSE file in the                                       #
 ##                                                               #
-##  Written by Stepan Tsirkin, University of Zurich.             #
-##  e-mail: stepan.tsirkin@physik.uzh.ch                         #
+##  Written by Stepan Tsirkin                                    #
+##  e-mail: stepan.tsirkin@epfl.ch                               #
 ##################################################################
 
-__version__="2.0.0"
+__version__ = "2.0.0"
 
-import copy
-import os
-import sys
-import logging
-import numpy as np
-from irrep.utility import str2bool, str2list_space, str_, log_message
 
 # using a logger to print useful information during debugging,
 # set to logging.INFO to disable debug messages
@@ -88,7 +87,8 @@ class SymopTable:
         -------
         str
         """
-        s = " ".join(map(str, self.R.flatten())) + "   " + " ".join(str_(x) for x in self.t)
+        s = " ".join(map(str, self.R.flatten())) + "   " + \
+            " ".join(str_(x) for x in self.t)
         if spinor:
             S_flat = self.S.flatten()
             s += "   " + " ".join(str_(abs(x)) for x in S_flat)
@@ -101,7 +101,7 @@ class KPoint:
     Organizes the info about a maximal k-point and contains routines to print 
     it. This info is obtained by parsing the parameter `line` or passed 
     directly as `name`, `k` and `isym`.
-    
+
     Parameters
     ----------
     name : str, default=None
@@ -114,7 +114,7 @@ class KPoint:
         and stored in `IrrepTable.symmetries`. 
     line : str, default=None
         Line to be parsed. 
-    
+
     Attributes
     ----------
     name : str
@@ -243,9 +243,10 @@ class Irrep:
         self.dim = int(line[1])
         self.nsym = len(k_point.isym)
         self.reality = len(line[2:]) == self.nsym
-        ch = np.array(line[2 : 2 + self.nsym], dtype=float)
+        ch = np.array(line[2: 2 + self.nsym], dtype=float)
         if not self.reality:
-            ch = ch * np.exp(1.0j * np.pi * np.array(line[2 + self.nsym : 2 + 2 * self.nsym], dtype=float))
+            ch = ch * \
+                np.exp( 1.0j * np.pi * np.array(line[2 + self.nsym: 2 + 2 * self.nsym], dtype=float))
         self.characters = {k_point.isym[i]: ch[i] for i in range(self.nsym)}
         log_message(f"## Irrep {self.name}\nCharacter:\n{self.characters}", v, 2)
         assert len(self.characters) == self.nsym
@@ -268,7 +269,8 @@ class Irrep:
             dimension and character of the irrep.
         """
         logger.debug(self.characters)
-        ch = np.array([self.characters[isym] for isym in sorted(self.characters)])
+        ch = np.array([self.characters[isym]
+                      for isym in sorted(self.characters)])
         if np.abs(np.imag(ch)).max() > 1e-6:
             str_ch = "   " + "  ".join(str_(x) for x in np.abs(ch))
             str_ch += "   " + "  ".join(str_(x) for x in np.angle(ch) / np.pi)
@@ -377,12 +379,13 @@ class IrrepTable:
                 kp = KPoint(line=l)
                 msg = f"k-point successfully read:\n{kp.str()}"
                 log_message(msg, v, 2)
-            except Exception as err:
+            except Exception as err1:
                 try:
                     self.irreps.append(Irrep(line=l, k_point=kp, v=v))
-                except Exception as err:
+                except Exception as err2:
                     if len(l.split()) > 0:
-                        log_message(f"WARNING: could not parse k-point nor irrep from the following line <\n{l}>", v, 2)
+                        log_message(
+                            f"WARNING: could not parse k-point nor irrep from the following line <\n{l}>\n errors are \n {err1} \n {err2}", v, 2)
                     else:
                         pass
 
@@ -408,4 +411,3 @@ class IrrepTable:
             print(i + 1, "\n", s.R, "\n", s.t, "\n", s.S, "\n\n")
         for irr in self.irreps:
             irr.show()
-
