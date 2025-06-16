@@ -470,15 +470,13 @@ class Kpoint:
             Sblock[b1:b2, b1:b2] = 0
         check = np.max(abs(Sblock))
         if check > 0.001:
-            msg = ("WARNING: matrix of symmetry has non-zero elements between "
-                   "states of different energy:  \n", check)
-            log_message(msg, verbosity, 1)
-            msg = (f"Printing matrix of symmetry at k={self.k}")
-            log_message(msg, verbosity, 1)
+            log_message("WARNING: matrix of symmetry has non-zero elements between "
+                        f"states of different energy:  {check} \n", verbosity, 1)
+            log_message(f"Printing matrix of symmetry at k={self.k}", verbosity, 1)
             log_message(format_matrix(Sblock), verbosity, 1)
             log_message("The diagonal blocks", verbosity, 1)
-            msg = ", ".join([f"{b1}:{b2} \n: {format_matrix(S[b1:b2, b1:b2])}" for b1, b2 in self.block_indices])
-            log_message(msg, verbosity, 1)
+            log_message(", ".join([f"{b1}:{b2} \n: {format_matrix(S[b1:b2, b1:b2])}" for b1, b2 in self.block_indices])
+                        , verbosity, 1)
 
 
         # Calculate eigenvalues and eigenvectors in each block
@@ -588,8 +586,7 @@ class Kpoint:
         # Check that number of irreps is int
         Nirrep = np.linalg.norm(char.sum(axis=1)) ** 2 / char.shape[0]
         if abs(Nirrep - round(Nirrep)) > 1e-2:
-            msg = f"WARNING - non-integer number of states : {Nirrep}"
-            log_message(msg, verbosity, 2)
+            log_message(f"WARNING - non-integer number of states : {Nirrep}", verbosity, 2)
         Nirrep = int(round(Nirrep))
 
         # Sum traces of degenerate states. Rows (cols) correspond to states (syms)

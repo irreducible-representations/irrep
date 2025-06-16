@@ -92,8 +92,7 @@ def calc_gvectors(
 
 """
 
-    msg = f"Generating plane waves at k: ({' '.join(f'{x:6.3f}' for x in K)})"
-    log_message(msg, verbosity, 2)
+    log_message(f"Generating plane waves at k: ({' '.join(f'{x:6.3f}' for x in K)})", verbosity, 2)
     if Ecut1 <= 0:
         Ecut1 = Ecut
     B = RecLattice
@@ -105,8 +104,7 @@ def calc_gvectors(
     for N in range(nplanemax):
         flag = True
         if N % 10 == 0:
-            msg = f'Cycle {N:>3d}: number of plane waves = {len(igall):>10d}'
-            log_message(msg, verbosity, 2)
+            log_message(f'Cycle {N:>3d}: number of plane waves = {len(igall):>10d}', verbosity, 2)
         if len(igall) >= nplane / 2:    # Only enters if vasp
             if spinor:
                 break

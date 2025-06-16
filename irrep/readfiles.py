@@ -169,9 +169,8 @@ class ParserAbinit():
         headform, fform = record[0][1]
         defversion = ['8.6.3', '9.6.2', '8.4.4', '8.10.3']
         if codsvn not in defversion:
-            msg = (f"WARNING, the version {codsvn} of abinit is not in {defversion} "
-                   "and may not be fully tested")
-            log_message(msg, verbosity, 1)
+            log_message(f"WARNING, the version {codsvn} of abinit is not in {defversion} "
+                        "and may not be fully tested", verbosity, 1)
         if headform < 80:
             raise ValueError(f"Head form {headform}<80 is not supported")
 
@@ -391,8 +390,7 @@ class ParserVasp:
             Each element is a number identifying the atomic species of an ion.
         """
 
-        msg = f'Reading POSCAR: {self.fPOS}'
-        log_message(msg, verbosity, 1)
+        log_message(f'Reading POSCAR: {self.fPOS}', verbosity, 1)
         fpos = (l.strip() for l in open(self.fPOS))
         title = next(fpos)  # title
         del title
@@ -423,7 +421,7 @@ class ParserVasp:
                 positions[i] = np.array(l.split()[:3])
                 i += 1
             except Exception as err:
-                log_message(err, msg, 1)
+                log_message(err, verbosity, 1)
                 pass
         if sum(nat) != i:
             raise RuntimeError(f"not all atomic positions were read : {i} of {sum(nat)}")
@@ -705,8 +703,7 @@ class ParserEspresso:
                         B = np.array(rec)
                         rec = record_abinit(fWFC, f"({igwx},3)i4")
                         kg = np.array(rec)
-                        msg = f'npwtot: {npwtot}, igwx: {igwx}'
-                        log_message(msg, verbosity, 2)
+                        log_message(f'npwtot: {npwtot}, igwx: {igwx}', verbosity, 2)
                         kpt = kpt.dot(np.linalg.inv(B))
                         # Parse coefficients of wave functions
                         WF = np.zeros((NBin, npwtot), dtype=complex)

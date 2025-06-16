@@ -337,11 +337,9 @@ class IrrepTable:
                     spinor="spin" if self.spinor else "scal",
                     root=os.path.dirname(__file__),
                 )
-            msg = f"Reading standard irrep table <{name}>"
-            log_message(msg, v, 2)
+            log_message(f"Reading standard irrep table <{name}>", v, 2)
         else:
-            msg = f"Reading a user-defined irrep table <{name}>"
-            log_message(msg, v, 2)
+            log_message(f"Reading a user-defined irrep table <{name}>", v, 2)
 
         log_message("\n---------- DATA FROM THE TABLE ----------\n", v, 2)
         lines = open(name).readlines()[-1::-1]
@@ -369,16 +367,14 @@ class IrrepTable:
                         pass
                 break
 
-        msg = "Symmetries are:\n" + "\n".join(s.str() for s in self.symmetries)
-        log_message(msg, v, 2)
+        log_message("Symmetries are:\n" + "\n".join(s.str() for s in self.symmetries), v, 2)
 
         self.irreps = []
         while len(lines) > 0:
             l = lines.pop().strip()
             try:
                 kp = KPoint(line=l)
-                msg = f"k-point successfully read:\n{kp.str()}"
-                log_message(msg, v, 2)
+                log_message(f"k-point successfully read:\n{kp.str()}", v, 2)
             except Exception as err1:
                 try:
                     self.irreps.append(Irrep(line=l, k_point=kp, v=v))

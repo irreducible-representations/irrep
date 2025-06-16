@@ -155,9 +155,9 @@ class SymmetryOperation():
         """
         accur = 1e-4
 
-        def is_close_int(x): 
+        def is_close_int(x):
             return abs((x + 0.5) % 1 - 0.5) < accur
-        
+
         api = self.angle / np.pi
         if abs(api) < 0.01:
             return " 0 "
@@ -990,11 +990,9 @@ class SpaceGroupIrreps(SpaceGroup):
         else:
             sorted_symmetries = []
             try:
-                ind, dt, signs, U = self.match_symmetries(
-                    signs=self.spinor,
-                    trans_thresh=trans_thresh,
-                    only_u_symmetries=False
-                )
+                ind, dt, signs, U = self.match_symmetries(signs=self.spinor,
+                                                          trans_thresh=trans_thresh,
+                                                          only_u_symmetries=False)
                 args = np.argsort(ind)
                 self.spin_transf = U
                 symmetries = self.symmetries
@@ -1004,20 +1002,19 @@ class SpaceGroupIrreps(SpaceGroup):
                     sorted_symmetries.append(symmetries[i_ind])
             except RuntimeError:
                 if search_cell:  # symmetries must match to identify irreps
-                    raise RuntimeError((
+                    raise RuntimeError(
                         "refUC and shiftUC don't transform the cell to one where "
                         "symmetries are identical to those read from tables. "
-                        "Try without specifying refUC and shiftUC."
-                    ))
+                        "Try without specifying refUC and shiftUC.")
                 elif refUC is not None or shiftUC is not None:
                     # User specified refUC or shiftUC in CLI. He/She may
                     # want the traces in a cell that is not neither the
                     # one in tables nor the DFT one
-                    msg = ("WARNING: refUC and shiftUC don't transform the cell to "
-                           "one where symmetries are identical to those read from "
-                           "tables. If you want to achieve the same cell as in "
-                           "tables, try not specifying refUC and shiftUC.")
-                    log_message(msg, verbosity, 1)
+                    log_message("WARNING: refUC and shiftUC don't transform the cell to "
+                                "one where symmetries are identical to those read from "
+                                "tables. If you want to achieve the same cell as in "
+                                "tables, try not specifying refUC and shiftUC.",
+                                verbosity, 1)
             self.symmetries = sorted_symmetries
 
 
@@ -1374,29 +1371,25 @@ class SpaceGroupIrreps(SpaceGroup):
         elif refUC_cli_bool and not shiftUC_cli_bool:  # shiftUC not given in CLI.
             refUC = refUC_cli.T  # User sets refUC as if it was acting on column
             shiftUC = np.zeros(3, dtype=float)
-            msg = ('refUC was specified in CLI, but shiftUC was not. Taking '
-                   'shiftUC=(0,0,0)')
-            log_message(msg, verbosity, 1)
+            log_message('refUC was specified in CLI, but shiftUC was not.'
+                        ' Taking shiftUC=(0,0,0)', verbosity, 1)
             return refUC, shiftUC
         elif not refUC_cli_bool and shiftUC_cli_bool:  # refUC not given in CLI.
             refUC = np.eye(3, dtype=float)
             shiftUC = shiftUC_cli
-            msg = ('shitfUC was specified in CLI, but refUC was not. Taking '
-                   '3x3 identity matrix as refUC.')
-            log_message(msg, verbosity, 1)
+            log_message('shitfUC was specified in CLI, but refUC was not. Taking '
+                        '3x3 identity matrix as refUC.', verbosity, 1)
             return refUC, shiftUC
         elif not search_cell:
             refUC = np.eye(3, dtype=float)
             shiftUC = np.zeros(3, dtype=float)
-            msg = ('Taking 3x3 identity matrix as refUC and shiftUC=(0,0,0). '
-                   'If you want to calculate the transformation to '
-                   'conventional cell, run IrRep with -searchcell')
-            log_message(msg, verbosity, 1)
+            log_message('Taking 3x3 identity matrix as refUC and shiftUC=(0,0,0). '
+                        'If you want to calculate the transformation to '
+                        'conventional cell, run IrRep with -searchcell', verbosity, 1)
             return refUC, shiftUC
         else:  # Neither specifiend in CLI.
-            msg = ('Determining transformation to conventional setting '
-                   '(refUC and shiftUC)')
-            log_message(msg, verbosity, 1)
+            log_message('Determining transformation to conventional setting '
+                        '(refUC and shiftUC)', verbosity, 1)
             refUC = np.linalg.inv(refUC_lib)  # from DFT to convenctional cell
 
             # Check if the shift given by spglib works
@@ -1427,8 +1420,8 @@ class SpaceGroupIrreps(SpaceGroup):
                             trans_thresh=trans_thresh,
                             only_u_symmetries=True
                         )
-                        msg = (f'ShiftUC achieved with the centering: {r_center}')
-                        log_message(msg, verbosity, 1)
+                        log_message(f'ShiftUC achieved with the centering: {r_center}',
+                                    verbosity, 1)
                         return refUC, shiftUC
                     except RuntimeError:
                         pass
@@ -1445,12 +1438,10 @@ class SpaceGroupIrreps(SpaceGroup):
                                                                   trans_thresh=trans_thresh,
                                                                   only_u_symmetries=True
                                                                   )
-                        msg = (
-                            f"ShiftUC achieved in 2 steps:\n"
-                            f"  (1) Place origin of primitive cell on inversion center: {0.5 * inv.translation}\n"
-                            f"  (2) Move origin of convenctional cell to the inversion-center: {r_center}"
-                        )
-                        log_message(msg, verbosity, 1)
+                        log_message(f"ShiftUC achieved in 2 steps:\n"
+                                    f"  (1) Place origin of primitive cell on inversion center: {0.5 * inv.translation}\n"
+                                    f"  (2) Move origin of convenctional cell to the inversion-center: {r_center}",
+                                    verbosity, 1)
                         return refUC, shiftUC
                     except RuntimeError:
                         pass

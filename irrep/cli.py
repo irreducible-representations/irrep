@@ -386,18 +386,16 @@ def cli(
         searchcell = True
 
     elif not searchcell:
-        msg = ("Warning: transformation to the convenctional unit "
-               "cell will not be calculated, nor its validity checked "
-               "(if given). See the description of flag -searchcell "
-               "on:\n"
-               "irrep --help"
-               )
-        log_message(msg, verbosity, 1)
-        msg = ("Warning: -kpnames not specified. Only traces of "
-               "symmetry operations will be calculated. Remember that "
-               "-kpnames must be specified to identify irreps"
-               )
-        log_message(msg, verbosity, 1)
+        log_message("Warning: transformation to the convenctional unit "
+                    "cell will not be calculated, nor its validity checked "
+                    "(if given). See the description of flag -searchcell "
+                    "on:\n"
+                    "irrep --help",
+                    verbosity, 1)
+        log_message("Warning: -kpnames not specified. Only traces of "
+                    "symmetry operations will be calculated. Remember that "
+                    "-kpnames must be specified to identify irreps", 
+                    verbosity, 1)
 
     # parse input arguments into lists if supplied
     if symmetries:
