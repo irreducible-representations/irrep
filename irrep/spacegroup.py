@@ -154,7 +154,11 @@ class SpaceGroup:
             self.number_str = number_str
             assert number is None, "number and number_str cannot be set at the same time"
         elif number is not None:
-            assert isinstance(number, int), "number must be an integer"
+            try:
+                number = int(number)
+            except ValueError:
+                raise ValueError(f"number must be an integer (or convertable to int), got <{number}> ({type(number)}) ")
+            
             if number < 0:
                 warnings.warn("Negative space group number is not supported. Setting it to -1")
                 number = -1
