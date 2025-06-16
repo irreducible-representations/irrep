@@ -902,20 +902,14 @@ class Kpoint:
         # short again coefficients of expansions
         for s in [0, 1] if self.spinor else [0]:
             WF1 = np.zeros((self.num_bands, igsize[0], igsize[1], igsize[2]), dtype=complex)
-            WF2 = np.zeros(
-                (other.num_bands, igsize[0], igsize[1], igsize[2]), dtype=complex
-            )
+            WF2 = np.zeros((other.num_bands, igsize[0], igsize[1], igsize[2]), dtype=complex)
             for i, ig in enumerate(self.ig.T):
-                WF1[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = self.WF[
-                    :, i + s * self.ig.shape[1]
-                ]
+                WF1[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = \
+                    self.WF[:, i + s * self.ig.shape[1]]
             for i, ig in enumerate(other.ig[:3].T - g[None, :]):
-                WF2[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = other.WF[
-                    :, i + s * other.ig.shape[1]
-                ]
+                WF2[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = \
+                    other.WF[:, i + s * other.ig.shape[1]]
             res += np.einsum("mabc,nabc->mn", WF1.conj(), WF2)
-        #        return np.einsum("mabc,nabc->mn",WF1.conj(),WF2)
-        #        return np.einsum("ma,na->mn",self.WF.conj(),other.WF)
         return res
 
     def getloc1(self, loc):
@@ -932,12 +926,8 @@ class Kpoint:
             for i, ig in enumerate(self.ig.T):
                 WF1[:, ig[0], ig[1], ig[2]] = self.WF[:, i + s * self.ig.shape[1]]
             #            print ("wfsum",WF1.sum()," shape ",WF1.shape,loc_grid.shape)
-            res += np.array(
-                [
-                    np.sum(np.abs(np.fft.ifftn(WF1[ib])) ** 2 * loc_grid).real
-                    for ib in range(self.num_bands)
-                ]
-            )
+            res += np.array([ np.sum(np.abs(np.fft.ifftn(WF1[ib])) ** 2 * loc_grid).real
+                                for ib in range(self.num_bands)])
         print("    ", loc_grid.shape)
         return res * (np.prod(loc_grid.shape))
 

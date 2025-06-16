@@ -1188,7 +1188,6 @@ class SpaceGroupIrreps(SpaceGroup):
             array, shape=(2,2)
                 Matrix of complex elements. 
             """
-
             return np.array([[x1 + 1j * x2 for x1, x2 in zip(l1, l2)] for l1, l2 in zip(x[:n * n].reshape((n, n)), x[n * n:].reshape((n, n)))])
 
         def residue_matrix(r): 
@@ -1230,7 +1229,9 @@ class SpaceGroupIrreps(SpaceGroup):
             if r < 1e-4:
                 break
         if r > 1e-3:
-            raise RuntimeError(f"the accuracy is only {r}. Is this good?")
+            raise RuntimeError(
+                "the accurcy is only {0}. Is this good?".format(r))
+
         R1 = RR(res.x)
         signs = np.array([R1.dot(b).dot(R1.T.conj()).dot(np.linalg.inv(a)).diagonal().mean().real.round() for a, b in zip(S1, S2)], dtype=int) 
 

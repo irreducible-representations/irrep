@@ -255,13 +255,7 @@ class BandStructure:
         elif code == "gpaw":
             parser = ParserGPAW(calculator=calculator_gpaw,
                                 spinor=False if spinor is None else spinor)
-            (NBin,
-             kpred,
-             Lattice,
-             self.spinor,
-             typat,
-             positions,
-             EF_in) = parser.parse_header()
+            NBin, kpred, Lattice, self.spinor, typat, positions, EF_in = parser.parse_header()
             if Ecut is None:
                 raise RuntimeError("Ecut mandatory for GPAW")
             self.Ecut0 = Ecut
@@ -304,16 +298,14 @@ class BandStructure:
         if EF.lower() == "auto":
             if EF_in is None:
                 self.efermi = 0.0
-                msg = "WARNING : fermi-energy not found. Setting it as 0 eV"
-                log_message(msg, verbosity, 1)
+                log_message("WARNING : fermi-energy not found. Setting it as 0 eV", verbosity, 1)
             else:
                 self.efermi = EF_in
         else:
             try:
                 self.efermi = float(EF)
             except:
-                raise RuntimeError("Invalid value for keyword EF. It must be "
-                                   "a number or 'auto'")
+                raise RuntimeError("Invalid value for keyword EF. It must be a number or 'auto'")
 
         log_message(f"Efermi: {self.efermi:.4f} eV", verbosity, 1)
 
@@ -336,13 +328,10 @@ class BandStructure:
 
 
         # To do: create writer of description for this class
-        msg = (f"WAVECAR contains {NK} k-points and {NBin} bands.\n"
-               f"Saving {NBout} bands starting from {IBstart + 1} in the output")
-        log_message(msg, verbosity, 1)
-        msg = f"Energy cutoff in WAVECAR : {self.Ecut0}"
-        log_message(msg, verbosity, 1)
-        msg = f"Energy cutoff reduced to : {self.Ecut}"
-        log_message(msg, verbosity, 1)
+        log_message((f"WAVECAR contains {NK} k-points and {NBin} bands.\n"
+                     f"Saving {NBout} bands starting from {IBstart + 1} in the output"), verbosity, 1)
+        log_message(f"Energy cutoff in WAVECAR : {self.Ecut0}", verbosity, 1)
+        log_message(f"Energy cutoff reduced to : {self.Ecut}", verbosity, 1)
 
         # Create list of indices for k-points
         if kplist is None:
@@ -356,8 +345,7 @@ class BandStructure:
         for ik in kplist:
 
             if code == 'vasp':
-                msg = f'Parsing wave functions at k-point #{ik:>3d}'
-                log_message(msg, verbosity, 2)
+                log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
                 WF, Energy, kpt, npw = parser.parse_kpoint(ik, NBin, self.spinor)
                 kg = calc_gvectors(kpt,
                                    self.RecLattice,
@@ -376,14 +364,12 @@ class BandStructure:
             elif code == 'abinit':
                 NBin = parser.nband[ik]
                 kpt = parser.kpt[ik]
-                msg = f'Parsing wave functions at k-point #{ik:>3d}: {kpt}'
-                log_message(msg, verbosity, 2)
+                log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
                 WF, Energy, kg = parser.parse_kpoint(ik)
                 WF, kg = sortIG(ik, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, self.spinor, verbosity=verbosity)
 
             elif code == 'espresso':
-                msg = f'Parsing wave functions at k-point #{ik:>3d}'
-                log_message(msg, verbosity, 2)
+                log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
                 WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel, verbosity=verbosity)
                 WF, kg = sortIG(ik+1, kg, kpt, WF, self.RecLattice/2.0, self.Ecut0, self.Ecut, self.spinor, verbosity=verbosity)
 
@@ -399,8 +385,7 @@ class BandStructure:
                                    verbosity=verbosity
                                    )
                 selectG = tuple(kg[0:3])
-                msg = f'Parsing wave functions at k-point #{ik:>3d}: {kpt}'
-                log_message(msg, verbosity, 2)
+                log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
                 WF = parser.parse_kpoint(ik+1, selectG)
             elif code == 'gpaw':
                 kpt = kpred[ik]
@@ -683,9 +668,7 @@ class BandStructure:
         for KP in self.kpoints:
             f.write("   ".join(f"{x:10.6f}" for x in KP.k) + "\n")
         for KP in self.kpoints:
-            f.write(
-                KP.write_trace()
-            )
+            f.write(KP.write_trace())
 
     def Separate(self, isymop, groupKramers=True, verbosity=0):
         """
@@ -799,28 +782,17 @@ class BandStructure:
         for O in overlaps:
             print(np.abs(O[0, 0]), np.angle(O[0, 0]))
         print("   sum  ", np.sum(np.angle(O[0, 0]) for O in overlaps) / np.pi)
-        #        overlaps.append(self.kpoints[-1].overlap(self.kpoints[0],g=np.array( (self.kpoints[-1].K-self.kpoints[0].K).round(),dtype=int )  )  )
         nmax = np.min([o.shape for o in overlaps])
         # calculate zak phase in incresing dimension of the subspace (1 band,
         # 2 bands, 3 bands,...)
         z = np.angle(
             [[la.det(O[:n, :n]) for n in range(1, nmax + 1)] for O in overlaps]
         ).sum(axis=0) % (2 * np.pi)
-        #        print (np.array([k.Energy[1:] for k in self.kpoints] ))
-        #        print (np.min([k.Energy[1:] for k in self.kpoints],axis=0) )
-        emin = np.hstack(
-            (np.min([k.Energy[1:nmax] for k in self.kpoints], axis=0), [np.inf])
-        )
+        emin = np.hstack( (np.min([k.Energy[1:nmax] for k in self.kpoints], axis=0), 
+                           [np.inf]) )
         emax = np.max([k.Energy[:nmax] for k in self.kpoints], axis=0)
-        locgap = np.hstack(
-            (
-                np.min(
-                    [k.Energy[1:nmax] - k.Energy[0 : nmax - 1] for k in self.kpoints],
-                    axis=0,
-                ),
-                [np.inf],
-            )
-        )
+        locgap = np.hstack( (np.min([k.Energy[1:nmax] - k.Energy[0 : nmax - 1] for k in self.kpoints],axis=0,),
+                             [np.inf],))
         return z, emin - emax, (emin + emax) / 2, locgap
 
     def wcc(self):
@@ -862,7 +834,7 @@ class BandStructure:
         for ik, kp in enumerate(self.kpoints):
             count = 0
             for iset, deg in enumerate(kp.degeneracies):
-                for i in range(deg):
+                for _ in range(deg):
                     energies_expanded[count,ik] = kp.Energy_mean[iset]
                     count += 1
 
@@ -1045,13 +1017,6 @@ class BandStructure:
                     kpt2kptirr=kpt2kptirr, 
                     d_band_blocks=d_band_blocks, 
                     d_band_block_indices=d_band_block_indices)
-        # return     (grid, 
-        #             kpoints,
-        #             kptirr, 
-        #             kptirr2kpt,
-        #             kpt2kptirr, 
-        #             d_band_blocks, 
-        #             d_band_block_indices)
 
     def get_irrep_counts(self, filter_valid=True):
         """

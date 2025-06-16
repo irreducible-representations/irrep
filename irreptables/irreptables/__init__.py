@@ -88,25 +88,12 @@ class SymopTable:
         -------
         str
         """
-        return (
-            "   ".join(" ".join(str(x) for x in r) for r in self.R)
-            + "     "
-            + " ".join(str_(x) for x in self.t)
-            + (
-                (
-                    "      "
-                    + "    ".join(
-                        "  ".join(str_(x) for x in X)
-                        for X in (
-                            np.abs(self.S.reshape(-1)),
-                            np.angle(self.S.reshape(-1)) / np.pi,
-                        )
-                    )
-                )
-                if spinor
-                else ""
-            )
-        )
+        s = " ".join(map(str, self.R.flatten())) + "   " + " ".join(str_(x) for x in self.t)
+        if spinor:
+            S_flat = self.S.flatten()
+            s += "   " + " ".join(str_(abs(x)) for x in S_flat)
+            s += "   " + " ".join(str_(np.angle(x) / np.pi) for x in S_flat)
+        return s
 
 
 class KPoint:
@@ -258,11 +245,7 @@ class Irrep:
         self.reality = len(line[2:]) == self.nsym
         ch = np.array(line[2 : 2 + self.nsym], dtype=float)
         if not self.reality:
-            ch = ch * np.exp(
-                1.0j
-                * np.pi
-                * np.array(line[2 + self.nsym : 2 + 2 * self.nsym], dtype=float)
-            )
+            ch = ch * np.exp(1.0j * np.pi * np.array(line[2 + self.nsym : 2 + 2 * self.nsym], dtype=float))
         self.characters = {k_point.isym[i]: ch[i] for i in range(self.nsym)}
         log_message(f"## Irrep {self.name}\nCharacter:\n{self.characters}", v, 2)
         assert len(self.characters) == self.nsym
