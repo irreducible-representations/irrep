@@ -186,6 +186,9 @@ class BandStructure:
         include_TR=False,
         unk_formatted=False,
         irreps=False,
+        symprec=1e-5, 
+        angle_tolerance=-1,
+        mag_symprec=-1,
         spacegroup=None,
     ):
 
@@ -196,7 +199,7 @@ class BandStructure:
         else:
             cls_spacegroup = SpaceGroup
 
-        if spacegroup None:
+        if spacegroup is None:
             spacegroup = cls_spacegroup.parse_files(
                 fWAV=fWAV,
                 fWFK=fWFK,
@@ -210,6 +213,9 @@ class BandStructure:
                 include_TR=include_TR,
                 verbosity=verbosity,
                 spinor=spinor,
+                symprec=symprec,
+                angle_tolerance=angle_tolerance,
+                mag_symprec=mag_symprec,
                 ######## Parameters for irreps ########
                 refUC=refUC,
                 shiftUC=shiftUC,

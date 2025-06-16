@@ -246,6 +246,13 @@ do not hesitate to contact the author:
     type=float,
     default=1e-4,
     help="Threshold to decide whether energy-levels are degenerate. Default: 1e-4")
+@click.option("-symprec",
+    type=float,
+    default=1e-5,
+    help="Symmetry precision. Default: 1e-5. Passed to spglib get_symmetry"
+)
+    
+    
 @click.option(
     "-groupKramers",
     flag_value=True,
@@ -342,6 +349,7 @@ def cli(
     kpnames,
     refuc,
     shiftuc,
+    symprec,
     isymsep,
     onlysym,
     writesym,
@@ -460,6 +468,7 @@ def cli(
         degen_thresh=degenthresh,
         magmom=magnetic_moments,
         save_wf=save_wf,
+        symprec=symprec,
         unk_formatted=unk_formatted,
         verbosity=verbosity,
         from_sym_file=from_sym_file,

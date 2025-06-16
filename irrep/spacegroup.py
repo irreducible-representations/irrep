@@ -272,6 +272,9 @@ class SpaceGroup:
             from_sym_file=None,
             magmom=None,
             include_TR=True,
+            symprec=1e-5,
+            mag_symprec=-1,
+            angle_tolerance=-1,
             verbosity=0,
             ############
             **kwargs_tables
@@ -325,7 +328,9 @@ class SpaceGroup:
         magmom : array
             Each element is the magnetic moment of an ion. if None - non-magnetic calculation
             if True - magnetic moments are set to zero, i.e. time-reversal symmetry is included in the spacegroup
-
+        symprec, angle_tolerance, mag_symprec: float
+            see `get_symmetry` and 'get_magnetic_symmetry` in 
+            `Spglib documentation <https://spglib.readthedocs.io/en/stable/api/python-api.html#spglib.spglib.get_magnetic_symmetry>'__
 
         """
 
@@ -361,7 +366,9 @@ class SpaceGroup:
         cell = (real_lattice, positions, typat)
         if not magnetic:  # No magnetic moments magmom = None
 
-            dataset = spglib.get_symmetry_dataset(cell)
+            dataset = spglib.get_symmetry_dataset(cell, 
+                                                  symprec=symprec, 
+                                                  angle_tolerance=angle_tolerance)
             if version.parse(spglib.__version__) < version.parse('2.5.0'):
                 name = dataset['international']
                 number_str = str(dataset['number'])
@@ -381,7 +388,10 @@ class SpaceGroup:
         else:  # Magnetic group
             if magmom is None or magmom is True:
                 magmom = np.zeros((len(positions), 3), dtype=float)
-            dataset = spglib.get_magnetic_symmetry_dataset((*cell, magmom))
+            dataset = spglib.get_magnetic_symmetry_dataset((*cell, magmom), 
+                                                            symprec=symprec, 
+                                                            angle_tolerance=angle_tolerance,
+                                                            mag_symprec=mag_symprec)
             if dataset is None:
                 raise ValueError("No magnetic space group could be detected!")
             rotations = dataset.rotations
@@ -521,8 +531,59 @@ class SpaceGroup:
         from_sym_file=None,
         magmom=None,
         include_TR=False,
+        ############
+        symprec=1e-5,
+        angle_tolerance=-1,
+        mag_symprec=-1,
+        ############
         **kwargs_tables
     ):
+        """
+        Parse files to create a space-group object.
+        Parameters
+        ----------
+        fWAV : str, default=None
+            Name of the file with wavefunctions (e.g. WAVECAR for VASP).
+        fWFK : str, default=None
+            Name of the file with wavefunctions (e.g. WFK for ABINIT).
+        prefix : str, default=None
+            Prefix of the files (e.g. prefix for Quantum Espresso).
+        calculator_gpaw : GPAW calculator, default=None     
+            GPAW calculator object. If provided, it is used to parse the 
+            wavefunctions.
+        fPOS : str, default=None
+            Name of the file with positions (e.g. POSCAR for VASP).
+        spinor : bool, default=None
+            `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+            If not specified, it is determined from the code.
+        code : str, default="vasp"
+            Code used to generate the files. Supported codes: "vasp", "abinit", 
+            "espresso", "wannier90", "gpaw". If not specified, it is assumed to be "vasp".
+        verbosity : int, default=0
+            Verbosity level. Default set to minimalistic printing.
+        alat : float, default=None
+            Lattice parameter in angstroms (quantum espresso convention).
+            If not specified, it is determined from the code.
+        from_sym_file : str, default=None
+            If provided, the symmetry operations are read from this file.
+            (format of pw2wannier90 prefix.sym  file)
+        magmom : array, default=None
+            Each element is the magnetic moment of an ion. If None, non-magnetic calculation.
+            If True, magnetic moments are set to zero, i.e. time-reversal symmetry is included in the spacegroup.
+        include_TR : bool, default=False
+            If `True`, the time-reversal symmetries are included in the space-group.
+            If `False`, the time-reversal symmetries are removed from the space-group.
+        symprec, angle_tolerance, mag_symprec: float
+            see `get_symmetry` and 'get_magnetic_symmetry` in 
+            `Spglib documentation <https://spglib.readthedocs.io/en/stable/api/python-api.html#spglib.spglib.get_magnetic_symmetry>'__
+        **kwargs_tables : dict
+            Additional keyword arguments to pass to the `SpaceGroupIrrep.set_irreptables` method.
+        
+        Returns
+        -------
+        SpaceGroup
+            An instance of the `SpaceGroup` class with the parsed symmetry operations.
+        """
         code = code.lower()
 
         if code == "vasp":
@@ -534,14 +595,8 @@ class SpaceGroup:
 
         elif code == "abinit":
             parser = ParserAbinit(fWFK)
-            (nband,
-             NK,
-             Lattice,
-             Ecut0,
-             spinor,
-             typat,
-             positions,
-             EF_in) = parser.parse_header(verbosity=verbosity)
+            (nband, NK, Lattice, Ecut0, spinor, typat, positions,EF_in) = \
+                parser.parse_header(verbosity=verbosity)
 
 
         elif code == "espresso":
@@ -578,6 +633,10 @@ class SpaceGroup:
             magmom=magmom,
             include_TR=include_TR,
             verbosity=verbosity,
+            ############
+            symprec=symprec,
+            angle_tolerance=angle_tolerance,
+            mag_symprec=mag_symprec,
             ####################
             **kwargs_tables
         )
