@@ -107,6 +107,10 @@ class BandStructure:
         If `True`, the input files are expected to be formatted text files. If False, the input files are expected to be binary files.
     irreps : bool
         If `True`, the irreducible representations of the wave functions will be identified.
+    spacegroup : SpaceGroup or SpaceGroupIrreps, default=None
+        if provided, the spacegroup will be used to initialize the band structure, and not from the files.
+        use on your own risk, no checks are performed to ensure that the spacegroup is consistent with the files.
+
 
     Attributes
     ----------
@@ -181,7 +185,8 @@ class BandStructure:
         magmom=None,
         include_TR=False,
         unk_formatted=False,
-        irreps=False
+        irreps=False,
+        spacegroup=None,
     ):
 
         code = code.lower()
@@ -191,25 +196,27 @@ class BandStructure:
         else:
             cls_spacegroup = SpaceGroup
 
-        self.spacegroup = cls_spacegroup.parse_files(
-            fWAV=fWAV,
-            fWFK=fWFK,
-            calculator_gpaw=calculator_gpaw,
-            prefix=prefix,
-            fPOS=fPOS,
-            code=code,
-            alat=alat,
-            from_sym_file=from_sym_file,
-            magmom=magmom,
-            include_TR=include_TR,
-            verbosity=verbosity,
-            spinor=spinor,
-            ######## Parameters for irreps ########
-            refUC=refUC,
-            shiftUC=shiftUC,
-            search_cell=search_cell,
-            trans_thresh=trans_thresh,
-        )
+        if spacegroup None:
+            spacegroup = cls_spacegroup.parse_files(
+                fWAV=fWAV,
+                fWFK=fWFK,
+                calculator_gpaw=calculator_gpaw,
+                prefix=prefix,
+                fPOS=fPOS,
+                code=code,
+                alat=alat,
+                from_sym_file=from_sym_file,
+                magmom=magmom,
+                include_TR=include_TR,
+                verbosity=verbosity,
+                spinor=spinor,
+                ######## Parameters for irreps ########
+                refUC=refUC,
+                shiftUC=shiftUC,
+                search_cell=search_cell,
+                trans_thresh=trans_thresh,
+            )
+        self.spacegroup = spacegroup
         self.spinor = self.spacegroup.spinor
         self.magnetic = self.spacegroup.magnetic
 
@@ -229,7 +236,7 @@ class BandStructure:
                 raise RuntimeError(
                     "spinor should be specified in the command line for VASP bandstructure"
                 )
-            self.spinor = spinor
+            _spinor = spinor
             parser = ParserVasp(fPOS, fWAV, onlysym)
             Lattice, positions, typat = parser.parse_poscar(verbosity)
             if not onlysym:
@@ -245,7 +252,7 @@ class BandStructure:
              NK,
              Lattice,
              self.Ecut0,
-             self.spinor,
+             _spinor,
              typat,
              positions,
              EF_in) = parser.parse_header(verbosity=verbosity)
@@ -254,7 +261,7 @@ class BandStructure:
         elif code == "espresso":
 
             parser = ParserEspresso(prefix)
-            self.spinor = parser.spinor
+            _spinor = parser.spinor
             # alat is saved to be used to write the prefix.sym file
             Lattice, positions, typat, _alat = parser.parse_lattice()
             if alat is None:
@@ -262,7 +269,7 @@ class BandStructure:
             spinpol, self.Ecut0, EF_in, NK, NBin_list = parser.parse_header()
 
             # Set NBin
-            if self.spinor and spinpol:
+            if _spinor and spinpol:
                 raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
             elif spinpol:
                 if spin_channel is None:
@@ -284,13 +291,13 @@ class BandStructure:
 
             self.Ecut0 = Ecut
             parser = ParserW90(prefix, unk_formatted=unk_formatted)
-            NK, NBin, self.spinor, EF_in = parser.parse_header()
+            NK, NBin, _spinor, EF_in = parser.parse_header()
             Lattice, positions, typat, kpred = parser.parse_lattice()
             Energies = parser.parse_energies()
         elif code == "gpaw":
             parser = ParserGPAW(calculator=calculator_gpaw,
                                 spinor=False if spinor is None else spinor)
-            NBin, kpred, Lattice, self.spinor, typat, positions, EF_in = parser.parse_header()
+            NBin, kpred, Lattice, _spinor, typat, positions, EF_in = parser.parse_header()
             if Ecut is None:
                 raise RuntimeError("Ecut mandatory for GPAW")
             self.Ecut0 = Ecut
@@ -298,9 +305,8 @@ class BandStructure:
         else:
             raise RuntimeError(f"Unknown/unsupported code :{code}")
 
+        assert _spinor == self.spinor, f"the spinor flag in the header ({_spinor}) does not match the one in the spacegroup ({self.spinor})"
         # cell = (Lattice, positions, typat)
-
-
         # self.spacegroup = cls_spacegroup.from_cell(cell=cell,
         #         spinor=self.spinor,
         #         alat=alat,
@@ -314,12 +320,11 @@ class BandStructure:
         #         search_cell=search_cell,
         #         trans_thresh=trans_thresh,
         #     )
-
-
-        self.magnetic = self.spacegroup.magnetic
-
-        if onlysym:
-            return
+        # self.spinor = self.spacegroup.spinor
+        # self.magnetic = self.spacegroup.magnetic
+        # 
+        # if onlysym:
+        #     return
 
         # Set Fermi energy
         if EF.lower() == "auto":
