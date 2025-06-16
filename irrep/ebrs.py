@@ -30,8 +30,9 @@ def get_ebr_matrix(ebr_data):
 
     return ebr_matrix
 
+
 def get_smith_form(ebr_data, return_all=True):
-    """
+    r"""
     Returns the Smith normal form from EBR data
 
     Parameters
@@ -54,15 +55,16 @@ def get_smith_form(ebr_data, return_all=True):
 
         EBR = U^{-1} \cdot R \cdot V^{-1}
     """
-    #U^{-1}RV^{-1}
+    # U^{-1}RV^{-1}
     u = np.array(ebr_data["smith_form"]["u"], dtype=int)
     v = np.array(ebr_data["smith_form"]["v"], dtype=int)
     r = np.array(ebr_data["smith_form"]["r"], dtype=int)
 
     if return_all:
-        return u,r,v
+        return u, r, v
     else:
         return r
+
 
 def get_ebr_names_and_positions(ebr_data):
     """
@@ -98,7 +100,7 @@ def create_symmetry_vector(irrep_counts, basis_labels):
         symmetry vector. Elements are multiplicities of the irreps in the 
         table of EBRs and are sorted accordingly
     """
-    basis_index = {name : i for i, name in enumerate(basis_labels)}
+    basis_index = {name: i for i, name in enumerate(basis_labels)}
 
     vec = np.zeros(len(basis_index), dtype=int)
 
@@ -106,12 +108,12 @@ def create_symmetry_vector(irrep_counts, basis_labels):
         if label in basis_index:
             vec[basis_index[label]] = multi
 
-    return vec 
+    return vec
 
 
 
 def compute_topological_classification_vector(irrep_counts, ebr_data):
-    """Computes relevant quantities in the problem of identifying topology from
+    r"""Computes relevant quantities in the problem of identifying topology from
     the Smith decomposition of the EBR matrix
 
     Parameters
@@ -160,8 +162,8 @@ def compute_topological_classification_vector(irrep_counts, ebr_data):
 
 
 def compute_ebr_decomposition(ebr_data, y):
-    from .or_solutions_obtainer import varArraySolutionObtainer 
-    """
+    from .or_solutions_obtainer import varArraySolutionObtainer
+    r"""
     Compute the decomposition of the symmetry vector into EBRs
 
     Parameters
@@ -193,7 +195,7 @@ def compute_ebr_decomposition(ebr_data, y):
         y' = U \cdot y.
     """
 
-    def get_solutions(bounds=(0,15), n_smallest=5):
+    def get_solutions(bounds=(0, 15), n_smallest=5):
         """
         Solve the decomposition problem with some coefficient bounds and return
         some solutions, starting by the combinations with smallest coefficients
@@ -220,11 +222,11 @@ def compute_ebr_decomposition(ebr_data, y):
         # Add the coefficients of EBRs as variables
         x = [model.NewIntVar(lb, ub, f"x{i}") for i in range(n_ebr)]
 
-        # Construct a callback that will be called each time a new solution is 
+        # Construct a callback that will be called each time a new solution is
         # found
         solution_obtainer = varArraySolutionObtainer(x)
 
-        # Add constraint: multiplicities of irreps in the solution must match 
+        # Add constraint: multiplicities of irreps in the solution must match
         # the multiplicities in the symmetry-data vector y
         for i in range(n_ir):
             model.Add(EBR[i] @ x == y[i])
@@ -239,14 +241,14 @@ def compute_ebr_decomposition(ebr_data, y):
 
     # first check positive coefficients only
     is_positive = True
-    solutions, status = get_solutions(bounds=(0,50))
+    solutions, status = get_solutions(bounds=(0, 50))
 
     # if positive solutions were not found
     if status not in ["OPTIMAL", "FEASIBLE"]:
         is_positive = False
-        
+
         # try with negative solutions
-        solutions, status = get_solutions(bounds=(-50,50))
+        solutions, status = get_solutions(bounds=(-50, 50))
 
         # if negative solutions are not found, something's wrong
         if status not in ["OPTIMAL", "FEASIBLE"]:
@@ -279,6 +281,7 @@ def compose_irrep_string(irrep_counts):
 
     return s
 
+
 def compose_ebr_string(vec, ebrs):
     """
     Create a string with the direct sum of EBRS from a decomposition vector
@@ -303,6 +306,7 @@ def compose_ebr_string(vec, ebrs):
     s = " + ".join(terms)
 
     return s
+
 
 def load_ebr_data(sg_number, spinor):
     '''

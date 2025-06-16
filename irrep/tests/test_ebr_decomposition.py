@@ -6,6 +6,7 @@ import numpy as np
 
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 
+
 def test_ebr_decomposition_stable_topology():
 
     os.chdir(TEST_FILES_PATH / "Bi-hoti")

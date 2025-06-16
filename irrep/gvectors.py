@@ -1,9 +1,10 @@
 
-            # ###   ###   #####  ###
-            # #  #  #  #  #      #  #
-            # ###   ###   ###    ###
-            # #  #  #  #  #      #
-            # #   # #   # #####  #
+from .utility import log_message, orthogonalize
+# ###   ###   #####  ###
+# #  #  #  #  #      #  #
+# ###   ###   ###    ###
+# #  #  #  #  #      #
+# #   # #   # #####  #
 
 
 ##################################################################
@@ -20,7 +21,6 @@ import numpy as np
 import numpy.linalg as la
 Rydberg_eV = 13.605693  # eV
 Hartree_eV = 2 * Rydberg_eV
-from .utility import log_message, orthogonalize
 
 
 class NotSymmetryError(RuntimeError):
@@ -31,9 +31,9 @@ class NotSymmetryError(RuntimeError):
     pass
 
 
-#!!   constant  below is 2m/hbar**2 in units of 1/eV Ang^2 (value is
-#!!   adjusted in final decimal places to agree with VASP value; program
-#!!   checks for discrepancy of any results between this and VASP values)
+#  constant  below is 2m/hbar**2 in units of 1/eV Ang^2 (value is
+#  adjusted in final decimal places to agree with VASP value; program
+#  checks for discrepancy of any results between this and VASP values)
 twomhbar2 = 0.262465831
 
 
@@ -89,12 +89,10 @@ def calc_gvectors(
         to short plane-waves based on energy (ascending order). Fitfth 
         (sixth) row contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.
-    
+
 """
 
-    msg = ('Generating plane waves at k: ({} )'
-           .format(' '.join([f'{x:6.3f}' for x in K])))
-    log_message(msg, verbosity, 2)
+    log_message(f"Generating plane waves at k: ({' '.join(f'{x:6.3f}' for x in K)})", verbosity, 2)
     if Ecut1 <= 0:
         Ecut1 = Ecut
     B = RecLattice
@@ -106,21 +104,18 @@ def calc_gvectors(
     for N in range(nplanemax):
         flag = True
         if N % 10 == 0:
-            msg = f'Cycle {N:>3d}: number of plane waves = {len(igall):>10d}'
-            log_message(msg, verbosity, 2)
+            log_message(f'Cycle {N:>3d}: number of plane waves = {len(igall):>10d}', verbosity, 2)
         if len(igall) >= nplane / 2:    # Only enters if vasp
             if spinor:
                 break
             else:      # Sure that not spinors?
-                if len(igall) >= nplane: # spinor=F, all plane waves found
+                if len(igall) >= nplane:  # spinor=F, all plane waves found
                     break
-                elif np.all(memory): # probably spinor wrong set as spinor=F
+                elif np.all(memory):  # probably spinor wrong set as spinor=F
                     raise RuntimeError(
-                          "calc_gvectors is stuck "
-                          "calculating plane waves of energy larger "
-                          "than cutoff Ecut = {}. Make sure that the "
-                          "VASP calculation does not include SOC and "
-                          "set -spinor if it does.".format(Ecut)
+                        "calc_gvectors is stuck calculating plane waves of energy larger "
+                        f"than cutoff Ecut = {Ecut}. Make sure that the "
+                        "VASP calculation does not include SOC and set -spinor if it does."
                     )
 
         for ig3 in range(-N, N + 1):
@@ -136,21 +131,13 @@ def calc_gvectors(
         memory[-1] = flag
 
     ncnt = len(igall)
-    if nplane < np.inf: # vasp
+    if nplane < np.inf:  # vasp
         if spinor:
             if 2 * ncnt != nplane:
-                raise RuntimeError(
-                    "*** error - computed 2*ncnt={0} != input nplane={1}".format(
-                        2 * ncnt, nplane
-                    )
-                )
+                raise RuntimeError(f"*** error - computed 2*ncnt={2 * ncnt} != input nplane={nplane}")
         else:
             if ncnt != nplane:
-                raise RuntimeError(
-                    "*** error - computed ncnt={0} != input nplane={1}".format(
-                        ncnt, nplane
-                    )
-                )
+                raise RuntimeError(f"*** error - computed ncnt={ncnt} != input nplane={nplane}")
     igall = np.array(igall, dtype=int)
     ng = igall.max(axis=0) - igall.min(axis=0)
     igall1 = igall % ng[None, :]
@@ -167,10 +154,10 @@ def calc_gvectors(
     igall = igall[srt, :].T
     wall = [0] + list(np.where(Eg[1:] - Eg[:-1] > thresh)[0] + 1) + [igall.shape[1]]
     for i in range(len(wall) - 1):
-        igall[4, wall[i] : wall[i + 1]] = wall[i]
-        igall[5, wall[i] : wall[i + 1]] = wall[i + 1]
-    #    print ("K={0}\n E={1}\nigall=\n{2}".format(K,Eg,igall.T))
+        igall[4, wall[i]: wall[i + 1]] = wall[i]
+        igall[5, wall[i]: wall[i + 1]] = wall[i + 1]
     return igall
+
 
 def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
     """
@@ -220,14 +207,14 @@ def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
         (sixth) row contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.
     """
-    thresh = 1e-4 # default thresh to distinguish energies of plane-waves
+    thresh = 1e-4  # default thresh to distinguish energies of plane-waves
     KG = (kg + kpt).dot(RecLattice)
     npw = kg.shape[0]
     eKG = Hartree_eV * (la.norm(KG, axis=1) ** 2) / 2
     log_message(
         f"Found cutoff: {Ecut0:12.6f} eV   Largest plane wave energy in K-point {ik:4d}: {np.max(eKG):12.6f} eV",
         verbosity=verbosity, level=2
-        )
+    )
     assert Ecut0 * 1.000000001 > np.max(eKG)
     sel = np.where(eKG < Ecut)[0]
 
@@ -243,8 +230,8 @@ def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
         [0] + list(np.where(eKG[1:] - eKG[:-1] > thresh)[0] + 1) + [igall.shape[1]]
     )
     for i in range(len(wall) - 1):
-        igall[4, wall[i] : wall[i + 1]] = wall[i]
-        igall[5, wall[i] : wall[i + 1]] = wall[i + 1]
+        igall[4, wall[i]: wall[i + 1]] = wall[i]
+        igall[5, wall[i]: wall[i + 1]] = wall[i + 1]
 
     if spinor:
         CG = CG[:, np.hstack((sel[srt], sel[srt] + npw))]
@@ -252,6 +239,7 @@ def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
         CG = CG[:, sel[srt]]
 
     return CG, igall
+
 
 def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
     """
@@ -275,7 +263,7 @@ def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
     A : array, shape=(3,3)
         Matrix describing the tranformation of basis vectors of the unit cell 
         under the symmetry operation.
-    
+
     Returns
     -------
     rotind : array
@@ -283,7 +271,7 @@ def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
         'rotind[j] = i' if `B @ ig[:,i] == ig_other[:,j]`. if inverse is `True`.
 
         where `B = np.linalg.inv(A).T`
-""" 
+"""
     assert (ig_other is None) == (kpt_other is None), "ig_other and kpt_other must be provided (or not) together"
     if ig_other is None:
         ig_other = ig
@@ -314,15 +302,11 @@ def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
     for i in range(ng):
         if rotind[i] == -1:
             raise RuntimeError(
-                    "Error in the transformation of plane-waves in k-point={}: "
-                    .format(kpt) +
-                    "No pair found for the g-vector igTr[{i}]={igtr}"
-                    .format(i=i, igtr=igTr[:,i]) +
-                    "obtained when transforming the g-vector ig[{i}]={ig} "
-                    .format(i=i, ig=ig_other[:3,i]) +
-                    "with the matrix {B}, where B=inv(A).T with A={A}"
-                    .format(B=B, A=A)
-                )
+                f"Error in the transformation of plane-waves in k-point={kpt}: "
+                f"No pair found for the g-vector igTr[{i}]={igTr[:, i]} "
+                f"obtained when transforming the g-vector ig[{i}]={ig_other[:3, i]} "
+                f"with the matrix {B}, where B=inv(A).T with A={A}"
+            )
     return rotind
 
 
@@ -375,9 +359,9 @@ def symm_eigenvalues(
     if spinor:
         part1 = WF[:, igrot].conj() * WF[:, :npw1] * S[0, 0]
         part2 = (
-            WF[:, igrot + npw1].conj() * WF[:, npw1:] * S[1, 1]
-            + WF[:, igrot].conj() * WF[:, npw1:] * S[0, 1]
-            + WF[:, igrot + npw1].conj() * WF[:, :npw1] * S[1, 0]
+            WF[:, igrot + npw1].conj() * WF[:, npw1:] * S[1, 1] +
+            WF[:, igrot].conj() * WF[:, npw1:] * S[0, 1] +
+            WF[:, igrot + npw1].conj() * WF[:, :npw1] * S[1, 0]
         )
         return np.dot(part1 + part2, multZ)
     else:
@@ -391,8 +375,8 @@ def symm_eigenvalues_blocks(K, WF, igall, A, S, T, spinor, block_ind):
     matrix_blocks = symm_matrix(K, WF, igall, A, S, T, spinor, return_blocks=True, block_ind=block_ind)
     traces = []
     for block in matrix_blocks:
-        n=block.shape[0]    
-        traces+= [np.trace(block)/n]*n
+        n = block.shape[0]
+        traces += [np.trace(block) / n] * n
     return np.array(traces)
 
 
@@ -470,39 +454,39 @@ def symm_matrix(
     unitary_params_loc = {
         "warning_threshold": 1e-3,
         "error_threshold": 1e-2,
-        "check_upper" : False,
+        "check_upper": False,
     }
     unitary_params_loc.update(unitary_params)
     npw1 = igall.shape[1]
-    multZ = np.exp(-2j * np.pi * T.dot(igall_other[:3, :] + K_other[:, None])) [None,:]
+    multZ = np.exp(-2j * np.pi * T.dot(igall_other[:3, :] + K_other[:, None]))[None, :]
 
     if time_reversal:
         A = -A
         WF = WF.conj()
         # multZ = multZ.conj() # this is not needed because igall_other and K_other are alreade reversed (because A=-A)
         if spinor:
-            S =  np.array([[0,1],[-1,0]]) @ S.conj()
+            S = np.array([[0, 1], [-1, 0]]) @ S.conj()
 
     igrot = transformed_g(kpt=K, ig=igall, A=A, ig_other=igall_other, kpt_other=K_other, inverse=True)
     if spinor:
-        WFrot_up   = WF[:, igrot]*multZ
-        WFrot_down = WF[:, igrot + npw1]*multZ 
+        WFrot_up = WF[:, igrot] * multZ
+        WFrot_down = WF[:, igrot + npw1] * multZ
         WFrot = np.stack([WFrot_up, WFrot_down], axis=2)
-        WFrot = np.einsum("ts,mgs->mgt", S,WFrot)
-        WFrot = WFrot.reshape((WFrot.shape[0], -1),order='F')
+        WFrot = np.einsum("ts,mgs->mgt", S, WFrot)
+        WFrot = WFrot.reshape((WFrot.shape[0], -1), order='F')
     else:
-        WFrot = WF[:, igrot]*multZ
+        WFrot = WF[:, igrot] * multZ
     block_list = []
     NB = WF.shape[0]
-    for b1,b2 in block_ind:
+    for b1, b2 in block_ind:
         WFinv = right_inverse(WF_other[b1:b2])
-        block = np.dot(WFrot[b1:b2,:], WFinv)
+        block = np.dot(WFrot[b1:b2, :], WFinv)
         if unitary:
-            if not unitary_params_loc["check_upper"] and b2==NB:
+            if not unitary_params_loc["check_upper"] and b2 == NB:
                 error_threshold = 10
             else:
                 error_threshold = unitary_params_loc["error_threshold"]
-            block = orthogonalize(block, 
+            block = orthogonalize(block,
                                   warning_threshold=unitary_params_loc["warning_threshold"],
                                   error_threshold=error_threshold,
                                   debug_msg=f"symm_matrix: block {b1}:{b2} of {WF.shape[0]}")
@@ -510,23 +494,23 @@ def symm_matrix(
     if return_blocks:
         return block_list
     else:
-        nwfout = sum(b2-b1 for b1,b2 in block_ind)
-        M = np.zeros( (nwfout, nwfout), dtype=complex)
-        i=0
-        for (b1,b2), block in zip(block_ind, block_list):
-            b = b2-b1
-            M[i:i+b,i:i+b] = block
-            i+=b
+        nwfout = sum(b2 - b1 for b1, b2 in block_ind)
+        M = np.zeros((nwfout, nwfout), dtype=complex)
+        i = 0
+        for (b1, b2), block in zip(block_ind, block_list):
+            b = b2 - b1
+            M[i:i + b, i:i + b] = block
+            i += b
         return M
 
 
 def right_inverse(A):
     """
     Compute the right inverse of a rectangular matrix A (m x n) where m < n.
-    
+
     Parameters:
     A (numpy.ndarray): The input matrix of shape (m, n).
-    
+
     Returns:
     numpy.ndarray: The right inverse of A of shape (n, m).
     """

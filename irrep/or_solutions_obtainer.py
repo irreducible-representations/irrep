@@ -1,6 +1,7 @@
 from ortools.sat.python import cp_model
 import numpy as np
 
+
 class varArraySolutionObtainer(cp_model.CpSolverSolutionCallback):
     """A class representing a solution callback for the solver.
 
@@ -52,7 +53,7 @@ class varArraySolutionObtainer(cp_model.CpSolverSolutionCallback):
             Each row contains a solution
         """
         return np.array(self.__x)
-    
+
     def n_smallest_solutions(self, n=5):
         '''
         Get the first `n` solutions

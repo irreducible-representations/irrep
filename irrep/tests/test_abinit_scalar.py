@@ -6,6 +6,7 @@ import numpy as np
 
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 
+
 def test_abinit_scalar_example():
 
     os.chdir(TEST_FILES_PATH / "abinit_scalar")

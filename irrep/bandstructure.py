@@ -1,9 +1,9 @@
 
-            # ###   ###   #####  ###
-            # #  #  #  #  #      #  #
-            # ###   ###   ###    ###
-            # #  #  #  #  #      #
-            # #   # #   # #####  #
+# ###   ###   #####  ###
+# #  #  #  #  #      #  #
+# ###   ###   ###    ###
+# #  #  #  #  #      #
+# #   # #   # #####  #
 
 
 ##################################################################
@@ -29,6 +29,7 @@ from .kpoint import Kpoint
 from .spacegroup import SpaceGroup, SpaceGroupIrreps
 from .gvectors import sortIG, calc_gvectors, symm_matrix
 from .utility import get_block_indices, grid_from_kpoints, log_message, UniqueListMod1
+
 
 class BandStructure:
     """
@@ -166,9 +167,9 @@ class BandStructure:
         EF='0.0',
         onlysym=False,
         spin_channel=None,
-        refUC = None,
-        shiftUC = None,
-        search_cell = False,
+        refUC=None,
+        shiftUC=None,
+        search_cell=False,
         trans_thresh=1e-5,
         degen_thresh=1e-8,
         save_wf=True,
@@ -179,15 +180,15 @@ class BandStructure:
         magmom=None,
         include_TR=False,
         unk_formatted=False,
-        irreps = False
+        irreps=False
     ):
 
         code = code.lower()
         if spin_channel is not None:
-            spin_channel=spin_channel.lower()
-        if spin_channel=='down':
-            spin_channel='dw'
-        
+            spin_channel = spin_channel.lower()
+        if spin_channel == 'down':
+            spin_channel = 'dw'
+
         if code == "vasp":
 
             if spinor is None:
@@ -232,7 +233,7 @@ class BandStructure:
             elif spinpol:
                 if spin_channel is None:
                     raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
-                assert (spin_channel in ['dw','up'])
+                assert (spin_channel in ['dw', 'up'])
                 if spin_channel == 'dw':
                     NBin = NBin_list[1]
                 else:
@@ -240,7 +241,7 @@ class BandStructure:
             else:
                 NBin = NBin_list[0]
                 if spin_channel is not None:
-                    raise ValueError("Found a non-polarized bandstructure, but spin channel is set to {}".format(spin_channel))
+                    raise ValueError(f"Found a non-polarized bandstructure, but spin channel is set to {spin_channel}")
 
         elif code == "wannier90":
 
@@ -255,13 +256,7 @@ class BandStructure:
         elif code == "gpaw":
             parser = ParserGPAW(calculator=calculator_gpaw,
                                 spinor=False if spinor is None else spinor)
-            (NBin,
-             kpred,
-             Lattice,
-             self.spinor,
-             typat,
-             positions,
-             EF_in) = parser.parse_header()
+            NBin, kpred, Lattice, self.spinor, typat, positions, EF_in = parser.parse_header()
             if Ecut is None:
                 raise RuntimeError("Ecut mandatory for GPAW")
             self.Ecut0 = Ecut
@@ -273,27 +268,27 @@ class BandStructure:
 
         if irreps:
             self.spacegroup = SpaceGroupIrreps(
-                              cell=cell,
-                              spinor=self.spinor,
-                              refUC=refUC,
-                              shiftUC=shiftUC,
-                              search_cell=search_cell,
-                              trans_thresh=trans_thresh,
-                              verbosity=verbosity,
-                              alat=alat,
-                              from_sym_file=from_sym_file,
-                              magmom=magmom,
-                              include_TR=include_TR,
-                              )
+                cell=cell,
+                spinor=self.spinor,
+                refUC=refUC,
+                shiftUC=shiftUC,
+                search_cell=search_cell,
+                trans_thresh=trans_thresh,
+                verbosity=verbosity,
+                alat=alat,
+                from_sym_file=from_sym_file,
+                magmom=magmom,
+                include_TR=include_TR,
+            )
         else:
             self.spacegroup = SpaceGroup(
-                              cell=cell,
-                              spinor=self.spinor,
-                              alat=alat,
-                              from_sym_file=from_sym_file,
-                              magmom=magmom,
-                              include_TR=include_TR
-                              )
+                cell=cell,
+                spinor=self.spinor,
+                alat=alat,
+                from_sym_file=from_sym_file,
+                magmom=magmom,
+                include_TR=include_TR
+            )
 
         self.magnetic = self.spacegroup.magnetic
 
@@ -304,16 +299,14 @@ class BandStructure:
         if EF.lower() == "auto":
             if EF_in is None:
                 self.efermi = 0.0
-                msg = "WARNING : fermi-energy not found. Setting it as 0 eV"
-                log_message(msg, verbosity, 1)
+                log_message("WARNING : fermi-energy not found. Setting it as 0 eV", verbosity, 1)
             else:
                 self.efermi = EF_in
         else:
             try:
                 self.efermi = float(EF)
-            except:
-                raise RuntimeError("Invalid value for keyword EF. It must be "
-                                   "a number or 'auto'")
+            except ValueError:
+                raise ValueError("Invalid value for keyword EF. It must be a number or 'auto'")
 
         log_message(f"Efermi: {self.efermi:.4f} eV", verbosity, 1)
 
@@ -336,14 +329,10 @@ class BandStructure:
 
 
         # To do: create writer of description for this class
-        msg = ("WAVECAR contains {} k-points and {} bands.\n"
-               "Saving {} bands starting from {} in the output"
-               .format(NK, NBin, NBout, IBstart + 1))
-        log_message(msg, verbosity, 1)
-        msg = f"Energy cutoff in WAVECAR : {self.Ecut0}"
-        log_message(msg, verbosity, 1)
-        msg = f"Energy cutoff reduced to : {self.Ecut}"
-        log_message(msg, verbosity, 1)
+        log_message((f"WAVECAR contains {NK} k-points and {NBin} bands.\n"
+                     f"Saving {NBout} bands starting from {IBstart + 1} in the output"), verbosity, 1)
+        log_message(f"Energy cutoff in WAVECAR : {self.Ecut0}", verbosity, 1)
+        log_message(f"Energy cutoff reduced to : {self.Ecut}", verbosity, 1)
 
         # Create list of indices for k-points
         if kplist is None:
@@ -357,8 +346,7 @@ class BandStructure:
         for ik in kplist:
 
             if code == 'vasp':
-                msg = f'Parsing wave functions at k-point #{ik:>3d}'
-                log_message(msg, verbosity, 2)
+                log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
                 WF, Energy, kpt, npw = parser.parse_kpoint(ik, NBin, self.spinor)
                 kg = calc_gvectors(kpt,
                                    self.RecLattice,
@@ -377,21 +365,19 @@ class BandStructure:
             elif code == 'abinit':
                 NBin = parser.nband[ik]
                 kpt = parser.kpt[ik]
-                msg = f'Parsing wave functions at k-point #{ik:>3d}: {kpt}'
-                log_message(msg, verbosity, 2)
+                log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
                 WF, Energy, kg = parser.parse_kpoint(ik)
                 WF, kg = sortIG(ik, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, self.spinor, verbosity=verbosity)
 
             elif code == 'espresso':
-                msg = f'Parsing wave functions at k-point #{ik:>3d}'
-                log_message(msg, verbosity, 2)
+                log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
                 WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel, verbosity=verbosity)
-                WF, kg = sortIG(ik+1, kg, kpt, WF, self.RecLattice/2.0, self.Ecut0, self.Ecut, self.spinor, verbosity=verbosity)
+                WF, kg = sortIG(ik + 1, kg, kpt, WF, self.RecLattice / 2.0, self.Ecut0, self.Ecut, self.spinor, verbosity=verbosity)
 
             elif code == 'wannier90':
                 kpt = kpred[ik]
                 Energy = Energies[ik]
-                ngx, ngy, ngz = parser.parse_grid(ik+1)
+                ngx, ngy, ngz = parser.parse_grid(ik + 1)
                 kg = calc_gvectors(kpred[ik],
                                    self.RecLattice,
                                    self.Ecut,
@@ -400,15 +386,14 @@ class BandStructure:
                                    verbosity=verbosity
                                    )
                 selectG = tuple(kg[0:3])
-                msg = f'Parsing wave functions at k-point #{ik:>3d}: {kpt}'
-                log_message(msg, verbosity, 2)
-                WF = parser.parse_kpoint(ik+1, selectG)
+                log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
+                WF = parser.parse_kpoint(ik + 1, selectG)
             elif code == 'gpaw':
                 kpt = kpred[ik]
-                Energy, WF, kg, kpt= parser.parse_kpoint(ik,
+                Energy, WF, kg, kpt = parser.parse_kpoint(ik,
                                                  RecLattice=self.RecLattice,
                                                  Ecut=self.Ecut)
-            
+
 
             # Pick energy of IBend+1 band to calculate gaps
             try:
@@ -420,24 +405,24 @@ class BandStructure:
             WF = WF[IBstart:IBend]
             Energy = Energy[IBstart:IBend] - self.efermi
 
-            
+
             kp = Kpoint(
-                    ik=ik,
-                    kpt=kpt,
-                    WF=WF,
-                    Energy=Energy,
-                    ig=kg,
-                    upper=upper,
-                    num_bands=NBout,
-                    RecLattice=self.RecLattice,
-                    symmetries_SG=self.spacegroup.u_symmetries,
-                    spinor=self.spinor,
-                    normalize=normalize,
-                    )
-            
+                ik=ik,
+                kpt=kpt,
+                WF=WF,
+                Energy=Energy,
+                ig=kg,
+                upper=upper,
+                num_bands=NBout,
+                RecLattice=self.RecLattice,
+                symmetries_SG=self.spacegroup.u_symmetries,
+                spinor=self.spinor,
+                normalize=normalize,
+            )
+
             if irreps:
                 # saved to further use in Separate()
-                self.kwargs_kpoint=dict(
+                self.kwargs_kpoint = dict(
                     degen_thresh=degen_thresh,
                     refUC=self.spacegroup.refUC,
                     shiftUC=self.spacegroup.shiftUC,
@@ -445,7 +430,7 @@ class BandStructure:
                     save_wf=save_wf,
                     verbosity=verbosity,
                     calculate_traces=calculate_traces,
-                    )
+                )
                 kp.init_traces(**self.kwargs_kpoint)
             else:
                 self.kwargs_kpoint = None
@@ -453,15 +438,15 @@ class BandStructure:
         del WF
 
 
-    @property 
+    @property
     def lattice(self):
         return self.spacegroup.real_lattice
-    
+
     @property
     def Lattice(self):
         return self.spacegroup.real_lattice
-    
-    @property 
+
+    @property
     def RecLattice(self):
         return self.spacegroup.reciprocal_lattice
 
@@ -486,7 +471,7 @@ class BandStructure:
         '''
 
         for ik, KP in enumerate(self.kpoints):
-            
+
             if kpnames is not None:
                 irreps = self.spacegroup.get_irreps_from_table(kpnames[ik], KP.k, verbosity=verbosity)
             else:
@@ -513,33 +498,27 @@ class BandStructure:
             else:
                 print("\nInvariant under inversion: Yes")
                 if self.spinor and not self.magnetic:
-                    print("Number of inversions-odd Kramers pairs : {}"
-                          .format(int(KP.num_bandinvs / 2))
-                          )
+                    print(f"Number of inversions-odd Kramers pairs : {int(KP.num_bandinvs / 2)}")
                 else:
-                    print("Number of inversions-odd states : {}"
-                          .format(KP.num_bandinvs))
+                    print(f"Number of inversions-odd states : {KP.num_bandinvs}")
 
             # Print gap with respect to next band
             if not np.isnan(KP.upper):
                 print("Gap with upper bands: ", KP.upper - KP.Energy_mean[-1])
-        
+
         # Print total number of band inversions
         if self.spinor and not self.magnetic:
-            print("\nTOTAL number of inversions-odd Kramers pairs : {}"
-                  .format(int(self.num_bandinvs/2)))
+            print(f"\nTOTAL number of inversions-odd Kramers pairs : {int(self.num_bandinvs / 2)}")
         else:
-            print("TOTAL number of inversions-odd states : {}"
-                  .format(self.num_bandinvs))
-        
+            print(f"TOTAL number of inversions-odd states : {self.num_bandinvs}")
         if not self.magnetic:
-            print('Z2 invariant: {}'.format(int(self.num_bandinvs/2 % 2)))
-            print('Z4 invariant: {}'.format(int(self.num_bandinvs/2 % 4)))
+            print(f'Z2 invariant: {int(self.num_bandinvs / 2 % 2)}')
+            print(f'Z4 invariant: {int(self.num_bandinvs / 2 % 4)}')
 
-        # Print indirect gap and smalles direct gap
-        print('Indirect gap: {}'.format(self.gap_indirect))
-        print('Smallest direct gap in the given set of k-points: {}'.format(self.gap_direct))
-    
+        # Print indirect gap and smallest direct gap
+        print(f'Indirect gap: {self.gap_indirect}')
+        print(f'Smallest direct gap in the given set of k-points: {self.gap_direct}')
+
 
     def json(self, kpnames=None):
         '''
@@ -560,7 +539,7 @@ class BandStructure:
         json_data = {}
         json_data['kpoints line'] = kpline
         json_data['k points'] = []
-        
+
         for ik, KP in enumerate(self.kpoints):
             json_kpoint = KP.json()
             json_kpoint['kp in line'] = kpline[ik]
@@ -569,15 +548,15 @@ class BandStructure:
             else:
                 json_kpoint['kpname'] = kpnames[ik]
             json_data['k points'].append(json_kpoint)
-        
-        json_data['indirect gap (eV)'] =  self.gap_indirect
-        json_data['Minimal direct gap (eV)'] =  self.gap_direct
+
+        json_data['indirect gap (eV)'] = self.gap_indirect
+        json_data['Minimal direct gap (eV)'] = self.gap_direct
 
         if self.spinor and not self.magnetic:
-            json_data["number of inversion-odd Kramers pairs"]  = int(self.num_bandinvs / 2)
+            json_data["number of inversion-odd Kramers pairs"] = int(self.num_bandinvs / 2)
             json_data["Z4"] = int(self.num_bandinvs / 2) % 4,
         else:
-            json_data["number of inversion-odd states"]  = self.num_bandinvs
+            json_data["number of inversion-odd states"] = self.num_bandinvs
 
         try:
             json_data['symmetry indicators'] = self.symmetry_indicators
@@ -606,7 +585,7 @@ class BandStructure:
 
         gap = np.inf
         for KP in self.kpoints:
-            gap = min(gap, KP.upper-KP.Energy_mean[-1])
+            gap = min(gap, KP.upper - KP.Energy_mean[-1])
         return gap
 
     @property
@@ -669,17 +648,9 @@ class BandStructure:
         """
         nbarray = [k.num_bands for k in self.kpoints]
         if len(set(nbarray)) > 1:
-            raise RuntimeError(
-                "the numbers of bands differs over k-points:{0} \n cannot write trace.txt \n".format(
-                    nbarray
-                )
-            )
+            raise RuntimeError(f"the numbers of bands differs over k-points: {nbarray} \n cannot write trace.txt \n")
         if len(nbarray) == 0:
-            raise RuntimeError(
-                "do we have any k-points??? NB={0} \n cannot write trace.txt \n".format(
-                    nbarray
-                )
-            )
+            raise RuntimeError(f"do we have any k-points??? NB={nbarray} \n cannot write trace.txt \n")
         return nbarray[0]
 
     def write_trace(self,):
@@ -689,37 +660,22 @@ class BandStructure:
         """
 
         f = open("trace.txt", "w")
-        f.write(
-            (
-                " {0}  \n"
-                + " {1}  \n"  # Number of bands below the Fermi level  # Spin-orbit coupling. No: 0, Yes: 1
-            ).format(self.num_bands, 1 if self.spinor else 0)
-        )
+        f.write(f"{self.num_bands}  \n{1 if self.spinor else 0}  \n")
 
-        f.write(
-                self.spacegroup.write_trace()
-                )
+        f.write(self.spacegroup.write_trace())
         # Number of maximal k-vectors in the space group. In the next files
-        # introduce the components of the maximal k-vectors))
-        f.write("  {0}  \n".format(len(self.kpoints)))
+        # introduce the components of the maximal k-vectors
+        f.write(f"  {len(self.kpoints)}  \n")
         for KP in self.kpoints:
-            f.write(
-                "   ".join(
-                    "{0:10.6f}".format(x)
-                    for x in KP.k
-                )
-                + "\n"
-            )
+            f.write("   ".join(f"{x:10.6f}" for x in KP.k) + "\n")
         for KP in self.kpoints:
-            f.write(
-                KP.write_trace()
-            )
+            f.write(KP.write_trace())
 
     def Separate(self, isymop, groupKramers=True, verbosity=0):
         """
         Separate band structure according to the eigenvalues of a symmetry 
         operation.
-        
+
         Parameters
         ----------
         isymop : int
@@ -753,7 +709,7 @@ class BandStructure:
         kpseparated = [
             kp.Separate(symop, groupKramers=groupKramers, verbosity=verbosity, kwargs_kpoint=self.kwargs_kpoint)
             for kp in self.kpoints
-        ] # each element is a dict with separated bandstructure of a k-point
+        ]  # each element is a dict with separated bandstructure of a k-point
 
         allvalues = np.array(sum((list(kps.keys()) for kps in kpseparated), []))
         if groupKramers:
@@ -762,7 +718,7 @@ class BandStructure:
             if len(block_indices) > 1:
                 allvalues = set(
                     [allvalues[b1:b2].mean() for b1, b2 in block_indices]
-                ) # unrepeated Re parts of all eigenvalues
+                )  # unrepeated Re parts of all eigenvalues
                 subspaces = {}
                 for vv in allvalues:
                     other = copy.copy(self)
@@ -772,7 +728,7 @@ class BandStructure:
                         vk0 = vk[np.argmin(np.abs(vv - vk))]
                         if abs(vk0 - vv) < 0.05:
                             other.kpoints.append(K[vk0])
-                    subspaces[vv] = other # unnecessary indent ?
+                    subspaces[vv] = other  # unnecessary indent ?
                 return subspaces
             else:
                 return dict({allvalues.mean(): self})
@@ -782,8 +738,8 @@ class BandStructure:
             block_indices = get_block_indices(allvalues, thresh=0.01, cyclic=True)
             nv = len(allvalues)
             if len(block_indices) > 1:
-                allvalues = set( [ np.roll(allvalues, -b1)[: (b2 - b1) % nv].mean()
-                                    for b1, b2 in block_indices ])
+                allvalues = set([np.roll(allvalues, -b1)[: (b2 - b1) % nv].mean()
+                                 for b1, b2 in block_indices])
                 log_message(f'Distinct values: {allvalues}', verbosity, 2)
                 subspaces = {}
                 for vv in allvalues:
@@ -800,7 +756,7 @@ class BandStructure:
                 return dict({allvalues.mean(): self})
 
     def zakphase(self):
-        """
+        r"""
         Calculate Zak phases along a path for a set of states.
 
         Returns
@@ -827,32 +783,21 @@ class BandStructure:
         for O in overlaps:
             print(np.abs(O[0, 0]), np.angle(O[0, 0]))
         print("   sum  ", np.sum(np.angle(O[0, 0]) for O in overlaps) / np.pi)
-        #        overlaps.append(self.kpoints[-1].overlap(self.kpoints[0],g=np.array( (self.kpoints[-1].K-self.kpoints[0].K).round(),dtype=int )  )  )
         nmax = np.min([o.shape for o in overlaps])
         # calculate zak phase in incresing dimension of the subspace (1 band,
         # 2 bands, 3 bands,...)
         z = np.angle(
-            [[la.det(O[:n, :n]) for n in range(1, nmax + 1)] for O in overlaps]
+            [[np.linalg.det(O[:n, :n]) for n in range(1, nmax + 1)] for O in overlaps]
         ).sum(axis=0) % (2 * np.pi)
-        #        print (np.array([k.Energy[1:] for k in self.kpoints] ))
-        #        print (np.min([k.Energy[1:] for k in self.kpoints],axis=0) )
-        emin = np.hstack(
-            (np.min([k.Energy[1:nmax] for k in self.kpoints], axis=0), [np.inf])
-        )
+        emin = np.hstack((np.min([k.Energy[1:nmax] for k in self.kpoints], axis=0),
+                          [np.inf]))
         emax = np.max([k.Energy[:nmax] for k in self.kpoints], axis=0)
-        locgap = np.hstack(
-            (
-                np.min(
-                    [k.Energy[1:nmax] - k.Energy[0 : nmax - 1] for k in self.kpoints],
-                    axis=0,
-                ),
-                [np.inf],
-            )
-        )
+        locgap = np.hstack((np.min([k.Energy[1:nmax] - k.Energy[0: nmax - 1] for k in self.kpoints], axis=0,),
+                            [np.inf],))
         return z, emin - emax, (emin + emax) / 2, locgap
 
     def wcc(self):
-        """
+        r"""
         Calculate Wilson loops.
 
         Returns
@@ -890,8 +835,8 @@ class BandStructure:
         for ik, kp in enumerate(self.kpoints):
             count = 0
             for iset, deg in enumerate(kp.degeneracies):
-                for i in range(deg):
-                    energies_expanded[count,ik] = kp.Energy_mean[iset]
+                for _ in range(deg):
+                    energies_expanded[count, ik] = kp.Energy_mean[iset]
                     count += 1
 
         # Write energies of each band
@@ -900,8 +845,7 @@ class BandStructure:
         for iband in range(self.num_bands):
             file.write('\n')  # blank line separating blocks of k points
             for k, energy in zip(kpline, energies_expanded[iband]):
-                s = '{:8.4f}    {:8.4f}\n'.format(k, energy)
-                file.write(s)
+                file.write(f"{k:8.4f}    {energy:8.4f}\n")
         file.close()
 
     def KPOINTSline(self, kpred=None, supercell=None, breakTHRESH=0.1):
@@ -936,7 +880,7 @@ class BandStructure:
         if supercell is None:
             reciprocal_lattice = self.RecLattice
         else:
-            reciprocal_lattice = supercell.T @ self.RecLattice 
+            reciprocal_lattice = supercell.T @ self.RecLattice
         KPcart = np.dot(kpred, reciprocal_lattice)
         K = np.zeros(KPcart.shape[0])
         k = np.linalg.norm(KPcart[1:, :] - KPcart[:-1, :], axis=1)
@@ -1030,7 +974,7 @@ class BandStructure:
                         kpt2kptirr[j] = ikirr
                     else:
                         assert kpt2kptirr[j] == ikirr, (f"two different irreducible kpoints {ikirr} and {kpt2kptirr[j]} are mapped to the same kpoint {j}"
-                                                             f"kptirr= {kptirr}, \nkpt2kptirr= {kpt2kptirr}\n kptirr2kpt= {kptirr2kpt}")
+                                                        f"kptirr= {kptirr}, \nkpt2kptirr= {kpt2kptirr}\n kptirr2kpt= {kptirr2kpt}")
         kptirr = np.array(kptirr)
         NKirr = len(kptirr)
         kptirr2kpt = np.array(kptirr2kpt)
@@ -1067,20 +1011,13 @@ class BandStructure:
                 )
                 d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
                 # transposed because in irrep WF is row vector, while in dmn it is column vector
-        return dict(grid=grid, 
+        return dict(grid=grid,
                     kpoints=kpoints,
-                    kptirr=kptirr, 
+                    kptirr=kptirr,
                     kptirr2kpt=kptirr2kpt,
-                    kpt2kptirr=kpt2kptirr, 
-                    d_band_blocks=d_band_blocks, 
+                    kpt2kptirr=kpt2kptirr,
+                    d_band_blocks=d_band_blocks,
                     d_band_block_indices=d_band_block_indices)
-        # return     (grid, 
-        #             kpoints,
-        #             kptirr, 
-        #             kptirr2kpt,
-        #             kpt2kptirr, 
-        #             d_band_blocks, 
-        #             d_band_block_indices)
 
     def get_irrep_counts(self, filter_valid=True):
         """
@@ -1092,7 +1029,7 @@ class BandStructure:
         filter_valid : bool, optional
             count only integer multiplicities, by default True
         """
-        
+
         irrep_data = []
         for kpoint in self.kpoints:
             if 'None' in kpoint.irreps:
@@ -1180,7 +1117,7 @@ class BandStructure:
 
         if self.symmetry_indicators is None:
             print(f"Space group {self.spacegroup.name} has no nontrivial "
-                    "indicators")
+                  "indicators")
 
         else:
             si_table = self.load_si_table()
@@ -1191,11 +1128,11 @@ class BandStructure:
                 # String for the formula to calculate the indicator
                 si_factors = si_table[indicator]["factors"]
                 terms = [
-                    f"{factor} x {label}" for label, factor in 
+                    f"{factor} x {label}" for label, factor in
                     si_factors.items() if factor != 0
                 ]
                 definition_str = " + ".join(terms)
-                
+
                 print(f"{indicator} =", self.symmetry_indicators[indicator])
                 print(f"\tDefinition: ({definition_str}) mod {si_table[indicator]['mod']}")
 
@@ -1247,7 +1184,7 @@ class BandStructure:
                 "There exists integer-valued solutions to the EBR decomposition "
                 "problem, so the set of bands is TRIVIAL or displays FRAGILE TOPOLOGY. "
                 "Install OR-Tools to compute decompositions."
-                )
+            )
 
         else:
             print('Calculating decomposition in terms of EBRs. '
@@ -1260,7 +1197,7 @@ class BandStructure:
 
 
     def print_ebr_decomposition(self):
-        """
+        r"""
         Computes and prints the EBR decomposition information. If the bands are
         trivial or fragile-topological, it tries to find EBR decompositions using
         ORtools if installed.
@@ -1308,22 +1245,22 @@ class BandStructure:
         _, d, _ = get_smith_form(ebr_data)
         smith_diagonal = d.diagonal()
         print(
-        f"Irrep decomposition at high-symmetry points:\n\n{compose_irrep_string(irrep_counts)}"
-        f"\n\nIrrep basis:\n{vector_pprint(basis_labels, fmt='s')}"
-        f"\n\nSymmetry vector (y):\n{vector_pprint(self.y, fmt='d')}"
-        f"\n\nTransformed symmetry vector (y'):\n{vector_pprint(self.y_prime, fmt='d')}"
-        f"\n\nSmith singular values:\n{vector_pprint(smith_diagonal, fmt='d')}"
-        f"\n\nNotation: EBR.x=y,  U.EBR.V=R,  y'=U.y"
+            f"Irrep decomposition at high-symmetry points:\n\n{compose_irrep_string(irrep_counts)}"
+            f"\n\nIrrep basis:\n{vector_pprint(basis_labels, fmt='s')}"
+            f"\n\nSymmetry vector (y):\n{vector_pprint(self.y, fmt='d')}"
+            f"\n\nTransformed symmetry vector (y'):\n{vector_pprint(self.y_prime, fmt='d')}"
+            f"\n\nSmith singular values:\n{vector_pprint(smith_diagonal, fmt='d')}"
+            f"\n\nNotation: EBR.x=y,  U.EBR.V=R,  y'=U.y"
         )
 
         # If EBR decomposition wasn't computed because ortools isn't installed
-        if (self.classification != 'STABLE TOPOLOGICAL' 
-            and self.ebr_decompositions is None):
+        if (self.classification != 'STABLE TOPOLOGICAL' and
+                self.ebr_decompositions is None):
             print(
                 "There exists integer-valued solutions to the EBR decomposition "
                 "problem, so the set of bands is TRIVIAL or displays FRAGILE TOPOLOGY. "
                 "Install OR-Tools and compute decompositions again"
-                )
+            )
 
         # If EBR decomposition was computed
         elif self.classification in ['ATOMIC LIMIT', 'FRAGILE TOPOLOGIVAL']:
@@ -1348,11 +1285,11 @@ class BandStructure:
         filename = (
             f"{'double' if self.spinor else 'single'}_indicators"
             f"{'_magnetic' if self.magnetic else ''}.json"
-            )
-        si_table = json.load(open(root+"/data/symmetry_indicators/"+filename, 'r'))
+        )
+        si_table = json.load(open(root + "/data/symmetry_indicators/" + filename, 'r'))
         return si_table
 
-        
+
 def check_multiplicity(multi):
     """Checks if an irrep multiplicity is correct, i.e. integer.
 
@@ -1366,7 +1303,7 @@ def check_multiplicity(multi):
     bool
         True if correct, else False
     """
-    
+
     # is real
     if not np.isclose(np.imag(multi), 0, rtol=0, atol=1e-3):
         return False

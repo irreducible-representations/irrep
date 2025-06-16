@@ -6,6 +6,7 @@ import numpy as np
 
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 
+
 def test_abinit_spinor_example():
 
     os.chdir(TEST_FILES_PATH / "abinit_spinor")
@@ -57,7 +58,7 @@ def test_abinit_spinor_example():
     kp_run = bs_run['k points'][0]
     assert np.allclose(kp_ref['symmetries'], kp_run['symmetries'])
     assert np.allclose(kp_ref['energies'], kp_run['energies_mean'], rtol=0., atol=1e-4)
-    assert np.allclose(kp_ref['characters'], kp_run['characters'], rtol=0., atol=1e-3) # TEMPORARY INCREASED TOLERANCE, NOT SURE WHY TEST FAILS
+    assert np.allclose(kp_ref['characters'], kp_run['characters'], rtol=0., atol=1e-3)  # TEMPORARY INCREASED TOLERANCE, NOT SURE WHY TEST FAILS
     assert kp_ref['characters refUC is the same'] == kp_run['characters refUC is the same']
     assert np.allclose(kp_ref['dimensions'], kp_run['dimensions'], rtol=0., atol=1e-4)
     for irrep_ref, irrep_run in zip(kp_ref['irreps'], kp_run['irreps']):

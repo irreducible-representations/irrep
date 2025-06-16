@@ -17,7 +17,7 @@ if not os.path.exists(TMP_DATA_PATH):
 
 def test_bi_hoti():
 
-    
+
     # Test specifying refUC in CLI
     command = [
         "irrep",
@@ -37,7 +37,9 @@ def test_bi_hoti():
 
 # C2y : 5, 13 (without matching syms)
 # -C4z+ : 11, 4 (without matching syms)
-@pytest.mark.parametrize("isym", [13,4])
+
+
+@pytest.mark.parametrize("isym", [13, 4])
 def test_vasp_scalar(isym):
     # Test specifying refUC in CLI
     output_file = f"irrep-output_isymsep-{isym}.json"
@@ -54,6 +56,7 @@ def test_vasp_scalar(isym):
     ref_file = f"ref_output_isymsep-{isym}.json"
     output_file = f"irrep-output_isymsep-{isym}.json"
     check_isymsep(example_dir, command, ref_file, output_file, check_irreps=False)
+
 
 def check_isymsep(example_dir, command, ref_file, output_file="irrep-output.json", check_irreps=True):
     os.chdir(TEST_FILES_PATH / example_dir)
@@ -134,34 +137,36 @@ def check_isymsep(example_dir, command, ref_file, output_file="irrep-output.json
 
 def test_symm_matrix_full():
     check_symm_matrix(example_dir="vasp_spinor",
-                      output_file="symm_matrix_full.npz" ,
+                      output_file="symm_matrix_full.npz",
                       Ecut=100,
                       degen_thresh=None,
                       acc=1e-6
                       )
 
+
 def test_symm_matrix_block_vs_full():
     check_symm_matrix(example_dir="vasp_spinor",
-                      output_file="symm_matrix_block.npz" ,
+                      output_file="symm_matrix_block.npz",
                       ref_file="symm_matrix_full.npz",
                       Ecut=30,
                       degen_thresh=1e-2,
                       acc=1e-4
                       )
 
+
 def test_symm_matrix_block():
     check_symm_matrix(example_dir="vasp_spinor",
-                      output_file="symm_matrix_block.npz" ,
+                      output_file="symm_matrix_block.npz",
                     #   ref_file="symm_matrix_full.npz",
                       Ecut=30,
                       degen_thresh=1e-2,
                       acc=1e-5
                       )
-    
+
 
 def test_symm_matrix_block_2():
     check_symm_matrix(example_dir="vasp_spinor",
-                      output_file="symm_matrix_block.npz" ,
+                      output_file="symm_matrix_block.npz",
                     #   ref_file="symm_matrix_full.npz",
                       Ecut=60,
                       degen_thresh=1e-2,
@@ -173,46 +178,46 @@ def check_symm_matrix(example_dir, output_file="symm_matrix", ref_file=None, deg
                       acc=1e-6):
     if ref_file is None:
         ref_file = output_file
-    path = os.path.join(TEST_FILES_PATH , example_dir)
-    bandstructure = BandStructure(code='vasp', 
+    path = os.path.join(TEST_FILES_PATH, example_dir)
+    bandstructure = BandStructure(code='vasp',
                                   fPOS=os.path.join(path, 'POSCAR'),
                                   fWAV=os.path.join(path, 'WAVECAR'),
                                   search_cell=True,
-                                  Ecut=Ecut, 
+                                  Ecut=Ecut,
                                   spinor=True, normalize=False,
                                   irreps=True,
                                   IBend=20)
     points = []
-    matrices=[]
-    matrices2=[] # calculate blocks separately, but collect to one big matrix
-    for k1,K1 in enumerate(bandstructure.kpoints):
+    matrices = []
+    matrices2 = []  # calculate blocks separately, but collect to one big matrix
+    for k1, K1 in enumerate(bandstructure.kpoints):
         if degen_thresh is not None:
             block_indices = get_block_indices(K1.Energy_raw, thresh=degen_thresh, cyclic=False)
         else:
             block_indices = None
-        for k2,K2 in enumerate(bandstructure.kpoints):
+        for k2, K2 in enumerate(bandstructure.kpoints):
             for isym, symop in enumerate(bandstructure.spacegroup.symmetries):
-                if is_round(symop.transform_k(K1.k)-K2.k, prec=1e-5):
-                    points.append((k1,k2,isym))
-                    kwargs = dict(K=K1.k, K_other=K2.k, 
-                                  WF=K1.WF, WF_other=K2.WF, 
-                                  igall=K1.ig, igall_other=K2.ig, 
-                                  A=symop.rotation, S=symop.spinor_rotation, 
-                                  T=symop.translation, spinor = K1.spinor)
+                if is_round(symop.transform_k(K1.k) - K2.k, prec=1e-5):
+                    points.append((k1, k2, isym))
+                    kwargs = dict(K=K1.k, K_other=K2.k,
+                                  WF=K1.WF, WF_other=K2.WF,
+                                  igall=K1.ig, igall_other=K2.ig,
+                                  A=symop.rotation, S=symop.spinor_rotation,
+                                  T=symop.translation, spinor=K1.spinor)
 
-                    matrices.append(symm_matrix( **kwargs))
-                    matrices2.append(symm_matrix( block_ind=block_indices, **kwargs))   
+                    matrices.append(symm_matrix(**kwargs))
+                    matrices2.append(symm_matrix(block_ind=block_indices, **kwargs))
     matrices2 = np.array(matrices2)
-    matrices = np.array(matrices)                                     
+    matrices = np.array(matrices)
     tmp_file = TMP_DATA_PATH / output_file
     np.savez_compressed(tmp_file, points=points, matrices=matrices)
     reference = np.load(REF_DATA_PATH / ref_file)
     assert np.allclose(reference['points'], points)
-    diff = abs(reference['matrices']-matrices)
-    if np.max(diff)>acc:
+    diff = abs(reference['matrices'] - matrices)
+    if np.max(diff) > acc:
         string = f"Matrices differ by {np.max(diff)}, {diff.shape}\n"
-        for i,j,k in zip(*np.where(diff>1e-5)):
-            string+=f"{i}, {j} , {k}, {diff[i,j,k]}, {reference['matrices'][i,j,k]}, {matrices[i,j,k]}\n"
+        for i, j, k in zip(*np.where(diff > 1e-5)):
+            string += f"{i}, {j} , {k}, {diff[i, j, k]}, {reference['matrices'][i, j, k]}, {matrices[i, j, k]}\n"
         raise ValueError(string)
-    
+
     os.remove(tmp_file)

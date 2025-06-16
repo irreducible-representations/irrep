@@ -6,6 +6,7 @@ import numpy as np
 
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 
+
 def test_espresso_spinor_example():
 
     os.chdir(TEST_FILES_PATH / "espresso_spinor")
@@ -73,6 +74,7 @@ def test_espresso_spinor_example():
     ):
         os.remove(test_output_file)
 
+
 def test_espresso_write_sym():
 
     os.chdir(TEST_FILES_PATH / "espresso_spinor")
@@ -115,14 +117,16 @@ def test_espresso_read_sym():
     os.remove("Bi.sym")
     os.remove("irrep-output.json")
 
+
 def readfile(filename):
     with open(filename, "r") as f:
         lines = f.readlines()
     lines = [line.strip() for line in lines]
-    lines = [line for line in lines if len(line)>0 and line[0] != "#"]
+    lines = [line for line in lines if len(line) > 0 and line[0] != "#"]
     return lines
 
-def compare_sym_files(frun,fref):
+
+def compare_sym_files(frun, fref):
     # Load generated and reference output data
     data_ref = readfile(fref)
     data_run = readfile(frun)
@@ -134,4 +138,3 @@ def compare_sym_files(frun,fref):
         a2 = np.array(line_run.split(), dtype=float)
         assert len(a1) == len(a2), f"Reference: {line_ref}, Run: {line_run}"
         assert np.allclose(a1, a2), f"Reference: {line_ref}, Run: {line_run}"
-

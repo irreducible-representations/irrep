@@ -1,8 +1,8 @@
-            # ###   ###   #####  ###
-            # #  #  #  #  #      #  #
-            # ###   ###   ###    ###
-            # #  #  #  #  #      #
-            # #   # #   # #####  #
+#                  #  ###   ###   #####  ###
+#                  #  #  #  #  #  #      #  #
+#                  #  ###   ###   ###    ###
+#                  #  #  #  #  #  #      #
+#                  #  #   # #   # #####  #
 
 
 ##################################################################
@@ -10,19 +10,18 @@
 ## "IrRep" code and under terms of GNU General Public license v3 #
 ## see LICENSE file in the                                       #
 ##                                                               #
-##  Written by Stepan Tsirkin, University of Zurich.             #
-##  e-mail: stepan.tsirkin@physik.uzh.ch                         #
+##  Written by Stepan Tsirkin                                    #
+##  e-mail: stepan.tsirkin@epfl.ch                               #
 ##################################################################
 
 
-from  . import IrrepTable as IRT
-
+from . import IrrepTable as IRT
 
 
 for sg in range(300):
-  try:
-    IRT(SGnumber=sg,spinor=True,fromUser=False).save4user()
-    IRT(SGnumber=sg,spinor=False,fromUser=False).save4user()
-  except Exception as err:
-    print (err)
-    pass
+    try:
+        IRT(SGnumber=sg, spinor=True, fromUser=False).save4user()
+        IRT(SGnumber=sg, spinor=False, fromUser=False).save4user()
+    except Exception as err:
+        print(err)
+        pass
