@@ -21,6 +21,8 @@ import warnings
 import numpy as np
 import spglib
 
+from irrep.readfiles import ParserAbinit, ParserEspresso, ParserGPAW, ParserVasp, ParserW90
+
 from .symmetry_operation import SymmetryOperation
 from .utility import BOHR, log_message
 from packaging import version
@@ -271,6 +273,8 @@ class SpaceGroup:
             magmom=None,
             include_TR=True,
             verbosity=0,
+            ############
+            **kwargs_tables
     ):
         """
         Determine the space-group and save info in attributes. Contains methods to 
@@ -424,7 +428,7 @@ class SpaceGroup:
         #             translation_mod1=translation_mod_1,
         #             time_reversal=time_reversal_list[isym]))
 
-        return CLS(
+        sg = CLS(
             Lattice=real_lattice,
             spinor=spinor,
             rotations=rotations,
@@ -442,7 +446,10 @@ class SpaceGroup:
             alat=alat,
             verbosity=verbosity,
         )
-
+        if CLS.__name__ == "SpaceGroupIrreps":
+            sg.set_irreptables(verbosity=verbosity,
+                               **kwargs_tables,)
+        return sg
 
     @property
     def number(self):
@@ -498,6 +505,84 @@ class SpaceGroup:
             f.write(f" {len(self.symmetries)} \n")
             for symop in self.symmetries:
                 f.write(symop.str_sym(alat))
+
+    @classmethod
+    def parse_files(
+        CLS,
+        fWAV=None,
+        fWFK=None,
+        prefix=None,
+        calculator_gpaw=None,
+        fPOS=None,
+        spinor=None,
+        code="vasp",
+        verbosity=0,
+        alat=None,
+        from_sym_file=None,
+        magmom=None,
+        include_TR=False,
+        **kwargs_tables
+    ):
+        code = code.lower()
+
+        if code == "vasp":
+            if spinor is None:
+                log_message("Spinor is not specified (for VASP), assuming non-spinor calculation", verbosity, 2)
+                spinor = False
+            parser = ParserVasp(fPOS, fWAV, onlysym=True)
+            Lattice, positions, typat = parser.parse_poscar(verbosity)
+
+        elif code == "abinit":
+            parser = ParserAbinit(fWFK)
+            (nband,
+             NK,
+             Lattice,
+             Ecut0,
+             spinor,
+             typat,
+             positions,
+             EF_in) = parser.parse_header(verbosity=verbosity)
+
+
+        elif code == "espresso":
+            parser = ParserEspresso(prefix)
+            spinor = parser.spinor
+            # alat is saved to be used to write the prefix.sym file
+            Lattice, positions, typat, _alat = parser.parse_lattice()
+            if alat is None:
+                alat = _alat
+            spinpol, Ecut0, EF_in, NK, NBin_list = parser.parse_header()
+
+
+        elif code == "wannier90":
+            parser = ParserW90(prefix, unk_formatted=None)
+            NK, NBin, spinor, EF_in = parser.parse_header()
+            Lattice, positions, typat, kpred = parser.parse_lattice()
+
+        elif code == "gpaw":
+            parser = ParserGPAW(calculator=calculator_gpaw,
+                                spinor=False if spinor is None else spinor)
+            NBin, kpred, Lattice, spinor, typat, positions, EF_in = parser.parse_header()
+
+        else:
+            raise RuntimeError(f"Unknown/unsupported code :{code}")
+
+
+        return CLS.from_cell(
+            real_lattice=Lattice,
+            positions=positions,
+            typat=typat,
+            spinor=spinor,
+            alat=alat,
+            from_sym_file=from_sym_file,
+            magmom=magmom,
+            include_TR=include_TR,
+            verbosity=verbosity,
+            ####################
+            **kwargs_tables
+        )
+
+
 
 
 

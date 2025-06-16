@@ -185,6 +185,39 @@ class BandStructure:
     ):
 
         code = code.lower()
+
+        if irreps:
+            cls_spacegroup = SpaceGroupIrreps
+        else:
+            cls_spacegroup = SpaceGroup
+
+        self.spacegroup = cls_spacegroup.parse_files(
+            fWAV=fWAV,
+            fWFK=fWFK,
+            calculator_gpaw=calculator_gpaw,
+            prefix=prefix,
+            fPOS=fPOS,
+            code=code,
+            alat=alat,
+            from_sym_file=from_sym_file,
+            magmom=magmom,
+            include_TR=include_TR,
+            verbosity=verbosity,
+            spinor=spinor,
+            ######## Parameters for irreps ########
+            refUC=refUC,
+            shiftUC=shiftUC,
+            search_cell=search_cell,
+            trans_thresh=trans_thresh,
+        )
+        self.spinor = self.spacegroup.spinor
+        self.magnetic = self.spacegroup.magnetic
+
+        if onlysym:
+            return
+        # this way the headers are parsed twice (once for spacegroup and once for bandstructure)
+        # but it is not a big problem, I think, and the onlysym requires less parameters (no Ecut, spinor, spin_channel....)
+        
         if spin_channel is not None:
             spin_channel = spin_channel.lower()
         if spin_channel == 'down':
@@ -265,39 +298,23 @@ class BandStructure:
         else:
             raise RuntimeError(f"Unknown/unsupported code :{code}")
 
-        cell = (Lattice, positions, typat)
+        # cell = (Lattice, positions, typat)
 
 
-        if irreps:
-            cls = SpaceGroupIrreps
-        else:
-            cls = SpaceGroup
-
-        self.spacegroup = cls.from_cell(cell=cell,
-                spinor=self.spinor,
-                alat=alat,
-                from_sym_file=from_sym_file,
-                magmom=magmom,
-                include_TR=include_TR,
-                verbosity=verbosity,
-            )
-        if irreps:
-            self.spacegroup.set_irreptables(
-                refUC=refUC,
-                shiftUC=shiftUC,
-                search_cell=search_cell,
-                trans_thresh=trans_thresh,
-                verbosity=verbosity,
-            )
-        # else:
-        #     self.spacegroup = SpaceGroup.from_cell(
-        #         cell=cell,
+        # self.spacegroup = cls_spacegroup.from_cell(cell=cell,
         #         spinor=self.spinor,
         #         alat=alat,
         #         from_sym_file=from_sym_file,
         #         magmom=magmom,
-        #         include_TR=include_TR
+        #         include_TR=include_TR,
+        #         verbosity=verbosity,
+        #         ######## Parameters for irreps ########
+        #         refUC=refUC,
+        #         shiftUC=shiftUC,
+        #         search_cell=search_cell,
+        #         trans_thresh=trans_thresh,
         #     )
+
 
         self.magnetic = self.spacegroup.magnetic
 

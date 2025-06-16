@@ -115,6 +115,10 @@ class SpaceGroupIrreps(SpaceGroup):
                                 "tables, try not specifying refUC and shiftUC.",
                                 verbosity, 1)
             self.symmetries = sorted_symmetries
+        self.irreps_are_set = True
+
+    def check_irreps_set(self):
+        assert self.irreps_are_set, "Cannot proceed before `SpaceGroupIrreps.set_irreptables()` is called. " \
 
 
     def show(self, symmetries=None):
@@ -251,92 +255,6 @@ class SpaceGroupIrreps(SpaceGroup):
             "\n\n"
         )
 
-    def __match_spinor_rotations(self, S1, S2):
-        """
-        Determine the sign difference between matrices describing the 
-        transformation of spinors found by `spglib` and those read from tables.
-
-        Parameters
-        ----------
-        S1 : list
-            Contains the matrices for the transformation of spinors 
-            corresponding to symmetry operations found by `spglib`.
-        S2 : list
-            Contains the matrices for the transformation of spinors 
-            corresponding to symmetry operations read from tables.
-
-        Returns
-        -------
-        array
-            The `j`-th element is the matrix to match the `j`-th matrices of 
-            `S1` and `S2`.
-        """
-        n = 2
-
-        def RR(x):
-            """
-            Constructs a 2x2 complex matrix out of a list containing real and 
-            imaginary parts.
-
-            Parameters
-            ----------
-            x : list, length=8
-                Length is 8. `x[:4]` contains the real parts, `x[4:]` the 
-                imaginary parts.
-
-            Returns
-            -------
-            array, shape=(2,2)
-                Matrix of complex elements. 
-            """
-            return np.array([[x1 + 1j * x2 for x1, x2 in zip(l1, l2)] for l1, l2 in zip(x[:n * n].reshape((n, n)), x[n * n:].reshape((n, n)))])
-
-        def residue_matrix(r):
-            """
-            Calculate the residue of a matrix.
-
-            Parameters
-            ----------
-            r : array
-                Matrix used as ansatz for the minimization.
-
-            Returns
-            -------
-            float            
-            """
-
-            return sum([min(abs(r.dot(b).dot(r.T.conj()) - s * a).sum() for s in (1, -1)) for a, b in zip(S1, S2)])
-
-        def residue(x):
-            """
-            Calculate the normalized residue.
-
-            Parameters
-            ----------
-            x : list, length=8
-                Length is 8. `x[:4]` contains the real parts, `x[4:]` the 
-                imaginary parts.
-
-            Returns
-            -------
-            float
-            """
-            return residue_matrix(RR(x)) / len(S1)
-
-        for i in range(11):
-            x0 = np.random.random(2 * n * n)
-            res = minimize(residue, x0)
-            r = res.fun
-            if r < 1e-4:
-                break
-        if r > 1e-3:
-            raise RuntimeError(
-                "the accurcy is only {0}. Is this good?".format(r))
-
-        R1 = RR(res.x)
-        signs = np.array([R1.dot(b).dot(R1.T.conj()).dot(np.linalg.inv(a)).diagonal().mean().real.round() for a, b in zip(S1, S2)], dtype=int)
-
-        return signs, R1
 
     def get_irreps_from_table(self, kpname, K, verbosity=0):
         """
@@ -658,7 +576,7 @@ class SpaceGroupIrreps(SpaceGroup):
         if signs:
             S1 = [sym.spinor_rotation for sym in symmetries]
             S2 = [symmetries_tables[i].S for i in ind]
-            signs_array, U = self.__match_spinor_rotations(S1, S2)
+            signs_array, U = match_spinor_rotations(S1, S2)
         else:
             signs_array = np.ones(len(ind), dtype=int)
             U = None
@@ -790,3 +708,92 @@ class SpaceGroupIrreps(SpaceGroup):
         kpoints = np.array([refUC_kspace.dot(k) for k in kpoints]) % 1
 
         return kpoints
+
+
+
+def match_spinor_rotations(S1, S2):
+    """
+    Determine the sign difference between matrices describing the 
+    transformation of spinors found by `spglib` and those read from tables.
+
+    Parameters
+    ----------
+    S1 : list
+        Contains the matrices for the transformation of spinors 
+        corresponding to symmetry operations found by `spglib`.
+    S2 : list
+        Contains the matrices for the transformation of spinors 
+        corresponding to symmetry operations read from tables.
+
+    Returns
+    -------
+    array
+        The `j`-th element is the matrix to match the `j`-th matrices of 
+        `S1` and `S2`.
+    """
+    n = 2
+
+    def RR(x):
+        """
+        Constructs a 2x2 complex matrix out of a list containing real and 
+        imaginary parts.
+
+        Parameters
+        ----------
+        x : list, length=8
+            Length is 8. `x[:4]` contains the real parts, `x[4:]` the 
+            imaginary parts.
+
+        Returns
+        -------
+        array, shape=(2,2)
+            Matrix of complex elements. 
+        """
+        return np.array([[x1 + 1j * x2 for x1, x2 in zip(l1, l2)] for l1, l2 in zip(x[:n * n].reshape((n, n)), x[n * n:].reshape((n, n)))])
+
+    def residue_matrix(r):
+        """
+        Calculate the residue of a matrix.
+
+        Parameters
+        ----------
+        r : array
+            Matrix used as ansatz for the minimization.
+
+        Returns
+        -------
+        float            
+        """
+
+        return sum([min(abs(r.dot(b).dot(r.T.conj()) - s * a).sum() for s in (1, -1)) for a, b in zip(S1, S2)])
+
+    def residue(x):
+        """
+        Calculate the normalized residue.
+
+        Parameters
+        ----------
+        x : list, length=8
+            Length is 8. `x[:4]` contains the real parts, `x[4:]` the 
+            imaginary parts.
+
+        Returns
+        -------
+        float
+        """
+        return residue_matrix(RR(x)) / len(S1)
+
+    for i in range(11):
+        x0 = np.random.random(2 * n * n)
+        res = minimize(residue, x0)
+        r = res.fun
+        if r < 1e-4:
+            break
+    if r > 1e-3:
+        raise RuntimeError(
+            "the accurcy is only {0}. Is this good?".format(r))
+
+    R1 = RR(res.x)
+    signs = np.array([R1.dot(b).dot(R1.T.conj()).dot(np.linalg.inv(a)).diagonal().mean().real.round() for a, b in zip(S1, S2)], dtype=int)
+
+    return signs, R1
