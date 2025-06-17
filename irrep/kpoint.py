@@ -26,7 +26,7 @@ from .utility import compstr, get_block_indices, is_round, format_matrix, log_me
 
 class Kpoint:
     """
-    Parses files and organizes info about the states and energy-levels of a 
+    Organizes info about the states and energy-levels of a 
     particular k-point in attributes. Contains methods to calculate and write 
     traces (and irreps), for the separation of the band structure in terms of a 
     symmetry operation and for the calculation of the Zak phase.
@@ -45,10 +45,6 @@ class Kpoint:
     RecLattice : array, shape=(3,3)
         Each row contains the cartesian coordinates of a basis vector forming 
         the unit-cell in reciprocal space.
-    symmetries_SG : list, default=None
-        Each element is an instance of class `SymmetryOperation` corresponding 
-        to a symmetry in the point group of the space-group. The value 
-        passed is the attribute `symmetries` of class `SpaceGroup`.
     spinor : bool, default=None
         `True` if wave functions are spinors, `False` if they are scalars.
     kpt : list or array, default=None
@@ -102,14 +98,6 @@ class Kpoint:
         Energy of the first band above the set of bands whose traces should be 
         calculated. It will be set to `numpy.NaN` if the last band matches the 
         last band in the DFT calculation (default `IBend`).
-    symmetries_SG : list
-        Each element is an instance of class `SymmetryOperation` corresponding 
-        to a symmetry in the point group of the space-group. The value 
-        passed is the attribute `symmetries` of class `SpaceGroup`.
-    symmetries : dict
-        Each key is an instance of `class` `SymmetryOperation` corresponding 
-        to an operation in the little-(co)group and the attached value is an 
-        array with the traces of the operation.
     char : array
         Each row corresponds to a set of degenerate states. Each column is the 
         trace of a symmetry in the little cogroup in the DFT cell setting.
@@ -138,20 +126,29 @@ class Kpoint:
         ik=None,
         num_bands=None,
         RecLattice=None,  # this was last mandatory argument
-        symmetries_SG=None,
         spinor=None,
         kpt=None,
         WF=None,  # first arg added for abinit (to be kept at the end)
         Energy=None,
         ig=None,
         upper=None,
-        symmetries=None,
         refUC=np.eye(3),
         normalize=True,
     ):
 
         self.spinor = spinor
-        self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
+        if ik is None:
+            self.ik0 = None
+        else:
+            self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
+
+        if num_bands is None:
+            if Energy is not None:
+                num_bands = len(Energy)
+            elif WF is not None:
+                num_bands = WF.shape[0]
+            else:
+                raise ValueError("num_bands must be specified if neither WF nor Energy are not provided")
         self.num_bands = num_bands
         self.RecLattice = RecLattice
         self.upper = upper
@@ -169,17 +166,24 @@ class Kpoint:
                 np.sqrt(np.abs(np.einsum("ij,ij->i", self.WF.conj(), self.WF)))
             ).reshape(self.num_bands, 1)
 
-        # Determine little group and keep only passed symmetries
-        if symmetries is None:
-            symmetries = [symop.ind for symop in symmetries_SG]
+    def set_little_group(self, symmetries):
+        """
+        Set the little group of the k-point based on the provided symmetries.
+        Parameters
+        ----------
+        symmetries : list
+            List of symmetry operations (instances of `SymmetryOperation`)
+
+        Sets the `little_group` attribute, which contains the symmetry operations
+        that leave the k-point invariant up to a reciprocal lattice vector.
+        """
         self.little_group = []
-        for symop in symmetries_SG:
-            if symop.ind not in symmetries:
-                continue
+        for symop in symmetries:
             k_rotated = np.dot(np.linalg.inv(symop.rotation).T, self.k)
-            dkpt = np.array(np.round(k_rotated - self.k), dtype=int)
+            dkpt =np.round(k_rotated - self.k)
             if np.allclose(dkpt, k_rotated - self.k):
                 self.little_group.append(symop)
+        return self.little_group
 
 
     def init_traces(self, degen_thresh=1e-8, verbosity=0, calculate_traces=True, refUC=np.eye(3), shiftUC=np.zeros(3),
@@ -388,31 +392,17 @@ class Kpoint:
         result = []
         for b1, b2 in block_indices:
             E = self.Energy_raw[b1:b2].mean()
-            W = np.array(
-                [
-                    [self.WF[i].conj().dot(self.WF[j]) for j in range(b1, b2)]
-                    for i in range(b1, b2)
-                ]
-            )
+            W = np.array( [ [self.WF[i].conj().dot(self.WF[j]) 
+                             for j in range(b1, b2)] for i in range(b1, b2)])
             if self.spinor:
                 ng = self.NG
-                Smatrix = [
-                    [
-                        np.array(
-                            [
-                                [
-                                    self.WF[i, ng * s: ng * (s + 1)]
-                                    .conj()
-                                    .dot(self.WF[j, ng * t: ng * (t + 1)])
-                                    for j in range(b1, b2)
-                                ]
-                                for i in range(b1, b2)
-                            ]
-                        )  # band indices
-                        for t in (0, 1)
-                    ]
-                    for s in (0, 1)
-                ]  # spin indices
+                Smatrix = [ 
+                    [ np.array( [
+                        [self.WF[i, ng * s: ng * (s + 1)].conj().dot(
+                            self.WF[j, ng * t: ng * (t + 1)]) for j in range(b1, b2)]
+                                for i in range(b1, b2)] )# band indices   
+                        for t in (0, 1) ] 
+                        for s in (0, 1) ]  # spin indices
                 Sx = Smatrix[0][1] + Smatrix[1][0]
                 Sy = 1j * (-Smatrix[0][1] + Smatrix[1][0])
                 Sz = Smatrix[0][0] - Smatrix[1][1]
@@ -663,6 +653,62 @@ class Kpoint:
 
         self.irreps = irreps
 
+    def copy(self):
+        """
+        Create a copy of the current k-point instance.
+
+        Returns
+        -------
+        Kpoint
+            A new instance of `Kpoint` with the same attributes as the current one.
+        """
+        return  Kpoint( ik=-1,
+                        RecLattice=self.RecLattice,
+                        spinor=self.spinor,
+                        kpt=self.k.copy(),
+                        WF=self.WF.copy(),  # first arg added for abinit (to be kept at the end)
+                        Energy=self.Energy_raw.copy(),
+                        ig=self.ig.copy(),
+                        upper=self.upper,
+                        refUC=self.refUC,
+                        normalize=False,  # already normalized in the original instance (if needed)
+                        )
+        
+
+
+
+    def get_transformed_copy(self, symmetry_operation, new_kpoint=None):
+        """
+        Get a copy of the k-point transformed by a symmetry operation.
+
+        Parameters
+        ----------
+        symmetry_operation : SymmetryOperation
+            Symmetry operation to apply to the k-point.
+        Returns
+        -------
+        Kpoint
+            A new instance of `Kpoint` with the k-point transformed by the
+            symmetry operation.
+        """
+        # Create a copy of the current k-point
+        new_kpoint = self.copy()
+        # Transform the k-point coordinates
+        new_kpoint.k = symmetry_operation.transform_k(self.k)
+
+        # Transform the wave 
+        if self.spinor:
+            new_kpoint.WF = np.dot(symmetry_operation.rotation, self.WF.T).T
+
+        # Update the k-point reference in the new instance
+        new_kpoint.k_refUC = np.dot(new_kpoint.k, symmetry_operation.refUC.T) % 1
+
+        # Update the little group symmetries
+        new_kpoint.little_group = [
+            symop.transform(symmetry_operation) for symop in self.little_group
+        ]
+
+        return new_kpoint
 
     def write_characters(self):
         '''

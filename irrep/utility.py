@@ -384,7 +384,7 @@ def get_block_indices(E, thresh=1e-5, cyclic=False):
         return np.array([borders[:-1], borders[1:]]).T
 
 
-def grid_from_kpoints(kpoints, grid=None):
+def grid_from_kpoints(kpoints, grid=None, allow_missing=False):
     """
     Given a list of kpoints in fractional coordinates, return a the size of the grid in each direction
     if some k-points are repeated, they are counted only once
@@ -421,7 +421,8 @@ def grid_from_kpoints(kpoints, grid=None):
             else:
                 warnings.warn(f"k-point {k} is repeated")
     if len(kpoints_unique) < np.prod(grid):
-        raise ValueError(f"Some k-points are missing {len(kpoints_unique)}< {np.prod(grid)}")
+        if not allow_missing:
+            raise ValueError(f"Some k-points are missing {len(kpoints_unique)}< {np.prod(grid)}")
     if len(kpoints_unique) > np.prod(grid):
         raise RuntimeError("Some k-points are taken twice - this must be a bug")
     if len(kpoints_unique) < len(kpoints):

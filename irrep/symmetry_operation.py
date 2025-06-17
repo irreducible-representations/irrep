@@ -592,6 +592,76 @@ class SymmetryOperation():
     def rotation_inv(self):
         return np.linalg.inv(self.rotation)
 
+    @cached_property
+    def spinor_rotation_TR(self):
+        """
+        Calculate the spinor rotation matrix under time-reversal.
+
+        Returns
+        -------
+        array
+            Spinor rotation matrix under time-reversal.
+        """
+        if self.time_reversal:
+            return np.array([[0, 1], [-1, 0]]) @ self.spinor_rotation.conj()
+        else:
+            return self.spinor_rotation
+        
+    def transform_WF(self, k, WF, igall, k_new=None):
+        """
+        Transform wavefunction under the symmetry operation.
+
+        Parameters
+        ----------
+        k: array((3,), dtype=float)
+            k-point to transform. (in reduced coordinates)
+        WF : array(nb,ng*nspinor, dtype=complex)
+            Wavefunction to transform. (or array of wavefunctions)
+        igall : np.ndarray((6,ng), dtype=int)
+            the array 
+        k_new : array((3,), dtype=float), optional
+            the new k-point to transform to. if provided, it will be checked that the
+            transformation is consistent with the new k-point (modulo reciprocal lattice vectors).
+            If not provided, the new k-point will be the transformed k-point.
+
+        Returns
+        -------
+        k_new : array((3,), dtype=float)
+            the transformed k-point.
+        """
+        # TODO : check all signs and other details
+        k_transformed = self.transform_k(k)
+        if k_new is None:
+            k_new = k_transformed
+            g_shift = np.zeros(3, dtype=int)
+        else:
+            g_shift_frac = k_new - k_transformed
+            g_shift = np.round(g_shift_frac).astype(int)
+            assert np.allclose(g_shift_frac, g_shift, atol=1e-6), \
+                f"The transformed k-point {k_transformed} does not match the provided new k-point {k_new} modulo reciprocal lattice vectors."
+        ng = igall.shape[0]
+        igall_new = np.copy(igall)
+
+        for i in range(ng):
+            igall_new[:3,i] = self.transform_k(igall[:3,i])
+        igall_new[:3,:] -= g_shift[:, None]  # shift the igall_new to the new k point
+            
+        # should it be rotated or not?
+        multZ = np.exp(-2j * np.pi * self.translation.dot(igall_new[:3, :] + k_new[:, None]))[None, :]
+        if self.time_reversal:
+            WF = WF.conj()
+
+        if self.spinor:
+            WFrot_up = WF[:, :ng] * multZ
+            WFrot_down = WF[:, ng:] * multZ
+            WFrot = np.stack([WFrot_up, WFrot_down], axis=2)
+            WFrot = np.einsum("ts,mgs->mgt", self.spinor_rotation_TR, WFrot)
+            WFrot = WFrot.reshape((WFrot.shape[0], -1), order='F')
+        else:
+            WFrot = WF[:, :] * multZ
+        return k_new, WFrot, igall_new
+    
+
     def transform_k(self, vector, inverse=False):
         """
         Transform a k-space vector under the symmetry operation.

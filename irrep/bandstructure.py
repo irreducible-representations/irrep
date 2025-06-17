@@ -452,10 +452,10 @@ class BandStructure:
                 upper=upper,
                 num_bands=NBout,
                 RecLattice=self.RecLattice,
-                symmetries_SG=self.spacegroup.u_symmetries,
                 spinor=self.spinor,
                 normalize=normalize,
             )
+            kp.set_little_group(symmetries=self.spacegroup.u_symmetries)
 
             if irreps:
                 # saved to further use in Separate()
@@ -926,7 +926,7 @@ class BandStructure:
         return K
 
 
-    def get_dmn(self, grid=None, degen_thresh=1e-2, unitary=True, unitary_params={}):
+    def get_dmn(self, grid=None, degen_thresh=1e-2, unitary=True, unitary_params={},):
         """
         grid : tuple(int), optional
             the grid of kpoints (3 integers), if None, the grid is determined from the kpoints
@@ -938,7 +938,7 @@ class BandStructure:
             if True, the transformation matrices are made unitary explicitly
         unitary_params : dict, optional
             parameters to be passed to :func:`~irrep.utility.orthogonalize`
-
+        
         Returns
         -------
         dict with the following keys:
@@ -965,6 +965,8 @@ class BandStructure:
         grid, selected_kpoints = grid_from_kpoints(kpoints, grid=grid)
         kpoints = kpoints[selected_kpoints]
         Nsym = self.spacegroup.size
+        assert len(kpoints) == np.prod(grid), \
+            f"the number of kpoints {len(kpoints)} does not match the grid {grid}.\n" \
 
         def get_K(ik):
             return self.kpoints[selected_kpoints[ik]]
@@ -998,7 +1000,8 @@ class BandStructure:
                 for isym, symop in enumerate(symmetries):
                     k1p = symop.transform_k(k1)
                     if k1p not in kpoints_mod1:
-                        raise RuntimeError("Symmetry operation maps k-point outside the grid. Maybe the grid is incompatible with the symmetry operations")
+                        raise RuntimeError(f"Symmetry operation {isym} maps k-point {k1} to {k1p} which is outside the grid."
+                                            "Maybe the grid is incompatible with the symmetry operations")
                     j = kpoints_mod1.index(k1p)
                     k2 = kpoints[j]
                     if j != i:

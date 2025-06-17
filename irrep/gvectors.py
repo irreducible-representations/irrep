@@ -380,6 +380,9 @@ def symm_eigenvalues_blocks(K, WF, igall, A, S, T, spinor, block_ind):
     return np.array(traces)
 
 
+
+
+
 def symm_matrix(
     K, WF, igall, A, S, T, spinor,
     time_reversal=False,
@@ -463,7 +466,7 @@ def symm_matrix(
     if time_reversal:
         A = -A
         WF = WF.conj()
-        # multZ = multZ.conj() # this is not needed because igall_other and K_other are alreade reversed (because A=-A)
+        # multZ = multZ.conj() # this is not needed because igall_other and K_other are already reversed (because A=-A)
         if spinor:
             S = np.array([[0, 1], [-1, 0]]) @ S.conj()
 
