@@ -58,6 +58,8 @@ class Kpoint:
     upper : float
         Energy of the state `IBend`+1. Used to calculate the gap with upper 
         bands.
+    eKG : array, shape=(ng, dtype=float)
+        the energies of the plane-waves in the expansion of wave-functions.
 
 
     Attributes
@@ -134,6 +136,7 @@ class Kpoint:
         upper=None,
         refUC=np.eye(3),
         normalize=True,
+        eKG=None,
     ):
 
         self.spinor = spinor
@@ -157,6 +160,7 @@ class Kpoint:
         self.WF = WF
         self.Energy_raw = Energy
         self.ig = ig
+        self.eKG = eKG
         self.upper = upper
 
         self.k_refUC = np.dot(refUC.T, self.k) % 1
@@ -444,13 +448,13 @@ class Kpoint:
 
 
         S = symm_matrix(
-            self.k,
-            self.WF,
-            self.ig,
-            symop.rotation,
-            symop.spinor_rotation,
-            symop.translation,
-            self.spinor,
+            K=self.k,
+            WF=self.WF,
+            igall=self.ig,
+            A=symop.rotation,
+            S=symop.spinor_rotation,
+            T=symop.translation,
+            spinor=self.spinor,
         )
 
 
@@ -525,6 +529,29 @@ class Kpoint:
                 )
 
         return subspaces
+    
+    def symm_matrix(self, other, symop, block_indices=None, unitary=True, unitary_params={}, Ecut=None):
+        K1=self
+        K2=other
+        return symm_matrix(
+                    K=K1.k,
+                    K_other=K2.k,
+                    WF=K1.WF,
+                    WF_other=K2.WF,
+                    igall=K1.ig,
+                    igall_other=K2.ig,
+                    A=symop.rotation,
+                    S=symop.spinor_rotation,
+                    T=symop.translation,
+                    time_reversal=symop.time_reversal,
+                    spinor=K1.spinor,
+                    block_ind=block_indices,
+                    return_blocks=True,
+                    unitary=unitary,
+                    unitary_params=unitary_params,
+                    Ecut=Ecut,
+                    eKG=K1.eKG
+                )
 
     def calculate_traces(self, refUC, shiftUC, symmetries_tables, verbosity=0, use_blocks=True):
         '''

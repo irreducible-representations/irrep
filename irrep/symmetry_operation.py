@@ -635,7 +635,7 @@ class SymmetryOperation():
             k_new = k_transformed
             g_shift = np.zeros(3, dtype=int)
         else:
-            g_shift_frac = k_new - k_transformed
+            g_shift_frac = k_transformed - k_new
             g_shift = np.round(g_shift_frac).astype(int)
             assert np.allclose(g_shift_frac, g_shift, atol=1e-6), \
                 f"The transformed k-point {k_transformed} does not match the provided new k-point {k_new} modulo reciprocal lattice vectors."
@@ -644,9 +644,8 @@ class SymmetryOperation():
 
         for i in range(ng):
             igall_new[:3,i] = self.transform_k(igall[:3,i])
-        igall_new[:3,:] -= g_shift[:, None]  # shift the igall_new to the new k point
+        igall_new[:3,:] += g_shift[:, None]  # shift the igall_new to the new k point
             
-        # should it be rotated or not?
         multZ = np.exp(-2j * np.pi * self.translation.dot(igall_new[:3, :] + k_new[:, None]))[None, :]
         if self.time_reversal:
             WF = WF.conj()

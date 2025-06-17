@@ -9,13 +9,13 @@ REF_FILES_PATH = Path(__file__).parent / "ref_data"
 TMP_FILES_PATH = Path(__file__).parent / "tmp_data"
 
 
-def check_Fe_qe(include_TR):
+def check_Fe_qe(include_TR, irreducible=False):
     path = TEST_FILES_PATH / "Fe_qe"
 
     bandstructure = BandStructure(prefix=str(path / "Fe"),
                                   code="espresso",
                                   degen_thresh=1e-3,
-                                  Ecut=50.,
+                                  Ecut=100.,
                                   magmom=[[0, 0, 1]],
                                   include_TR=include_TR)
     # bandstructure.spacegroup.show()
@@ -23,14 +23,19 @@ def check_Fe_qe(include_TR):
     data = bandstructure.get_dmn(degen_thresh=1e-3, unitary=True,
                                  unitary_params={"check_upper": False,
                                                  "waring_threshold": 1e-3,
-                                                 "error_threshold": 1e-2}, )
+                                                 "error_threshold": 1e-2},
+                                                  irreducible=irreducible,
+                                                Ecut=50) 
     print(f"number of symmetries: {bandstructure.spacegroup.size}")
     for a in data["d_band_blocks"][:1]:
         for b in a:
             for c in b:
                 assert np.allclose(c.dot(c.T.conj()), np.eye(c.shape[0])), f"block is not unitary {c}"
 
-    fname = f"Fe_qe_dmn_TR={include_TR}.pkl"
+    if irreducible:
+        fname = f"Fe_qe_dmn_TR={include_TR}_irred.pkl"
+    else:
+        fname = f"Fe_qe_dmn_TR={include_TR}.pkl"
     pickle.dump(data, open(TMP_FILES_PATH / fname, "wb"))
 
     data_ref = pickle.load(open(REF_FILES_PATH / fname, "rb"))
@@ -61,6 +66,12 @@ def test_Fe_qe_TR():
 
 def test_Fe_qe_noTR():
     check_Fe_qe(include_TR=False)
+
+def test_Fe_qe_TR_irred():
+    check_Fe_qe(include_TR=True, irreducible=True)
+
+def test_Fe_qe_noTR_irred():
+    check_Fe_qe(include_TR=False, irreducible=True)
 
 
 def compare_nested_lists(a, b, key, depth=0, factor=1):

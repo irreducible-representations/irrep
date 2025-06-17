@@ -156,7 +156,7 @@ def calc_gvectors(
     for i in range(len(wall) - 1):
         igall[4, wall[i]: wall[i + 1]] = wall[i]
         igall[5, wall[i]: wall[i + 1]] = wall[i + 1]
-    return igall
+    return igall, Eg
 
 
 def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
@@ -238,7 +238,7 @@ def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
     else:
         CG = CG[:, sel[srt]]
 
-    return CG, igall
+    return CG, igall, eKG
 
 
 def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
@@ -391,7 +391,9 @@ def symm_matrix(
     return_blocks=False,
     ortogonalize=True,
     unitary=True,
-    unitary_params={}
+    unitary_params={},
+    Ecut = None,
+    eKG=None  # Ecut is not used in this function, but it is needed for compatibility
 ):
     """
     Computes the matrix S_mn such that
@@ -447,6 +449,31 @@ def symm_matrix(
         Bloch Hamiltonian :math:`H(k)`.
     """
     assert (WF_other is None) == (igall_other is None) == (K_other is None), "WF_other and igall_other must be provided (or not) together"
+    npw1 = igall.shape[1]
+    if Ecut is not None:
+        assert eKG is not None, "Ecut is provided, but eKG is not"
+        select = np.where(eKG <= Ecut)[0]
+        npw_cut = igall[5, select.max()]
+        igall = igall[:, :npw_cut]
+        if spinor:
+            WF = np.hstack( (WF[:, :npw_cut], WF[:, npw1:npw1+npw_cut]))
+        else:
+            WF = WF[:, :npw_cut]
+        if WF_other is not None:
+            igall_other = igall_other[:, :npw_cut]
+            if spinor:
+                WF_other = np.hstack( (WF_other[:, :npw_cut], WF_other[:, npw1:npw1+npw_cut]) )
+            else:
+                WF_other = WF_other[:, :npw_cut]
+        return symm_matrix(
+            K=K, WF=WF, igall=igall, A=A, S=S, T=T,
+            spinor=spinor, time_reversal=time_reversal,
+            WF_other=WF_other, igall_other=igall_other, K_other=K_other,
+            block_ind=block_ind, return_blocks=return_blocks,
+            ortogonalize=ortogonalize, unitary=unitary,
+            unitary_params=unitary_params
+        )
+
     if WF_other is None:
         WF_other = WF
         igall_other = igall

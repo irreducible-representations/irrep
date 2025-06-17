@@ -1116,7 +1116,7 @@ class ParserGPAW:
         ngx, ngy, ngz = WF.shape[1:]
         WF = np.fft.fftn(WF, axes=(1, 2, 3))
         kpt = self.calculator.get_ibz_k_points()[ik]
-        kg = calc_gvectors(kpt,
+        kg, eKG = calc_gvectors(kpt,
                            RecLattice,
                            Ecut,
                            spinor=False,
@@ -1133,4 +1133,4 @@ class ParserGPAW:
         else:
             energies = self.calculator.get_eigenvalues(kpt=ik)
 
-        return energies, WF, kg, kpt
+        return energies, WF, kg, kpt, eKG
