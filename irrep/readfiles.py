@@ -12,7 +12,7 @@
 ## see LICENSE file in the                                       #
 ##                                                               #
 ##  Written by Stepan Tsirkin                                    #
-##  e-mail: stepan.tsirkin@ehu.eus                               #
+##  e-mail: stepan.tsirkin@epfl.ch                               #
 ##################################################################
 
 
@@ -281,7 +281,7 @@ class ParserAbinit():
 
         Returns
         -------
-        CG : array
+        WF : array
             Each row contains the coefficients of the plane-wave 
             expansion of a wave function
         eigen : array
@@ -327,14 +327,14 @@ class ParserAbinit():
             if skip:
                 record = record_abinit(self.fWFK, "f8")
             else:
-                CG = np.zeros((nband, npw * nspinor), dtype=complex)
+                WF = np.zeros((nband, npw, nspinor), dtype=complex)
                 for iband in range(nband):
                     record = record_abinit(self.fWFK, "f8")
-                    CG[iband] = record[0::2] + 1.0j * record[1::2]
+                    WF[iband, :] = (record[0::2] + 1.0j * record[1::2]).reshape((npw, nspinor), order='F')
 
             self.kpt_count += 1
 
-        return CG, eigen, kg
+        return WF, eigen, kg
 
         # Check orthonormality for norm-conserving pseudos
         # if self.usepaw == 0:
@@ -477,16 +477,19 @@ class ParserVasp:
         '''
 
         r = self.fWAV.record(2 + ik * (NBin + 1))
-
+        nspinor = 2 if spinor else 1
         # Check if number of plane waves is even for spinors
         npw = int(r[0])
-        if spinor and npw % 2 != 0:
-            raise RuntimeError(f"odd number of coefs {npw} for spinor wavefunctions")
+        print(f"npw = {npw}, nspinor = {nspinor}, NBin = {NBin}")
+        if spinor:
+            assert npw % 2 == 0, f"odd number of coefs {npw} for spinor wavefunctions"
+        npw //= nspinor
         kpt = r[1:4]
         Energy = np.array(r[4: 4 + NBin * 3]).reshape(NBin, 3)[:, 0]
-        WF = np.zeros((NBin, npw), dtype=np.complex64)
+        WF = np.zeros((NBin, npw, nspinor), dtype=np.complex64)
         for ib in range(NBin):
-            WF[ib] = self.fWAV.record(3 + ik * (NBin + 1) + ib, npw, np.complex64)
+            WF[ib] = self.fWAV.record(3 + ik * (NBin + 1) + ib, npw * nspinor, np.complex64
+                                      ).reshape((npw, nspinor), order='F')
         return WF, Energy, kpt, npw
 
 
@@ -664,7 +667,8 @@ class ParserEspresso:
         Energy = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)
         Energy *= Hartree_eV
         npw = int(kptxml.find("npw").text)
-        npwtot = npw * (2 if self.spinor else 1)
+        nspinor = 2 if self.spinor else 1
+        npwtot = npw * nspinor
 
         # Open file with the wave functions
         wfcname = f"wfc{'' if spin_channel is None else spin_channel}{ik + 1}"
@@ -710,6 +714,7 @@ class ParserEspresso:
                         for ib in range(NBin):
                             rec = record_abinit(fWFC, f"{npwtot * 2}f8")
                             WF[ib] = rec[0::2] + 1.0j * rec[1::2]
+                    WF = WF.reshape((NBin, npw, nspinor), order='F')
                     return WF, Energy, kg, kpt
                 checked_files.append(filename)
         raise RuntimeError(f"Wavefunction file not found. Tried files: {checked_files}")
@@ -930,17 +935,15 @@ class ParserW90:
         WF_in = np.loadtxt(fUNK, dtype=complex)
         WF_in = WF_in[:, 0] + 1.0j * WF_in[:, 1]
         fUNK.close()
-        WF = []
+        ng_loc = selectG[0].shape[0]
+        WF = np.zeros((self.NBin, ng_loc, nspinor), dtype=complex)
         for ib in range(self.NBin):
-            WF_tmp = []
             for i in range(nspinor):
                 i_start = ib * nspinor * ngtot + i * ngtot
                 cg_tmp = WF_in[i_start:i_start + ngtot]
                 cg_tmp = cg_tmp.reshape((ngx, ngy, ngz), order="F")
                 cg_tmp = np.fft.fftn(cg_tmp)
-                WF_tmp.append(cg_tmp[selectG])
-            WF.append(np.hstack(WF_tmp))
-        WF = np.array(WF)
+                WF[ib, :, i] = cg_tmp[selectG]
         return WF
 
 
@@ -961,19 +964,17 @@ class ParserW90:
 
         self.check_ik_nb(ik_in, ik, nbnd, fname)
 
+        # print (f"selectG.shape = {selectG[0].shape}, ngtot = {ngtot}, nspinor = {nspinor}")
         # Parse WF coefficients
-        WF = []
+        ng_loc = selectG[0].shape[0]
+        WF = np.zeros((self.NBin, ng_loc, nspinor), dtype=complex)
         for ib in range(self.NBin):
-            WF_tmp = []
             for i in range(nspinor):
                 cg_tmp = record_abinit(fUNK, f"{ngtot * 2}f8")
                 cg_tmp = (cg_tmp[0::2] + 1.0j * cg_tmp[1::2]).reshape(
                     (ngx, ngy, ngz), order="F")
                 cg_tmp = np.fft.fftn(cg_tmp)
-                WF_tmp.append(cg_tmp[selectG])
-            WF.append(np.hstack(WF_tmp))
-
-        WF = np.array(WF)
+                WF[ib, :, i] = cg_tmp[selectG]
         return WF
 
     def parse_grid(self, ik):
@@ -1112,7 +1113,8 @@ class ParserGPAW:
 
     def parse_kpoint(self, ik, RecLattice, Ecut):
         WF = np.array([
-            self.calculator.get_pseudo_wave_function(kpt=ik, band=ib, periodic=True) for ib in range(self.nband)])
+            self.calculator.get_pseudo_wave_function(kpt=ik, band=ib, periodic=True)
+            for ib in range(self.nband)])
         ngx, ngy, ngz = WF.shape[1:]
         WF = np.fft.fftn(WF, axes=(1, 2, 3))
         kpt = self.calculator.get_ibz_k_points()[ik]
@@ -1125,12 +1127,14 @@ class ParserGPAW:
         selectG = tuple(kg[0:3])
         WF = np.array([wf[selectG] for wf in WF])
         if self.spinor:
+            WFspinor = np.zeros((WF.shape[0], WF.shape[1], 2), dtype=complex)
             v_kmn = self.soc.eigenvectors()
-            psit0_mG = v_kmn[ik, :, ::2] @ WF
-            psit1_mG = v_kmn[ik, :, 1::2] @ WF
-            WF = np.hstack([psit0_mG, psit1_mG])
+            for s in range(2):
+                WFspinor[:, :, s] = v_kmn[ik, :, s::2] @ WF
             energies = self.soc.eigenvalues()[ik]
+            WF = WFspinor
         else:
+            WF = WF[:, :, None]
             energies = self.calculator.get_eigenvalues(kpt=ik)
 
         return energies, WF, kg, kpt, eKG

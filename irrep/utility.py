@@ -544,6 +544,7 @@ def vector_pprint(vector, fmt=None):
         fmt = " " + fmt if fmt[0] != " " else fmt
     return ("[" + ("{:{fmt}} " * len(vector)) + "]").format(*vector, fmt=fmt)
 
+
 def select_irreducible(kpoints, spacegroup):
     """
     Select irreducible k-points from a list of k-points and a space group.
@@ -562,7 +563,7 @@ def select_irreducible(kpoints, spacegroup):
     """
     irreducible_list = UniqueListMod1()
     irreducible_list_ik = []
-    for ik,kp in enumerate(kpoints):
+    for ik, kp in enumerate(kpoints):
         for symop in spacegroup.symmetries:
             if symop.transform_k(kp) in irreducible_list:
                 break
@@ -571,10 +572,11 @@ def select_irreducible(kpoints, spacegroup):
             irreducible_list_ik.append(ik)
     return np.array(irreducible_list_ik, dtype=int)
 
+
 def get_mapping_irr(kpoints, kptirr, spacegroup):
     """
     Get a mapping from irreducible k-points to the full list of k-points and vice versa.
-    
+
     kptirr2kpt[i,isym]=j means that the i-th irreducible kpoint
     is transformed to the j-th kpoint of full grid by the isym-th symmetry operation.
     This is consistent with w90 documentations, but seems to be opposite to what pw2wannier90 does
@@ -605,30 +607,36 @@ def get_mapping_irr(kpoints, kptirr, spacegroup):
     kptirr2kpt = []
     kpt2kptirr = -np.ones(NK, dtype=int)
     for ikirr, i in enumerate(kptirr):
-        k1= kpoints[i]
+        k1 = kpoints[i]
         kptirr2kpt.append(np.zeros(Nsym, dtype=int))
         for isym, symop in enumerate(symmetries):
             k1p = symop.transform_k(k1)
             if k1p not in kpoints_mod1:
                 raise RuntimeError(f"Symmetry operation {isym} maps k-point {k1} to {k1p} which is outside the grid."
-                                    "Maybe the grid is incompatible with the symmetry operations")
+                                   "Maybe the grid is incompatible with the symmetry operations")
             j = kpoints_mod1.index(k1p)
-            k2 = kpoints[j]
             kptirr2kpt[ikirr][isym] = j
-            # the G vectors mean that
-            # symop.transform(ki) = kj + G
             if kpt2kptirr[j] == -1:
                 kpt2kptirr[j] = ikirr
             else:
-                assert kpt2kptirr[j] == ikirr, (f"two different irreducible kpoints {ikirr} and {kpt2kptirr[j]} are mapped to the same kpoint {j}"
+                assert kpt2kptirr[j] == ikirr, (f"two different irreducible kpoints {ikirr} and {kpt2kptirr[j]} are mapped to t"
+                                                f"he same kpoint {j}\n"
                                                 f"kptirr= {kptirr}, \nkpt2kptirr= {kpt2kptirr}\n kptirr2kpt= {kptirr2kpt}")
     kptirr2kpt = np.array(kptirr2kpt)
     del kpoints_mod1
-
+    kpt_from_kptirr_isym = np.zeros((len(kptirr), Nsym), dtype=int)
+    for ik, ikirr in enumerate(kpt2kptirr):
+        for isym in range(Nsym):
+            if kptirr2kpt[ikirr, isym] == ik:
+                kpt_from_kptirr_isym[ikirr, isym] = ik
+                break
+        else:
+            raise RuntimeError("No Symmetry operation maps irreducible "
+                               "k-point {ikirr} to point {ik}, but kpt2kptirr[{ik}] = {ikirr}.")
     assert np.all(kptirr2kpt >= 0)
     assert np.all(kpt2kptirr >= 0
                   )
-    return kptirr2kpt, kpt2kptirr
+    return kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym
 
 
 
@@ -662,21 +670,21 @@ def restore_full_grid(kpoints_irr, grid, spacegroup):
     ValueError
         If some points on the grid cannot be generated from the irreducible k-points.
     """
-    n1,n2,n3 = grid
-    all_k_grid = [np.array([i1/n2, i2/n3, i3/n1])
-                    for i1 in range(n1)
-                        for i2 in range(n2)
-                            for i3 in range(n3)]
+    n1, n2, n3 = grid
+    all_k_grid = [np.array([i1 / n2, i2 / n3, i3 / n1])
+                  for i1 in range(n1)
+                  for i2 in range(n2)
+                  for i3 in range(n3)]
     all_k_grid_mod1 = UniqueListMod1(all_k_grid, tol=1e-5)
     all_k_mod1 = UniqueListMod1(kpoints_irr, tol=1e-5)
-    all_k = [k for k in kpoints_irr ] # first come the irreducible k-points
+    all_k = [k for k in kpoints_irr]  # first come the irreducible k-points
     assert len(all_k_mod1) == len(kpoints_irr), "kpoints should be unique"
     kpoints_irr_mod1 = UniqueListMod1(kpoints_irr, tol=1e-5)
 
     kpt2kptirr = -np.ones(len(all_k_grid_mod1), dtype=int)
     kptirr2kpt = -np.ones((len(kpoints_irr_mod1), len(spacegroup.symmetries)), dtype=int)
 
-    for ikirr, kpirr in enumerate(kpoints_irr):  
+    for ikirr, kpirr in enumerate(kpoints_irr):
         for isym, symop in enumerate(spacegroup.symmetries):
             transformed_k = symop.transform_k(kpirr)
             if all_close_mod1(transformed_k, kpirr):
@@ -697,5 +705,15 @@ def restore_full_grid(kpoints_irr, grid, spacegroup):
                 kptirr2kpt[ikirr, isym] = ik
                 all_k_mod1.append(transformed_k)
                 all_k.append(transformed_k)
-            
-    return np.array(all_k), kptirr2kpt, kpt2kptirr
+
+    kpt_from_kptirr_isym = -np.ones(len(all_k_grid_mod1), dtype=int)
+    for ik, ikirr in enumerate(kpt2kptirr):
+        for isym in range(len(spacegroup.symmetries)):
+            if kptirr2kpt[ikirr, isym] == ik:
+                kpt_from_kptirr_isym[ik] = ikirr
+                break
+        else:
+            raise RuntimeError(f"No Symmetry operation maps irreducible "
+                               f"k-point {ikirr} to point {ik}, but kpt2kptirr[{ik}] = {ikirr}.")
+
+    return np.array(all_k), kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym

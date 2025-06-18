@@ -186,7 +186,7 @@ class BandStructure:
         include_TR=False,
         unk_formatted=False,
         irreps=False,
-        symprec=1e-5, 
+        symprec=1e-5,
         angle_tolerance=-1,
         mag_symprec=-1,
         spacegroup=None,
@@ -230,14 +230,15 @@ class BandStructure:
 
         if select_grid is not None:
             def is_on_grid(kpt):
-                a = np.array(kpt)*np.array(select_grid)
+                a = np.array(kpt) * np.array(select_grid)
                 return np.allclose(a, np.round(a))
         else:
             def is_on_grid(kpt):
                 return True
-            
+
         if irreducible:
             irreducible_list = UniqueListMod1()
+
             def is_reducible(kpt):
                 for symop in self.spacegroup.symmetries:
                     if symop.transform_k(kpt) in irreducible_list:
@@ -248,7 +249,7 @@ class BandStructure:
         else:
             def is_reducible(kpt):
                 return False
-            
+
         def check_skip(kpt):
             if not is_on_grid(kpt):
                 log_message(f'k-point {kpt} is not on the grid {select_grid}, skipping', verbosity, 1)
@@ -257,13 +258,13 @@ class BandStructure:
                 log_message(f'k-point {kpt} is reducible, skipping', verbosity, 1)
                 return True
             return False
-                
-        
+
+
         if onlysym:
             return
         # this way the headers are parsed twice (once for spacegroup and once for bandstructure)
         # but it is not a big problem, I think, and the onlysym requires less parameters (no Ecut, spinor, spin_channel....)
-        
+
         if spin_channel is not None:
             spin_channel = spin_channel.lower()
         if spin_channel == 'down':
@@ -345,7 +346,7 @@ class BandStructure:
             raise RuntimeError(f"Unknown/unsupported code :{code}")
 
         assert _spinor == self.spinor, f"the spinor flag in the header ({_spinor}) does not match the one in the spacegroup ({self.spinor})"
-        
+
         # Set Fermi energy
         if EF.lower() == "auto":
             if EF_in is None:
@@ -409,11 +410,7 @@ class BandStructure:
                                    spinor=self.spinor,
                                    verbosity=verbosity
                                    )
-                if not self.spinor:
-                    selectG = kg[3]
-                else:
-                    selectG = np.hstack((kg[3], kg[3] + int(npw / 2)))
-                WF = WF[:, selectG]
+                WF = WF[:, kg[3], :]
 
             elif code == 'abinit':
                 NBin = parser.nband[ik]
@@ -422,14 +419,14 @@ class BandStructure:
                     continue
                 log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
                 WF, Energy, kg = parser.parse_kpoint(ik)
-                WF, kg, eKG = sortIG(ik, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, self.spinor, verbosity=verbosity)
+                WF, kg, eKG = sortIG(ik, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, verbosity=verbosity)
 
             elif code == 'espresso':
                 log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
                 WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel, verbosity=verbosity)
                 if check_skip(kpt):
                     continue
-                WF, kg, eKG = sortIG(ik + 1, kg, kpt, WF, self.RecLattice / 2.0, self.Ecut0, self.Ecut, self.spinor, verbosity=verbosity)
+                WF, kg, eKG = sortIG(ik + 1, kg, kpt, WF, self.RecLattice / 2.0, self.Ecut0, self.Ecut, verbosity=verbosity)
 
             elif code == 'wannier90':
                 kpt = kpred[ik]
@@ -952,7 +949,7 @@ class BandStructure:
 
 
     def get_dmn(self, grid=None, degen_thresh=1e-2, unitary=True, unitary_params={},
-                irreducible=False, Ecut = None):
+                irreducible=False, Ecut=None):
         """
         grid : tuple(int), optional
             the grid of kpoints (3 integers), if None, the grid is determined from the kpoints
@@ -964,7 +961,7 @@ class BandStructure:
             if True, the transformation matrices are made unitary explicitly
         unitary_params : dict, optional
             parameters to be passed to :func:`~irrep.utility.orthogonalize`
-        
+
         Returns
         -------
         dict with the following keys:
@@ -991,24 +988,24 @@ class BandStructure:
         grid, selected_kpoints = grid_from_kpoints(kpoints, grid=grid, allow_missing=irreducible)
         kptirr = select_irreducible(kpoints[selected_kpoints], spacegroup=self.spacegroup)
         if irreducible:
-            print (f"kptirr: {kptirr}")
+            print(f"kptirr: {kptirr}")
             selected_kpoints = selected_kpoints[kptirr]
             kptirr = np.arange(len(kptirr), dtype=int)
         kpoints = kpoints[selected_kpoints]
         Nsym = self.spacegroup.size
         if irreducible:
-            kpoints, kptirr2kpt, kpt2kptirr = restore_full_grid(kpoints, grid=grid, spacegroup=self.spacegroup)
+            kpoints, kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym = restore_full_grid(kpoints, grid=grid, spacegroup=self.spacegroup)
         else:
             assert len(kpoints) == np.prod(grid), \
                 f"the number of kpoints {len(kpoints)} does not match the grid {grid}.\n" \
                 f"Use the `grid` argument to specify the grid of kpoints."
-            kptirr2kpt, kpt2kptirr  = get_mapping_irr(kpoints, kptirr, self.spacegroup)
+            kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym = get_mapping_irr(kpoints, kptirr, self.spacegroup)
 
 
         def get_K(ik):
             return self.kpoints[selected_kpoints[ik]]
 
-        
+
         d_band_blocks = [[[] for _ in range(Nsym)] for _ in range(len(kptirr))]
         d_band_block_indices = []
 
@@ -1025,16 +1022,18 @@ class BandStructure:
                     d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
                     # transposed because in irrep WF is row vector, while in dmn it is column vector
                 else:
-                    # fill with identity matrices, because the other k=point is assumed to be 
+                    # fill with identity matrices, because the other k=point is assumed to be
                     # directly obtained from the irreducible k-point by the symmetry operation
                     # TODO : adapt WannierBerri in such a way that these matrices are not used
-                    d_band_blocks[i][isym] = [ np.eye(b2-b1) for b1, b2 in block_indices ]
-                
+                    d_band_blocks[i][isym] = [np.eye(b2 - b1) for b1, b2 in block_indices]
+
+
         return dict(grid=grid,
                     kpoints=kpoints,
                     kptirr=kptirr,
                     kptirr2kpt=kptirr2kpt,
                     kpt2kptirr=kpt2kptirr,
+                    kpt_from_kptirr_isym=kpt_from_kptirr_isym,
                     d_band_blocks=d_band_blocks,
                     d_band_block_indices=d_band_block_indices,
                     selected_kpoints=selected_kpoints,)

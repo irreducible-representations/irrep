@@ -158,7 +158,7 @@ class SpaceGroup:
                 number = int(number)
             except ValueError:
                 raise ValueError(f"number must be an integer (or convertable to int), got <{number}> ({type(number)}) ")
-            
+
             if number < 0:
                 warnings.warn("Negative space group number is not supported. Setting it to -1")
                 number = -1
@@ -370,8 +370,8 @@ class SpaceGroup:
         cell = (real_lattice, positions, typat)
         if not magnetic:  # No magnetic moments magmom = None
 
-            dataset = spglib.get_symmetry_dataset(cell, 
-                                                  symprec=symprec, 
+            dataset = spglib.get_symmetry_dataset(cell,
+                                                  symprec=symprec,
                                                   angle_tolerance=angle_tolerance)
             if version.parse(spglib.__version__) < version.parse('2.5.0'):
                 name = dataset['international']
@@ -392,10 +392,10 @@ class SpaceGroup:
         else:  # Magnetic group
             if magmom is None or magmom is True:
                 magmom = np.zeros((len(positions), 3), dtype=float)
-            dataset = spglib.get_magnetic_symmetry_dataset((*cell, magmom), 
-                                                            symprec=symprec, 
-                                                            angle_tolerance=angle_tolerance,
-                                                            mag_symprec=mag_symprec)
+            dataset = spglib.get_magnetic_symmetry_dataset((*cell, magmom),
+                                                           symprec=symprec,
+                                                           angle_tolerance=angle_tolerance,
+                                                           mag_symprec=mag_symprec)
             if dataset is None:
                 raise ValueError("No magnetic space group could be detected!")
             rotations = dataset.rotations
@@ -582,7 +582,7 @@ class SpaceGroup:
             `Spglib documentation <https://spglib.readthedocs.io/en/stable/api/python-api.html#spglib.spglib.get_magnetic_symmetry>'__
         **kwargs_tables : dict
             Additional keyword arguments to pass to the `SpaceGroupIrrep.set_irreptables` method.
-        
+
         Returns
         -------
         SpaceGroup
@@ -599,7 +599,7 @@ class SpaceGroup:
 
         elif code == "abinit":
             parser = ParserAbinit(fWFK)
-            (nband, NK, Lattice, Ecut0, spinor, typat, positions,EF_in) = \
+            (nband, NK, Lattice, Ecut0, spinor, typat, positions, EF_in) = \
                 parser.parse_header(verbosity=verbosity)
 
 

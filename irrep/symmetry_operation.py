@@ -606,7 +606,7 @@ class SymmetryOperation():
             return np.array([[0, 1], [-1, 0]]) @ self.spinor_rotation.conj()
         else:
             return self.spinor_rotation
-        
+
     def transform_WF(self, k, WF, igall, k_new=None):
         """
         Transform wavefunction under the symmetry operation.
@@ -643,9 +643,9 @@ class SymmetryOperation():
         igall_new = np.copy(igall)
 
         for i in range(ng):
-            igall_new[:3,i] = self.transform_k(igall[:3,i])
-        igall_new[:3,:] += g_shift[:, None]  # shift the igall_new to the new k point
-            
+            igall_new[:3, i] = self.transform_k(igall[:3, i])
+        igall_new[:3, :] += g_shift[:, None]  # shift the igall_new to the new k point
+
         multZ = np.exp(-2j * np.pi * self.translation.dot(igall_new[:3, :] + k_new[:, None]))[None, :]
         if self.time_reversal:
             WF = WF.conj()
@@ -659,7 +659,7 @@ class SymmetryOperation():
         else:
             WFrot = WF[:, :] * multZ
         return k_new, WFrot, igall_new
-    
+
 
     def transform_k(self, vector, inverse=False):
         """

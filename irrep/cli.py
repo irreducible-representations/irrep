@@ -251,8 +251,6 @@ do not hesitate to contact the author:
     default=1e-5,
     help="Symmetry precision. Default: 1e-5. Passed to spglib get_symmetry"
 )
-    
-    
 @click.option(
     "-groupKramers",
     flag_value=True,

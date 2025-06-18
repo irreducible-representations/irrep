@@ -70,10 +70,14 @@ class Kpoint:
         Index of the k-point, starting the count from 1.
     num_bands : int
         Number of bands whose traces should be calculated.
+    spinor : bool   
+        `True` if wave-functions are spinors, `False` if they are scalars.
+    nspinor : int
+        Number of spinor components in the wave functions. Returns 2 for spinors, 1 for scalars.
     RecLattice : array, shape=(3,3)
         Each row contains the cartesian coordinates of a basis vector forming 
         the unit-cell in reciprocal space.
-    WF : array
+    WF : array( (num_bands, NG, nspinor), dtype=complex)
         Coefficients of wave-functions in the plane-wave expansion. A row for 
         each wave-function, a column for each plane-wave.
     ig : array
@@ -139,7 +143,20 @@ class Kpoint:
         eKG=None,
     ):
 
+        if spinor is None:
+            if WF is not None:
+                spinor = (WF.shape[2] == 2)  # if WF is provided, check the number of components
+            else:
+                raise ValueError("spinor must be specified if WF is not provided")
+        else:
+            if WF is not None:
+                if WF.shape[2] != (2 if spinor else 1):
+                    raise ValueError(
+                        f"WF must have {2 if spinor else 1} components if spinor is {spinor}, got {WF.shape[1]} components"
+                    )
         self.spinor = spinor
+        print(f"kpoint spinor={self.spinor}")
+
         if ik is None:
             self.ik0 = None
         else:
@@ -152,6 +169,7 @@ class Kpoint:
                 num_bands = WF.shape[0]
             else:
                 raise ValueError("num_bands must be specified if neither WF nor Energy are not provided")
+
         self.num_bands = num_bands
         self.RecLattice = RecLattice
         self.upper = upper
@@ -167,8 +185,9 @@ class Kpoint:
 
         if normalize:
             self.WF /= (
-                np.sqrt(np.abs(np.einsum("ij,ij->i", self.WF.conj(), self.WF)))
-            ).reshape(self.num_bands, 1)
+                np.sqrt(np.abs(np.einsum("ijs,ijs->i", self.WF.conj(), self.WF)))
+            ).reshape(self.num_bands, 1, 1)
+            # np.linalg.norm(self.WF, axis=(1,2))[:, None, None]
 
     def set_little_group(self, symmetries):
         """
@@ -184,11 +203,18 @@ class Kpoint:
         self.little_group = []
         for symop in symmetries:
             k_rotated = np.dot(np.linalg.inv(symop.rotation).T, self.k)
-            dkpt =np.round(k_rotated - self.k)
+            dkpt = np.round(k_rotated - self.k)
             if np.allclose(dkpt, k_rotated - self.k):
                 self.little_group.append(symop)
         return self.little_group
 
+    @property
+    def nspinor(self):
+        """
+        Number of spinor components in the wave functions.
+        Returns 2 for spinors, 1 for scalars.
+        """
+        return 2 if self.spinor else 1
 
     def init_traces(self, degen_thresh=1e-8, verbosity=0, calculate_traces=True, refUC=np.eye(3), shiftUC=np.zeros(3),
                     symmetries_tables=None, save_wf=True):
@@ -232,7 +258,8 @@ class Kpoint:
 
         # Calculate traces
         if calculate_traces:
-            self.char, self.char_refUC, self.Energy_mean = self.calculate_traces(refUC, shiftUC, symmetries_tables, verbosity, use_blocks=False)
+            self.char, self.char_refUC, self.Energy_mean = \
+                self.calculate_traces(refUC, shiftUC, symmetries_tables, verbosity, use_blocks=False)
 
             # Determine number of band inversions based on parity
             found = False
@@ -245,9 +272,13 @@ class Kpoint:
                     break
             if found:
                 # Number of inversion odd states (not pairs!)
+                print(f"inversion is {i}-th symmetry in the little group")
+                print(f"characters of inversion symmetry: {self.char[:, i]}")
+                print(f"degeneracies: {self.degeneracies}")
                 self.num_bandinvs = int(round(sum(self.degeneracies - self.char[:, i].real) / 2))
             else:
                 self.num_bandinvs = None
+            print(f"number of inversion-odd states: {self.num_bandinvs}")
 
         if not save_wf:
             self.WF = None
@@ -290,9 +321,8 @@ class Kpoint:
         WF : array
             Coefficients of the plane-wave expansion of wave-functions. Each row 
             corresponds to a wave-function, each column to a plane-wave.
-        inds : array(int)
-            Indices of the states in the parent kpoint object. Used to keep the irrep labels
-
+        kwargs_kpoint : dict, optional
+            Additional keyword arguments to pass to the `init_traces` method,
         Returns
         -------
         other : class
@@ -351,15 +381,16 @@ class Kpoint:
         )
         if self.spinor:
             selectG = np.hstack((selectG, selectG + self.NG))
-        WF = self.WF[:, selectG]
+        WF = self.WF[:, selectG, :]
         result = []
         for b1, b2, E, matrices in self.get_rho_spin(degen_thresh):
-            proj = np.array(
-                [
-                    [WF[i].conj().dot(WF[j]) for j in range(b1, b2)]
-                    for i in range(b1, b2)
-                ]
-            )
+            # proj = np.array(
+            #     [
+            #         [WF[i].reshape(-1).conj().dot(WF[j].reshape(-1)) for j in range(b1, b2)]
+            #         for i in range(b1, b2)
+            #     ]
+            # )
+            proj = np.einsum('igs,jgs->ij', WF[b1:b2].conj(), WF[b1:b2])
             result.append([E,] + [np.trace(proj.dot(M)).real for M in matrices])
         return np.array(result)
 
@@ -396,17 +427,19 @@ class Kpoint:
         result = []
         for b1, b2 in block_indices:
             E = self.Energy_raw[b1:b2].mean()
-            W = np.array( [ [self.WF[i].conj().dot(self.WF[j]) 
-                             for j in range(b1, b2)] for i in range(b1, b2)])
+            W = np.einsum('igs,jgs->ij', self.WF[b1:b2].conj(), self.WF[b1:b2])
+            # np.array( [ [self.WF[i].conj().dot(self.WF[j])
+            #                  for j in range(b1, b2)] for i in range(b1, b2)])
             if self.spinor:
-                ng = self.NG
-                Smatrix = [ 
-                    [ np.array( [
-                        [self.WF[i, ng * s: ng * (s + 1)].conj().dot(
-                            self.WF[j, ng * t: ng * (t + 1)]) for j in range(b1, b2)]
-                                for i in range(b1, b2)] )# band indices   
-                        for t in (0, 1) ] 
-                        for s in (0, 1) ]  # spin indices
+                # ng = self.NG
+                # [
+                #     [ np.array( [
+                #         [self.WF[i, ng * s: ng * (s + 1)].conj().dot(
+                #             self.WF[j, ng * t: ng * (t + 1)]) for j in range(b1, b2)]
+                #                 for i in range(b1, b2)] )# band indices
+                #         for t in (0, 1) ]
+                #         for s in (0, 1) ]  # spin indices
+                Smatrix = np.einsum('igs,jgt->ijst', self.WF[b1:b2].conj(), self.WF[b1:b2])
                 Sx = Smatrix[0][1] + Smatrix[1][0]
                 Sy = 1j * (-Smatrix[0][1] + Smatrix[1][0])
                 Sz = Smatrix[0][0] - Smatrix[1][1]
@@ -414,6 +447,9 @@ class Kpoint:
             else:
                 result.append((b1, b2, E, (W,)))
         return result
+
+    def normWF(self):
+        return np.linalg.norm(self.WF, axis=(1, 2))
 
     def Separate(self, symop, groupKramers=True, verbosity=0,
                  kwargs_kpoint={}):
@@ -440,7 +476,7 @@ class Kpoint:
 
         # Check orthogonality of wave functions
         # Rm once tests are fixed
-        norms = self.WF.conj().dot(self.WF.T)
+        norms = self.normWF()**2
         check = np.max(abs(norms - np.eye(norms.shape[0])))
         if check > 1e-5:
             log_message(f"orthogonality (largest of diag. <psi_nk|psi_mk>): {check:7.5f} > 1e-5   \n",
@@ -509,7 +545,9 @@ class Kpoint:
 
             for b1, b2 in block_indices:
                 v1 = v[:, b1:b2]
-                subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2], WF=v1.T.conj().dot(self.WF), kwargs_kpoint=kwargs_kpoint)
+                subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2],
+                                                           WF=np.einsum('ij,jks->iks', v1.T.conj(), self.WF),
+                                                           kwargs_kpoint=kwargs_kpoint)
 
         else:  # don't group Kramers pairs
 
@@ -524,34 +562,35 @@ class Kpoint:
             for b1, b2 in block_indices:
                 v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
                 subspaces[np.roll(w, -b1)[: (b2 - b1) % self.num_bands].mean()] = self.copy_sub(
-                    E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands], WF=v1.T.conj().dot(self.WF),
+                    E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands],
+                    WF=np.einsum('ij,jks->iks', v1.T.conj(), self.WF),
                     kwargs_kpoint=kwargs_kpoint
                 )
 
         return subspaces
-    
+
     def symm_matrix(self, other, symop, block_indices=None, unitary=True, unitary_params={}, Ecut=None):
-        K1=self
-        K2=other
+        K1 = self
+        K2 = other
         return symm_matrix(
-                    K=K1.k,
-                    K_other=K2.k,
-                    WF=K1.WF,
-                    WF_other=K2.WF,
-                    igall=K1.ig,
-                    igall_other=K2.ig,
-                    A=symop.rotation,
-                    S=symop.spinor_rotation,
-                    T=symop.translation,
-                    time_reversal=symop.time_reversal,
-                    spinor=K1.spinor,
-                    block_ind=block_indices,
-                    return_blocks=True,
-                    unitary=unitary,
-                    unitary_params=unitary_params,
-                    Ecut=Ecut,
-                    eKG=K1.eKG
-                )
+            K=K1.k,
+            K_other=K2.k,
+            WF=K1.WF,
+            WF_other=K2.WF,
+            igall=K1.ig,
+            igall_other=K2.ig,
+            A=symop.rotation,
+            S=symop.spinor_rotation,
+            T=symop.translation,
+            time_reversal=symop.time_reversal,
+            spinor=K1.spinor,
+            block_ind=block_indices,
+            return_blocks=True,
+            unitary=unitary,
+            unitary_params=unitary_params,
+            Ecut=Ecut,
+            eKG=K1.eKG
+        )
 
     def calculate_traces(self, refUC, shiftUC, symmetries_tables, verbosity=0, use_blocks=True):
         '''
@@ -588,13 +627,13 @@ class Kpoint:
         for symop in self.little_group:
             char.append(
                 symm_eigenvalues(
-                    self.k,
-                    self.WF,
-                    self.ig,
-                    symop.rotation,
-                    symop.spinor_rotation,
-                    symop.translation,
-                    self.spinor,
+                    K=self.k,
+                    WF=self.WF,
+                    igall=self.ig,
+                    A=symop.rotation,
+                    S=symop.spinor_rotation,
+                    T=symop.translation,
+                    spinor=self.spinor,
                     block_ind=self.block_indices if use_blocks else None
                 ))
         char = np.array(char)
@@ -689,18 +728,18 @@ class Kpoint:
         Kpoint
             A new instance of `Kpoint` with the same attributes as the current one.
         """
-        return  Kpoint( ik=-1,
-                        RecLattice=self.RecLattice,
-                        spinor=self.spinor,
-                        kpt=self.k.copy(),
-                        WF=self.WF.copy(),  # first arg added for abinit (to be kept at the end)
-                        Energy=self.Energy_raw.copy(),
-                        ig=self.ig.copy(),
-                        upper=self.upper,
-                        refUC=self.refUC,
-                        normalize=False,  # already normalized in the original instance (if needed)
+        return Kpoint(ik=-1,
+                      RecLattice=self.RecLattice,
+                      spinor=self.spinor,
+                      kpt=self.k.copy(),
+                      WF=self.WF.copy(),  # first arg added for abinit (to be kept at the end)
+                      Energy=self.Energy_raw.copy(),
+                      ig=self.ig.copy(),
+                      upper=self.upper,
+                      refUC=self.refUC,
+                      normalize=False,  # already normalized in the original instance (if needed)
                         )
-        
+
 
 
 
@@ -723,9 +762,9 @@ class Kpoint:
         # Transform the k-point coordinates
         new_kpoint.k = symmetry_operation.transform_k(self.k)
 
-        # Transform the wave 
-        if self.spinor:
-            new_kpoint.WF = np.dot(symmetry_operation.rotation, self.WF.T).T
+        # Transform the wave
+        # if self.spinor:
+        #     new_kpoint.WF = np.dot(symmetry_operation.rotation, self.WF.swapaxes(0,1)).swa
 
         # Update the k-point reference in the new instance
         new_kpoint.k_refUC = np.dot(new_kpoint.k, symmetry_operation.refUC.T) % 1
@@ -961,6 +1000,7 @@ class Kpoint:
         res : array
             Matrix of `complex` elements  < u_m(k) | u_n(k+g) >.
         """
+        assert self.spinor == other.spinor, "Spinor property of k-points should be the same"
         g = np.array((self.k - other.k).round(), dtype=int)
         igall = np.hstack((self.ig[:3], other.ig[:3] - g[:, None]))
         igmax = igall.max(axis=1)
@@ -971,36 +1011,36 @@ class Kpoint:
         res = np.zeros((self.num_bands, other.num_bands), dtype=complex)
 
         # short again coefficients of expansions
-        for s in [0, 1] if self.spinor else [0]:
-            WF1 = np.zeros((self.num_bands, igsize[0], igsize[1], igsize[2]), dtype=complex)
-            WF2 = np.zeros((other.num_bands, igsize[0], igsize[1], igsize[2]), dtype=complex)
-            for i, ig in enumerate(self.ig.T):
-                WF1[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = \
-                    self.WF[:, i + s * self.ig.shape[1]]
-            for i, ig in enumerate(other.ig[:3].T - g[None, :]):
-                WF2[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = \
-                    other.WF[:, i + s * other.ig.shape[1]]
-            res += np.einsum("mabc,nabc->mn", WF1.conj(), WF2)
+        # for s in [0, 1] if self.spinor else [0]:
+        WF1 = np.zeros((self.num_bands, igsize[0], igsize[1], igsize[2], self.nspinor), dtype=complex)
+        WF2 = np.zeros((other.num_bands, igsize[0], igsize[1], igsize[2], self.nspinor), dtype=complex)
+        for i, ig in enumerate(self.ig.T):
+            WF1[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2], :] = self.WF[:, i, :]
+        for i, ig in enumerate(other.ig[:3].T - g[None, :]):
+            WF2[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = other.WF[:, i, :]
+        res += np.einsum("mabcs,nabcs->mn", WF1.conj(), WF2)
         return res
 
-    def getloc1(self, loc):
-        gmax = abs(self.ig[:3]).max(axis=1)
-        grid = [np.linspace(0.0, 1.0, 2 * gm + 1, False) for gm in gmax]
-        print("grid:", grid)
-        loc_grid = loc(
-            grid[0][:, None, None], grid[1][None, :, None], grid[2][None, None, :]
-        )
-        print("loc=", loc, "loc_grid=\n", loc_grid)
-        res = np.zeros(self.num_bands)
-        for s in [0, 1] if self.spinor else [0]:
-            WF1 = np.zeros((self.num_bands, *(2 * gmax + 1)), dtype=complex)
-            for i, ig in enumerate(self.ig.T):
-                WF1[:, ig[0], ig[1], ig[2]] = self.WF[:, i + s * self.ig.shape[1]]
-            #            print ("wfsum",WF1.sum()," shape ",WF1.shape,loc_grid.shape)
-            res += np.array([np.sum(np.abs(np.fft.ifftn(WF1[ib])) ** 2 * loc_grid).real
-                             for ib in range(self.num_bands)])
-        print("    ", loc_grid.shape)
-        return res * (np.prod(loc_grid.shape))
+    # I think these routines are not used anymore, but I leave them here for reference
+    # def getloc1(self, loc):
+    #     gmax = abs(self.ig[:3]).max(axis=1)
+    #     grid = [np.linspace(0.0, 1.0, 2 * gm + 1, False) for gm in gmax]
+    #     print("grid:", grid)
+    #     loc_grid = loc(
+    #         grid[0][:, None, None], grid[1][None, :, None], grid[2][None, None, :]
+    #     )
+    #     print("loc=", loc, "loc_grid=\n", loc_grid)
+    #     res = np.zeros(self.num_bands)
+    #     WF1 = np.zeros((self.num_bands, *(2 * gmax + 1)), dtype=complex)
+    #     for s in [0, 1] if self.spinor else [0]:
+    #         WF1 = np.zeros((self.num_bands, *(2 * gmax + 1)), dtype=complex)
+    #         for i, ig in enumerate(self.ig.T):
+    #             WF1[:, ig[0], ig[1], ig[2]] = self.WF[:, i + s * self.ig.shape[1]]
+    #         #            print ("wfsum",WF1.sum()," shape ",WF1.shape,loc_grid.shape)
+    #         res += np.array([np.sum(np.abs(np.fft.ifftn(WF1[ib])) ** 2 * loc_grid).real
+    #                          for ib in range(self.num_bands)])
+    #     print("    ", loc_grid.shape)
+    #     return res * (np.prod(loc_grid.shape))
 
-    def getloc(self, locs):
-        return np.array([self.getloc1(loc) for loc in locs])
+    # def getloc(self, locs):
+    #     return np.array([self.getloc1(loc) for loc in locs])
