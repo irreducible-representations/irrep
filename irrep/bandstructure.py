@@ -410,7 +410,7 @@ class BandStructure:
                                    spinor=self.spinor,
                                    verbosity=verbosity
                                    )
-                WF = WF[:, kg[3], :]
+                WF = WF[:, kg[:, 3], :]
 
             elif code == 'abinit':
                 NBin = parser.nband[ik]
@@ -441,7 +441,7 @@ class BandStructure:
                                    nplanemax=np.max([ngx, ngy, ngz]) // 2,
                                    verbosity=verbosity
                                    )
-                selectG = tuple(kg[0:3])
+                selectG = tuple(kg[:,0:3].T)
                 log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
                 WF = parser.parse_kpoint(ik + 1, selectG)
             elif code == 'gpaw':
@@ -984,22 +984,27 @@ class BandStructure:
                 at the i-th irreducible kpoint        
         """
 
-        kpoints = np.array([KP.K  for KP in self.kpoints])
-        grid, selected_kpoints = grid_from_kpoints(kpoints, grid=grid, allow_missing=irreducible)
-        kptirr = select_irreducible(kpoints[selected_kpoints], spacegroup=self.spacegroup)
+        kpt_latt_grid = np.array([KP.K  for KP in self.kpoints])
+        grid, selected_kpoints = grid_from_kpoints(kpt_latt_grid, grid=grid, allow_missing=irreducible)
+        kptirr = select_irreducible(kpt_latt_grid[selected_kpoints], spacegroup=self.spacegroup)
         if irreducible:
             print(f"kptirr: {kptirr}")
             selected_kpoints = selected_kpoints[kptirr]
             kptirr = np.arange(len(kptirr), dtype=int)
-        kpoints = kpoints[selected_kpoints]
+        kpt_latt_grid = kpt_latt_grid[selected_kpoints]
         Nsym = self.spacegroup.size
         if irreducible:
-            kpoints, kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym = restore_full_grid(kpoints, grid=grid, spacegroup=self.spacegroup)
+            kpt_latt_grid, kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym = restore_full_grid(kpt_latt_grid, grid=grid, spacegroup=self.spacegroup)
+            # debug
+            print (f"restored kpt_latt_grid: {kpt_latt_grid}")
+            print (f"restored kptirr2kpt: {kptirr2kpt}")
+            print (f"restored kpt2kptirr: {kpt2kptirr}")
+            print (f"restored kpt_from_kptirr_isym: {kpt_from_kptirr_isym}")
         else:
-            assert len(kpoints) == np.prod(grid), \
-                f"the number of kpoints {len(kpoints)} does not match the grid {grid}.\n" \
+            assert len(kpt_latt_grid) == np.prod(grid), \
+                f"the number of kpoints {len(kpt_latt_grid)} does not match the grid {grid}.\n" \
                 f"Use the `grid` argument to specify the grid of kpoints."
-            kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym = get_mapping_irr(kpoints, kptirr, self.spacegroup)
+            kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym = get_mapping_irr(kpt_latt_grid, kptirr, self.spacegroup)
 
 
         def get_K(ik):
@@ -1009,27 +1014,40 @@ class BandStructure:
         d_band_blocks = [[[] for _ in range(Nsym)] for _ in range(len(kptirr))]
         d_band_block_indices = []
 
+        
+
         for i, ikirr in enumerate(kptirr):
             K1 = get_K(ikirr)
             block_indices = get_block_indices(K1.Energy_raw, thresh=degen_thresh, cyclic=False)
             d_band_block_indices.append(block_indices)
             for isym, symop in enumerate(self.spacegroup.symmetries):
-                if kptirr2kpt[i, isym] == i or not irreducible:
+                ik2 = kptirr2kpt[i, isym]
+                extra_kpoints = {}
+                if not irreducible or ik2 in kptirr:
                     K2 = get_K(kptirr2kpt[i, isym])
-                    block_list = K1.symm_matrix(K2, symop, block_indices=block_indices,
-                                                unitary=unitary, unitary_params=unitary_params,
-                                                Ecut=Ecut)
-                    d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
-                    # transposed because in irrep WF is row vector, while in dmn it is column vector
                 else:
-                    # fill with identity matrices, because the other k=point is assumed to be
-                    # directly obtained from the irreducible k-point by the symmetry operation
-                    # TODO : adapt WannierBerri in such a way that these matrices are not used
-                    d_band_blocks[i][isym] = [np.eye(b2 - b1) for b1, b2 in block_indices]
+                    if ik2 not in extra_kpoints:
+                        print (f"transforming k-point {ikirr}={K1.k} with symmetry {isym} to k-point {ik2} = {kpt_latt_grid[ik2]}")
+                        symop = self.spacegroup.symmetries[kpt_from_kptirr_isym[ik2]]
+                        symop.show()
+                        # TODO: in principle, here it is not needed to transform the k-point,
+                        # For the first symmetry the transformation is the identity
+                        # For the rest the transformations can be obtained from the
+                        # little group of the irreducible k-point. But we do it
+                        # here explicitly, further it will be checked, and recoded
+                        K2 = K1.get_transformed_copy(symmetry_operation=symop,
+                                                     k_new=kpt_latt_grid[ik2])
+                        extra_kpoints[ik2] = K2
+                    K2 = extra_kpoints[ik2]
+                block_list = K1.symm_matrix(K2, symop, block_indices=block_indices,
+                                            unitary=unitary, unitary_params=unitary_params,
+                                            Ecut=Ecut)
+                d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
+                # transposed because in irrep WF is row vector, while in dmn it is column vector
 
 
         return dict(grid=grid,
-                    kpoints=kpoints,
+                    kpoints=kpt_latt_grid,
                     kptirr=kptirr,
                     kptirr2kpt=kptirr2kpt,
                     kpt2kptirr=kpt2kptirr,

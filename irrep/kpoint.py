@@ -21,7 +21,7 @@ import numpy as np
 import numpy.linalg as la
 import copy
 from .gvectors import symm_eigenvalues, symm_matrix
-from .utility import compstr, get_block_indices, is_round, format_matrix, log_message, orthogonalize, vector_pprint
+from .utility import cached_einsum, compstr, get_block_indices, is_round, format_matrix, log_message, orthogonalize, vector_pprint
 
 
 class Kpoint:
@@ -138,7 +138,6 @@ class Kpoint:
         Energy=None,
         ig=None,
         upper=None,
-        refUC=np.eye(3),
         normalize=True,
         eKG=None,
     ):
@@ -155,8 +154,7 @@ class Kpoint:
                         f"WF must have {2 if spinor else 1} components if spinor is {spinor}, got {WF.shape[1]} components"
                     )
         self.spinor = spinor
-        print(f"kpoint spinor={self.spinor}")
-
+        
         if ik is None:
             self.ik0 = None
         else:
@@ -181,11 +179,11 @@ class Kpoint:
         self.eKG = eKG
         self.upper = upper
 
-        self.k_refUC = np.dot(refUC.T, self.k) % 1
+        # self.k_refUC = np.dot(refUC.T, self.k) % 1
 
         if normalize:
             self.WF /= (
-                np.sqrt(np.abs(np.einsum("ijs,ijs->i", self.WF.conj(), self.WF)))
+                np.sqrt(np.abs(cached_einsum("ijs,ijs->i", self.WF.conj(), self.WF)))
             ).reshape(self.num_bands, 1, 1)
             # np.linalg.norm(self.WF, axis=(1,2))[:, None, None]
 
@@ -390,14 +388,14 @@ class Kpoint:
             #         for i in range(b1, b2)
             #     ]
             # )
-            proj = np.einsum('igs,jgs->ij', WF[b1:b2].conj(), WF[b1:b2])
+            proj = cached_einsum('igs,jgs->ij', WF[b1:b2].conj(), WF[b1:b2])
             result.append([E,] + [np.trace(proj.dot(M)).real for M in matrices])
         return np.array(result)
 
     @property
     def NG(self):
         """Getter for the number of plane-waves in current k-point"""
-        return self.ig.shape[1]
+        return self.ig.shape[0]
 
     @lru_cache
     def get_rho_spin(self, degen_thresh=1e-4):
@@ -427,7 +425,7 @@ class Kpoint:
         result = []
         for b1, b2 in block_indices:
             E = self.Energy_raw[b1:b2].mean()
-            W = np.einsum('igs,jgs->ij', self.WF[b1:b2].conj(), self.WF[b1:b2])
+            W = cached_einsum('igs,jgs->ij', self.WF[b1:b2].conj(), self.WF[b1:b2])
             # np.array( [ [self.WF[i].conj().dot(self.WF[j])
             #                  for j in range(b1, b2)] for i in range(b1, b2)])
             if self.spinor:
@@ -439,7 +437,7 @@ class Kpoint:
                 #                 for i in range(b1, b2)] )# band indices
                 #         for t in (0, 1) ]
                 #         for s in (0, 1) ]  # spin indices
-                Smatrix = np.einsum('igs,jgt->ijst', self.WF[b1:b2].conj(), self.WF[b1:b2])
+                Smatrix = cached_einsum('igs,jgt->ijst', self.WF[b1:b2].conj(), self.WF[b1:b2])
                 Sx = Smatrix[0][1] + Smatrix[1][0]
                 Sy = 1j * (-Smatrix[0][1] + Smatrix[1][0])
                 Sz = Smatrix[0][0] - Smatrix[1][1]
@@ -546,7 +544,7 @@ class Kpoint:
             for b1, b2 in block_indices:
                 v1 = v[:, b1:b2]
                 subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2],
-                                                           WF=np.einsum('ij,jks->iks', v1.T.conj(), self.WF),
+                                                           WF=cached_einsum('ij,jks->iks', v1.T.conj(), self.WF),
                                                            kwargs_kpoint=kwargs_kpoint)
 
         else:  # don't group Kramers pairs
@@ -563,7 +561,7 @@ class Kpoint:
                 v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
                 subspaces[np.roll(w, -b1)[: (b2 - b1) % self.num_bands].mean()] = self.copy_sub(
                     E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands],
-                    WF=np.einsum('ij,jks->iks', v1.T.conj(), self.WF),
+                    WF=cached_einsum('ij,jks->iks', v1.T.conj(), self.WF),
                     kwargs_kpoint=kwargs_kpoint
                 )
 
@@ -736,14 +734,13 @@ class Kpoint:
                       Energy=self.Energy_raw.copy(),
                       ig=self.ig.copy(),
                       upper=self.upper,
-                      refUC=self.refUC,
                       normalize=False,  # already normalized in the original instance (if needed)
                         )
 
 
 
 
-    def get_transformed_copy(self, symmetry_operation, new_kpoint=None):
+    def get_transformed_copy(self, symmetry_operation, k_new=None):
         """
         Get a copy of the k-point transformed by a symmetry operation.
 
@@ -758,23 +755,14 @@ class Kpoint:
             symmetry operation.
         """
         # Create a copy of the current k-point
-        new_kpoint = self.copy()
+        other = self.copy()
         # Transform the k-point coordinates
-        new_kpoint.k = symmetry_operation.transform_k(self.k)
+        other.k, other.WF, other.igall = symmetry_operation.transform_WF(
+            k=self.k, WF=self.WF, igall=self.ig,
+            k_new=k_new
+        )
 
-        # Transform the wave
-        # if self.spinor:
-        #     new_kpoint.WF = np.dot(symmetry_operation.rotation, self.WF.swapaxes(0,1)).swa
-
-        # Update the k-point reference in the new instance
-        new_kpoint.k_refUC = np.dot(new_kpoint.k, symmetry_operation.refUC.T) % 1
-
-        # Update the little group symmetries
-        new_kpoint.little_group = [
-            symop.transform(symmetry_operation) for symop in self.little_group
-        ]
-
-        return new_kpoint
+        return other
 
     def write_characters(self):
         '''
@@ -1002,9 +990,9 @@ class Kpoint:
         """
         assert self.spinor == other.spinor, "Spinor property of k-points should be the same"
         g = np.array((self.k - other.k).round(), dtype=int)
-        igall = np.hstack((self.ig[:3], other.ig[:3] - g[:, None]))
-        igmax = igall.max(axis=1)
-        igmin = igall.min(axis=1)
+        igall = np.vstack((self.ig[:, :3], other.ig[:, :3] - g[None, :]))
+        igmax = igall.max(axis=0)
+        igmin = igall.min(axis=0)
         igsize = igmax - igmin + 1
         #        print (self.ig.T)
         #        print (igsize)
@@ -1018,7 +1006,7 @@ class Kpoint:
             WF1[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2], :] = self.WF[:, i, :]
         for i, ig in enumerate(other.ig[:3].T - g[None, :]):
             WF2[:, ig[0] - igmin[0], ig[1] - igmin[1], ig[2] - igmin[2]] = other.WF[:, i, :]
-        res += np.einsum("mabcs,nabcs->mn", WF1.conj(), WF2)
+        res += cached_einsum("mabcs,nabcs->mn", WF1.conj(), WF2)
         return res
 
     # I think these routines are not used anymore, but I leave them here for reference

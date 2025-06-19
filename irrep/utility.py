@@ -26,6 +26,26 @@ from typing import Any
 BOHR = constants.physical_constants['Bohr radius'][0] / constants.angstrom
 
 
+# Global cache to store einsum paths
+EINSUM_PATH_CACHE = {}
+def cached_einsum(subscripts, *operands, 
+                    optimize='greedy',
+                  **kwargs):
+    """
+    A wrapper for np.einsum that caches the contraction path.
+    The cache key is a combination of the subscripts string and the
+    shapes of the operand arrays.
+    """
+    shapes = tuple(op.shape for op in operands)
+    cache_key = (subscripts, shapes)
+
+    if cache_key in EINSUM_PATH_CACHE:
+        path = EINSUM_PATH_CACHE[cache_key]
+    else:
+        path = np.einsum_path(subscripts, *operands, optimize=optimize)[0]
+        EINSUM_PATH_CACHE[cache_key] = path
+    return np.einsum(subscripts, *operands, optimize=path, **kwargs)
+
 class FortranFileR(fortio.FortranFile):
     '''
     Class that implements `syrte/fortio` package to parse long records
@@ -710,7 +730,7 @@ def restore_full_grid(kpoints_irr, grid, spacegroup):
     for ik, ikirr in enumerate(kpt2kptirr):
         for isym in range(len(spacegroup.symmetries)):
             if kptirr2kpt[ikirr, isym] == ik:
-                kpt_from_kptirr_isym[ik] = ikirr
+                kpt_from_kptirr_isym[ik] = isym
                 break
         else:
             raise RuntimeError(f"No Symmetry operation maps irreducible "

@@ -1,4 +1,3 @@
-
 # ###   ###   #####  ###
 # #  #  #  #  #      #  #
 # ###   ###   ###    ###
@@ -19,7 +18,7 @@
 from functools import cached_property
 import numpy as np
 from scipy.linalg import expm
-from .utility import str_, BOHR
+from .utility import str_, BOHR, cached_einsum
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -103,7 +102,7 @@ class SymmetryOperation():
         self.spinor = spinor
         if spinor_rotation is None:
             self.spinor_rotation = expm(-0.5j * self.angle *
-                                    np.einsum('i,ijk->jk', self.axis, pauli_sigma))
+                                    cached_einsum('i,ijk->jk', self.axis, pauli_sigma))
         else:
             self.spinor_rotation = spinor_rotation
         self.sign = 1  # May be changed later externally
@@ -617,7 +616,7 @@ class SymmetryOperation():
             k-point to transform. (in reduced coordinates)
         WF : array(nb,ng*nspinor, dtype=complex)
             Wavefunction to transform. (or array of wavefunctions)
-        igall : np.ndarray((6,ng), dtype=int)
+        igall : np.ndarray((ng, 6), dtype=int)
             the array 
         k_new : array((3,), dtype=float), optional
             the new k-point to transform to. if provided, it will be checked that the
@@ -639,26 +638,21 @@ class SymmetryOperation():
             g_shift = np.round(g_shift_frac).astype(int)
             assert np.allclose(g_shift_frac, g_shift, atol=1e-6), \
                 f"The transformed k-point {k_transformed} does not match the provided new k-point {k_new} modulo reciprocal lattice vectors."
+            print (f"k_old = {k}, k_new = {k_new}, k_transformed = {k_transformed}, g_shift = {g_shift}")
         ng = igall.shape[0]
         igall_new = np.copy(igall)
 
         for i in range(ng):
-            igall_new[:3, i] = self.transform_k(igall[:3, i])
-        igall_new[:3, :] += g_shift[:, None]  # shift the igall_new to the new k point
+            igall_new[i, :3] = self.transform_k(igall[i, :3])
+        igall_new[:, :3] += g_shift[None, :]  # shift the igall_new to the new k point
 
-        multZ = np.exp(-2j * np.pi * self.translation.dot(igall_new[:3, :] + k_new[:, None]))[None, :]
+        multZ = np.exp(-2j * np.pi * (igall_new[:, :3] + k_new[None, :]) @ self.translation)
         if self.time_reversal:
             WF = WF.conj()
-
-        if self.spinor:
-            WFrot_up = WF[:, :ng] * multZ
-            WFrot_down = WF[:, ng:] * multZ
-            WFrot = np.stack([WFrot_up, WFrot_down], axis=2)
-            WFrot = np.einsum("ts,mgs->mgt", self.spinor_rotation_TR, WFrot)
-            WFrot = WFrot.reshape((WFrot.shape[0], -1), order='F')
-        else:
-            WFrot = WF[:, :] * multZ
-        return k_new, WFrot, igall_new
+        WF = WF[:, :, :] * multZ[None, :, None]
+        if self.spinor:  
+            WF = cached_einsum("ts,mgs->mgt", self.spinor_rotation_TR, WF)
+        return k_new, WF, igall_new
 
 
     def transform_k(self, vector, inverse=False):
