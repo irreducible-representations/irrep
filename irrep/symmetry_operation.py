@@ -631,8 +631,7 @@ class SymmetryOperation():
         """
         # TODO : check all signs and other details
         k_new, igTr = self.transform_gk(k, igall, k_other=k_new)
-        
-        ng = igall.shape[0]
+
         igall_new = np.copy(igall)
         igall_new[:, :3] = igTr
 
@@ -640,7 +639,7 @@ class SymmetryOperation():
         if self.time_reversal:
             WF = WF.conj()
         WF = WF[:, :, :] * multZ[None, :, None]
-        if self.spinor:  
+        if self.spinor:
             WF = cached_einsum("ts,mgs->mgt", self.spinor_rotation_TR, WF)
         return k_new, WF, igall_new
 

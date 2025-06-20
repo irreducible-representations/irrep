@@ -37,6 +37,7 @@ class NotSymmetryError(RuntimeError):
 #  checks for discrepancy of any results between this and VASP values)
 twomhbar2 = 0.262465831
 
+
 def get_pw_energies(RecLattice, k, ig):
     """
     Calculates the plane-wave energies at a given k-point.
@@ -58,7 +59,7 @@ def get_pw_energies(RecLattice, k, ig):
     eKG : array
         Energies of the plane-waves at the given k-point.
     """
-    return 0.5*Hartree_eV*(bohr_angstrom**2) * la.norm( (k[None,:] + ig[:,:3]) @ RecLattice, axis=1) ** 2
+    return 0.5 * Hartree_eV * (bohr_angstrom**2) * la.norm((k[None, :] + ig[:, :3]) @ RecLattice, axis=1) ** 2
 
 
 # This function is a python translation of a part of WaveTrans Code
@@ -230,7 +231,7 @@ def sortIG(ik, kg, kpt, WF, RecLattice, Ecut0, Ecut, verbosity=0):
     """
     thresh = 1e-4  # default thresh to distinguish energies of plane-waves
     KG = (kg + kpt).dot(RecLattice)
-    eKG = Hartree_eV * bohr_angstrom**2*(la.norm(KG, axis=1) ** 2) / 2
+    eKG = Hartree_eV * bohr_angstrom**2 * (la.norm(KG, axis=1) ** 2) / 2
     log_message(
         f"Found cutoff: {Ecut0:12.6f} eV   Largest plane wave energy in K-point {ik:4d}: {np.max(eKG):12.6f} eV",
         verbosity=verbosity, level=2
@@ -244,7 +245,7 @@ def sortIG(ik, kg, kpt, WF, RecLattice, Ecut0, Ecut, verbosity=0):
     srt = np.argsort(eKG)
     eKG = eKG[srt]
     igall = np.zeros((len(sel), 6), dtype=int)
-    igall[ :, :3] = kg[srt]
+    igall[:, :3] = kg[srt]
     igall[:, 3] = srt
     wall = (
         [0] + list(np.where(eKG[1:] - eKG[:-1] > thresh)[0] + 1) + [igall.shape[0]]
@@ -260,8 +261,9 @@ def sortIG(ik, kg, kpt, WF, RecLattice, Ecut0, Ecut, verbosity=0):
 
 
 def transform_gk(kpt, ig, A, kpt_other=None):
-    B = np.linalg.inv(A).T
-    kptTr = B.dot(kpt)
+    B = np.linalg.inv(A)
+    # kptTr = B.dot(kpt)
+    kptTr = kpt @ B  # kptTr is a direct coordinate of the transformed k-point
     if kpt_other is None:
         kpt_other = kptTr
     dkpt = np.array(np.round(kptTr - kpt_other), dtype=int)
@@ -271,7 +273,7 @@ def transform_gk(kpt, ig, A, kpt_other=None):
             f"The k-point {kpt} is transformed point {kptTr}  that is non-equivalent to the final point {kpt_other} "
             f"under transformation\n {A}"
         )
-    igTr =ig[:, :3] @ B.T + dkpt[None, :]
+    igTr = ig[:, :3] @ B + dkpt[None, :]
     igTr = np.array(np.round(igTr), dtype=int)
     return kpt_other, igTr
 
@@ -315,10 +317,10 @@ def transformed_g_order(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False
     _, igTr = transform_gk(kpt, ig, A, kpt_other)
     ng = ig.shape[0]
     rotind = -np.ones(ng, dtype=int)
-    print (f"igTr: {igTr.shape}, ig_other: {ig_other.shape}, ng: {ng}")
+    print(f"igTr: {igTr.shape}, ig_other: {ig_other.shape}, ng: {ng}")
     for i in range(ng):
         for j in range(ig[i, 4], ig[i, 5]):
-            if (igTr[i,:] == ig_other[j, :3]).all():
+            if (igTr[i, :] == ig_other[j, :3]).all():
                 if inverse:
                     rotind[j] = i
                 else:
@@ -381,7 +383,7 @@ def symm_eigenvalues(
     if block_ind is not None:
         return symm_eigenvalues_blocks(K, WF, igall, A, S, T, spinor, block_ind)
     multZ = np.exp(
-        -1.0j * (2 * np.pi * np.linalg.inv(A).dot(T).dot( (igall[:, :3] + K[ None, :]).T  ) ) # TODO: rewrite more elegantly 
+        -1.0j * (2 * np.pi * (igall[:, :3] + K[None, :])  @ (np.linalg.inv(A) @ T))
     )
     igrot = transformed_g_order(kpt=K, ig=igall, A=A)
     if spinor:
@@ -503,7 +505,7 @@ def symm_matrix(
         "check_upper": False,
     }
     unitary_params_loc.update(unitary_params)
-    multZ = np.exp(-2j * np.pi * T.dot( (igall_other[:, :3] + K_other[None, :]).T)) # TODO : rewrite more elegantly
+    multZ = np.exp(-2j * np.pi * (igall_other[:, :3] + K_other[None, :]) @ T)
 
     if time_reversal:
         A = -A

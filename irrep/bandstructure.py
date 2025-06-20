@@ -441,7 +441,7 @@ class BandStructure:
                                    nplanemax=np.max([ngx, ngy, ngz]) // 2,
                                    verbosity=verbosity
                                    )
-                selectG = tuple(kg[:,0:3].T)
+                selectG = tuple(kg[:, 0:3].T)
                 log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
                 WF = parser.parse_kpoint(ik + 1, selectG)
             elif code == 'gpaw':
@@ -996,10 +996,10 @@ class BandStructure:
         if irreducible:
             kpt_latt_grid, kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym = restore_full_grid(kpt_latt_grid, grid=grid, spacegroup=self.spacegroup)
             # debug
-            print (f"restored kpt_latt_grid: {kpt_latt_grid}")
-            print (f"restored kptirr2kpt: {kptirr2kpt}")
-            print (f"restored kpt2kptirr: {kpt2kptirr}")
-            print (f"restored kpt_from_kptirr_isym: {kpt_from_kptirr_isym}")
+            print(f"restored kpt_latt_grid: {kpt_latt_grid}")
+            print(f"restored kptirr2kpt: {kptirr2kpt}")
+            print(f"restored kpt2kptirr: {kpt2kptirr}")
+            print(f"restored kpt_from_kptirr_isym: {kpt_from_kptirr_isym}")
         else:
             assert len(kpt_latt_grid) == np.prod(grid), \
                 f"the number of kpoints {len(kpt_latt_grid)} does not match the grid {grid}.\n" \
@@ -1014,7 +1014,7 @@ class BandStructure:
         d_band_blocks = [[[] for _ in range(Nsym)] for _ in range(len(kptirr))]
         d_band_block_indices = []
 
-        
+
 
         for i, ikirr in enumerate(kptirr):
             K1 = get_K(ikirr)
@@ -1027,7 +1027,7 @@ class BandStructure:
                     K2 = get_K(kptirr2kpt[i, isym])
                 else:
                     if ik2 not in extra_kpoints:
-                        print (f"transforming k-point {ikirr}={K1.k} with symmetry {isym} to k-point {ik2} = {kpt_latt_grid[ik2]}")
+                        print(f"transforming k-point {ikirr}={K1.k} with symmetry {isym} to k-point {ik2} = {kpt_latt_grid[ik2]}")
                         symop = self.spacegroup.symmetries[kpt_from_kptirr_isym[ik2]]
                         symop.show()
                         # TODO: in principle, here it is not needed to transform the k-point,
@@ -1043,6 +1043,16 @@ class BandStructure:
                                             unitary=unitary, unitary_params=unitary_params,
                                             Ecut=Ecut)
                 d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
+                # transposed because in irrep WF is row vector, while in dmn it is column vector
+                if irreducible and ik2 not in kptirr:
+                    # check if the transformation is correct
+                    if isym == kpt_from_kptirr_isym[ik2]:
+                        for ind, block in zip(block_indices, d_band_blocks[i][isym]):
+                            assert np.allclose(block, np.eye(ind[1] - ind[0])), \
+                                f"Transformation matrix for k-point {ik2} under symmetry {isym} is not identity for bands {ind[0]}-{ind[1] - 1}.\n" \
+                                f"Transformation matrix:\n{block}\nExpected identity matrix.\n"
+
+
                 # transposed because in irrep WF is row vector, while in dmn it is column vector
 
 

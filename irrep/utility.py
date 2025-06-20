@@ -28,8 +28,10 @@ BOHR = constants.physical_constants['Bohr radius'][0] / constants.angstrom
 
 # Global cache to store einsum paths
 EINSUM_PATH_CACHE = {}
-def cached_einsum(subscripts, *operands, 
-                    optimize='greedy',
+
+
+def cached_einsum(subscripts, *operands,
+                  optimize='greedy',
                   **kwargs):
     """
     A wrapper for np.einsum that caches the contraction path.
@@ -45,6 +47,7 @@ def cached_einsum(subscripts, *operands,
         path = np.einsum_path(subscripts, *operands, optimize=optimize)[0]
         EINSUM_PATH_CACHE[cache_key] = path
     return np.einsum(subscripts, *operands, optimize=path, **kwargs)
+
 
 class FortranFileR(fortio.FortranFile):
     '''

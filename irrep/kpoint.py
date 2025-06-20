@@ -154,7 +154,7 @@ class Kpoint:
                         f"WF must have {2 if spinor else 1} components if spinor is {spinor}, got {WF.shape[1]} components"
                     )
         self.spinor = spinor
-        
+
         if ik is None:
             self.ik0 = None
         else:
@@ -180,7 +180,7 @@ class Kpoint:
         if eKG is None:
             eKG = eKGcalc
         else:
-            assert np.allclose(eKG, eKGcalc, atol=1e-4), f"eKG provided {eKG} does not match calculated {eKGcalc}, ration is {eKG/eKGcalc}"
+            assert np.allclose(eKG, eKGcalc, atol=1e-4), f"eKG provided {eKG} does not match calculated {eKGcalc}, ration is {eKG / eKGcalc}"
             # pass
         self.eKG = eKG
         self.upper = upper
@@ -211,7 +211,7 @@ class Kpoint:
             if np.allclose(dkpt, k_rotated - self.k):
                 self.little_group.append(symop)
         return self.little_group
-    
+
     def calc_egk(self):
         return get_pw_energies(self.RecLattice, self.k, self.ig)
 
@@ -289,6 +289,17 @@ class Kpoint:
 
         if not save_wf:
             self.WF = None
+
+    @property
+    def k_cart(self):
+        return np.dot(self.k, self.RecLattice)
+
+    @property
+    def ig_cart(self):
+        """
+        Returns the ig vectors in cartesian coordinates.
+        """
+        return np.dot(self.ig[:, :3], self.RecLattice)
 
     @property
     def K(self):
@@ -763,15 +774,18 @@ class Kpoint:
             A new instance of `Kpoint` with the k-point transformed by the
             symmetry operation.
         """
-        # Create a copy of the current k-point
-        other = self.copy()
-        # Transform the k-point coordinates
-        other.k, other.WF, other.igall = symmetry_operation.transform_WF(
-            k=self.k, WF=self.WF, igall=self.ig,
-            k_new=k_new
-        )
-
-        return other
+        _k, _WF, _ig = symmetry_operation.transform_WF(k=self.k, WF=self.WF, igall=self.ig, k_new=k_new)
+        return Kpoint(ik=self.ik0,
+                      RecLattice=self.RecLattice,
+                      spinor=self.spinor,
+                      kpt=_k,
+                      WF=_WF,  # first arg added for abinit (to be kept at the end)
+                      Energy=self.Energy_raw.copy(),
+                      ig=_ig,
+                      upper=self.upper,
+                      normalize=False,  # already normalized in the original instance (if needed)
+                      eKG=self.eKG.copy()
+                      )
 
     def write_characters(self):
         '''
