@@ -191,7 +191,7 @@ class ParserAbinit():
          usepaw,
          nspinor,
          occopt) = np.array(record[0])[[0, 4, 8, 12, 13, 11, 14, 17, 10, 15]]
-        rprimd = record[1][7:16].reshape((3, 3))
+        rprimd = record[1][7:16].reshape((3, 3))*BOHR
         ecut = record[1][0] * Hartree_eV
         nshiftk_orig = record[2][1]
         nshiftk = record[2][2]

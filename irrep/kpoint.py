@@ -20,7 +20,7 @@ from functools import lru_cache
 import numpy as np
 import numpy.linalg as la
 import copy
-from .gvectors import symm_eigenvalues, symm_matrix
+from .gvectors import symm_eigenvalues, symm_matrix, get_pw_energies
 from .utility import cached_einsum, compstr, get_block_indices, is_round, format_matrix, log_message, orthogonalize, vector_pprint
 
 
@@ -176,6 +176,12 @@ class Kpoint:
         self.WF = WF
         self.Energy_raw = Energy
         self.ig = ig
+        eKGcalc = self.calc_egk()
+        if eKG is None:
+            eKG = eKGcalc
+        else:
+            assert np.allclose(eKG, eKGcalc, atol=1e-4), f"eKG provided {eKG} does not match calculated {eKGcalc}, ration is {eKG/eKGcalc}"
+            # pass
         self.eKG = eKG
         self.upper = upper
 
@@ -205,6 +211,9 @@ class Kpoint:
             if np.allclose(dkpt, k_rotated - self.k):
                 self.little_group.append(symop)
         return self.little_group
+    
+    def calc_egk(self):
+        return get_pw_energies(self.RecLattice, self.k, self.ig)
 
     @property
     def nspinor(self):

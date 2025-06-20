@@ -21,6 +21,7 @@ import numpy as np
 import numpy.linalg as la
 Rydberg_eV = 13.605693  # eV
 Hartree_eV = 2 * Rydberg_eV
+bohr_angstrom = 0.52917721092  # Angstrom
 
 
 class NotSymmetryError(RuntimeError):
@@ -35,6 +36,29 @@ class NotSymmetryError(RuntimeError):
 #  adjusted in final decimal places to agree with VASP value; program
 #  checks for discrepancy of any results between this and VASP values)
 twomhbar2 = 0.262465831
+
+def get_pw_energies(RecLattice, k, ig):
+    """
+    Calculates the plane-wave energies at a given k-point.
+
+    Parameters
+    ----------
+    RecLattice : array, shape=(3,3)
+        Each row contains the cartesian coordinates of a basis vector forming 
+        the unit-cell in reciprocal space.
+    k : array, shape=(3,)
+        Direct coordinates of the k-point.
+    ig : array, shape=(n, 3)
+        Each row contains the integer coefficients of a reciprocal lattice 
+        vector taking part in the plane-wave expansion of wave-functions at 
+        the current k-point.
+
+    Returns
+    -------
+    eKG : array
+        Energies of the plane-waves at the given k-point.
+    """
+    return 0.5*Hartree_eV*(bohr_angstrom**2) * la.norm( (k[None,:] + ig[:,:3]) @ RecLattice, axis=1) ** 2
 
 
 # This function is a python translation of a part of WaveTrans Code
@@ -206,7 +230,7 @@ def sortIG(ik, kg, kpt, WF, RecLattice, Ecut0, Ecut, verbosity=0):
     """
     thresh = 1e-4  # default thresh to distinguish energies of plane-waves
     KG = (kg + kpt).dot(RecLattice)
-    eKG = Hartree_eV * (la.norm(KG, axis=1) ** 2) / 2
+    eKG = Hartree_eV * bohr_angstrom**2*(la.norm(KG, axis=1) ** 2) / 2
     log_message(
         f"Found cutoff: {Ecut0:12.6f} eV   Largest plane wave energy in K-point {ik:4d}: {np.max(eKG):12.6f} eV",
         verbosity=verbosity, level=2
@@ -235,7 +259,25 @@ def sortIG(ik, kg, kpt, WF, RecLattice, Ecut0, Ecut, verbosity=0):
     return WF, igall, eKG
 
 
-def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
+def transform_gk(kpt, ig, A, kpt_other=None):
+    B = np.linalg.inv(A).T
+    kptTr = B.dot(kpt)
+    if kpt_other is None:
+        kpt_other = kptTr
+    dkpt = np.array(np.round(kptTr - kpt_other), dtype=int)
+
+    if not np.isclose(dkpt, kptTr - kpt_other).all():
+        raise NotSymmetryError(
+            f"The k-point {kpt} is transformed point {kptTr}  that is non-equivalent to the final point {kpt_other} "
+            f"under transformation\n {A}"
+        )
+    igTr =ig[:, :3] @ B.T + dkpt[None, :]
+    igTr = np.array(np.round(igTr), dtype=int)
+    return kpt_other, igTr
+
+
+
+def transformed_g_order(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
     """
     Determines how the transformation matrix `A` reorders the reciprocal
     lattice vectors taking part in the plane-wave expansion of wave-functions.
@@ -265,23 +307,12 @@ def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
         'rotind[j] = i' if `B @ ig[i] == ig_other[j]`. if inverse is `True`.
 
         where `B = np.linalg.inv(A).T`
-"""
+    """
     assert (ig_other is None) == (kpt_other is None), "ig_other and kpt_other must be provided (or not) together"
     if ig_other is None:
         ig_other = ig
         kpt_other = kpt
-    B = np.linalg.inv(A).T
-    kpt_ = B.dot(kpt)
-    dkpt = np.array(np.round(kpt_ - kpt_other), dtype=int)
-
-    if not np.isclose(dkpt, kpt_ - kpt_other).all():
-        raise NotSymmetryError(
-            f"The k-point {kpt} is transformed point {kpt_}  that is non-equivalent to the final point {kpt_other} "
-            f"under transformation\n {A}"
-        )
-
-    igTr =ig[:, :3] @ B.T + dkpt[None, :]
-    igTr = np.array(np.round(igTr), dtype=int)
+    _, igTr = transform_gk(kpt, ig, A, kpt_other)
     ng = ig.shape[0]
     rotind = -np.ones(ng, dtype=int)
     print (f"igTr: {igTr.shape}, ig_other: {ig_other.shape}, ng: {ng}")
@@ -293,14 +324,16 @@ def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
                 else:
                     rotind[i] = j
                 break
+    print(f"igTr: {igTr}, ig_other: {ig_other}, rotind: {rotind}")
 
     for i in range(ng):
         if rotind[i] == -1:
+
             raise RuntimeError(
                 f"Error in the transformation of plane-waves in k-point={kpt}: "
                 f"No pair found for the g-vector igTr[{i}]={igTr[i]} "
                 f"obtained when transforming the g-vector ig[{i}]={ig_other[i, :3]} "
-                f"with the matrix {B}, where B=inv(A).T with A={A}"
+                f"with the matrix  B=inv(A).T with A={A}"
             )
     return rotind
 
@@ -350,7 +383,7 @@ def symm_eigenvalues(
     multZ = np.exp(
         -1.0j * (2 * np.pi * np.linalg.inv(A).dot(T).dot( (igall[:, :3] + K[ None, :]).T  ) ) # TODO: rewrite more elegantly 
     )
-    igrot = transformed_g(kpt=K, ig=igall, A=A)
+    igrot = transformed_g_order(kpt=K, ig=igall, A=A)
     if spinor:
         return cached_einsum('igs,igt,st->ig', WF[:, igrot].conj(), WF[:, :], S).dot(multZ)
     else:
@@ -479,7 +512,7 @@ def symm_matrix(
         if spinor:
             S = np.array([[0, 1], [-1, 0]]) @ S.conj()
 
-    igrot = transformed_g(kpt=K, ig=igall, A=A, ig_other=igall_other, kpt_other=K_other, inverse=True)
+    igrot = transformed_g_order(kpt=K, ig=igall, A=A, ig_other=igall_other, kpt_other=K_other, inverse=True)
     WFrot = WF[:, igrot, :] * multZ[None, :, None]
     if spinor:
         WFrot = cached_einsum("ts,mgs->mgt", S, WFrot)

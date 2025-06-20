@@ -19,6 +19,7 @@ from functools import cached_property
 import numpy as np
 from scipy.linalg import expm
 from .utility import str_, BOHR, cached_einsum
+from .gvectors import transform_gk
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -629,22 +630,11 @@ class SymmetryOperation():
             the transformed k-point.
         """
         # TODO : check all signs and other details
-        k_transformed = self.transform_k(k)
-        if k_new is None:
-            k_new = k_transformed
-            g_shift = np.zeros(3, dtype=int)
-        else:
-            g_shift_frac = k_transformed - k_new
-            g_shift = np.round(g_shift_frac).astype(int)
-            assert np.allclose(g_shift_frac, g_shift, atol=1e-6), \
-                f"The transformed k-point {k_transformed} does not match the provided new k-point {k_new} modulo reciprocal lattice vectors."
-            print (f"k_old = {k}, k_new = {k_new}, k_transformed = {k_transformed}, g_shift = {g_shift}")
+        k_new, igTr = self.transform_gk(k, igall, k_other=k_new)
+        
         ng = igall.shape[0]
         igall_new = np.copy(igall)
-
-        for i in range(ng):
-            igall_new[i, :3] = self.transform_k(igall[i, :3])
-        igall_new[:, :3] += g_shift[None, :]  # shift the igall_new to the new k point
+        igall_new[:, :3] = igTr
 
         multZ = np.exp(-2j * np.pi * (igall_new[:, :3] + k_new[None, :]) @ self.translation)
         if self.time_reversal:
@@ -654,6 +644,11 @@ class SymmetryOperation():
             WF = cached_einsum("ts,mgs->mgt", self.spinor_rotation_TR, WF)
         return k_new, WF, igall_new
 
+    def transform_gk(self, k, ig, k_other=None):
+        A = self.rotation
+        if self.time_reversal:
+            A = -A
+        return transform_gk(k, ig, A, kpt_other=k_other)
 
     def transform_k(self, vector, inverse=False):
         """

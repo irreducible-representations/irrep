@@ -426,7 +426,7 @@ class BandStructure:
                 WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel, verbosity=verbosity)
                 if check_skip(kpt):
                     continue
-                WF, kg, eKG = sortIG(ik + 1, kg, kpt, WF, self.RecLattice / 2.0, self.Ecut0, self.Ecut, verbosity=verbosity)
+                WF, kg, eKG = sortIG(ik + 1, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, verbosity=verbosity)
 
             elif code == 'wannier90':
                 kpt = kpred[ik]
