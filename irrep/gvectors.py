@@ -530,10 +530,10 @@ def symm_matrix(
                 error_threshold = 10
             else:
                 error_threshold = unitary_params_loc["error_threshold"]
-        if not unitary_params_loc["warn_upper"] and b2 == NB:
-            warning_threshold = 10
-        else:
-            warning_threshold = unitary_params_loc["warning_threshold"]
+            if not unitary_params_loc["warn_upper"] and b2 == NB:
+                warning_threshold = 10
+            else:
+                warning_threshold = unitary_params_loc["warning_threshold"]
             block = orthogonalize(block,
                                   warning_threshold=warning_threshold,
                                   error_threshold=error_threshold,
