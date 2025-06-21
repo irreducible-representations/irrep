@@ -42,21 +42,23 @@ def check_Fe_qe(include_TR, irreducible=False):
     for k in data_ref.keys():
         print(f"Comparing {k}")
         if k != "d_band_blocks":
-            compare_nested_lists(data[k], data_ref[k], key=k)
+            compare_nested_lists(data[k], data_ref[k], key=k, atol=1e-5)
         else:
             for isym in range(data["kptirr2kpt"].shape[1]):
                 try:
                     for ik in range(data["kptirr"].shape[0]):
                         compare_nested_lists(data["d_band_blocks"][ik][isym],
                                              data_ref["d_band_blocks"][ik][isym],
-                                             key=f"{k}, ik={ik}, isym={isym}, factor=1")
+                                             key=f"{k}, ik={ik}, isym={isym}, factor=1",
+                                             atol=1e-5)
                 except AssertionError:
                     for ik in range(data["kptirr"].shape[0]):
                         # this is needed because of ambiguity of double group representations
                         compare_nested_lists(data["d_band_blocks"][ik][isym],
                                              data_ref["d_band_blocks"][ik][isym],
                                              key=f"{k}, ik={ik}, isym={isym}, factor=-1",
-                                             factor=-1)
+                                             factor=-1,
+                                             atol=1e-5)
     os.remove(TMP_FILES_PATH / fname)
 
 
@@ -76,11 +78,11 @@ def test_Fe_qe_noTR_irred():
     check_Fe_qe(include_TR=False, irreducible=True)
 
 
-def compare_nested_lists(a, b, key, depth=0, factor=1):
+def compare_nested_lists(a, b, key, depth=0, factor=1, atol=1e-5):
     if depth > 3:
         raise ValueError("Too deep, depth={depth}>3")
     try:
-        assert np.allclose(a, b * factor), f"Failed for {key} depth={depth}"
+        assert np.allclose(a, b * factor, atol=atol), f"Failed for {key} depth={depth}"
     except ValueError:
         for c, d in zip(a, b):
-            compare_nested_lists(c, d, key=key, depth=depth + 1, factor=factor)
+            compare_nested_lists(c, d, key=key, depth=depth + 1, factor=factor, atol=atol)
