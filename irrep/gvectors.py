@@ -317,7 +317,6 @@ def transformed_g_order(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False
     _, igTr = transform_gk(kpt, ig, A, kpt_other)
     ng = ig.shape[0]
     rotind = -np.ones(ng, dtype=int)
-    print(f"igTr: {igTr.shape}, ig_other: {ig_other.shape}, ng: {ng}")
     for i in range(ng):
         for j in range(ig[i, 4], ig[i, 5]):
             if (igTr[i, :] == ig_other[j, :3]).all():
@@ -326,8 +325,7 @@ def transformed_g_order(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False
                 else:
                     rotind[i] = j
                 break
-    print(f"igTr: {igTr}, ig_other: {ig_other}, rotind: {rotind}")
-
+    
     for i in range(ng):
         if rotind[i] == -1:
 
@@ -503,6 +501,7 @@ def symm_matrix(
         "warning_threshold": 1e-3,
         "error_threshold": 1e-2,
         "check_upper": False,
+        "warn_upper": False
     }
     unitary_params_loc.update(unitary_params)
     multZ = np.exp(-2j * np.pi * (igall_other[:, :3] + K_other[None, :]) @ T)
@@ -531,8 +530,12 @@ def symm_matrix(
                 error_threshold = 10
             else:
                 error_threshold = unitary_params_loc["error_threshold"]
+        if not unitary_params_loc["warn_upper"] and b2 == NB:
+            warning_threshold = 10
+        else:
+            warning_threshold = unitary_params_loc["warning_threshold"]
             block = orthogonalize(block,
-                                  warning_threshold=unitary_params_loc["warning_threshold"],
+                                  warning_threshold=warning_threshold,
                                   error_threshold=error_threshold,
                                   debug_msg=f"symm_matrix: block {b1}:{b2} of {WF.shape[0]}")
         block_list.append(block)

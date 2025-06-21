@@ -223,16 +223,18 @@ class BandStructure:
                 shiftUC=shiftUC,
                 search_cell=search_cell,
                 trans_thresh=trans_thresh,
-            )
+            )   
         self.spacegroup = spacegroup
         self.spinor = self.spacegroup.spinor
         self.magnetic = self.spacegroup.magnetic
-
+        
         if select_grid is not None:
+            self.mp_grid = tuple(select_grid)
             def is_on_grid(kpt):
                 a = np.array(kpt) * np.array(select_grid)
                 return np.allclose(a, np.round(a))
         else:
+            self.mp_grid = None
             def is_on_grid(kpt):
                 return True
 
@@ -952,7 +954,8 @@ class BandStructure:
                 irreducible=False, Ecut=None):
         """
         grid : tuple(int), optional
-            the grid of kpoints (3 integers), if None, the grid is determined from the kpoints
+            the grid of kpoints (3 integers), if None, the grid is taken from the object if is not None), 
+            else determined from the kpoints
             may be used to reduce the grid (by an integer factor) for the symmetry analysis
         degen_thresh : float, optional
             the threshold for the degeneracy of the bands. Only transformations between bands
@@ -985,7 +988,10 @@ class BandStructure:
         """
 
         kpt_latt_grid = np.array([KP.K  for KP in self.kpoints])
+        if grid is None:
+            grid = self.mp_grid
         grid, selected_kpoints = grid_from_kpoints(kpt_latt_grid, grid=grid, allow_missing=irreducible)
+        print (f"grid: {grid}, selected_kpoints: {selected_kpoints}")
         kptirr = select_irreducible(kpt_latt_grid[selected_kpoints], spacegroup=self.spacegroup)
         if irreducible:
             print(f"kptirr: {kptirr}")
@@ -1020,16 +1026,17 @@ class BandStructure:
             K1 = get_K(ikirr)
             block_indices = get_block_indices(K1.Energy_raw, thresh=degen_thresh, cyclic=False)
             d_band_block_indices.append(block_indices)
+            extra_kpoints = {}
             for isym, symop in enumerate(self.spacegroup.symmetries):
                 ik2 = kptirr2kpt[i, isym]
-                extra_kpoints = {}
                 if not irreducible or ik2 in kptirr:
                     K2 = get_K(kptirr2kpt[i, isym])
                 else:
                     if ik2 not in extra_kpoints:
-                        print(f"transforming k-point {ikirr}={K1.k} with symmetry {isym} to k-point {ik2} = {kpt_latt_grid[ik2]}")
-                        symop = self.spacegroup.symmetries[kpt_from_kptirr_isym[ik2]]
-                        symop.show()
+                        isym_loc = kpt_from_kptirr_isym[ik2]
+                        # print(f"transforming k-point {ikirr}={K1.k} with symmetry {isym_loc} to k-point {ik2} = {kpt_latt_grid[ik2]}")
+                        symop = self.spacegroup.symmetries[isym_loc]
+                        # symop.show()
                         # TODO: in principle, here it is not needed to transform the k-point,
                         # For the first symmetry the transformation is the identity
                         # For the rest the transformations can be obtained from the

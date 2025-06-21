@@ -29,7 +29,6 @@ BOHR = constants.physical_constants['Bohr radius'][0] / constants.angstrom
 # Global cache to store einsum paths
 EINSUM_PATH_CACHE = {}
 
-
 def cached_einsum(subscripts, *operands,
                   optimize='greedy',
                   **kwargs):
@@ -694,7 +693,7 @@ def restore_full_grid(kpoints_irr, grid, spacegroup):
         If some points on the grid cannot be generated from the irreducible k-points.
     """
     n1, n2, n3 = grid
-    all_k_grid = [np.array([i1 / n2, i2 / n3, i3 / n1])
+    all_k_grid = [np.array([i1 / n1, i2 / n2, i3 / n3])
                   for i1 in range(n1)
                   for i2 in range(n2)
                   for i3 in range(n3)]
@@ -729,6 +728,7 @@ def restore_full_grid(kpoints_irr, grid, spacegroup):
                 all_k_mod1.append(transformed_k)
                 all_k.append(transformed_k)
 
+    
     kpt_from_kptirr_isym = -np.ones(len(all_k_grid_mod1), dtype=int)
     for ik, ikirr in enumerate(kpt2kptirr):
         for isym in range(len(spacegroup.symmetries)):
