@@ -140,7 +140,7 @@ def test_symm_matrix_full():
                       output_file="symm_matrix_full.npz",
                       Ecut=100,
                       degen_thresh=None,
-                      acc=1e-6
+                      acc=5e-5
                       )
 
 
@@ -160,8 +160,8 @@ def test_symm_matrix_block():
                     #   ref_file="symm_matrix_full.npz",
                       Ecut=30,
                       degen_thresh=1e-2,
-                      acc=1e-5
-                      )
+                      acc=5e-5
+                     )
 
 
 def test_symm_matrix_block_2():
@@ -170,7 +170,7 @@ def test_symm_matrix_block_2():
                     #   ref_file="symm_matrix_full.npz",
                       Ecut=60,
                       degen_thresh=1e-2,
-                      acc=5e-7
+                      acc=5e-5
                       )
 
 

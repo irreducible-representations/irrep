@@ -28,8 +28,8 @@ from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, Pars
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .spacegroup_irreps import SpaceGroupIrreps
-from .gvectors import sortIG, calc_gvectors, symm_matrix
-from .utility import get_block_indices, grid_from_kpoints, log_message, UniqueListMod1
+from .gvectors import sortIG, calc_gvectors
+from .utility import get_block_indices, get_mapping_irr, grid_from_kpoints, log_message, UniqueListMod1, restore_full_grid, select_irreducible
 
 
 class BandStructure:
@@ -186,10 +186,12 @@ class BandStructure:
         include_TR=False,
         unk_formatted=False,
         irreps=False,
-        symprec=1e-5, 
+        symprec=1e-5,
         angle_tolerance=-1,
         mag_symprec=-1,
         spacegroup=None,
+        select_grid=None,
+        irreducible=False
     ):
 
         code = code.lower()
@@ -226,11 +228,47 @@ class BandStructure:
         self.spinor = self.spacegroup.spinor
         self.magnetic = self.spacegroup.magnetic
 
+        if select_grid is not None:
+            self.mp_grid = tuple(select_grid)
+
+            def is_on_grid(kpt):
+                a = np.array(kpt) * np.array(select_grid)
+                return np.allclose(a, np.round(a))
+        else:
+            self.mp_grid = None
+
+            def is_on_grid(kpt):
+                return True
+
+        if irreducible:
+            irreducible_list = UniqueListMod1()
+
+            def is_reducible(kpt):
+                for symop in self.spacegroup.symmetries:
+                    if symop.transform_k(kpt) in irreducible_list:
+                        return True
+                else:
+                    irreducible_list.append(kpt)
+                    return False
+        else:
+            def is_reducible(kpt):
+                return False
+
+        def check_skip(kpt):
+            if not is_on_grid(kpt):
+                log_message(f'k-point {kpt} is not on the grid {select_grid}, skipping', verbosity, 1)
+                return True
+            if is_reducible(kpt):
+                log_message(f'k-point {kpt} is reducible, skipping', verbosity, 1)
+                return True
+            return False
+
+
         if onlysym:
             return
         # this way the headers are parsed twice (once for spacegroup and once for bandstructure)
         # but it is not a big problem, I think, and the onlysym requires less parameters (no Ecut, spinor, spin_channel....)
-        
+
         if spin_channel is not None:
             spin_channel = spin_channel.lower()
         if spin_channel == 'down':
@@ -312,25 +350,6 @@ class BandStructure:
             raise RuntimeError(f"Unknown/unsupported code :{code}")
 
         assert _spinor == self.spinor, f"the spinor flag in the header ({_spinor}) does not match the one in the spacegroup ({self.spinor})"
-        # cell = (Lattice, positions, typat)
-        # self.spacegroup = cls_spacegroup.from_cell(cell=cell,
-        #         spinor=self.spinor,
-        #         alat=alat,
-        #         from_sym_file=from_sym_file,
-        #         magmom=magmom,
-        #         include_TR=include_TR,
-        #         verbosity=verbosity,
-        #         ######## Parameters for irreps ########
-        #         refUC=refUC,
-        #         shiftUC=shiftUC,
-        #         search_cell=search_cell,
-        #         trans_thresh=trans_thresh,
-        #     )
-        # self.spinor = self.spacegroup.spinor
-        # self.magnetic = self.spacegroup.magnetic
-        # 
-        # if onlysym:
-        #     return
 
         # Set Fermi energy
         if EF.lower() == "auto":
@@ -385,7 +404,9 @@ class BandStructure:
             if code == 'vasp':
                 log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
                 WF, Energy, kpt, npw = parser.parse_kpoint(ik, NBin, self.spinor)
-                kg = calc_gvectors(kpt,
+                if check_skip(kpt):
+                    continue
+                kg, eKG = calc_gvectors(kpt,
                                    self.RecLattice,
                                    self.Ecut0,
                                    npw,
@@ -393,41 +414,45 @@ class BandStructure:
                                    spinor=self.spinor,
                                    verbosity=verbosity
                                    )
-                if not self.spinor:
-                    selectG = kg[3]
-                else:
-                    selectG = np.hstack((kg[3], kg[3] + int(npw / 2)))
-                WF = WF[:, selectG]
+                WF = WF[:, kg[:, 3], :]
 
             elif code == 'abinit':
                 NBin = parser.nband[ik]
                 kpt = parser.kpt[ik]
+                if check_skip(kpt):
+                    continue
                 log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
                 WF, Energy, kg = parser.parse_kpoint(ik)
-                WF, kg = sortIG(ik, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, self.spinor, verbosity=verbosity)
+                WF, kg, eKG = sortIG(ik, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, verbosity=verbosity)
 
             elif code == 'espresso':
                 log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
                 WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel, verbosity=verbosity)
-                WF, kg = sortIG(ik + 1, kg, kpt, WF, self.RecLattice / 2.0, self.Ecut0, self.Ecut, self.spinor, verbosity=verbosity)
+                if check_skip(kpt):
+                    continue
+                WF, kg, eKG = sortIG(ik + 1, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, verbosity=verbosity)
 
             elif code == 'wannier90':
                 kpt = kpred[ik]
+                if check_skip(kpt):
+                    continue
                 Energy = Energies[ik]
                 ngx, ngy, ngz = parser.parse_grid(ik + 1)
-                kg = calc_gvectors(kpred[ik],
+                kg, eKG = calc_gvectors(kpred[ik],
                                    self.RecLattice,
                                    self.Ecut,
                                    spinor=self.spinor,
                                    nplanemax=np.max([ngx, ngy, ngz]) // 2,
                                    verbosity=verbosity
                                    )
-                selectG = tuple(kg[0:3])
+                selectG = tuple(kg[:, 0:3].T)
                 log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
                 WF = parser.parse_kpoint(ik + 1, selectG)
             elif code == 'gpaw':
                 kpt = kpred[ik]
-                Energy, WF, kg, kpt = parser.parse_kpoint(ik,
+                if check_skip(kpt):
+                    continue
+                Energy, WF, kg, kpt, eKG = parser.parse_kpoint(ik,
                                                  RecLattice=self.RecLattice,
                                                  Ecut=self.Ecut)
 
@@ -452,10 +477,11 @@ class BandStructure:
                 upper=upper,
                 num_bands=NBout,
                 RecLattice=self.RecLattice,
-                symmetries_SG=self.spacegroup.u_symmetries,
                 spinor=self.spinor,
                 normalize=normalize,
+                eKG=eKG,
             )
+            kp.set_little_group(symmetries=self.spacegroup.u_symmetries)
 
             if irreps:
                 # saved to further use in Separate()
@@ -926,10 +952,12 @@ class BandStructure:
         return K
 
 
-    def get_dmn(self, grid=None, degen_thresh=1e-2, unitary=True, unitary_params={}):
+    def get_dmn(self, grid=None, degen_thresh=1e-2, unitary=True, unitary_params={},
+                irreducible=False, Ecut=None):
         """
         grid : tuple(int), optional
-            the grid of kpoints (3 integers), if None, the grid is determined from the kpoints
+            the grid of kpoints (3 integers), if None, the grid is taken from the object if is not None), 
+            else determined from the kpoints
             may be used to reduce the grid (by an integer factor) for the symmetry analysis
         degen_thresh : float, optional
             the threshold for the degeneracy of the bands. Only transformations between bands
@@ -961,100 +989,91 @@ class BandStructure:
                 at the i-th irreducible kpoint        
         """
 
-        kpoints = np.array([KP.K  for KP in self.kpoints])
-        grid, selected_kpoints = grid_from_kpoints(kpoints, grid=grid)
-        kpoints = kpoints[selected_kpoints]
+        kpt_latt_grid = np.array([KP.K  for KP in self.kpoints])
+        if grid is None:
+            grid = self.mp_grid
+        grid, selected_kpoints = grid_from_kpoints(kpt_latt_grid, grid=grid, allow_missing=irreducible)
+        print(f"grid: {grid}, selected_kpoints: {selected_kpoints}")
+        kptirr = select_irreducible(kpt_latt_grid[selected_kpoints], spacegroup=self.spacegroup)
+        if irreducible:
+            print(f"kptirr: {kptirr}")
+            selected_kpoints = selected_kpoints[kptirr]
+            kptirr = np.arange(len(kptirr), dtype=int)
+        kpt_latt_grid = kpt_latt_grid[selected_kpoints]
         Nsym = self.spacegroup.size
+        if irreducible:
+            kpt_latt_grid, kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym = restore_full_grid(kpt_latt_grid, grid=grid, spacegroup=self.spacegroup)
+            # debug
+            print(f"restored kpt_latt_grid: {kpt_latt_grid}")
+            print(f"restored kptirr2kpt: {kptirr2kpt}")
+            print(f"restored kpt2kptirr: {kpt2kptirr}")
+            print(f"restored kpt_from_kptirr_isym: {kpt_from_kptirr_isym}")
+        else:
+            assert len(kpt_latt_grid) == np.prod(grid), \
+                f"the number of kpoints {len(kpt_latt_grid)} does not match the grid {grid}.\n" \
+                f"Use the `grid` argument to specify the grid of kpoints."
+            kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym = get_mapping_irr(kpt_latt_grid, kptirr, self.spacegroup)
+
 
         def get_K(ik):
             return self.kpoints[selected_kpoints[ik]]
 
-        # First determine which kpoints are irreducible
-        # and set mapping from irreducible to full grid and back
-        #
-        # kptirr2kpt[i,isym]=j means that the i-th irreducible kpoint
-        # is transformed to the j-th kpoint of full grid
-        #  by the isym-th symmetry operation.
-        #
-        # This is consistent with w90 documentations, but seemd to be opposite to what pw2wannier90 does
-        symmetries = self.spacegroup.symmetries
 
-        kpoints_mod1 = UniqueListMod1(kpoints)
-        assert len(kpoints_mod1) == len(kpoints)
-        NK = len(kpoints_mod1)
-        is_irreducible = np.ones(NK, dtype=bool)
-        kptirr = []
-        kptirr2kpt = []
-        kpt2kptirr = -np.ones(NK, dtype=int)
-        G = []
-        ikirr = -1
-        for i, k1 in enumerate(kpoints):
-            if is_irreducible[i]:
-                kptirr.append(i)
-                kptirr2kpt.append(np.zeros(Nsym, dtype=int))
-                G.append(np.zeros((Nsym, 3), dtype=int))
-                ikirr += 1
-
-                for isym, symop in enumerate(symmetries):
-                    k1p = symop.transform_k(k1)
-                    if k1p not in kpoints_mod1:
-                        raise RuntimeError("Symmetry operation maps k-point outside the grid. Maybe the grid is incompatible with the symmetry operations")
-                    j = kpoints_mod1.index(k1p)
-                    k2 = kpoints[j]
-                    if j != i:
-                        is_irreducible[j] = False
-                    kptirr2kpt[ikirr][isym] = j
-                    # the G vectors mean that
-                    # symop.transform(ki) = kj + G
-                    G[ikirr][isym] = k1p - k2
-                    if kpt2kptirr[j] == -1:
-                        kpt2kptirr[j] = ikirr
-                    else:
-                        assert kpt2kptirr[j] == ikirr, (f"two different irreducible kpoints {ikirr} and {kpt2kptirr[j]} are mapped to the same kpoint {j}"
-                                                        f"kptirr= {kptirr}, \nkpt2kptirr= {kpt2kptirr}\n kptirr2kpt= {kptirr2kpt}")
-        kptirr = np.array(kptirr)
-        NKirr = len(kptirr)
-        kptirr2kpt = np.array(kptirr2kpt)
-        G = np.array(G)
-        del kpoints_mod1
-
-        assert np.all(kptirr2kpt >= 0)
-        assert np.all(kpt2kptirr >= 0)
-
-        d_band_blocks = [[[] for _ in range(Nsym)] for _ in range(NKirr)]
+        d_band_blocks = [[[] for _ in range(Nsym)] for _ in range(len(kptirr))]
         d_band_block_indices = []
+
+
+
         for i, ikirr in enumerate(kptirr):
             K1 = get_K(ikirr)
             block_indices = get_block_indices(K1.Energy_raw, thresh=degen_thresh, cyclic=False)
             d_band_block_indices.append(block_indices)
-            for isym, symop in enumerate(symmetries):
-                K2 = get_K(kptirr2kpt[i, isym])
-                block_list = symm_matrix(
-                    K=K1.k,
-                    K_other=K2.k,
-                    WF=K1.WF,
-                    WF_other=K2.WF,
-                    igall=K1.ig,
-                    igall_other=K2.ig,
-                    A=symop.rotation,
-                    S=symop.spinor_rotation,
-                    T=symop.translation,
-                    time_reversal=symop.time_reversal,
-                    spinor=K1.spinor,
-                    block_ind=block_indices,
-                    return_blocks=True,
-                    unitary=unitary,
-                    unitary_params=unitary_params,
-                )
+            extra_kpoints = {}
+            for isym, symop in enumerate(self.spacegroup.symmetries):
+                ik2 = kptirr2kpt[i, isym]
+                if not irreducible or ik2 in kptirr:
+                    K2 = get_K(kptirr2kpt[i, isym])
+                else:
+                    if ik2 not in extra_kpoints:
+                        isym_loc = kpt_from_kptirr_isym[ik2]
+                        # print(f"transforming k-point {ikirr}={K1.k} with symmetry {isym_loc} to k-point {ik2} = {kpt_latt_grid[ik2]}")
+                        symop = self.spacegroup.symmetries[isym_loc]
+                        # symop.show()
+                        # TODO: in principle, here it is not needed to transform the k-point,
+                        # For the first symmetry the transformation is the identity
+                        # For the rest the transformations can be obtained from the
+                        # little group of the irreducible k-point. But we do it
+                        # here explicitly, further it will be checked, and recoded
+                        K2 = K1.get_transformed_copy(symmetry_operation=symop,
+                                                     k_new=kpt_latt_grid[ik2])
+                        extra_kpoints[ik2] = K2
+                    K2 = extra_kpoints[ik2]
+                block_list = K1.symm_matrix(K2, symop, block_indices=block_indices,
+                                            unitary=unitary, unitary_params=unitary_params,
+                                            Ecut=Ecut)
                 d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
                 # transposed because in irrep WF is row vector, while in dmn it is column vector
+                if irreducible and ik2 not in kptirr:
+                    # check if the transformation is correct
+                    if isym == kpt_from_kptirr_isym[ik2]:
+                        for ind, block in zip(block_indices, d_band_blocks[i][isym]):
+                            assert np.allclose(block, np.eye(ind[1] - ind[0])), \
+                                f"Transformation matrix for k-point {ik2} under symmetry {isym} is not identity for bands {ind[0]}-{ind[1] - 1}.\n" \
+                                f"Transformation matrix:\n{block}\nExpected identity matrix.\n"
+
+
+                # transposed because in irrep WF is row vector, while in dmn it is column vector
+
+
         return dict(grid=grid,
-                    kpoints=kpoints,
+                    kpoints=kpt_latt_grid,
                     kptirr=kptirr,
                     kptirr2kpt=kptirr2kpt,
                     kpt2kptirr=kpt2kptirr,
+                    kpt_from_kptirr_isym=kpt_from_kptirr_isym,
                     d_band_blocks=d_band_blocks,
-                    d_band_block_indices=d_band_block_indices)
+                    d_band_block_indices=d_band_block_indices,
+                    selected_kpoints=selected_kpoints,)
 
     def get_irrep_counts(self, filter_valid=True):
         """

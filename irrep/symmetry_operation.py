@@ -1,4 +1,3 @@
-
 # ###   ###   #####  ###
 # #  #  #  #  #      #  #
 # ###   ###   ###    ###
@@ -19,7 +18,8 @@
 from functools import cached_property
 import numpy as np
 from scipy.linalg import expm
-from .utility import str_, BOHR
+from .utility import str_, BOHR, cached_einsum
+from .gvectors import transform_gk
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -103,7 +103,7 @@ class SymmetryOperation():
         self.spinor = spinor
         if spinor_rotation is None:
             self.spinor_rotation = expm(-0.5j * self.angle *
-                                    np.einsum('i,ijk->jk', self.axis, pauli_sigma))
+                                    cached_einsum('i,ijk->jk', self.axis, pauli_sigma))
         else:
             self.spinor_rotation = spinor_rotation
         self.sign = 1  # May be changed later externally
@@ -591,6 +591,63 @@ class SymmetryOperation():
     @cached_property
     def rotation_inv(self):
         return np.linalg.inv(self.rotation)
+
+    @cached_property
+    def spinor_rotation_TR(self):
+        """
+        Calculate the spinor rotation matrix under time-reversal.
+
+        Returns
+        -------
+        array
+            Spinor rotation matrix under time-reversal.
+        """
+        if self.time_reversal:
+            return np.array([[0, 1], [-1, 0]]) @ self.spinor_rotation.conj()
+        else:
+            return self.spinor_rotation
+
+    def transform_WF(self, k, WF, igall, k_new=None):
+        """
+        Transform wavefunction under the symmetry operation.
+
+        Parameters
+        ----------
+        k: array((3,), dtype=float)
+            k-point to transform. (in reduced coordinates)
+        WF : array(nb,ng*nspinor, dtype=complex)
+            Wavefunction to transform. (or array of wavefunctions)
+        igall : np.ndarray((ng, 6), dtype=int)
+            the array 
+        k_new : array((3,), dtype=float), optional
+            the new k-point to transform to. if provided, it will be checked that the
+            transformation is consistent with the new k-point (modulo reciprocal lattice vectors).
+            If not provided, the new k-point will be the transformed k-point.
+
+        Returns
+        -------
+        k_new : array((3,), dtype=float)
+            the transformed k-point.
+        """
+        # TODO : check all signs and other details
+        k_new, igTr = self.transform_gk(k, igall, k_other=k_new)
+
+        igall_new = np.copy(igall)
+        igall_new[:, :3] = igTr
+
+        multZ = np.exp(-2j * np.pi * (igall_new[:, :3] + k_new[None, :]) @ self.translation)
+        if self.time_reversal:
+            WF = WF.conj()
+        WF = WF[:, :, :] * multZ[None, :, None]
+        if self.spinor:
+            WF = cached_einsum("ts,mgs->mgt", self.spinor_rotation_TR, WF)
+        return k_new, WF, igall_new
+
+    def transform_gk(self, k, ig, k_other=None):
+        A = self.rotation
+        if self.time_reversal:
+            A = -A
+        return transform_gk(k, ig, A, kpt_other=k_other)
 
     def transform_k(self, vector, inverse=False):
         """

@@ -1,5 +1,5 @@
 
-from .utility import log_message, orthogonalize
+from .utility import log_message, orthogonalize, cached_einsum
 # ###   ###   #####  ###
 # #  #  #  #  #      #  #
 # ###   ###   ###    ###
@@ -21,6 +21,7 @@ import numpy as np
 import numpy.linalg as la
 Rydberg_eV = 13.605693  # eV
 Hartree_eV = 2 * Rydberg_eV
+bohr_angstrom = 0.52917721092  # Angstrom
 
 
 class NotSymmetryError(RuntimeError):
@@ -35,6 +36,30 @@ class NotSymmetryError(RuntimeError):
 #  adjusted in final decimal places to agree with VASP value; program
 #  checks for discrepancy of any results between this and VASP values)
 twomhbar2 = 0.262465831
+
+
+def get_pw_energies(RecLattice, k, ig):
+    """
+    Calculates the plane-wave energies at a given k-point.
+
+    Parameters
+    ----------
+    RecLattice : array, shape=(3,3)
+        Each row contains the cartesian coordinates of a basis vector forming 
+        the unit-cell in reciprocal space.
+    k : array, shape=(3,)
+        Direct coordinates of the k-point.
+    ig : array, shape=(n, 3)
+        Each row contains the integer coefficients of a reciprocal lattice 
+        vector taking part in the plane-wave expansion of wave-functions at 
+        the current k-point.
+
+    Returns
+    -------
+    eKG : array
+        Energies of the plane-waves at the given k-point.
+    """
+    return 0.5 * Hartree_eV * (bohr_angstrom**2) * la.norm((k[None, :] + ig[:, :3]) @ RecLattice, axis=1) ** 2
 
 
 # This function is a python translation of a part of WaveTrans Code
@@ -83,11 +108,11 @@ def calc_gvectors(
     Returns
     -------
     igall : array
-        Every column corresponds to a plane-wave of energy smaller than 
-        `Ecut`. The number of rows is 6: the first 3 contain direct 
-        coordinates of the plane-wave, the fourth row stores indices needed
+        Every row corresponds to a plane-wave of energy smaller than 
+        `Ecut`. The number of columns is 6: the first 3 contain direct 
+        coordinates of the plane-wave, the fourth column stores indices needed
         to short plane-waves based on energy (ascending order). Fitfth 
-        (sixth) row contains the index of the first (last) plane-wave with 
+        (sixth) column contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.
 
 """
@@ -105,18 +130,19 @@ def calc_gvectors(
         flag = True
         if N % 10 == 0:
             log_message(f'Cycle {N:>3d}: number of plane waves = {len(igall):>10d}', verbosity, 2)
-        if len(igall) >= nplane / 2:    # Only enters if vasp
-            if spinor:
+        if len(igall) >= nplane:     # Only enters if vasp
+            if np.all(memory):  # probably spinor wrong set as spinor=F
+                raise RuntimeError(
+                    "calc_gvectors is stuck calculating plane waves of energy larger "
+                    f"than cutoff Ecut = {Ecut}. Make sure that the "
+                    "VASP calculation does not include SOC and set -spinor if it does."
+                )
+            else:
+                log_message(
+                    f"Reached the maximum number of plane-waves {nplane} at N={N}, "
+                    "stopping the calculation", verbosity, 2
+                )
                 break
-            else:      # Sure that not spinors?
-                if len(igall) >= nplane:  # spinor=F, all plane waves found
-                    break
-                elif np.all(memory):  # probably spinor wrong set as spinor=F
-                    raise RuntimeError(
-                        "calc_gvectors is stuck calculating plane waves of energy larger "
-                        f"than cutoff Ecut = {Ecut}. Make sure that the "
-                        "VASP calculation does not include SOC and set -spinor if it does."
-                    )
 
         for ig3 in range(-N, N + 1):
             for ig2 in range(-(N - abs(ig3)), N - abs(ig3) + 1):
@@ -132,12 +158,8 @@ def calc_gvectors(
 
     ncnt = len(igall)
     if nplane < np.inf:  # vasp
-        if spinor:
-            if 2 * ncnt != nplane:
-                raise RuntimeError(f"*** error - computed 2*ncnt={2 * ncnt} != input nplane={nplane}")
-        else:
-            if ncnt != nplane:
-                raise RuntimeError(f"*** error - computed ncnt={ncnt} != input nplane={nplane}")
+        if ncnt != nplane:
+            raise RuntimeError(f"*** error - computed ncnt={ncnt} != input nplane={nplane}")
     igall = np.array(igall, dtype=int)
     ng = igall.max(axis=0) - igall.min(axis=0)
     igall1 = igall % ng[None, :]
@@ -151,15 +173,15 @@ def calc_gvectors(
     Eg = Eg[Eg <= Ecut1]
     srt = np.argsort(Eg)
     Eg = Eg[srt]
-    igall = igall[srt, :].T
-    wall = [0] + list(np.where(Eg[1:] - Eg[:-1] > thresh)[0] + 1) + [igall.shape[1]]
+    igall = igall[srt, :]
+    wall = [0] + list(np.where(Eg[1:] - Eg[:-1] > thresh)[0] + 1) + [igall.shape[0]]
     for i in range(len(wall) - 1):
-        igall[4, wall[i]: wall[i + 1]] = wall[i]
-        igall[5, wall[i]: wall[i + 1]] = wall[i + 1]
-    return igall
+        igall[wall[i]: wall[i + 1], 4] = wall[i]
+        igall[wall[i]: wall[i + 1], 5] = wall[i + 1]
+    return igall, Eg
 
 
-def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
+def sortIG(ik, kg, kpt, WF, RecLattice, Ecut0, Ecut, verbosity=0):
     """
     Apply plane-wave cutoff specified in CLI to the expansion of 
     wave-functions and sort the coefficients and plane-waves in ascending 
@@ -175,8 +197,8 @@ def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
         the current k-point.
     kpt : array, shape=(3,)
         Direct coordinates of the k-point.
-    CG : array
-        `CG[i,j]` contains the complex coefficient corresponding to 
+    WF : array
+        `WF[i,j]` contains the complex coefficient corresponding to 
         :math:`j^{th}` plane-wave in the expansion of :math:`i^{th}` 
         wave-function.
     RecLattice : array, shape=(3,3)
@@ -194,23 +216,22 @@ def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
 
     Returns
     -------
-    CG : array
+    WF : array
         Contains the coefficients (same row-column formatting as argument 
-        `CG`) of the expansion of wave-functions corresponding to 
+        `WF`) of the expansion of wave-functions corresponding to 
         plane-waves of energy smaller than `Ecut`. Columns (plane-waves) 
         are shorted based on their energy, from smaller to larger.
     igall : array
-        Every column corresponds to a plane-wave of energy smaller than 
-        `Ecut`. The number of rows is 6: the first 3 contain direct 
-        coordinates of the plane-wave, the fourth row stores indices needed
+        Every row corresponds to a plane-wave of energy smaller than 
+        `Ecut`. The number of columns is 6: the first 3 contain direct 
+        coordinates of the plane-wave, the fourth column stores indices needed
         to short plane-waves based on energy (ascending order). Fitfth 
-        (sixth) row contains the index of the first (last) plane-wave with 
+        (sixth) column contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.
     """
     thresh = 1e-4  # default thresh to distinguish energies of plane-waves
     KG = (kg + kpt).dot(RecLattice)
-    npw = kg.shape[0]
-    eKG = Hartree_eV * (la.norm(KG, axis=1) ** 2) / 2
+    eKG = Hartree_eV * bohr_angstrom**2 * (la.norm(KG, axis=1) ** 2) / 2
     log_message(
         f"Found cutoff: {Ecut0:12.6f} eV   Largest plane wave energy in K-point {ik:4d}: {np.max(eKG):12.6f} eV",
         verbosity=verbosity, level=2
@@ -223,25 +244,42 @@ def sortIG(ik, kg, kpt, CG, RecLattice, Ecut0, Ecut, spinor, verbosity=0):
     eKG = eKG[sel]
     srt = np.argsort(eKG)
     eKG = eKG[srt]
-    igall = np.zeros((6, len(sel)), dtype=int)
-    igall[:3, :] = kg[srt].T
-    igall[3, :] = srt
+    igall = np.zeros((len(sel), 6), dtype=int)
+    igall[:, :3] = kg[srt]
+    igall[:, 3] = srt
     wall = (
-        [0] + list(np.where(eKG[1:] - eKG[:-1] > thresh)[0] + 1) + [igall.shape[1]]
+        [0] + list(np.where(eKG[1:] - eKG[:-1] > thresh)[0] + 1) + [igall.shape[0]]
     )
     for i in range(len(wall) - 1):
-        igall[4, wall[i]: wall[i + 1]] = wall[i]
-        igall[5, wall[i]: wall[i + 1]] = wall[i + 1]
-
-    if spinor:
-        CG = CG[:, np.hstack((sel[srt], sel[srt] + npw))]
-    else:
-        CG = CG[:, sel[srt]]
-
-    return CG, igall
+        igall[wall[i]: wall[i + 1], 4] = wall[i]
+        igall[wall[i]: wall[i + 1], 5] = wall[i + 1]
 
 
-def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
+    WF = WF[:, sel[srt], :]
+
+    return WF, igall, eKG
+
+
+def transform_gk(kpt, ig, A, kpt_other=None):
+    B = np.linalg.inv(A)
+    # kptTr = B.dot(kpt)
+    kptTr = kpt @ B  # kptTr is a direct coordinate of the transformed k-point
+    if kpt_other is None:
+        kpt_other = kptTr
+    dkpt = np.array(np.round(kptTr - kpt_other), dtype=int)
+
+    if not np.isclose(dkpt, kptTr - kpt_other).all():
+        raise NotSymmetryError(
+            f"The k-point {kpt} is transformed point {kptTr}  that is non-equivalent to the final point {kpt_other} "
+            f"under transformation\n {A}"
+        )
+    igTr = ig[:, :3] @ B + dkpt[None, :]
+    igTr = np.array(np.round(igTr), dtype=int)
+    return kpt_other, igTr
+
+
+
+def transformed_g_order(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
     """
     Determines how the transformation matrix `A` reorders the reciprocal
     lattice vectors taking part in the plane-wave expansion of wave-functions.
@@ -267,32 +305,21 @@ def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
     Returns
     -------
     rotind : array
-        `rotind[i] = j` if `B @ ig[:,i] == ig_other[:,j]`. if inverse is `False`,
-        'rotind[j] = i' if `B @ ig[:,i] == ig_other[:,j]`. if inverse is `True`.
+        `rotind[i] = j` if `B @ ig[i] == ig_other[j]`. if inverse is `False`,
+        'rotind[j] = i' if `B @ ig[i] == ig_other[j]`. if inverse is `True`.
 
         where `B = np.linalg.inv(A).T`
-"""
+    """
     assert (ig_other is None) == (kpt_other is None), "ig_other and kpt_other must be provided (or not) together"
     if ig_other is None:
         ig_other = ig
         kpt_other = kpt
-    B = np.linalg.inv(A).T
-    kpt_ = B.dot(kpt)
-    dkpt = np.array(np.round(kpt_ - kpt_other), dtype=int)
-
-    if not np.isclose(dkpt, kpt_ - kpt_other).all():
-        raise NotSymmetryError(
-            f"The k-point {kpt} is transformed point {kpt_}  that is non-equivalent to the final point {kpt_other} "
-            f"under transformation\n {A}"
-        )
-
-    igTr = B.dot(ig[:3, :]) + dkpt[:, None]  # the transformed
-    igTr = np.array(np.round(igTr), dtype=int)
-    ng = ig.shape[1]
+    _, igTr = transform_gk(kpt, ig, A, kpt_other)
+    ng = ig.shape[0]
     rotind = -np.ones(ng, dtype=int)
     for i in range(ng):
-        for j in range(ig[4, i], ig[5, i]):
-            if (igTr[:, i] == ig_other[:3, j]).all():
+        for j in range(ig[i, 4], ig[i, 5]):
+            if (igTr[i, :] == ig_other[j, :3]).all():
                 if inverse:
                     rotind[j] = i
                 else:
@@ -301,11 +328,12 @@ def transformed_g(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False):
 
     for i in range(ng):
         if rotind[i] == -1:
+
             raise RuntimeError(
                 f"Error in the transformation of plane-waves in k-point={kpt}: "
-                f"No pair found for the g-vector igTr[{i}]={igTr[:, i]} "
-                f"obtained when transforming the g-vector ig[{i}]={ig_other[:3, i]} "
-                f"with the matrix {B}, where B=inv(A).T with A={A}"
+                f"No pair found for the g-vector igTr[{i}]={igTr[i]} "
+                f"obtained when transforming the g-vector ig[{i}]={ig_other[i, :3]} "
+                f"with the matrix  B=inv(A).T with A={A}"
             )
     return rotind
 
@@ -322,16 +350,17 @@ def symm_eigenvalues(
     K : array, shape=(3,)
         Direct coordinates of the k-point.
     WF : array
-        `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
+        `WF[i,j, s]` contains the coefficient corresponding to :math:`j^{th}`
         plane-wave in the expansion of the wave-function in :math:`i^{th}`
-        band. It contains only plane-waves of energy smaller than `Ecut`.
+        band. and s^{th} spin component
+        It contains only plane-waves of energy smaller than `Ecut`.
     igall : array
         Returned by `__sortIG`.
-        Every column corresponds to a plane-wave of energy smaller than 
-        `Ecut`. The number of rows is 6: the first 3 contain direct 
-        coordinates of the plane-wave, the fourth row stores indices needed
+        Every row corresponds to a plane-wave of energy smaller than 
+        `Ecut`. The number of columns is 6: the first 3 contain direct 
+        coordinates of the plane-wave, the fourth column stores indices needed
         to short plane-waves based on energy (ascending order). Fitfth 
-        (sixth) row contains the index of the first (last) plane-wave with 
+        (sixth) column contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.
     A : array, shape=(3,3)
         Matrix describing the tranformation of basis vectors of the unit cell 
@@ -351,21 +380,14 @@ def symm_eigenvalues(
     """
     if block_ind is not None:
         return symm_eigenvalues_blocks(K, WF, igall, A, S, T, spinor, block_ind)
-    npw1 = igall.shape[1]
     multZ = np.exp(
-        -1.0j * (2 * np.pi * np.linalg.inv(A).dot(T).dot(igall[:3, :] + K[:, None]))
+        -1.0j * (2 * np.pi * (igall[:, :3] + K[None, :])  @ (np.linalg.inv(A) @ T))
     )
-    igrot = transformed_g(kpt=K, ig=igall, A=A)
+    igrot = transformed_g_order(kpt=K, ig=igall, A=A)
     if spinor:
-        part1 = WF[:, igrot].conj() * WF[:, :npw1] * S[0, 0]
-        part2 = (
-            WF[:, igrot + npw1].conj() * WF[:, npw1:] * S[1, 1] +
-            WF[:, igrot].conj() * WF[:, npw1:] * S[0, 1] +
-            WF[:, igrot + npw1].conj() * WF[:, :npw1] * S[1, 0]
-        )
-        return np.dot(part1 + part2, multZ)
+        return cached_einsum('igs,igt,st->ig', WF[:, igrot].conj(), WF[:, :], S).dot(multZ)
     else:
-        return np.dot(WF[:, igrot].conj() * WF[:, :], multZ)
+        return (WF[:, igrot, 0].conj() * WF[:, :, 0]).dot(multZ)
 
 
 def symm_eigenvalues_blocks(K, WF, igall, A, S, T, spinor, block_ind):
@@ -380,6 +402,9 @@ def symm_eigenvalues_blocks(K, WF, igall, A, S, T, spinor, block_ind):
     return np.array(traces)
 
 
+
+
+
 def symm_matrix(
     K, WF, igall, A, S, T, spinor,
     time_reversal=False,
@@ -388,7 +413,9 @@ def symm_matrix(
     return_blocks=False,
     ortogonalize=True,
     unitary=True,
-    unitary_params={}
+    unitary_params={},
+    Ecut=None,
+    eKG=None  # Ecut is not used in this function, but it is needed for compatibility
 ):
     """
     Computes the matrix S_mn such that
@@ -399,16 +426,17 @@ def symm_matrix(
     K : array, shape=(3,)
         Direct coordinates of the k-point.
     WF : array
-        `WF[i,j]` contains the coefficient corresponding to :math:`j^{th}`
+        `WF[i,j,s]` contains the coefficient corresponding to :math:`j^{th}`
         plane-wave in the expansion of the wave-function in :math:`i^{th}`
-        band. It contains only plane-waves if energy smaller than `Ecut`.
+        band. and s^{th} spin component.
+        It contains only plane-waves if energy smaller than `Ecut`.
     igall : array
         Returned by `__sortIG`.
-        Every column corresponds to a plane-wave of energy smaller than 
-        `Ecut`. The number of rows is 6: the first 3 contain direct 
-        coordinates of the plane-wave, the fourth row stores indices needed
+        Every row corresponds to a plane-wave of energy smaller than 
+        `Ecut`. The number of columns is 6: the first 3 contain direct 
+        coordinates of the plane-wave, the fourth column stores indices needed
         to short plane-waves based on energy (ascending order). Fitfth 
-        (sixth) row contains the index of the first (last) plane-wave with 
+        (sixth) column contains the index of the first (last) plane-wave with 
         the same energy as the plane-wave of the current column.
     WF_other, igall_other : array, default=None
         if provided, transformation to a different point is calculated.
@@ -444,6 +472,24 @@ def symm_matrix(
         Bloch Hamiltonian :math:`H(k)`.
     """
     assert (WF_other is None) == (igall_other is None) == (K_other is None), "WF_other and igall_other must be provided (or not) together"
+    if Ecut is not None:
+        assert eKG is not None, "Ecut is provided, but eKG is not"
+        select = np.where(eKG <= Ecut)[0]
+        npw_cut = igall[select.max(), 5]
+        igall = igall[:npw_cut]
+        WF = WF[:, :npw_cut, :]
+        if WF_other is not None:
+            igall_other = igall_other[:npw_cut]
+            WF_other = WF_other[:, :npw_cut, :]
+        return symm_matrix(
+            K=K, WF=WF, igall=igall, A=A, S=S, T=T,
+            spinor=spinor, time_reversal=time_reversal,
+            WF_other=WF_other, igall_other=igall_other, K_other=K_other,
+            block_ind=block_ind, return_blocks=return_blocks,
+            ortogonalize=ortogonalize, unitary=unitary,
+            unitary_params=unitary_params
+        )
+
     if WF_other is None:
         WF_other = WF
         igall_other = igall
@@ -455,27 +501,25 @@ def symm_matrix(
         "warning_threshold": 1e-3,
         "error_threshold": 1e-2,
         "check_upper": False,
+        "warn_upper": False
     }
     unitary_params_loc.update(unitary_params)
-    npw1 = igall.shape[1]
-    multZ = np.exp(-2j * np.pi * T.dot(igall_other[:3, :] + K_other[:, None]))[None, :]
+    multZ = np.exp(-2j * np.pi * (igall_other[:, :3] + K_other[None, :]) @ T)
 
     if time_reversal:
         A = -A
         WF = WF.conj()
-        # multZ = multZ.conj() # this is not needed because igall_other and K_other are alreade reversed (because A=-A)
+        # multZ = multZ.conj() # this is not needed because igall_other and K_other are already reversed (because A=-A)
         if spinor:
             S = np.array([[0, 1], [-1, 0]]) @ S.conj()
 
-    igrot = transformed_g(kpt=K, ig=igall, A=A, ig_other=igall_other, kpt_other=K_other, inverse=True)
+    igrot = transformed_g_order(kpt=K, ig=igall, A=A, ig_other=igall_other, kpt_other=K_other, inverse=True)
+    WFrot = WF[:, igrot, :] * multZ[None, :, None]
     if spinor:
-        WFrot_up = WF[:, igrot] * multZ
-        WFrot_down = WF[:, igrot + npw1] * multZ
-        WFrot = np.stack([WFrot_up, WFrot_down], axis=2)
-        WFrot = np.einsum("ts,mgs->mgt", S, WFrot)
-        WFrot = WFrot.reshape((WFrot.shape[0], -1), order='F')
-    else:
-        WFrot = WF[:, igrot] * multZ
+        WFrot = cached_einsum("ts,mgs->mgt", S, WFrot)
+    WFrot = np.hstack([WFrot[:, :, s] for s in range(WFrot.shape[2])])
+    WF_other = np.hstack([WF_other[:, :, s] for s in range(WF_other.shape[2])])
+    # WFrot = WFrot.reshape((WFrot.shape[0], -1), order='F')
     block_list = []
     NB = WF.shape[0]
     for b1, b2 in block_ind:
@@ -486,8 +530,12 @@ def symm_matrix(
                 error_threshold = 10
             else:
                 error_threshold = unitary_params_loc["error_threshold"]
+            if not unitary_params_loc["warn_upper"] and b2 == NB:
+                warning_threshold = 10
+            else:
+                warning_threshold = unitary_params_loc["warning_threshold"]
             block = orthogonalize(block,
-                                  warning_threshold=unitary_params_loc["warning_threshold"],
+                                  warning_threshold=warning_threshold,
                                   error_threshold=error_threshold,
                                   debug_msg=f"symm_matrix: block {b1}:{b2} of {WF.shape[0]}")
         block_list.append(block)
