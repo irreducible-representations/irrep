@@ -160,7 +160,7 @@ def test_symm_matrix_block():
                     #   ref_file="symm_matrix_full.npz",
                       Ecut=30,
                       degen_thresh=1e-2,
-                      acc =5e-5
+                      acc=5e-5
                      )
 
 

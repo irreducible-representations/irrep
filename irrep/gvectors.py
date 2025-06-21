@@ -325,7 +325,7 @@ def transformed_g_order(kpt, ig, A, kpt_other=None, ig_other=None, inverse=False
                 else:
                     rotind[i] = j
                 break
-    
+
     for i in range(ng):
         if rotind[i] == -1:
 

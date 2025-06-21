@@ -223,18 +223,20 @@ class BandStructure:
                 shiftUC=shiftUC,
                 search_cell=search_cell,
                 trans_thresh=trans_thresh,
-            )   
+            )
         self.spacegroup = spacegroup
         self.spinor = self.spacegroup.spinor
         self.magnetic = self.spacegroup.magnetic
-        
+
         if select_grid is not None:
             self.mp_grid = tuple(select_grid)
+
             def is_on_grid(kpt):
                 a = np.array(kpt) * np.array(select_grid)
                 return np.allclose(a, np.round(a))
         else:
             self.mp_grid = None
+
             def is_on_grid(kpt):
                 return True
 
@@ -991,7 +993,7 @@ class BandStructure:
         if grid is None:
             grid = self.mp_grid
         grid, selected_kpoints = grid_from_kpoints(kpt_latt_grid, grid=grid, allow_missing=irreducible)
-        print (f"grid: {grid}, selected_kpoints: {selected_kpoints}")
+        print(f"grid: {grid}, selected_kpoints: {selected_kpoints}")
         kptirr = select_irreducible(kpt_latt_grid[selected_kpoints], spacegroup=self.spacegroup)
         if irreducible:
             print(f"kptirr: {kptirr}")

@@ -29,6 +29,7 @@ BOHR = constants.physical_constants['Bohr radius'][0] / constants.angstrom
 # Global cache to store einsum paths
 EINSUM_PATH_CACHE = {}
 
+
 def cached_einsum(subscripts, *operands,
                   optimize='greedy',
                   **kwargs):
@@ -728,7 +729,7 @@ def restore_full_grid(kpoints_irr, grid, spacegroup):
                 all_k_mod1.append(transformed_k)
                 all_k.append(transformed_k)
 
-    
+
     kpt_from_kptirr_isym = -np.ones(len(all_k_grid_mod1), dtype=int)
     for ik, ikirr in enumerate(kpt2kptirr):
         for isym in range(len(spacegroup.symmetries)):
