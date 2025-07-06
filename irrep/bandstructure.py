@@ -993,10 +993,10 @@ class BandStructure:
         if grid is None:
             grid = self.mp_grid
         grid, selected_kpoints = grid_from_kpoints(kpt_latt_grid, grid=grid, allow_missing=irreducible)
-        print(f"grid: {grid}, selected_kpoints: {selected_kpoints}")
+        # print(f"grid: {grid}, selected_kpoints: {selected_kpoints}")
         kptirr = select_irreducible(kpt_latt_grid[selected_kpoints], spacegroup=self.spacegroup)
         if irreducible:
-            print(f"kptirr: {kptirr}")
+            # print(f"kptirr: {kptirr}")
             selected_kpoints = selected_kpoints[kptirr]
             kptirr = np.arange(len(kptirr), dtype=int)
         kpt_latt_grid = kpt_latt_grid[selected_kpoints]
@@ -1004,10 +1004,10 @@ class BandStructure:
         if irreducible:
             kpt_latt_grid, kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym = restore_full_grid(kpt_latt_grid, grid=grid, spacegroup=self.spacegroup)
             # debug
-            print(f"restored kpt_latt_grid: {kpt_latt_grid}")
-            print(f"restored kptirr2kpt: {kptirr2kpt}")
-            print(f"restored kpt2kptirr: {kpt2kptirr}")
-            print(f"restored kpt_from_kptirr_isym: {kpt_from_kptirr_isym}")
+            # print(f"restored kpt_latt_grid: {kpt_latt_grid}")
+            # print(f"restored kptirr2kpt: {kptirr2kpt}")
+            # print(f"restored kpt2kptirr: {kpt2kptirr}")
+            # print(f"restored kpt_from_kptirr_isym: {kpt_from_kptirr_isym}")
         else:
             assert len(kpt_latt_grid) == np.prod(grid), \
                 f"the number of kpoints {len(kpt_latt_grid)} does not match the grid {grid}.\n" \
