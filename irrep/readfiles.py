@@ -54,7 +54,8 @@ class WAVECARFILE:
         # RECLENGTH=3 # the length of a record in WAVECAR. It is defined in the
         # first record, so let it be 3 fo far"
         self.rl, ispin, iprec = [int(x) for x in self.record(0)]
-        self.iprec=iprec
+        self.iprec = iprec
+        print(f"iprec tag = {iprec}")
         if iprec not in (45200, 53300):
             raise RuntimeError(f"invalid iprec tag found: {iprec}, probably not a single-precision file. Double-precision is not supported")
         if ispin != 1:
