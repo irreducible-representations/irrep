@@ -54,8 +54,9 @@ class WAVECARFILE:
         # RECLENGTH=3 # the length of a record in WAVECAR. It is defined in the
         # first record, so let it be 3 fo far"
         self.rl, ispin, iprec = [int(x) for x in self.record(0)]
-        if iprec != 45200:
-            raise RuntimeError("double precision WAVECAR is not supported")
+        self.iprec=iprec
+        if iprec not in (45200, 53300):
+            raise RuntimeError(f"invalid iprec tag found: {iprec}, probably not a single-precision file. Double-precision is not supported")
         if ispin != 1:
             raise RuntimeError("WAVECAR contains spin-polarized non-spinor wavefunctions."
                                f"ISPIN={ispin}  this is not supported yet")
