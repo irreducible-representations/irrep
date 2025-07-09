@@ -594,8 +594,8 @@ class SpaceGroup:
             if spinor is None:
                 log_message("Spinor is not specified (for VASP), assuming non-spinor calculation", verbosity, 2)
                 spinor = False
-            parser = ParserVasp(fPOS, fWAV, onlysym=True)
-            Lattice, positions, typat = parser.parse_poscar(verbosity)
+            parser = ParserVasp(fPOS, fWAV, onlysym=True, verbosity=verbosity)
+            Lattice, positions, typat = parser.parse_poscar()
 
         elif code == "abinit":
             parser = ParserAbinit(fWFK)

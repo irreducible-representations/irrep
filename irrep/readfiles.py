@@ -48,24 +48,50 @@ class WAVECARFILE:
         Equal to parameter `RL`.
     """
 
-    def __init__(self, filename, RL=3):
+    def __init__(self, filename, RL=3, verbosity=0):
+        self.verbosity = verbosity
         self.f = open(filename, "rb")
-        self.rl = 3
+        self.rl = RL
         # RECLENGTH=3 # the length of a record in WAVECAR. It is defined in the
         # first record, so let it be 3 fo far"
         self.rl, ispin, iprec = [int(x) for x in self.record(0)]
         self.iprec = iprec
-        print(f"iprec tag = {iprec}")
+        log_message(f"iprec tag = {iprec}, record_length = {self.rl} bytes", self.verbosity, 1)
         if iprec not in (45200, 53300):
             raise RuntimeError(f"invalid iprec tag found: {iprec}, probably not a single-precision file. Double-precision is not supported")
         if ispin != 1:
             raise RuntimeError("WAVECAR contains spin-polarized non-spinor wavefunctions."
                                f"ISPIN={ispin}  this is not supported yet")
+        self.nrec_enocc = None  # will be set later
+        self.nrec_kpoint = None  # will be set later
+        self.nrec_header = 2
+
+    def set_nrec_kpoint(self, NBin):
+        size_enocc = (4 + 3 * NBin) * 8
+        # number of records needed to store band energies and occupations
+        self.nrec_enocc = (size_enocc + self.rl - 1) // self.rl
+        log_message(f"number of records for energies and occupancies : {self.nrec_enocc}", self.verbosity, 1)
+        if self.iprec in (42200, 42210):
+            assert self.nrec_enocc == 1, (f"energies and occupancies for tag {self.iprec} should fit in one record. However, "
+                                        f"the record length is {self.rl} bytes, which does not fit 4 + 3*{NBin} = {(4 + 3 * NBin)}*8 = {size_enocc} bytes for {NBin} bands")
+        self.nrec_kpoint = NBin + self.nrec_enocc
 
     def record(self, irec, cnt=np.inf, dtype=float):
         """An auxilary function to get records from WAVECAR"""
         self.f.seek(irec * self.rl)
         return np.fromfile(self.f, dtype=dtype, count=min(self.rl, cnt))
+
+    def irec_start_k(self, ik):
+        return self.nrec_header + ik * self.nrec_kpoint
+
+    def record_k_header(self, ik):
+        rec_start = self.irec_start_k(ik)
+        return np.hstack([self.record(rec_start + i) for i in range(self.nrec_enocc)])
+
+    def record_k_band(self, ik, ib, cnt=np.inf):
+        irec = self.irec_start_k(ik) + self.nrec_enocc + ib
+        return self.record(irec, cnt=cnt, dtype=np.complex64)
+
 
 
 def record_abinit(fWFK, st):
@@ -367,12 +393,14 @@ class ParserVasp:
         Instance of `WAVECARFILE`
     """
 
-    def __init__(self, fPOS, fWAV, onlysym=False):
+    def __init__(self, fPOS, fWAV, onlysym=False, verbosity=0):
+        self.verbosity = verbosity
         self.fPOS = fPOS
         if not onlysym:
-            self.fWAV = WAVECARFILE(fWAV)
+            self.fWAV = WAVECARFILE(fWAV, verbosity=self.verbosity)
 
-    def parse_poscar(self, verbosity=0):
+
+    def parse_poscar(self):
         """
         Parses POSCAR.
 
@@ -392,7 +420,7 @@ class ParserVasp:
             Each element is a number identifying the atomic species of an ion.
         """
 
-        log_message(f'Reading POSCAR: {self.fPOS}', verbosity, 1)
+        log_message(f'Reading POSCAR: {self.fPOS}', self.verbosity, 1)
         fpos = (l.strip() for l in open(self.fPOS))
         title = next(fpos)  # title
         del title
@@ -423,7 +451,7 @@ class ParserVasp:
                 positions[i] = np.array(l.split()[:3])
                 i += 1
             except Exception as err:
-                log_message(err, verbosity, 1)
+                log_message(err, self.verbosity, 1)
                 pass
         if sum(nat) != i:
             raise RuntimeError(f"not all atomic positions were read : {i} of {sum(nat)}")
@@ -450,6 +478,7 @@ class ParserVasp:
         tmp = self.fWAV.record(1)
         NK = int(tmp[0])
         NBin = int(tmp[1])
+        self.fWAV.set_nrec_kpoint(NBin=NBin)
         Ecut0 = tmp[2]
         lattice = np.array(tmp[3:12]).reshape(3, 3)
         return NK, NBin, Ecut0, lattice
@@ -478,11 +507,11 @@ class ParserVasp:
             Number of plane waves in the expansion of wave functions
         '''
 
-        r = self.fWAV.record(2 + ik * (NBin + 1))
+        r = self.fWAV.record_k_header(ik)
         nspinor = 2 if spinor else 1
         # Check if number of plane waves is even for spinors
         npw = int(r[0])
-        print(f"npw = {npw}, nspinor = {nspinor}, NBin = {NBin}")
+        log_message(f"npw = {npw}, nspinor = {nspinor}, NBin = {NBin}", self.verbosity, 2)
         if spinor:
             assert npw % 2 == 0, f"odd number of coefs {npw} for spinor wavefunctions"
         npw //= nspinor
@@ -490,8 +519,7 @@ class ParserVasp:
         Energy = np.array(r[4: 4 + NBin * 3]).reshape(NBin, 3)[:, 0]
         WF = np.zeros((NBin, npw, nspinor), dtype=np.complex64)
         for ib in range(NBin):
-            WF[ib] = self.fWAV.record(3 + ik * (NBin + 1) + ib, npw * nspinor, np.complex64
-                                      ).reshape((npw, nspinor), order='F')
+            WF[ib] = self.fWAV.record_k_band(ik=ik, ib=ib, cnt=npw * nspinor).reshape((npw, nspinor), order='F')
         return WF, Energy, kpt, npw
 
 
