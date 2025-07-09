@@ -464,6 +464,7 @@ class SymmetryOperation():
         str
             Description to print.
         """
+
         if refUC is None:
             refUC = np.eye(3, dtype=int)
         if shiftUC is None:
@@ -475,13 +476,14 @@ class SymmetryOperation():
         t = self.translation
         S = self.spinor_rotation
         tr = -1 if self.time_reversal else 1
-        sR = "   ".join(" ".join(f"{x:2d}" for x in r) for r in R)
-        st = " ".join(f"{x:10.6f}" for x in t)
+        sR = " ".join(f"{x:>2d}" for row in R for x in row)
+        st = " ".join(f"{x: >10.6f}" for x in t)
+
         if S is not None:
-            sS = "      " + "    ".join(
-                "  ".join(f"{x.real:10.6f} {x.imag:10.6f}" for x in S.reshape(-1)))
+            sS = " ".join(f"{x.real: >10.6f} {x.imag: >10.6f}" for x in S.reshape(-1))
         else:
             sS = ""
+
         if write_tr:
             return f"{sR}     {st}{sS} {tr}\n"
         else:
