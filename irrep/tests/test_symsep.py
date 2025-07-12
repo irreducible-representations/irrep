@@ -140,7 +140,8 @@ def test_symm_matrix_full():
                       output_file="symm_matrix_full.npz",
                       Ecut=100,
                       degen_thresh=None,
-                      acc=5e-5
+                      acc=5e-5,
+                      transpose_ref=True
                       )
 
 
@@ -150,7 +151,8 @@ def test_symm_matrix_block_vs_full():
                       ref_file="symm_matrix_full.npz",
                       Ecut=30,
                       degen_thresh=1e-2,
-                      acc=1e-4
+                      acc=1e-4,
+                      transpose_ref=True
                       )
 
 
@@ -160,7 +162,8 @@ def test_symm_matrix_block():
                     #   ref_file="symm_matrix_full.npz",
                       Ecut=30,
                       degen_thresh=1e-2,
-                      acc=5e-5
+                      acc=5e-5,
+                      transpose_ref=True
                      )
 
 
@@ -170,12 +173,14 @@ def test_symm_matrix_block_2():
                     #   ref_file="symm_matrix_full.npz",
                       Ecut=60,
                       degen_thresh=1e-2,
-                      acc=5e-5
+                      acc=5e-5,
+                      transpose_ref=True
                       )
 
 
 def check_symm_matrix(example_dir, output_file="symm_matrix", ref_file=None, degen_thresh=None, Ecut=30,
-                      acc=1e-6):
+                      acc=1e-6,
+                      transpose_ref=False):
     if ref_file is None:
         ref_file = output_file
     path = os.path.join(TEST_FILES_PATH, example_dir)
@@ -209,15 +214,19 @@ def check_symm_matrix(example_dir, output_file="symm_matrix", ref_file=None, deg
                     matrices2.append(symm_matrix(block_ind=block_indices, **kwargs))
     matrices2 = np.array(matrices2)
     matrices = np.array(matrices)
+    print(f"{matrices.shape=}")
     tmp_file = TMP_DATA_PATH / output_file
     np.savez_compressed(tmp_file, points=points, matrices=matrices)
     reference = np.load(REF_DATA_PATH / ref_file)
+    ref_mat = reference['matrices']
+    if transpose_ref:
+        ref_mat = ref_mat.swapaxes(1, 2)
     assert np.allclose(reference['points'], points)
-    diff = abs(reference['matrices'] - matrices)
+    diff = abs(ref_mat - matrices)
     if np.max(diff) > acc:
         string = f"Matrices differ by {np.max(diff)}, {diff.shape}\n"
         for i, j, k in zip(*np.where(diff > 1e-5)):
-            string += f"{i}, {j} , {k}, {diff[i, j, k]}, {reference['matrices'][i, j, k]}, {matrices[i, j, k]}\n"
+            string += f"{i}, {j} , {k}, {diff[i, j, k]}, {ref_mat[i, j, k]}, {matrices[i, j, k]}\n"
         raise ValueError(string)
 
     os.remove(tmp_file)
