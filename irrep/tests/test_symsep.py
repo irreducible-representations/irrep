@@ -230,3 +230,25 @@ def check_symm_matrix(example_dir, output_file="symm_matrix", ref_file=None, deg
         raise ValueError(string)
 
     os.remove(tmp_file)
+
+
+def test_symm_matrix_model():
+    K = np.array([0, 0, 0])
+    igall = np.array([[ 0, 0, 0, 0, 0, 1],
+                      [ 1, 0, 0, 0, 1, 3],
+                      [-1, 0, 0, 1, 1, 3],
+                        ]).T
+
+    A = np.array([[-1, 0, 0],
+                  [ 0, 1, 0],
+                  [ 0, 0, 1]])
+    T = np.zeros(3)
+
+    WF = np.array([[0, 1, 0],
+                   [0, 0, 1j]])
+
+    S = symm_matrix(WF=WF[:, :, None], igall=igall.T, K=K, A=A, T=T, spinor=False, S=None)
+
+    WFrot = WF[:, [0, 2, 1]]
+    assert np.allclose(WFrot, S.T @ WF)
+    assert np.allclose(WF.conj() @ WFrot.T, S)
