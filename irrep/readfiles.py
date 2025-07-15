@@ -750,9 +750,11 @@ class ParserW90:
         Number of k-points in DFT calculation
     '''
 
-    def __init__(self, prefix, unk_formatted=False):
+    def __init__(self, prefix, unk_formatted=False, spin_channel=None):
 
         self.prefix = prefix
+        self.spin_channel = spin_channel
+        self.path = os.path.dirname(prefix)
         self.fwin = [l.strip().lower() for l in open(prefix + ".win").readlines()]
         self.fwin = [
             [s.strip() for s in split(l)]
@@ -922,9 +924,15 @@ class ParserW90:
         else:
             return self.parse_kpoint_unformatted(ik, selectG)
 
+    def get_UNK_name(self, ik):
+        if self.spin_channel is None:
+            spin_channel_loc = 'NC' if self.spinor else '1'
+        else:
+            spin_channel_loc = str(self.spin_channel).upper()
+        return os.path.join(self.path, f"UNK{ik:05d}.{spin_channel_loc}")
 
     def parse_kpoint_formatted(self, ik, selectG):
-        fname = f"UNK{ik:05d}.{'NC' if self.spinor else '1'}"
+        fname = self.get_UNK_name(ik)
         print(f"parse_kpoint_formatted: {fname}")
         fUNK = open(fname, "r")
         ngx, ngy, ngz, ik_in, nbnd = (int(x) for x in fUNK.readline().split())
@@ -956,7 +964,7 @@ class ParserW90:
 
 
     def parse_kpoint_unformatted(self, ik, selectG):
-        fname = f"UNK{ik:05d}.{'NC' if self.spinor else '1'}"
+        fname = self.get_UNK_name(ik)
         fUNK = FF(fname, "r")
         ngx, ngy, ngz, ik_in, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
         ngtot = ngx * ngy * ngz
@@ -997,7 +1005,7 @@ class ParserW90:
             Number of k-point along 3rd direction in reciprocal space 
         '''
 
-        fname = f"UNK{ik:05d}.{'NC' if self.spinor else '1'}"
+        fname = self.get_UNK_name(ik)
         if self.unk_formatted:
             fUNK = open(fname, "r")
             ngx, ngy, ngz, ik_in, nbnd = (int(x) for x in fUNK.readline().split())
