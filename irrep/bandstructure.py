@@ -277,12 +277,12 @@ class BandStructure:
                     "spinor should be specified in the command line for VASP bandstructure"
                 )
             _spinor = spinor
-            parser = ParserVasp(fPOS, fWAV, onlysym)
-            Lattice, positions, typat = parser.parse_poscar(verbosity)
+            parser = ParserVasp(fPOS, fWAV, onlysym, verbosity=verbosity)
+            Lattice, positions, typat = parser.parse_poscar()
             if not onlysym:
                 NK, NBin, self.Ecut0, lattice_wavecar = parser.parse_header()
                 if not np.allclose(Lattice, lattice_wavecar):
-                    raise RuntimeError("POSCAR and WAVECAR contain different lattices")
+                    raise RuntimeError(f"POSCAR and WAVECAR contain different lattices\n Lattice in WAVECAR:\n{lattice_wavecar} \n Lattice in POSCAR: \n{Lattice}")
                 EF_in = None  # not written in WAVECAR
 
         elif code == "abinit":

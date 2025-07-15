@@ -131,6 +131,7 @@ def calc_gvectors(
         if N % 10 == 0:
             log_message(f'Cycle {N:>3d}: number of plane waves = {len(igall):>10d}', verbosity, 2)
         if len(igall) >= nplane:     # Only enters if vasp
+            log_message(f"{N=}, {memory=}", verbosity, 2)
             if np.all(memory):  # probably spinor wrong set as spinor=F
                 raise RuntimeError(
                     "calc_gvectors is stuck calculating plane waves of energy larger "
