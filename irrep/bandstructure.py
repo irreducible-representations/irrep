@@ -71,8 +71,9 @@ class BandStructure:
     onlysym : bool, default=False
         Exit after printing info about space-group.
     spin_channel : str, default=None
-        Selection of the spin-channel. Foq QuantumEspresso: 'up' for spin-up, 'dw' for spin-down. 
+        Selection of the spin-channel. Foq QuantumEspresso 'up' for spin-up, 'dw' for spin-down. 
         for wannier90 : 1 for spin-up, 2 for spin-down. (the last digit of the UNK file name)
+        for gpaw : 0 or 1
     refUC : array, default=None
         3x3 array describing the transformation of vectors defining the 
         unit cell to the standard setting.
@@ -341,7 +342,9 @@ class BandStructure:
             Energies = parser.parse_energies()
         elif code == "gpaw":
             parser = ParserGPAW(calculator=calculator_gpaw,
-                                spinor=False if spinor is None else spinor)
+                                spinor=bool(spinor),
+                                spin_channel=spin_channel
+                                )
             NBin, kpred, Lattice, _spinor, typat, positions, EF_in = parser.parse_header()
             if Ecut is None:
                 raise RuntimeError("Ecut mandatory for GPAW")

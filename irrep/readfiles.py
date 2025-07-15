@@ -1128,7 +1128,7 @@ class ParserGPAW:
         instance of GPAW class or the name of the file containing it
     """
 
-    def __init__(self, calculator, spinor=False):
+    def __init__(self, calculator, spinor=False, spin_channel=None):
         from gpaw import GPAW
         if isinstance(calculator, str):
             calculator = GPAW(calculator)
@@ -1136,14 +1136,20 @@ class ParserGPAW:
         self.nband = self.calculator.get_number_of_bands()
         print("spinor", spinor)
         self.spinor = spinor
+        
         if self.spinor:
             from gpaw import spinorbit
             self.soc = spinorbit.soc_eigenstates(self.calculator)
-            self.nspins=self.calculator.wfs.nspins
-            self.nband
+            nspins=self.calculator.wfs.nspins
+            if spin_channel is None:
+                self.spin_channels = np.arange(nspins)
+            else:
+                self.spin_channels = [spin_channel]
         else:
-            self.nspins = 1
-        
+            if spin_channel is None:
+                spin_channel = 0
+            self.spin_channels=[spin_channel]
+
 
     def parse_header(self, spinor=False):
         kpred = self.calculator.get_ibz_k_points()
@@ -1154,14 +1160,10 @@ class ParserGPAW:
         return (self.nband * (1 + int(self.spinor)), kpred, Lattice, self.spinor, typat, positions, EF_in)
 
     def parse_kpoint(self, ik, RecLattice, Ecut):
-        WF = np.array([
-            self.calculator.get_pseudo_wave_function(kpt=ik, band=ib, periodic=True)
-            for ib in range(self.nband)])
-        if self.nspins==2:
-            WFdown = np.array([
-            self.calculator.get_pseudo_wave_function(kpt=ik, band=ib, periodic=True, spin=1)
-            for ib in range(self.nband)])
-        ngx, ngy, ngz = WF.shape[1:]
+        WFupdw = [np.array([
+            self.calculator.get_pseudo_wave_function(kpt=ik, band=ib, periodic=True, spin=ispin)
+            for ib in range(self.nband)]) for ispin in self.spin_channels]
+        ngx, ngy, ngz = WFupdw[0].shape[1:]
         kpt = self.calculator.get_ibz_k_points()[ik]
         kg, eKG = calc_gvectors(kpt,
                            RecLattice,
@@ -1171,24 +1173,21 @@ class ParserGPAW:
                             )
         selectG = tuple(kg[:,0:3].T)
         
-        WF = np.fft.fftn(WF, axes=(1, 2, 3))
-        WF = np.array([wf[selectG] for wf in WF])
-        if self.nspins==2:
-            WFdown = np.fft.fftn(WFdown, axes=(1, 2, 3))
-            WFdown = np.array([wf[selectG] for wf in WFdown])
+        for i in range(len(WFupdw)):
+            WFupdw[i] = np.fft.fftn(WFupdw[i], axes=(1, 2, 3))
+            WFupdw[i] = np.array([wf[selectG] for wf in WFupdw[i]])
         if self.spinor:
-            if self.nspins==2:
-                WFupdw = [WF,WFdown]
-            else:
-                WFupdw = [WF,WF]
+            if len(WFupdw)==1:
+                WFupdw = WFupdw *2
+            WF = WFupdw[0]
             WFspinor = np.zeros((2*WF.shape[0], WF.shape[1], 2), dtype=complex)
             v_kmn = self.soc.eigenvectors()
             for s in range(2):
                 WFspinor[:, :, s] = v_kmn[ik, :, s::2] @ WFupdw[s]
             energies = self.soc.eigenvalues()[ik]
-            WF = WFspinor
+            WFout = WFspinor
         else:
-            WF = WF[:, :, None]
-            energies = self.calculator.get_eigenvalues(kpt=ik)
+            WFout = WFupdw[0][:, :, None]
+            energies = self.calculator.get_eigenvalues(kpt=ik, spin=self.spin_channels[0])
 
-        return energies, WF, kg, kpt, eKG
+        return energies, WFout, kg, kpt, eKG
