@@ -1139,7 +1139,11 @@ class ParserGPAW:
         if self.spinor:
             from gpaw import spinorbit
             self.soc = spinorbit.soc_eigenstates(self.calculator)
+            self.nspins=self.calculator.wfs.nspins
             self.nband
+        else:
+            self.nspins = 1
+        
 
     def parse_header(self, spinor=False):
         kpred = self.calculator.get_ibz_k_points()
@@ -1153,8 +1157,11 @@ class ParserGPAW:
         WF = np.array([
             self.calculator.get_pseudo_wave_function(kpt=ik, band=ib, periodic=True)
             for ib in range(self.nband)])
+        if self.nspins==2:
+            WFdown = np.array([
+            self.calculator.get_pseudo_wave_function(kpt=ik, band=ib, periodic=True, spin=1)
+            for ib in range(self.nband)])
         ngx, ngy, ngz = WF.shape[1:]
-        WF = np.fft.fftn(WF, axes=(1, 2, 3))
         kpt = self.calculator.get_ibz_k_points()[ik]
         kg, eKG = calc_gvectors(kpt,
                            RecLattice,
@@ -1162,13 +1169,22 @@ class ParserGPAW:
                            spinor=False,
                            nplanemax=np.max([ngx, ngy, ngz]) // 2
                             )
-        selectG = tuple(kg[0:3])
+        selectG = tuple(kg[:,0:3].T)
+        
+        WF = np.fft.fftn(WF, axes=(1, 2, 3))
         WF = np.array([wf[selectG] for wf in WF])
+        if self.nspins==2:
+            WFdown = np.fft.fftn(WFdown, axes=(1, 2, 3))
+            WFdown = np.array([wf[selectG] for wf in WFdown])
         if self.spinor:
-            WFspinor = np.zeros((WF.shape[0], WF.shape[1], 2), dtype=complex)
+            if self.nspins==2:
+                WFupdw = [WF,WFdown]
+            else:
+                WFupdw = [WF,WF]
+            WFspinor = np.zeros((2*WF.shape[0], WF.shape[1], 2), dtype=complex)
             v_kmn = self.soc.eigenvectors()
             for s in range(2):
-                WFspinor[:, :, s] = v_kmn[ik, :, s::2] @ WF
+                WFspinor[:, :, s] = v_kmn[ik, :, s::2] @ WFupdw[s]
             energies = self.soc.eigenvalues()[ik]
             WF = WFspinor
         else:
