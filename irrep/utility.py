@@ -314,7 +314,7 @@ def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf, verbosity
     if np.any(np.abs(s - 1) > error_threshold):
         raise ValueError(msg)
     elif np.any(np.abs(s - 1) > warning_threshold):
-        log_message("Warning: "+msg, verbosity, 1)
+        log_message("Warning: " + msg, verbosity, 1)
     return u @ vh
 
 

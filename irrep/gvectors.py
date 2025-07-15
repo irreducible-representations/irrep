@@ -506,7 +506,7 @@ def symm_matrix(
         "error_threshold": 1e-2,
         "check_upper": False,
         "warn_upper": False,
-        "nbands_upper_skip":2
+        "nbands_upper_skip": 2
     }
     for key, val in unitary_params.items():
         if key not in unitary_params_loc:
@@ -535,11 +535,11 @@ def symm_matrix(
         WFinv = right_inverse(WF_other[b1:b2])
         block = np.dot(WFrot[b1:b2, :], WFinv).T
         if unitary:
-            if not unitary_params_loc["check_upper"] and b2 >= NB-unitary_params_loc["nbands_upper_skip"]:
+            if not unitary_params_loc["check_upper"] and b2 >= NB - unitary_params_loc["nbands_upper_skip"]:
                 error_threshold = 100
             else:
                 error_threshold = unitary_params_loc["error_threshold"]
-            if not unitary_params_loc["warn_upper"] and b2 >= NB-unitary_params_loc["nbands_upper_skip"]:
+            if not unitary_params_loc["warn_upper"] and b2 >= NB - unitary_params_loc["nbands_upper_skip"]:
                 warning_threshold = 100
             else:
                 warning_threshold = unitary_params_loc["warning_threshold"]

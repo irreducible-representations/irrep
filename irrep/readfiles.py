@@ -1136,11 +1136,11 @@ class ParserGPAW:
         self.nband = self.calculator.get_number_of_bands()
         print("spinor", spinor)
         self.spinor = spinor
-        
+
         if self.spinor:
             from gpaw import spinorbit
             self.soc = spinorbit.soc_eigenstates(self.calculator)
-            nspins=self.calculator.wfs.nspins
+            nspins = self.calculator.wfs.nspins
             if spin_channel is None:
                 self.spin_channels = np.arange(nspins)
             else:
@@ -1148,7 +1148,7 @@ class ParserGPAW:
         else:
             if spin_channel is None:
                 spin_channel = 0
-            self.spin_channels=[spin_channel]
+            self.spin_channels = [spin_channel]
 
 
     def parse_header(self, spinor=False):
@@ -1171,16 +1171,16 @@ class ParserGPAW:
                            spinor=False,
                            nplanemax=np.max([ngx, ngy, ngz]) // 2
                             )
-        selectG = tuple(kg[:,0:3].T)
-        
+        selectG = tuple(kg[:, 0:3].T)
+
         for i in range(len(WFupdw)):
             WFupdw[i] = np.fft.fftn(WFupdw[i], axes=(1, 2, 3))
             WFupdw[i] = np.array([wf[selectG] for wf in WFupdw[i]])
         if self.spinor:
-            if len(WFupdw)==1:
-                WFupdw = WFupdw *2
+            if len(WFupdw) == 1:
+                WFupdw = WFupdw * 2
             WF = WFupdw[0]
-            WFspinor = np.zeros((2*WF.shape[0], WF.shape[1], 2), dtype=complex)
+            WFspinor = np.zeros((2 * WF.shape[0], WF.shape[1], 2), dtype=complex)
             v_kmn = self.soc.eigenvectors()
             for s in range(2):
                 WFspinor[:, :, s] = v_kmn[ik, :, s::2] @ WFupdw[s]
