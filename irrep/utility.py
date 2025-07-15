@@ -310,10 +310,11 @@ def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf, verbosity
         Orthogonalized matrix
     """
     u, s, vh = np.linalg.svd(A)
+    msg = f"Matrix is not orthogonal. Singular values {s}!=1 \n {A} \n {debug_msg}"
     if np.any(np.abs(s - 1) > error_threshold):
-        raise ValueError(f"Matrix is not orthogonal \n {A} \n {debug_msg}")
+        raise ValueError(msg)
     elif np.any(np.abs(s - 1) > warning_threshold):
-        log_message(f"Warning: Matrix is not orthogonal \n {A} \n {debug_msg}", verbosity, 1)
+        log_message("Warning: " + msg, verbosity, 1)
     return u @ vh
 
 
