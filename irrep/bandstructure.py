@@ -499,7 +499,6 @@ class BandStructure:
             else:
                 self.kwargs_kpoint = None
             self.kpoints.append(kp)
-        del WF
 
 
     @property
@@ -1052,8 +1051,7 @@ class BandStructure:
                 block_list = K1.symm_matrix(K2, symop, block_indices=block_indices,
                                             unitary=unitary, unitary_params=unitary_params,
                                             Ecut=Ecut)
-                d_band_blocks[i][isym] = [np.ascontiguousarray(b.T) for b in block_list]
-                # transposed because in irrep WF is row vector, while in dmn it is column vector
+                d_band_blocks[i][isym] = [np.ascontiguousarray(b) for b in block_list]
                 if irreducible and ik2 not in kptirr:
                     # check if the transformation is correct
                     if isym == kpt_from_kptirr_isym[ik2]:
@@ -1061,10 +1059,6 @@ class BandStructure:
                             assert np.allclose(block, np.eye(ind[1] - ind[0])), \
                                 f"Transformation matrix for k-point {ik2} under symmetry {isym} is not identity for bands {ind[0]}-{ind[1] - 1}.\n" \
                                 f"Transformation matrix:\n{block}\nExpected identity matrix.\n"
-
-
-                # transposed because in irrep WF is row vector, while in dmn it is column vector
-
 
         return dict(grid=grid,
                     kpoints=kpt_latt_grid,

@@ -420,12 +420,14 @@ def symm_matrix(
 ):
     """
     Computes the matrix S_mn such that
-    {A|T} |Psi_mk> = sum_n S_mn * |Psi_nk'>
+    {A|T} |Psi_nk> = sum_m |Psi_mk'> * S_mn
+
+    WARNING : In the versions from 1.10.0 to 2.2.0 this function was giving the transposed matrices.
 
     Parameters
     ----------
     K : array, shape=(3,)
-        Direct coordinates of the k-point.
+        Direct coordinates of the k-point. 
     WF : array
         `WF[i,j,s]` contains the coefficient corresponding to :math:`j^{th}`
         plane-wave in the expansion of the wave-function in :math:`i^{th}`
@@ -525,7 +527,7 @@ def symm_matrix(
     NB = WF.shape[0]
     for b1, b2 in block_ind:
         WFinv = right_inverse(WF_other[b1:b2])
-        block = np.dot(WFrot[b1:b2, :], WFinv)
+        block = np.dot(WFrot[b1:b2, :], WFinv).T
         if unitary:
             if not unitary_params_loc["check_upper"] and b2 == NB:
                 error_threshold = 10

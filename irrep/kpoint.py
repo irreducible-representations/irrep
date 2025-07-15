@@ -564,7 +564,7 @@ class Kpoint:
             for b1, b2 in block_indices:
                 v1 = v[:, b1:b2]
                 subspaces[w[b1:b2].mean()] = self.copy_sub(E=Eloc[b1:b2],
-                                                           WF=cached_einsum('ij,jks->iks', v1.T.conj(), self.WF),
+                                                           WF=cached_einsum('ij,jks->iks', v1.T, self.WF),
                                                            kwargs_kpoint=kwargs_kpoint)
 
         else:  # don't group Kramers pairs
@@ -581,7 +581,7 @@ class Kpoint:
                 v1 = np.roll(v, -b1, axis=1)[:, : (b2 - b1) % self.num_bands]
                 subspaces[np.roll(w, -b1)[: (b2 - b1) % self.num_bands].mean()] = self.copy_sub(
                     E=np.roll(Eloc, -b1)[: (b2 - b1) % self.num_bands],
-                    WF=cached_einsum('ij,jks->iks', v1.T.conj(), self.WF),
+                    WF=cached_einsum('ij,jks->iks', v1.T, self.WF),
                     kwargs_kpoint=kwargs_kpoint
                 )
 
