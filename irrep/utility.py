@@ -647,19 +647,10 @@ def get_mapping_irr(kpoints, kptirr, spacegroup):
                                                 f"kptirr= {kptirr}, \nkpt2kptirr= {kpt2kptirr}\n kptirr2kpt= {kptirr2kpt}")
     kptirr2kpt = np.array(kptirr2kpt)
     del kpoints_mod1
-    kpt_from_kptirr_isym = np.zeros((len(kptirr), Nsym), dtype=int)
-    for ik, ikirr in enumerate(kpt2kptirr):
-        for isym in range(Nsym):
-            if kptirr2kpt[ikirr, isym] == ik:
-                kpt_from_kptirr_isym[ikirr, isym] = ik
-                break
-        else:
-            raise RuntimeError("No Symmetry operation maps irreducible "
-                               "k-point {ikirr} to point {ik}, but kpt2kptirr[{ik}] = {ikirr}.")
     assert np.all(kptirr2kpt >= 0)
     assert np.all(kpt2kptirr >= 0
                   )
-    return kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym
+    return kptirr2kpt, kpt2kptirr
 
 
 
@@ -729,15 +720,22 @@ def restore_full_grid(kpoints_irr, grid, spacegroup):
                 all_k_mod1.append(transformed_k)
                 all_k.append(transformed_k)
 
+    return np.array(all_k), kptirr2kpt, kpt2kptirr
 
-    kpt_from_kptirr_isym = -np.ones(len(all_k_grid_mod1), dtype=int)
+
+
+def get_kpt_from_kptirr_isym(kpt2kptirr, kptirr2kpt):
+    NKirr, Nsym = kptirr2kpt.shape
+    NK = kpt2kptirr.shape[0]
+    print(f"kpt_from_kptirr {NK=}, NKirr=, {Nsym=}")
+    kpt_from_kptirr_isym = -np.ones(NK, dtype=int)
     for ik, ikirr in enumerate(kpt2kptirr):
-        for isym in range(len(spacegroup.symmetries)):
+        for isym in range(Nsym):
             if kptirr2kpt[ikirr, isym] == ik:
                 kpt_from_kptirr_isym[ik] = isym
                 break
         else:
             raise RuntimeError(f"No Symmetry operation maps irreducible "
-                               f"k-point {ikirr} to point {ik}, but kpt2kptirr[{ik}] = {ikirr}.")
-
-    return np.array(all_k), kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym
+                            f"k-point {ikirr} to point {ik}, but kpt2kptirr[{ik}] = {ikirr}.")
+    print (f"returning {kpt_from_kptirr_isym}")
+    return kpt_from_kptirr_isym

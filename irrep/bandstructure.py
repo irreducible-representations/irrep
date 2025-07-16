@@ -29,7 +29,9 @@ from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .spacegroup_irreps import SpaceGroupIrreps
 from .gvectors import sortIG, calc_gvectors
-from .utility import get_block_indices, get_mapping_irr, grid_from_kpoints, log_message, UniqueListMod1, restore_full_grid, select_irreducible
+from .utility import (get_block_indices, get_mapping_irr, grid_from_kpoints, log_message, 
+                      UniqueListMod1, restore_full_grid, select_irreducible,
+                      get_kpt_from_kptirr_isym)
 
 
 class BandStructure:
@@ -1002,7 +1004,7 @@ class BandStructure:
         kpt_latt_grid = kpt_latt_grid[selected_kpoints]
         Nsym = self.spacegroup.size
         if irreducible:
-            kpt_latt_grid, kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym = restore_full_grid(kpt_latt_grid, grid=grid, spacegroup=self.spacegroup)
+            kpt_latt_grid, kptirr2kpt, kpt2kptirr = restore_full_grid(kpt_latt_grid, grid=grid, spacegroup=self.spacegroup)
             # debug
             # print(f"restored kpt_latt_grid: {kpt_latt_grid}")
             # print(f"restored kptirr2kpt: {kptirr2kpt}")
@@ -1012,7 +1014,9 @@ class BandStructure:
             assert len(kpt_latt_grid) == np.prod(grid), \
                 f"the number of kpoints {len(kpt_latt_grid)} does not match the grid {grid}.\n" \
                 f"Use the `grid` argument to specify the grid of kpoints."
-            kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym = get_mapping_irr(kpt_latt_grid, kptirr, self.spacegroup)
+            kptirr2kpt, kpt2kptirr = get_mapping_irr(kpt_latt_grid, kptirr, self.spacegroup)
+        kpt_from_kptirr_isym = get_kpt_from_kptirr_isym(kpt2kptirr=kpt2kptirr, kptirr2kpt=kptirr2kpt)
+    
 
 
         def get_K(ik):

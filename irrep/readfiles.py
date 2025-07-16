@@ -1169,6 +1169,7 @@ class ParserGPAW:
             v_kmn = self.soc.eigenvectors()
             for s in range(2):
                 WFspinor[:, :, s] = v_kmn[ik, :, s::2] @ WF
+                # WFspinor[:, :, s] = v_kmn[ik, s::2, :].T @ WF
             energies = self.soc.eigenvalues()[ik]
             WF = WFspinor
         else:
