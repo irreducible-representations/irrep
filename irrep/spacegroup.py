@@ -251,7 +251,7 @@ class SymmetryOperation():
         return np.linalg.inv(self.Lattice.T) @ self.axis
 
     def matrix_spinrep(self):
-        '''
+        r'''
         Construct matrix for the spin representation based on the formula
 
         .. math::
@@ -917,7 +917,7 @@ class SpaceGroup():
 
             for isym in range(self.order):
                 
-                log_message(f'\n## Sym {isym}  ##\n', verbosity, 2)
+                log_message(f'\n## Sym {isym+1}  ##\n', verbosity, 2)
                 angle, axis, d = self.identify_from_spinrep(spin_repr[isym], verbosity)
                 if d:
                     continue
@@ -954,7 +954,7 @@ class SpaceGroup():
 
                 try:
                     ind, dt, signs = self.match_symmetries(
-                                        find_spin_matrices=False,
+                                        find_spin_matrices=self.spinor,
                                         trans_thresh=trans_thresh
                                         )
 
@@ -1007,10 +1007,6 @@ class SpaceGroup():
                                 if order_axis > 1:
                                     signs[isym] = -1
 
-                    #print('signs')
-                    #for i, ifplo in enumerate(self.inds_fplo):
-                    #    print(ifplo, self.symmetries[i].sign)
-
                     # Sort symmetries like in tables
                     args = np.argsort(ind)
                     for i,i_ind in enumerate(args):
@@ -1024,12 +1020,13 @@ class SpaceGroup():
                         log_message('\nCorrespondence between indices of symmetries',
                                     verbosity,
                                     2)
-                        log_message(('\nIndex in +groupinfo | Index in tables\n'
-                                     '-------------------------------------'),
+                        log_message(('\nIndex in +groupinfo | Index in tables | Sign \n'
+                                     '---------------------------------------------'),
                                      verbosity,
                                      2)
                         for i,j in enumerate(self.inds_fplo):
-                            msg = '{:^20d}|{:^16d}'.format(i,j)
+                            s = self.symmetries[i].sign
+                            msg = '{:^20d}|{:^17d}|{:6^d}'.format(j+1,i+1,s)
                             log_message(msg, verbosity, 2)
 
                 except RuntimeError:
@@ -1120,9 +1117,24 @@ class SpaceGroup():
                         log_message(msg, verbosity, 1)
                         pass
 
+            if verbosity > 1:
+                log_message('\nCorrespondence between indices of symmetries',
+                            verbosity,
+                            2)
+                log_message(('\nIndex in spglib     | Index in tables | Signs\n'
+                             '---------------------------------------------'),
+                             verbosity,
+                             2)
+                for i_spglib,i_table in enumerate(ind):
+                    msg = '{:^20d}|{:^17d}|{:^6d}'.format(i_spglib+1,i_table+1,signs[i_spglib])
+                    log_message(msg, verbosity, 2)
+		
+		
 
         self.cell_dft = Cell(Lattice)
         self.cell_conv = Cell(np.dot(self.Lattice.T, self.refUC).T)
+
+	
 
 
     def _findsym(self, cell, from_sym_file, alat, magmom=None, include_TR=False):
