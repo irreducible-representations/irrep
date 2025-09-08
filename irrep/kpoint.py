@@ -279,8 +279,9 @@ class Kpoint:
                     break
             if found:
                 # Number of inversion odd states (not pairs!)
+                print(f"kpoint {self.ik0} = {vector_pprint(self.k)} ")
                 print(f"inversion is {i}-th symmetry in the little group")
-                print(f"characters of inversion symmetry: {self.char[:, i]}")
+                # print(f"characters of inversion symmetry: {self.char[:, i]}")
                 print(f"degeneracies: {self.degeneracies}")
                 self.num_bandinvs = int(round(sum(self.degeneracies - self.char[:, i].real) / 2))
             else:
@@ -787,7 +788,7 @@ class Kpoint:
                       eKG=self.eKG.copy()
                       )
 
-    def write_characters(self):
+    def write_characters(self, dftcell=True, refcell=True):
         '''
         Write the block of data of the k point, including energy levels,
         degeneracies, traces and irreps.
@@ -859,13 +860,15 @@ class Kpoint:
             right_str1 = ' '.join(right_str1)
             right_str2 = ' '.join(right_str2)
 
-            # Energy, degeneracy, irrep's label and character in DFT cell
-            left_str = f" {e:8.4f}  |    {d:5d}      | {ir:{irreplen}s} |"
-            print(left_str + " " + right_str1)
+            if dftcell:
+                # Energy, degeneracy, irrep's label and character in DFT cell
+                left_str = f" {e:8.4f}  |    {d:5d}      | {ir:{irreplen}s} |"
+                print(left_str + " " + right_str1)
 
-            # Line for character in reference cell
-            left_str = f"           |               | {' ' * len(ir):{irreplen}s} |"
-            print(left_str + " " + right_str2)  # line for character in DFT
+            if refcell:
+                # Line for character in reference cell
+                left_str = f"           |               | {' ' * len(ir):{irreplen}s} |"
+                print(left_str + " " + right_str2)  # line for character in DFT
 
 
     def json(self):

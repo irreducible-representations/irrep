@@ -1,4 +1,5 @@
 
+import warnings
 from .utility import log_message, orthogonalize, cached_einsum
 # ###   ###   #####  ###
 # #  #  #  #  #      #  #
@@ -504,8 +505,13 @@ def symm_matrix(
         "warning_threshold": 1e-3,
         "error_threshold": 1e-2,
         "check_upper": False,
-        "warn_upper": False
+        "warn_upper": False,
+        "nbands_upper_skip": 2
     }
+    for key, val in unitary_params.items():
+        if key not in unitary_params_loc:
+            warnings.warn(f"You provided a parameter {key}:{val} for unitarity check in symm_matrix, which is not recognized. Probably this is a typo."
+                          f"the recognized parameters and theitr default values are {unitary_params_loc}")
     unitary_params_loc.update(unitary_params)
     multZ = np.exp(-2j * np.pi * (igall_other[:, :3] + K_other[None, :]) @ T)
 
@@ -529,12 +535,12 @@ def symm_matrix(
         WFinv = right_inverse(WF_other[b1:b2])
         block = np.dot(WFrot[b1:b2, :], WFinv).T
         if unitary:
-            if not unitary_params_loc["check_upper"] and b2 == NB:
-                error_threshold = 10
+            if not unitary_params_loc["check_upper"] and b2 >= NB - unitary_params_loc["nbands_upper_skip"]:
+                error_threshold = 100
             else:
                 error_threshold = unitary_params_loc["error_threshold"]
-            if not unitary_params_loc["warn_upper"] and b2 == NB:
-                warning_threshold = 10
+            if not unitary_params_loc["warn_upper"] and b2 >= NB - unitary_params_loc["nbands_upper_skip"]:
+                warning_threshold = 100
             else:
                 warning_threshold = unitary_params_loc["warning_threshold"]
             block = orthogonalize(block,

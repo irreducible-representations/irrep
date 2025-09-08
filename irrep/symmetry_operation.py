@@ -368,9 +368,9 @@ class SymmetryOperation():
         if self.spinor:
             spinstr = [f"{s}{' '.join(f'{x.real:6.3f}{x.imag:+6.3f}j' for x in row)}{t}"
                        for s, row, t in zip(
-                ["\nspinor rot.         : |", " " * 22 + "|"],
-                self.spinor_rotation,
-                [" |", " |"])
+                           ["\nspinor rot.         : |", " " * 22 + "|"],
+                           self.spinor_rotation,
+                           [" |", " |"])
             ]
             print("\n".join(spinstr))
             if write_ref:
