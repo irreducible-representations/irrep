@@ -341,6 +341,16 @@ class BandStructure:
             Lattice, positions, typat, kpred = parser.parse_lattice()
             Energies = parser.parse_energies()
         elif code == "gpaw":
+            if spin_channel is None:
+                spin_channel = 0
+            elif isinstance(spin_channel, str):
+                if spin_channel.isdigit():
+                    spin_channel = int(spin_channel)
+                elif spin_channel.lower() == 'up':
+                    spin_channel = 0
+                elif spin_channel.lower() in ['dw', 'down']:
+                    spin_channel = 1
+
             parser = ParserGPAW(calculator=calculator_gpaw,
                                 spinor=bool(spinor),
                                 spin_channel=spin_channel
@@ -398,7 +408,7 @@ class BandStructure:
         if kplist is None:
             kplist = range(NK)
         else:
-            kplist -= 1
+            kplist = np.array(kplist) - 1
             kplist = np.array([k for k in kplist if k >= 0 and k < NK])
 
         # Parse wave functions at each k-point
@@ -544,7 +554,7 @@ class BandStructure:
                 irreps = None
             KP.identify_irreps(irreptable=irreps)
 
-    def write_characters(self):
+    def write_characters(self, dftcell=True, refcell=True):
         '''
         For each k point, write the energy levels, their degeneracies, traces 
         of the little cogroup's symmetries, and the direct and indirect gaps. 
@@ -556,7 +566,7 @@ class BandStructure:
         for KP in self.kpoints:
 
             # Print block of irreps and their characters
-            KP.write_characters()
+            KP.write_characters(dftcell=dftcell, refcell=refcell)
 
             # Print number of inversion odd Kramers pairs
             if KP.num_bandinvs is None:
