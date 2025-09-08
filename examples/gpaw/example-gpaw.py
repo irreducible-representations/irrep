@@ -43,13 +43,17 @@ except FileNotFoundError:
     calc = calc_Bi()
 
 # from gpaw.spinorbit import soc_eigenstates
+spinor = False
+nspinor = 2 if spinor else 1
 
 if world.rank == 0:
     print("Fermi level", calc.get_fermi_level())
     bandstructure = BandStructure(code="gpaw", calculator_gpaw=calc,
-                                  spinor=True,
+                                  spinor=spinor,
                                     # spin_channel=0,
                                     # normalize=True,
+                                    IBstart=10*nspinor+1,
+                                    IBend=15*nspinor,
                                     Ecut=50, 
                                     degen_thresh=2e-4,
                                     calculate_traces=True,
