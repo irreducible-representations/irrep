@@ -16,6 +16,7 @@
 
 
 from functools import cached_property
+import warnings
 import numpy as np
 from scipy.linalg import expm
 from .utility import str_, BOHR, cached_einsum
@@ -107,6 +108,112 @@ class SymmetryOperation():
         else:
             self.spinor_rotation = spinor_rotation
         self.sign = 1  # May be changed later externally
+
+    def inverse(self):
+        """
+        Create the inverse symmetry operation.
+
+        Returns
+        -------
+        SymmetryOperation
+            A new instance of the symmetry operation representing the inverse.
+        """
+        rot_inv = np.linalg.inv(self.rotation)
+        trans_inv = -rot_inv @ self.translation
+        spinor_rot_inv = self.spinor_rotation.conj().T
+        if self.time_reversal:
+            warnings.warn("The inverse of a symmetry with time-reversal is not well defined.")
+            spinor_rot_inv = np.array([[0, -1], [1, 0]]) @ spinor_rot_inv
+        return SymmetryOperation(rot=rot_inv,
+                                 trans=trans_inv,
+                                 Lattice=self.real_lattice,
+                                 time_reversal=self.time_reversal,
+                                 ind=self.ind,
+                                 spinor=self.spinor,
+                                 translation_mod1=self.translation_mod1,
+                                 spinor_rotation=spinor_rot_inv)
+
+    def __mul__(self, other):
+        """
+        Create the product of two symmetry operations.
+
+        Parameters
+        ----------
+        other : SymmetryOperation
+            The symmetry operation to multiply with.
+
+        Returns
+        -------
+        SymmetryOperation
+            A new instance of the symmetry operation representing the product.
+        """
+        return self.multiply_keeptransl(other, mod1=self.translation_mod1)
+    
+    def multiply_keeptransl(self, other, mod1=False):
+        """
+        Create the product of two symmetry operations, possibly without taking the translational part modulo 1.
+
+        Parameters
+        ----------
+        other : SymmetryOperation
+            The symmetry operation to multiply with.
+        mod1 : bool, default=False
+            If `True`, the translational part is taken modulo 1.
+
+        Returns
+        -------
+        SymmetryOperation
+            A new instance of the symmetry operation representing the product.
+        """
+        if not isinstance(other, SymmetryOperation):
+            raise RuntimeError("Can only multiply two SymmetryOperation objects.")
+        rot_new = self.rotation @ other.rotation
+        trans_new = self.translation + rot_new @ other.translation
+        if self.spinor and other.spinor:
+            spinor_rot_new = self.spinor_rotation @ other.spinor_rotation
+            if self.time_reversal != other.time_reversal:
+                warnings.warn("The product of two symmetries with different time-reversal is not tested.")
+                spinor_rot_new = np.array([[0, 1], [-1, 0]]) @ spinor_rot_new.conj()
+        else:
+            spinor_rot_new = None
+        return SymmetryOperation(rot=rot_new,
+                                 trans=trans_new,
+                                 Lattice=self.real_lattice,
+                                 time_reversal=self.time_reversal != other.time_reversal,
+                                 ind=self.ind,
+                                 spinor=self.spinor,
+                                 translation_mod1=mod1,
+                                 spinor_rotation=spinor_rot_new)
+
+    def equals(self, other, mod1=True):
+        """
+        Check if two symmetry operations are equal.
+
+        Parameters
+        ----------
+        other : SymmetryOperation
+            The symmetry operation to compare with.
+        mod1 : bool, default=True
+            If `True`, the translation part is compared modulo 1.
+
+        Returns
+        -------
+        bool
+            `True` if the symmetry operations are equal, `False` otherwise.
+        """
+        if not isinstance(other, SymmetryOperation):
+            raise ValueError("Can only compare two SymmetryOperation objects.")
+        if not np.all(self.rotation == other.rotation):
+            return False
+        if self.time_reversal != other.time_reversal:
+            return False
+        dt = self.translation - other.translation
+        if mod1:
+            dt = dt - np.round(dt)
+        if not np.all(np.abs(dt) < 1e-6):
+            return False
+        return True
+    
 
     @property
     def lattice(self):
