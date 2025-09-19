@@ -170,13 +170,10 @@ class SymmetryOperation():
         rot_new = self.rotation @ other.rotation
         trans_new = self.translation + self.rotation @ other.translation
         if self.spinor and other.spinor:
-            if self.time_reversal:
-                spinor_rot_new = self.spinor_rotation @ np.array([[0, -1], [1, 0]]) @ other.spinor_rotation.conj() @ np.array([[0, 1], [-1, 0]])
-            else:
-                spinor_rot_new = self.spinor_rotation @ other.spinor_rotation
-            # if self.time_reversal != other.time_reversal:
-            #     warnings.warn("The product of two symmetries with different time-reversal is not tested.")
-            #     spinor_rot_new = np.array([[0, 1], [-1, 0]]) @ spinor_rot_new.conj()
+            spinor_rot_new = self.spinor_rotation @ other.spinor_rotation
+            # Time reversal squares to -1 for spinors, and commutes with rotations
+            if self.time_reversal and other.time_reversal:
+                spinor_rot_new = -spinor_rot_new
         else:
             spinor_rot_new = None
         return SymmetryOperation(rot=rot_new,

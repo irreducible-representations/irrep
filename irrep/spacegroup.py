@@ -653,9 +653,17 @@ class SpaceGroup:
         )
 
 
-    def get_product_table(self, get_translations_diff=False):
+    def get_product_table(self, get_diff=False):
         """
         Compute the product table of the space-group.
+
+        Parameters
+        ----------
+        get_diff : bool, default=False
+            If `True`, the difference of the translational parts of the 
+            product and the resulting symmetry operation is also returned.
+            If `False`, only the product table is returned.
+            Also returns the spinor 
 
         Returns
         -------
@@ -663,11 +671,22 @@ class SpaceGroup:
             Product table of the space-group. The element (i,j) is the index 
             of the symmetry operation corresponding to the product of symmetry 
             operations i and j.
+
+        np.array(Nsym, Nsym, 3), dtype=int
+            (only if `get_diff` is `True`) Difference of the translational parts 
+            of the product and the resulting symmetry operation. The element 
+            (i,j) is the difference for the product of symmetry operations i 
+            and j.
+        np.array(Nsym, Nsym), dtype=int
+            (only if `get_diff` is `True` and `self.spinor` is `True`) Spinor 
+            factor for the product of symmetry operations i and j. The element 
+            (i,j) is 1 if the spinor rotation of the product matches that of 
+            the resulting symmetry operation, -1 if it is opposite
         """
 
         nsym = len(self.symmetries)
         prod_table = np.zeros((nsym, nsym), dtype=int)
-        if get_translations_diff:
+        if get_diff:
             transl_diff = np.zeros((nsym, nsym, 3), dtype=float)
             if self.spinor:
                 spinor_factors = np.zeros((nsym, nsym), dtype=int)
@@ -675,11 +694,11 @@ class SpaceGroup:
                 spinor_factors = np.ones((nsym, nsym), dtype=int)
         for i, sym_i in enumerate(self.symmetries):
             for j, sym_j in enumerate(self.symmetries):
-                sym_ij = sym_i.multiply_keeptransl(sym_j, mod1=not get_translations_diff)
+                sym_ij = sym_i.multiply_keeptransl(sym_j, mod1=not get_diff)
                 for k, sym_k in enumerate(self.symmetries):
                     if sym_ij.equals(sym_k, mod1=True):
                         prod_table[i, j] = k
-                        if get_translations_diff:
+                        if get_diff:
                             transl_diff[i, j] = np.round(sym_ij.translation - sym_k.translation).astype(int)
                             if self.spinor:
                                 if np.allclose(sym_ij.spinor_rotation, sym_k.spinor_rotation):
@@ -695,7 +714,7 @@ class SpaceGroup:
                 else:
                     raise ValueError(f"Product of symmetries {i} and {j} not found in the list of symmetries" +
                                      f" sym_i: {sym_i.str()},\n sym_j: {sym_j.str()}, \nsym_ij: {sym_ij.str()}")
-        if get_translations_diff:
+        if get_diff:
             transl_diff_round = np.round(transl_diff).astype(int)
             assert np.allclose(transl_diff, transl_diff_round), f"Translations differences are not integers: {transl_diff}"
             return prod_table, transl_diff_round, spinor_factors
