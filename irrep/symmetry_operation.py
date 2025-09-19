@@ -148,7 +148,7 @@ class SymmetryOperation():
             A new instance of the symmetry operation representing the product.
         """
         return self.multiply_keeptransl(other, mod1=self.translation_mod1)
-    
+
     def multiply_keeptransl(self, other, mod1=False):
         """
         Create the product of two symmetry operations, possibly without taking the translational part modulo 1.
@@ -168,7 +168,7 @@ class SymmetryOperation():
         if not isinstance(other, SymmetryOperation):
             raise RuntimeError("Can only multiply two SymmetryOperation objects.")
         rot_new = self.rotation @ other.rotation
-        trans_new = self.translation + rot_new @ other.translation
+        trans_new = self.translation + self.rotation @ other.translation
         if self.spinor and other.spinor:
             spinor_rot_new = self.spinor_rotation @ other.spinor_rotation
             if self.time_reversal != other.time_reversal:
@@ -204,16 +204,19 @@ class SymmetryOperation():
         if not isinstance(other, SymmetryOperation):
             raise ValueError("Can only compare two SymmetryOperation objects.")
         if not np.all(self.rotation == other.rotation):
+            print(f"rotation matrices differ : \n {self.rotation} \n vs \n {other.rotation}")
             return False
         if self.time_reversal != other.time_reversal:
+            print("time-reversal differs")
             return False
         dt = self.translation - other.translation
         if mod1:
             dt = dt - np.round(dt)
         if not np.all(np.abs(dt) < 1e-6):
+            print(f"translations differ by {dt} ({self.translation} vs {other.translation})")
             return False
         return True
-    
+
 
     @property
     def lattice(self):

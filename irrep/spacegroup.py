@@ -357,6 +357,9 @@ class SpaceGroup:
         assert real_lattice is not None, "real_lattice must be provided"
         assert positions is not None, "positions must be provided"
         assert typat is not None, "typat must be provided"
+        real_lattice = np.array(real_lattice, dtype=float)
+        positions = np.array(positions, dtype=float)
+        typat = np.array(typat, dtype=int)
         magmom = magmom
         include_TR = include_TR
 
@@ -676,7 +679,8 @@ class SpaceGroup:
                             transl_diff[i, j] = sym_ij.translation - sym_k.translation
                         break
                 else:
-                    raise ValueError(f"Product of symmetries {sym_i.ind} and {sym_j.ind} not found in the list of symmetries")
+                    raise ValueError(f"Product of symmetries {i} and {j} not found in the list of symmetries" +
+                                     f" sym_i: {sym_i.str()},\n sym_j: {sym_j.str()}, \nsym_ij: {sym_ij.str()}")
         if get_translations_diff:
             transl_diff_round = np.round(transl_diff).astype(int)
             assert np.allclose(transl_diff, transl_diff_round), f"Translations differences are not integers: {transl_diff}"
