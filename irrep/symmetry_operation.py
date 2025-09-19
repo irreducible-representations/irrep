@@ -170,10 +170,13 @@ class SymmetryOperation():
         rot_new = self.rotation @ other.rotation
         trans_new = self.translation + self.rotation @ other.translation
         if self.spinor and other.spinor:
-            spinor_rot_new = self.spinor_rotation @ other.spinor_rotation
-            if self.time_reversal != other.time_reversal:
-                warnings.warn("The product of two symmetries with different time-reversal is not tested.")
-                spinor_rot_new = np.array([[0, 1], [-1, 0]]) @ spinor_rot_new.conj()
+            if self.time_reversal:
+                spinor_rot_new = self.spinor_rotation @ np.array([[0, -1], [1, 0]]) @ other.spinor_rotation.conj() @ np.array([[0, 1], [-1, 0]])
+            else:
+                spinor_rot_new = self.spinor_rotation @ other.spinor_rotation
+            # if self.time_reversal != other.time_reversal:
+            #     warnings.warn("The product of two symmetries with different time-reversal is not tested.")
+            #     spinor_rot_new = np.array([[0, 1], [-1, 0]]) @ spinor_rot_new.conj()
         else:
             spinor_rot_new = None
         return SymmetryOperation(rot=rot_new,
@@ -204,16 +207,13 @@ class SymmetryOperation():
         if not isinstance(other, SymmetryOperation):
             raise ValueError("Can only compare two SymmetryOperation objects.")
         if not np.all(self.rotation == other.rotation):
-            print(f"rotation matrices differ : \n {self.rotation} \n vs \n {other.rotation}")
             return False
         if self.time_reversal != other.time_reversal:
-            print("time-reversal differs")
             return False
         dt = self.translation - other.translation
         if mod1:
             dt = dt - np.round(dt)
         if not np.all(np.abs(dt) < 1e-6):
-            print(f"translations differ by {dt} ({self.translation} vs {other.translation})")
             return False
         return True
 

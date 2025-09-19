@@ -33,7 +33,7 @@ def test_spacegroup_Te_noTR():
 
 def test_spacegroup_Te_TR():
     spacegroup_Te = SpaceGroup.from_cell(**struct_param_Te,
-                                         include_TR=True,)
+                                         include_TR=True)
 
     np.savez(TMP_DATA_PATH / "spacegroup_Te_TR.npz", **spacegroup_Te.as_dict())
     assert spacegroup_Te.size == 12
@@ -41,19 +41,22 @@ def test_spacegroup_Te_TR():
     assert spacegroup_Te.name == "P3_1211'"
 
 
+
 def test_spacegroup_Te_product_noTR():
     spacegroup = SpaceGroup( **np.load(REF_DATA_PATH / "spacegroup_Te_noTR.npz"))
-    product, transl_diff = spacegroup.get_product_table(get_translations_diff=True)
+    product, transl_diff, spinor_factors = spacegroup.get_product_table(get_translations_diff=True)
     np.savez(TMP_DATA_PATH / "spacegroup_Te_noTR_product.npz", product=product, transl_diff=transl_diff)
     ref = np.load(REF_DATA_PATH / "spacegroup_Te_noTR_product.npz")
     assert np.all(product == ref["product"])
     assert np.all(transl_diff == ref["transl_diff"])
+    assert np.all(spinor_factors == ref["spinor_factors"])
 
 
 def test_spacegroup_Te_product_TR():
     spacegroup = SpaceGroup( **np.load(REF_DATA_PATH / "spacegroup_Te_TR.npz"))
-    product, transl_diff = spacegroup.get_product_table(get_translations_diff=True)
-    np.savez(TMP_FILES_PATH / "spacegroup_Te_TR_product.npz", product=product, transl_diff=transl_diff)
+    product, transl_diff, spinor_factors = spacegroup.get_product_table(get_translations_diff=True)
+    np.savez(TMP_FILES_PATH / "spacegroup_Te_TR_product.npz", product=product, transl_diff=transl_diff, spinor_factors=spinor_factors)
     ref = np.load(REF_FILES_PATH / "spacegroup_Te_TR_product.npz")
     assert np.all(product == ref["product"])
     assert np.all(transl_diff == ref["transl_diff"])
+    assert np.all(spinor_factors == ref["spinor_factors"])

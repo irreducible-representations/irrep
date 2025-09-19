@@ -669,6 +669,10 @@ class SpaceGroup:
         prod_table = np.zeros((nsym, nsym), dtype=int)
         if get_translations_diff:
             transl_diff = np.zeros((nsym, nsym, 3), dtype=float)
+            if self.spinor:
+                spinor_factors = np.zeros((nsym, nsym), dtype=int)
+            else:
+                spinor_factors = np.ones((nsym, nsym), dtype=int)
         for i, sym_i in enumerate(self.symmetries):
             for j, sym_j in enumerate(self.symmetries):
                 sym_ij = sym_i.multiply_keeptransl(sym_j, mod1=not get_translations_diff)
@@ -676,7 +680,17 @@ class SpaceGroup:
                     if sym_ij.equals(sym_k, mod1=True):
                         prod_table[i, j] = k
                         if get_translations_diff:
-                            transl_diff[i, j] = sym_ij.translation - sym_k.translation
+                            transl_diff[i, j] = np.round(sym_ij.translation - sym_k.translation).astype(int)
+                            if self.spinor:
+                                if np.allclose(sym_ij.spinor_rotation, sym_k.spinor_rotation):
+                                    spinor_factors[i, j] = 1
+                                elif np.allclose(sym_ij.spinor_rotation, -sym_k.spinor_rotation):
+                                    spinor_factors[i, j] = -1
+                                else:
+                                    raise ValueError(f"Spinor rotations do not match for product {i}x{j}={k}: \n"
+                                                     f"the product of spinor rotations: \n {sym_ij.spinor_rotation}\n"
+                                                     f"does not match the spinor rotation of the resulting symmetry: \n {sym_k.spinor_rotation}")
+
                         break
                 else:
                     raise ValueError(f"Product of symmetries {i} and {j} not found in the list of symmetries" +
@@ -684,7 +698,7 @@ class SpaceGroup:
         if get_translations_diff:
             transl_diff_round = np.round(transl_diff).astype(int)
             assert np.allclose(transl_diff, transl_diff_round), f"Translations differences are not integers: {transl_diff}"
-            return prod_table, transl_diff_round
+            return prod_table, transl_diff_round, spinor_factors
         else:
             return prod_table
 
