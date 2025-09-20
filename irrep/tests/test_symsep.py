@@ -1,18 +1,13 @@
 import os
 import subprocess
-from pathlib import Path
 from irrep.bandstructure import BandStructure
 from irrep.gvectors import symm_matrix
+from .conftest import TEST_FILES_PATH, REF_DATA_PATH, TMP_DATA_PATH
 from irrep.utility import get_block_indices, is_round
 from monty.serialization import loadfn
 import numpy as np
 import pytest
 
-TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
-REF_DATA_PATH = Path(__file__).parents[0] / "ref_data"
-TMP_DATA_PATH = Path(__file__).parents[0] / "tmp_data"
-if not os.path.exists(TMP_DATA_PATH):
-    os.makedirs(TMP_DATA_PATH)
 
 
 def test_bi_hoti():

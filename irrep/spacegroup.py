@@ -122,7 +122,7 @@ class SpaceGroup:
     def __init__(self, Lattice, spinor,
                  rotations=None, translations=None,
                  time_reversals=None, translation_mod1=False,
-                 symemtry_operations=None,
+                 symmetry_operations=None,
                  number=None,
                  number_str=None,
                  name="",
@@ -138,7 +138,11 @@ class SpaceGroup:
                  ):
 
         log_message(f"Creating space group {name} with number {number_str}", verbosity, 2)
-        log_message(f"Number of symmetries: {len(rotations)}", verbosity, 2)
+        if rotations is not None:
+            nsym = len(rotations)
+        else:
+            nsym = len(symmetry_operations)
+        log_message(f"Number of symmetries: {nsym}", verbosity, 2)
 
         self.real_lattice = Lattice
         self.spinor = spinor
@@ -164,9 +168,9 @@ class SpaceGroup:
                 number = -1
             self.number_str = str(number)
         else:
-            self.numper_str = "0"
+            self.number_str = "0"
 
-        if symemtry_operations is None:
+        if symmetry_operations is None:
             copy_symops = False
             symmetry_operations = []
             if spinor_rotations is None:
@@ -353,6 +357,9 @@ class SpaceGroup:
         assert real_lattice is not None, "real_lattice must be provided"
         assert positions is not None, "positions must be provided"
         assert typat is not None, "typat must be provided"
+        real_lattice = np.array(real_lattice, dtype=float)
+        positions = np.array(positions, dtype=float)
+        typat = np.array(typat, dtype=int)
         magmom = magmom
         include_TR = include_TR
 
@@ -646,9 +653,97 @@ class SpaceGroup:
         )
 
 
+    def get_product_table(self, get_diff=False):
+        """
+        Compute the product table of the space-group.
 
+        Parameters
+        ----------
+        get_diff : bool, default=False
+            If `True`, the difference of the translational parts of the 
+            product and the resulting symmetry operation is also returned.
+            If `False`, only the product table is returned.
+            Also returns the spinor 
 
+        Returns
+        -------
+        np.array(Nsym, Nsym), dtype=int
+            Product table of the space-group. The element (i,j) is the index 
+            of the symmetry operation corresponding to the product of symmetry 
+            operations i and j.
 
+        np.array(Nsym, Nsym, 3), dtype=int
+            (only if `get_diff` is `True`) Difference of the translational parts 
+            of the product and the resulting symmetry operation. The element 
+            (i,j) is the difference for the product of symmetry operations i 
+            and j.
+        np.array(Nsym, Nsym), dtype=int
+            (only if `get_diff` is `True` and `self.spinor` is `True`) Spinor 
+            factor for the product of symmetry operations i and j. The element 
+            (i,j) is 1 if the spinor rotation of the product matches that of 
+            the resulting symmetry operation, -1 if it is opposite
+        """
+
+        nsym = len(self.symmetries)
+        prod_table = np.zeros((nsym, nsym), dtype=int)
+        if get_diff:
+            transl_diff = np.zeros((nsym, nsym, 3), dtype=float)
+            if self.spinor:
+                spinor_factors = np.zeros((nsym, nsym), dtype=int)
+            else:
+                spinor_factors = np.ones((nsym, nsym), dtype=int)
+        for i, sym_i in enumerate(self.symmetries):
+            for j, sym_j in enumerate(self.symmetries):
+                sym_ij = sym_i.multiply_keeptransl(sym_j, mod1=not get_diff)
+                for k, sym_k in enumerate(self.symmetries):
+                    if sym_ij.equals(sym_k, mod1=True):
+                        prod_table[i, j] = k
+                        if get_diff:
+                            transl_diff[i, j] = np.round(sym_ij.translation - sym_k.translation).astype(int)
+                            if self.spinor:
+                                if np.allclose(sym_ij.spinor_rotation, sym_k.spinor_rotation):
+                                    spinor_factors[i, j] = 1
+                                elif np.allclose(sym_ij.spinor_rotation, -sym_k.spinor_rotation):
+                                    spinor_factors[i, j] = -1
+                                else:
+                                    raise ValueError(f"Spinor rotations do not match for product {i}x{j}={k}: \n"
+                                                     f"the product of spinor rotations: \n {sym_ij.spinor_rotation}\n"
+                                                     f"does not match the spinor rotation of the resulting symmetry: \n {sym_k.spinor_rotation}")
+
+                        break
+                else:
+                    raise ValueError(f"Product of symmetries {i} and {j} not found in the list of symmetries" +
+                                     f" sym_i: {sym_i.str()},\n sym_j: {sym_j.str()}, \nsym_ij: {sym_ij.str()}")
+        if get_diff:
+            transl_diff_round = np.round(transl_diff).astype(int)
+            assert np.allclose(transl_diff, transl_diff_round), f"Translations differences are not integers: {transl_diff}"
+            return prod_table, transl_diff_round, spinor_factors
+        else:
+            return prod_table
+
+    def get_inverse_table(self):
+        """
+        Compute the inverse table of the space-group.
+
+        Returns
+        -------
+        np.array(Nsym,), dtype=int
+            Inverse table of the space-group. The element i is the index 
+            of the symmetry operation corresponding to the inverse of symmetry 
+            operation i.
+        """
+
+        nsym = len(self.symmetries)
+        inv_table = np.zeros((nsym,), dtype=int)
+        for i, sym_i in enumerate(self.symmetries):
+            sym_i_inv = sym_i.inverse()
+            for k, sym_k in enumerate(self.symmetries):
+                if sym_i_inv.equals(sym_k, mod1=True):
+                    inv_table[i] = k
+                    break
+            else:
+                raise ValueError(f"Inverse of symmetry {sym_i.ind} not found in the list of symmetries")
+        return inv_table
 
 
 def read_sym_file(fname):
