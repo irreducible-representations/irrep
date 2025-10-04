@@ -19,7 +19,7 @@ from functools import cached_property
 import warnings
 import numpy as np
 from scipy.linalg import expm
-from .utility import str_, BOHR, cached_einsum
+from .utility import UniqueListMod1, str_, BOHR, cached_einsum
 from .gvectors import transform_gk
 
 pauli_sigma = np.array(
@@ -88,9 +88,11 @@ class SymmetryOperation():
     """
 
     def __init__(self, rot, trans, Lattice, time_reversal=False, ind=-1, spinor=True,
+                 positions=None,
                  translation_mod1=True, spinor_rotation=None):
         self.ind = ind
         self.rotation = rot
+        self.positions = positions
         self.time_reversal = bool(time_reversal)
         self.real_lattice = Lattice
         self.translation_mod1 = translation_mod1
@@ -266,6 +268,10 @@ class SymmetryOperation():
                 return "{num:.0f}{denom} pi".format(
                     num=round(api * n), denom="" if n == 1 else "/" + str(n))
         raise RuntimeError(f"{api} pi rotation cannot be in the space group")
+
+    @cached_property
+    def is_identity(self):
+        return np.allclose(self.rotation, np.eye(3)) and np.allclose(self.translation, 0) and not self.time_reversal and not self.inversion
 
 
     def _get_operation_type(self):
@@ -783,3 +789,89 @@ class SymmetryOperation():
         if self.time_reversal:
             res = -res
         return res
+
+    def transform_grid_indices(self, size):
+        """
+        Transform a grid of k-points under the symmetry operation.
+
+        Parameters
+        ----------
+        size : array((3,), dtype=int)
+            Size of the grid in each direction.
+
+        Returns
+        -------
+        array
+            Transformed grid.
+        """
+        size = tuple(size)
+        assert len(size) == 3
+        if not hasattr(self, 'rotate_grid_cache'):
+            self.rotate_grid_cache = {}
+        if size not in self.rotate_grid_cache:
+            i_trans = self.translation * np.array(size)
+            i_trans_int = np.round(i_trans).astype(int)
+            assert np.allclose(i_trans, i_trans_int), f"Translation {self.translation} not compatible with grid {size}"
+            indx = np.dot(self.rotation, np.indices(size).reshape((3, -1)) + i_trans_int[:, None])
+            indx = np.ravel_multi_index(indx, size, 'wrap')
+            self.rotate_grid_cache[size] = indx
+        return self.rotate_grid_cache[size]
+
+
+
+
+    def set_R_aii_gpaw(self, calc, reset=False):
+        """rotation matrices for the PAW projections."""
+        if not hasattr(self, 'R_aii') or reset:
+            from gpaw.atomrotations import AtomRotations
+            setups = calc.setups
+            symmetry = SymmetryGpawFake(self.rotation_cart)
+            atomrotations = AtomRotations(setups.setups, setups.id_a, symmetry)
+            R_aii = atomrotations.get_R_asii()
+            self.R_aii = [R_ii[0] for R_ii in R_aii]  # remove unnecessary nesting
+
+    def get_U_aii_gpaw(self, kpoint):
+        """Phase corrected rotation matrices for the PAW projections."""
+        return [ R_ii.T * np.exp(2j * np.pi * np.dot(kpoint, self.atom_map_T[a])) for a, R_ii in enumerate(self.R_aii)]
+
+    def set_gpaw(self, calculator):
+        """Set all gpaw-related attributes."""
+        positions = calculator.atoms.get_scaled_positions()
+        self.atom_map, self.atom_map_T = get_atom_map(self, positions)
+        self.set_R_aii_gpaw(calculator)
+
+
+
+
+class SymmetryGpawFake():
+    def __init__(self, rot_cart):
+        self.op_scc = rot_cart[None, :, :]
+        self.cell_cv = np.eye(3)
+
+
+
+def get_atom_map(symop, positions):
+    positions_list = UniqueListMod1(positions, tol=1e-4)
+    assert len(positions) == len(UniqueListMod1(positions)), f"some positions are equivalent mod 1: {positions}"
+    num_points = len(positions)
+    atommap = -np.ones((num_points), dtype=int)
+    T = np.zeros((num_points, 3), dtype=float)
+
+    for ip, p in enumerate(positions):
+        p2 = symop.transform_r(p)
+        ip2 = positions_list.index(p2)
+        atommap[ip] = ip2
+        p2a = positions[ip2]
+        T[ip] = p2a - p2
+    assert np.all(atommap >= 0), f"some positions are not mapped: atommap={atommap}"
+
+    T_round = np.round(T)
+    T_diff = np.abs(T - T_round).max()
+    if T_diff > 1e-6:
+        msg = f"the T vectors should result integer values, but the maximal deviation from integer is {T_diff} T=\n{T}, \nT_round=\n{T_round}, \n max_diff={T_diff}"
+        if T_diff > 1e-3:
+            raise ValueError(msg)
+        else:
+            warnings.warn(msg)
+    T = T_round.astype(int)
+    return atommap, T

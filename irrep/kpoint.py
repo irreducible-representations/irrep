@@ -16,6 +16,7 @@
 ##################################################################
 
 
+import abc
 from functools import lru_cache
 import numpy as np
 import numpy.linalg as la
@@ -24,7 +25,31 @@ from .gvectors import symm_eigenvalues, symm_matrix, get_pw_energies
 from .utility import cached_einsum, compstr, get_block_indices, is_round, format_matrix, log_message, orthogonalize, vector_pprint
 
 
-class Kpoint:
+class KpointAbstract(abc.ABC):
+    """
+    Abstract base class for Kpoint and its subclasses.
+    """
+
+    @abc.abstractmethod
+    def __init__(self, kpt, ik=None, weight=1.0, spinor=False, normalize=True, num_bands=None, RecLattice=None):
+        self.k = np.array(kpt)
+        self.weight = weight
+        self.spinor = spinor
+        self.num_bands = num_bands
+        self.RecLattice = RecLattice
+
+        if ik is None:
+            self.ik0 = None
+        else:
+            self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
+
+        self.num_bands = num_bands
+        self.RecLattice = RecLattice
+
+        self.k = kpt
+
+
+class Kpoint(KpointAbstract):
     """
     Organizes info about the states and energy-levels of a 
     particular k-point in attributes. Contains methods to calculate and write 
@@ -141,7 +166,7 @@ class Kpoint:
         normalize=True,
         eKG=None,
     ):
-
+        super().__init__(kpt=kpt, spinor=spinor, num_bands=num_bands, RecLattice=RecLattice, ik=ik)
         if spinor is None:
             if WF is not None:
                 spinor = (WF.shape[2] == 2)  # if WF is provided, check the number of components
@@ -155,24 +180,7 @@ class Kpoint:
                     )
         self.spinor = spinor
 
-        if ik is None:
-            self.ik0 = None
-        else:
-            self.ik0 = ik + 1  # the index in the WAVECAR (count start from 1)
 
-        if num_bands is None:
-            if Energy is not None:
-                num_bands = len(Energy)
-            elif WF is not None:
-                num_bands = WF.shape[0]
-            else:
-                raise ValueError("num_bands must be specified if neither WF nor Energy are not provided")
-
-        self.num_bands = num_bands
-        self.RecLattice = RecLattice
-        self.upper = upper
-
-        self.k = kpt
         self.WF = WF
         self.Energy_raw = Energy
         self.ig = ig
