@@ -546,7 +546,8 @@ def symm_matrix(
             block = orthogonalize(block,
                                   warning_threshold=warning_threshold,
                                   error_threshold=error_threshold,
-                                  debug_msg=f"symm_matrix: block {b1}:{b2} of {WF.shape[0]}")
+                                  debug_msg=f"symm_matrix: block {b1}:{b2} of {WF.shape[0]}" +
+                                  f" K={K}, K_other={K_other}, A={A}, T={T}")
         block_list.append(block)
     if return_blocks:
         return block_list

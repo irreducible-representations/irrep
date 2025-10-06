@@ -705,7 +705,10 @@ class SymmetryOperation():
 
     @cached_property
     def rotation_inv(self):
-        return np.linalg.inv(self.rotation)
+        rotinv = np.linalg.inv(self.rotation)
+        rotinv_int = np.array(rotinv.round(), dtype=int)
+        assert np.allclose(rotinv, rotinv_int, atol=1e-6), f"Inverse Rotation matrix is not integer: {rotinv}"
+        return rotinv_int
 
     @cached_property
     def spinor_rotation_TR(self):
@@ -790,7 +793,7 @@ class SymmetryOperation():
             res = -res
         return res
 
-    def transform_grid_indices(self, size):
+    def transform_grid_indices(self, size, inverse=False):
         """
         Transform a grid of k-points under the symmetry operation.
 
@@ -809,13 +812,24 @@ class SymmetryOperation():
         if not hasattr(self, 'rotate_grid_cache'):
             self.rotate_grid_cache = {}
         if size not in self.rotate_grid_cache:
+            # First compute direct transformation
+            i_rot = self.rotation
             i_trans = self.translation * np.array(size)
             i_trans_int = np.round(i_trans).astype(int)
+            ind_original = np.indices(size).reshape((3, -1))
             assert np.allclose(i_trans, i_trans_int), f"Translation {self.translation} not compatible with grid {size}"
-            indx = np.dot(self.rotation, np.indices(size).reshape((3, -1)) + i_trans_int[:, None])
+            indx = np.dot(i_rot, ind_original + i_trans_int[:, None])
             indx = np.ravel_multi_index(indx, size, 'wrap')
-            self.rotate_grid_cache[size] = indx
-        return self.rotate_grid_cache[size]
+            # now compute inverse transformation
+            i_rot_inv = self.rotation_inv
+            indx_inv = np.dot(i_rot_inv, ind_original - i_trans_int[:, None])
+            indx_inv = np.ravel_multi_index(indx_inv, size, 'wrap')
+            size_tot = np.prod(size)
+            assert np.all(np.sort(indx) == np.arange(size_tot)), f"Rotation does not permute the grid correctly: {indx}"
+            assert np.all(np.sort(indx_inv) == np.arange(size_tot)), f"Inverse Rotation does not permute the grid correctly: {indx_inv}"
+            assert np.all(indx[indx_inv] == np.arange(size_tot)), f"Inverse rotation is not consistent with direct rotation: {indx} and {indx_inv}"
+            self.rotate_grid_cache[size] = {True: indx_inv, False: indx}
+        return self.rotate_grid_cache[size][inverse]
 
 
 

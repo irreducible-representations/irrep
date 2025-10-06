@@ -578,7 +578,7 @@ def select_irreducible(kpoints, spacegroup):
     kpoints : array((nk, ndim), dtype=float)
         List of k-points in fractional coordinates.
     spacegroup : SpaceGroup
-        Space group object containing the symmetries.
+        Space/point group object containing the symmetries. 
 
     Returns
     -------
