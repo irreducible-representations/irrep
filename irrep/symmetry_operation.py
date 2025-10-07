@@ -313,7 +313,7 @@ class SymmetryOperation():
             if np.isclose(s, -1):
                 angle = 2 * np.pi - angle
             elif not np.isclose(s, 1):
-                raise RuntimeError("the sign of rotation should be +-1")
+                raise RuntimeError(f"the sign of rotation should be +-1, cannot determine for {rotxyz}")
         return (axis, angle, inversion)
 
     def rotation_refUC(self, refUC):
@@ -818,7 +818,7 @@ class SymmetryOperation():
             i_trans_int = np.round(i_trans).astype(int)
             ind_original = np.indices(size).reshape((3, -1))
             assert np.allclose(i_trans, i_trans_int), f"Translation {self.translation} not compatible with grid {size}"
-            indx = np.dot(i_rot, ind_original + i_trans_int[:, None])
+            indx = np.dot(i_rot, ind_original) + i_trans_int[:, None]
             indx = np.ravel_multi_index(indx, size, 'wrap')
             # now compute inverse transformation
             i_rot_inv = self.rotation_inv
@@ -827,10 +827,23 @@ class SymmetryOperation():
             size_tot = np.prod(size)
             assert np.all(np.sort(indx) == np.arange(size_tot)), f"Rotation does not permute the grid correctly: {indx}"
             assert np.all(np.sort(indx_inv) == np.arange(size_tot)), f"Inverse Rotation does not permute the grid correctly: {indx_inv}"
-            assert np.all(indx[indx_inv] == np.arange(size_tot)), f"Inverse rotation is not consistent with direct rotation: {indx} and {indx_inv}"
+            assert np.all(indx[indx_inv] == np.arange(size_tot)), f"Inverse rotation is not consistent with direct rotation: {indx} and {indx_inv}, {indx[indx_inv]}"
             self.rotate_grid_cache[size] = {True: indx_inv, False: indx}
         return self.rotate_grid_cache[size][inverse]
 
+    def transform_grid_data(self, grid_data, inverse=False):
+        if grid_data.ndim < 3:
+            raise ValueError("data should have shape (...,Nx,Ny,Nz)")
+        Nc = grid_data.shape[-3:]
+        shape_front = grid_data.shape[:-3]
+        Nc_tot = np.prod(Nc)
+        NB = int(grid_data.size / Nc_tot)
+        assert NB * Nc_tot == grid_data.size, f"the data should have shape (...,Nx,Ny,Nz), but got {grid_data.shape}"
+        indx = self.transform_grid_indices(Nc, inverse=False)
+        grid_data = grid_data.reshape(NB, Nc_tot)
+        grid_data_new = np.zeros(grid_data.shape, dtype=grid_data.dtype)
+        grid_data_new[:, indx] = grid_data
+        return grid_data_new.reshape(shape_front + Nc)
 
 
 
@@ -839,9 +852,15 @@ class SymmetryOperation():
         if not hasattr(self, 'R_aii') or reset:
             from gpaw.atomrotations import AtomRotations
             setups = calc.setups
-            symmetry = SymmetryGpawFake(self.rotation_cart)
-            atomrotations = AtomRotations(setups.setups, setups.id_a, symmetry)
-            R_aii = atomrotations.get_R_asii()
+
+            class SymmetryGpaw1():
+                def __init__(self, symop):
+                    # self.op_scc = symop.rotation[None, :, :]
+                    # self.cell_cv = symop.real_lattice
+                    self.op_scc = symop.rotation_cart[None, :, :]
+                    self.cell_cv = np.eye(3)
+            symmetry = SymmetryGpaw1(self)
+            R_aii = AtomRotations(setups.setups, setups.id_a, symmetry).get_R_asii()
             self.R_aii = [R_ii[0] for R_ii in R_aii]  # remove unnecessary nesting
 
     def get_U_aii_gpaw(self, kpoint):
@@ -857,10 +876,6 @@ class SymmetryOperation():
 
 
 
-class SymmetryGpawFake():
-    def __init__(self, rot_cart):
-        self.op_scc = rot_cart[None, :, :]
-        self.cell_cv = np.eye(3)
 
 
 

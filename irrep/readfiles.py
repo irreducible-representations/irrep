@@ -1128,7 +1128,8 @@ class ParserGPAW:
         instance of GPAW class or the name of the file containing it
     """
 
-    def __init__(self, calculator, spinor=False, spin_channel=None):
+    def __init__(self, calculator, spinor=False, spin_channel=None,
+                 verbosity=0):
         from gpaw import GPAW
         if isinstance(calculator, str):
             calculator = GPAW(calculator)
@@ -1136,6 +1137,7 @@ class ParserGPAW:
         self.nband = self.calculator.get_number_of_bands()
         print("spinor", spinor)
         self.spinor = spinor
+        self.verbosity = verbosity
 
         if self.spinor:
             nspins = self.calculator.get_number_of_spins()
@@ -1167,9 +1169,14 @@ class ParserGPAW:
                            RecLattice,
                            Ecut,
                            spinor=False,
-                           nplanemax=np.max([ngx, ngy, ngz]) // 2
+                            verbosity=self.verbosity,
+                        #    nplanemax=np.max([ngx, ngy, ngz]) // 2
                             )
-        selectG = tuple(kg[:, 0:3].T)
+        selectG = (kg[:, 0:3].T).copy()
+        selectG[0, :] = selectG[0, :] % ngx
+        selectG[1, :] = selectG[1, :] % ngy
+        selectG[2, :] = selectG[2, :] % ngz
+        selectG = tuple(selectG)
 
         for i in range(len(WFupdw)):
             WFupdw[i] = np.fft.fftn(WFupdw[i], axes=(1, 2, 3))

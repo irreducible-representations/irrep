@@ -73,6 +73,7 @@ def calc_gvectors(
     thresh=1e-3,
     spinor=True,
     nplanemax=10000,
+    iter_nochange_break=10,
     verbosity=0
 ):
     """ 
@@ -127,6 +128,7 @@ def calc_gvectors(
     igall = []
     Eg = []
     memory = np.full(10, True)
+    nplane_iter = []
     for N in range(nplanemax):
         flag = True
         if N % 10 == 0:
@@ -157,6 +159,15 @@ def calc_gvectors(
                         flag = False
         memory[:-1] = memory[1:]
         memory[-1] = flag
+        nplane_iter.append(len(igall))
+        if len(nplane_iter) > iter_nochange_break:
+            if nplane_iter[-iter_nochange_break] == nplane_iter[-1]:
+                log_message(
+                    f"No change in the number of plane-waves for {iter_nochange_break} "
+                    f"iterations, stopping the calculation at N={N}", verbosity, 2
+                )
+                break
+
 
     ncnt = len(igall)
     if nplane < np.inf:  # vasp

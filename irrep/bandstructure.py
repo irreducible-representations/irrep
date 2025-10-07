@@ -25,6 +25,7 @@ import numpy as np
 from functools import cached_property
 
 from irrep.kpoint_gpaw import KpointGPAW
+from irrep.wf_overlap import OverlapPAW
 
 from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
@@ -357,12 +358,14 @@ class BandStructure:
 
             parser = ParserGPAW(calculator=calculator_gpaw,
                                 spinor=bool(spinor),
-                                spin_channel=spin_channel
+                                spin_channel=spin_channel,
+                                verbosity=verbosity
                                 )
             if read_paw:
                 self.kpoints_paw = []
-                self.spacegroup.set_gpaw(calculator=calculator_gpaw)
-                self.wfs = calculator_gpaw.wfs
+                self.spacegroup.set_gpaw(calculator=parser.calculator)
+                self.overlap_paw = OverlapPAW(wfs=parser.calculator.wfs)
+
             NBin, kpred, Lattice, _spinor, typat, positions, EF_in = parser.parse_header()
             if Ecut is None:
                 raise RuntimeError("Ecut mandatory for GPAW")
@@ -460,9 +463,9 @@ class BandStructure:
                     continue
                 Energy = Energies[ik]
                 ngx, ngy, ngz = parser.parse_grid(ik + 1)
-                kg, eKG = calc_gvectors(kpred[ik],
-                                   self.RecLattice,
-                                   self.Ecut,
+                kg, eKG = calc_gvectors(K=kpred[ik],
+                                   RecLattice=self.RecLattice,
+                                   Ecut=self.Ecut,
                                    spinor=self.spinor,
                                    nplanemax=np.max([ngx, ngy, ngz]) // 2,
                                    verbosity=verbosity

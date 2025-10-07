@@ -24,7 +24,7 @@ import spglib
 from irrep.readfiles import ParserAbinit, ParserEspresso, ParserGPAW, ParserVasp, ParserW90
 
 from .symmetry_operation import SymmetryOperation
-from .utility import BOHR, log_message
+from .utility import BOHR, log_message, select_irreducible
 from packaging import version
 import os
 
@@ -501,6 +501,48 @@ class SpaceGroup:
         else:
             return []
 
+    def is_grid_symmetrical(self, nk):
+        nk = np.array(nk, dtype=int)
+        basis = np.diag(1. / nk)
+        for symop in self.symmetries:
+            basis_rot = symop.transform_k(basis)
+            A = basis_rot @ np.diag(nk)
+            Aint = np.round(A).astype(int)
+            if not np.allclose(A, Aint):
+                return False
+            if not np.allclose(abs(np.linalg.det(A)), 1):
+                return False
+        return True
+
+    def get_irreducible_kpoints_grid(self, grid, allow_asymmetric=False):
+        """Get irreducible k-points from a Monkhorst-Pack grid and space group
+
+        Parameters
+        ----------
+        grid : array-like
+            Monkhorst-Pack grid dimensions, e.g. [6, 6, 4]
+        spacegroup : irrep.SpaceGroup
+            the space group of the crystal
+
+        Returns
+        -------
+        np.array
+            Array of irreducible k-points in fractional coordinates
+        """
+
+        is_symmetric = self.is_grid_symmetrical(grid)
+        if not is_symmetric:
+            msg = f"The grid {grid} is not symmetric with respect to the space group {self.number_str}. "
+            if allow_asymmetric:
+                warnings.warn(msg + "But allow_asymmetric=True, so continuing anyway.")
+            else:
+                raise ValueError(msg)
+        kp1 = np.linspace(0, 1, grid[0], endpoint=False)
+        kp2 = np.linspace(0, 1, grid[1], endpoint=False)
+        kp3 = np.linspace(0, 1, grid[2], endpoint=False)
+        kpoints = np.array(np.meshgrid(kp1, kp2, kp3, indexing='ij')).reshape(3, -1).T
+        irr_ik = select_irreducible(kpoints, self)
+        return kpoints[irr_ik]
 
 
     def write_sym_file(self, filename, alat=None):
@@ -804,7 +846,7 @@ class SpaceGroup:
             magmoms_set = set(magmoms)
             if len(magmoms_set) > 1:
                 magmom_map = {m: i + 1 for i, m in enumerate(sorted(magmoms_set))}
-                typat = [typat[i] * 1000 + magmom_map[mag] for i, mag in enumerate(magmoms)]
+                typat = [int(typat[i] * 1000 + magmom_map[mag]) for i, mag in enumerate(magmoms)]
         else:
             assert len(typat) == len(calculator.atoms), "typat should have the same length as the number of atoms"
         print("typat used for spacegroup detection (accounting magmoms):", typat)
