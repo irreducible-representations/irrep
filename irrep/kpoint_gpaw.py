@@ -55,12 +55,13 @@ class KpointGPAW(KpointAbstract):
         Returns:
             KpointGPAW: Transformed copy of the KpointGPAW object.
         """
-        new_wavefunction = rotate_pseudo_wavefunction(self.wavefunction, symmetry_operation, self.k, k_new)
-        new_proj = rotate_projection(self.proj, symmetry_operation, self.k, k_new)
+        phase = np.exp(-2j * np.pi * symmetry_operation.transform_k(self.k)  @ symmetry_operation.translation)
+        new_wavefunction = rotate_pseudo_wavefunction(self.wavefunction, symmetry_operation, self.k, k_new) * phase
+        new_proj = rotate_projection(self.proj, symmetry_operation, self.k, k_new, phase=1) 
         return KpointGPAW(kpt=k_new, wavefunction=new_wavefunction, proj=new_proj, nbands=self.nbands)
 
 
-def rotate_projection(projections, symop, k_origin, k_target):
+def rotate_projection(projections, symop, k_origin, k_target, phase=1.0):
     """
     Rotate the projection coefficients according to the given symmetry operation
 
@@ -91,7 +92,7 @@ def rotate_projection(projections, symop, k_origin, k_target):
             Pout_ni = np.conj(Pout_ni)
         # Store output projections
         I1, I2 = mapped_projections.map[a]
-        mapped_projections.array[..., I1:I2] = Pout_ni
+        mapped_projections.array[..., I1:I2] = Pout_ni*phase
     return mapped_projections
 
 
