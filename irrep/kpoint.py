@@ -803,9 +803,9 @@ class Kpoint(KpointAbstract):
         '''
 
         # Print header for k-point
-        print(f"\n\n k-point {self.ik0:3d} : {vector_pprint(np.round(self.k, 5))} (in DFT cell)\n"
-              +f"               {vector_pprint(np.round(self.k_refUC, 5))} (after cell trasformation)\n\n" if refcell else ""
-              +f" number of states : {self.num_bands}\n"
+        print(f"\n\n k-point {self.ik0:3d} : {vector_pprint(np.round(self.k, 5))} (in DFT cell)\n" +
+              f"               {vector_pprint(np.round(self.k_refUC, 5))} (after cell trasformation)\n\n" if refcell else "" +
+              f" number of states : {self.num_bands}\n"
               )
 
         # Generate str describing irrep corresponding to sets of states

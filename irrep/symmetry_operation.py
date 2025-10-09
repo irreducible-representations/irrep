@@ -863,16 +863,86 @@ class SymmetryOperation():
             R_aii = AtomRotations(setups.setups, setups.id_a, symmetry).get_R_asii()
             self.R_aii = [R_ii[0] for R_ii in R_aii]  # remove unnecessary nesting
 
-    def get_U_aii_gpaw(self, kpoint):
-        """Phase corrected rotation matrices for the PAW projections."""
-        return [ R_ii.T * np.exp(-2j * np.pi * np.dot(kpoint, self.atom_map_T[a])) for a, R_ii in enumerate(self.R_aii)]
-        # return [ R_ii.T  for a, R_ii in enumerate(self.R_aii)]  # no phase factor, try this
+    # def get_U_aii_gpaw(self, kpoint):
+    #     """Phase corrected rotation matrices for the PAW projections."""
+    #     return [ R_ii.T * np.exp( 2j * np.pi * np.dot(kpoint, self.atom_map_T[a])) for a, R_ii in enumerate(self.R_aii)]
+    #     # return [ R_ii.T  for a, R_ii in enumerate(self.R_aii)]  # no phase factor, try this
 
     def set_gpaw(self, calculator):
         """Set all gpaw-related attributes."""
         positions = calculator.atoms.get_scaled_positions()
         self.atom_map, self.atom_map_T = get_atom_map(self, positions)
         self.set_R_aii_gpaw(calculator)
+
+
+
+    def rotate_projection(self, projections, k_origin, k_target, phase=1.0):
+        """
+        Rotate the projection coefficients according to the given symmetry operation
+
+        Parameters
+        ----------
+        proj : Projections
+            the projection coefficients
+        symop : irrep.SymmetryOperation
+            the symmetry operation
+        k_origin : np.ndarray(shape=(3,), dtype=float)
+            the original k-point in the basis of the reciprocal lattice
+        k_target : np.ndarray(shape=(3,), dtype=float)
+            the target k-point in the basis of the reciprocal lattice
+
+        Returns
+        -------
+        proj_rot : Projections
+            the rotated projection coefficients
+        """
+        mapped_projections = projections.new()
+
+        for a, R_ii in enumerate(self.R_aii):
+            Pout_ni = (projections[a] @ R_ii.T) * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
+            if self.time_reversal:
+                Pout_ni = np.conj(Pout_ni)
+            I1, I2 = mapped_projections.map[self.atom_map[a]]
+            mapped_projections.array[..., I1:I2] = Pout_ni * phase
+        return mapped_projections
+
+    def rotate_pseudo_wavefunction(self, psi_n_grid, k_origin, k_target):
+        """
+        Rotate the pseudo wavefunction according to the given symmetry operation
+
+        Parameters
+        ----------
+        psi_nG : np.ndarray(shape=(NB, n1, n2, n3), dtype=complex)
+            the pseudo wavefunction in G-space
+        k_origin : np.ndarray(shape=(3,), dtype=float)
+            the original k-point in the basis of the reciprocal lattice
+        k_target : np.ndarray(shape=(3,), dtype=float)
+            the target k-point in the basis of the reciprocal lattice
+
+        Returns
+        -------
+        psi_nG_rot : np.ndarray(shape=(NB, NG), dtype=complex)
+            the rotated pseudo wavefunction in G-space
+        """
+        phase = np.exp(-2j * np.pi * self.transform_k(k_origin)  @ self.translation)
+
+        psi_n_grid = np.array(psi_n_grid).copy()
+        Nc = psi_n_grid.shape[1:]
+        # Nc_tot = np.prod(Nc)
+        if not self.is_identity:
+            psi_n_grid = self.transform_grid_data(psi_n_grid)
+
+        if self.time_reversal:
+            psi_n_grid = np.conj(psi_n_grid)
+        psi_n_grid *= phase  # should it be before or after time-reversal? TODO: check!
+        kpt_shift = k_target - self.transform_k(k_origin)
+        kpt_shift_int = np.round(kpt_shift).astype(int)
+        assert np.allclose(kpt_shift, kpt_shift_int), f"k-point shift {kpt_shift} is not a reciprocal lattice vector"
+        for i, ksh in enumerate(kpt_shift_int):
+            if ksh != 0:
+                phase = np.exp(-2j * np.pi * ksh * np.arange(Nc[i]) / Nc[i]).reshape((1,) * (i + 1) + (Nc[i],) + (1,) * (2 - i))
+                psi_n_grid = psi_n_grid * phase
+        return psi_n_grid
 
 
 

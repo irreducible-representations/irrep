@@ -1162,7 +1162,7 @@ class ParserGPAW:
             for ib in range(self.nband)]) for ispin in self.spin_channels]
         Eupdw = [self.calculator.get_eigenvalues(kpt=ik, spin=ispin) for ispin in self.spin_channels]
 
-        print(f"shapes of WFupdw: {[wf.shape for wf in WFupdw]}")
+        log_message(f"shapes of WFupdw: {[wf.shape for wf in WFupdw]}", self.verbosity, 2)
         ngx, ngy, ngz = WFupdw[0].shape[1:]
         kpt = self.calculator.get_ibz_k_points()[ik]
         kg, eKG = calc_gvectors(kpt,

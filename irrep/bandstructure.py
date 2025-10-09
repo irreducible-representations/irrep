@@ -24,8 +24,7 @@ import json
 import numpy as np
 from functools import cached_property
 
-from irrep.kpoint_gpaw import KpointGPAW
-from irrep.wf_overlap import OverlapPAW
+from irrep.kpoint_gpaw import KpointGPAW, OverlapPAW
 
 from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
