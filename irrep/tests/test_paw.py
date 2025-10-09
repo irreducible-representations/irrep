@@ -30,6 +30,7 @@ def check_traces_gpaw():
         kp0g = bandstructure.kpoints[ik]
         kp0g.init_traces(degen_thresh=0.001)
         kp0g.identify_irreps()
+        print(f"Testing k-point {ik}/{bandstructure.num_k}, k={kp0.k}, little group size={len(kp0g.little_group)}")
         kp0g.write_characters(refcell=False)
         char = kp0g.char
 
@@ -97,7 +98,7 @@ def check_traces_gpaw():
 
 @pytest.mark.parametrize("incl_paw_pseudo", [(True, True), (True, False), (False, True)], ids=lambda p: f"paw={p[0]}_pseudo={p[1]}")
 @pytest.mark.parametrize("ik", range(8), ids=lambda k: f"ik={k}")
-def test_traces_gpaw_diamopnd(BandstrGpawDiamond, check_traces_gpaw, incl_paw_pseudo, ik):
+def test_traces_gpaw_diamond(BandstrGpawDiamond, check_traces_gpaw, incl_paw_pseudo, ik):
     include_paw, include_pseudo = incl_paw_pseudo
     good, msg = check_traces_gpaw(BandstrGpawDiamond, include_paw=include_paw, include_pseudo=include_pseudo, ik=ik)
     assert good, msg

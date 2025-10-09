@@ -39,7 +39,7 @@ class KpointGPAW(KpointAbstract):
         proj.array[:] = kpt.projections.array[:nbands]
         if RecLattice is None:
             RecLattice = calc.wfs.gd.reciprocal_lattice
-        atom_positions = calc.atoms.get_positions()
+        atom_positions = calc.atoms.get_scaled_positions()
 
         wavefunction = np.array([calc.wfs.get_wave_function_array(n, ibz_index, ispin, periodic=True)
                                  for n in range(nbands)])
@@ -58,7 +58,8 @@ class KpointGPAW(KpointAbstract):
         """
         new_wavefunction = symmetry_operation.rotate_pseudo_wavefunction(psi_n_grid=self.wavefunction, k_origin=self.k, k_target=k_new)
         new_proj = symmetry_operation.rotate_projection(self.proj, self.k, k_new)
-        return KpointGPAW(kpt=k_new, wavefunction=new_wavefunction, proj=new_proj, nbands=self.nbands)
+        return KpointGPAW(kpt=k_new, wavefunction=new_wavefunction, proj=new_proj, nbands=self.nbands,
+                          RecLattice=self.RecLattice, atom_positions=self.atom_positions)
 
 
 class OverlapPAW:
@@ -71,7 +72,9 @@ class OverlapPAW:
 
     def product(self, KP1, KP2,
                 include_paw=True,
-                include_pseudo=True):
+                include_pseudo=True,
+                bk=None,
+                ):
         wf1 = KP1.wavefunction
         proj1 = KP1.proj
         wf2 = KP2.wavefunction
@@ -83,6 +86,17 @@ class OverlapPAW:
         if include_pseudo:
             prod += cached_einsum('aijk,bijk->ab', wf1.conj(), wf2) * self.dv
         if include_paw:
+            positions = KP1.atom_positions
+            na = len(positions)
+            if bk is None:
+                phases = np.ones(na, dtype=complex)
+            else:
+                phases = np.exp(-2j * np.pi * (positions @ bk))
+                print(f"bk = {bk}, positions={positions}, Phases={np.angle(phases, deg=True)}")
             for a, dO_ii in self.dO_aii.items():
-                prod += (proj1[a].conj() @ dO_ii @ (proj2[a].T))
+                # proj1_tmp = proj1[a].copy()
+                # proj2_tmp = proj2[a].copy()
+                # proj1_tmp[:,1:] = 0
+                # proj2_tmp[:,1:] = 0
+                prod += (proj1[a].conj() @ dO_ii @ (proj2[a].T)) * phases[a]
         return prod

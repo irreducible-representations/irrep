@@ -876,7 +876,7 @@ class SymmetryOperation():
 
 
 
-    def rotate_projection(self, projections, k_origin, k_target, phase=1.0):
+    def rotate_projection(self, projections, k_origin, k_target):
         """
         Rotate the projection coefficients according to the given symmetry operation
 
@@ -897,13 +897,13 @@ class SymmetryOperation():
             the rotated projection coefficients
         """
         mapped_projections = projections.new()
-
+        
         for a, R_ii in enumerate(self.R_aii):
             Pout_ni = (projections[a] @ R_ii.T) * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
             if self.time_reversal:
                 Pout_ni = np.conj(Pout_ni)
             I1, I2 = mapped_projections.map[self.atom_map[a]]
-            mapped_projections.array[..., I1:I2] = Pout_ni * phase
+            mapped_projections.array[..., I1:I2] = Pout_ni 
         return mapped_projections
 
     def rotate_pseudo_wavefunction(self, psi_n_grid, k_origin, k_target):
