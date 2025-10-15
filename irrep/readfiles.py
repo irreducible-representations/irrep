@@ -1128,14 +1128,15 @@ class ParserGPAW:
         instance of GPAW class or the name of the file containing it
     """
 
-    def __init__(self, calculator, spinor=False, spin_channel=None):
+    def __init__(self, calculator, spinor=False, spin_channel=None,
+                 verbosity=0):
         from gpaw import GPAW
         if isinstance(calculator, str):
             calculator = GPAW(calculator)
         self.calculator = calculator
         self.nband = self.calculator.get_number_of_bands()
-        print("spinor", spinor)
         self.spinor = spinor
+        self.verbosity = verbosity
 
         if self.spinor:
             nspins = self.calculator.get_number_of_spins()
@@ -1160,16 +1161,21 @@ class ParserGPAW:
             for ib in range(self.nband)]) for ispin in self.spin_channels]
         Eupdw = [self.calculator.get_eigenvalues(kpt=ik, spin=ispin) for ispin in self.spin_channels]
 
-        print(f"shapes of WFupdw: {[wf.shape for wf in WFupdw]}")
+        log_message(f"shapes of WFupdw: {[wf.shape for wf in WFupdw]}", self.verbosity, 2)
         ngx, ngy, ngz = WFupdw[0].shape[1:]
         kpt = self.calculator.get_ibz_k_points()[ik]
         kg, eKG = calc_gvectors(kpt,
                            RecLattice,
                            Ecut,
                            spinor=False,
-                           nplanemax=np.max([ngx, ngy, ngz]) // 2
+                            verbosity=self.verbosity,
+                        #    nplanemax=np.max([ngx, ngy, ngz]) // 2
                             )
-        selectG = tuple(kg[:, 0:3].T)
+        selectG = (kg[:, 0:3].T).copy()
+        selectG[0, :] = selectG[0, :] % ngx
+        selectG[1, :] = selectG[1, :] % ngy
+        selectG[2, :] = selectG[2, :] % ngz
+        selectG = tuple(selectG)
 
         for i in range(len(WFupdw)):
             WFupdw[i] = np.fft.fftn(WFupdw[i], axes=(1, 2, 3))

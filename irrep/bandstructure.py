@@ -24,6 +24,8 @@ import json
 import numpy as np
 from functools import cached_property
 
+from irrep.kpoint_gpaw import KpointGPAW, OverlapPAW
+
 from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
@@ -192,7 +194,8 @@ class BandStructure:
         mag_symprec=-1,
         spacegroup=None,
         select_grid=None,
-        irreducible=False
+        irreducible=False,
+        read_paw=False
     ):
 
         code = code.lower()
@@ -351,10 +354,17 @@ class BandStructure:
                 elif spin_channel.lower() in ['dw', 'down']:
                     spin_channel = 1
 
+
             parser = ParserGPAW(calculator=calculator_gpaw,
                                 spinor=bool(spinor),
-                                spin_channel=spin_channel
+                                spin_channel=spin_channel,
+                                verbosity=verbosity
                                 )
+            if read_paw:
+                self.kpoints_paw = []
+                self.spacegroup.set_gpaw(calculator=parser.calculator)
+                self.overlap_paw = OverlapPAW(wfs=parser.calculator.wfs)
+
             NBin, kpred, Lattice, _spinor, typat, positions, EF_in = parser.parse_header()
             if Ecut is None:
                 raise RuntimeError("Ecut mandatory for GPAW")
@@ -399,7 +409,7 @@ class BandStructure:
 
 
         # To do: create writer of description for this class
-        log_message((f"WAVECAR contains {NK} k-points and {NBin} bands.\n"
+        log_message((f"Input files contain {NK} k-points and {NBin} bands.\n"
                      f"Saving {NBout} bands starting from {IBstart + 1} in the output"), verbosity, 1)
         log_message(f"Energy cutoff in WAVECAR : {self.Ecut0}", verbosity, 1)
         log_message(f"Energy cutoff reduced to : {self.Ecut}", verbosity, 1)
@@ -452,9 +462,9 @@ class BandStructure:
                     continue
                 Energy = Energies[ik]
                 ngx, ngy, ngz = parser.parse_grid(ik + 1)
-                kg, eKG = calc_gvectors(kpred[ik],
-                                   self.RecLattice,
-                                   self.Ecut,
+                kg, eKG = calc_gvectors(K=kpred[ik],
+                                   RecLattice=self.RecLattice,
+                                   Ecut=self.Ecut,
                                    spinor=self.spinor,
                                    nplanemax=np.max([ngx, ngy, ngz]) // 2,
                                    verbosity=verbosity
@@ -469,7 +479,11 @@ class BandStructure:
                 Energy, WF, kg, kpt, eKG = parser.parse_kpoint(ik,
                                                  RecLattice=self.RecLattice,
                                                  Ecut=self.Ecut)
-
+                if read_paw:
+                    # read projections and reconstruct pseudo wavefunctions on a grid
+                    kp_gpaw = KpointGPAW.from_gpaw(calc=calculator_gpaw, ibz_index=ik, ispin=spin_channel,
+                                                   RecLattice=self.RecLattice)
+                    self.kpoints_paw.append(kp_gpaw)
 
             # Pick energy of IBend+1 band to calculate gaps
             try:

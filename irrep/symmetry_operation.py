@@ -19,7 +19,7 @@ from functools import cached_property
 import warnings
 import numpy as np
 from scipy.linalg import expm
-from .utility import str_, BOHR, cached_einsum
+from .utility import UniqueListMod1, str_, BOHR, cached_einsum
 from .gvectors import transform_gk
 
 pauli_sigma = np.array(
@@ -88,9 +88,11 @@ class SymmetryOperation():
     """
 
     def __init__(self, rot, trans, Lattice, time_reversal=False, ind=-1, spinor=True,
+                 positions=None,
                  translation_mod1=True, spinor_rotation=None):
         self.ind = ind
         self.rotation = rot
+        self.positions = positions
         self.time_reversal = bool(time_reversal)
         self.real_lattice = Lattice
         self.translation_mod1 = translation_mod1
@@ -267,6 +269,10 @@ class SymmetryOperation():
                     num=round(api * n), denom="" if n == 1 else "/" + str(n))
         raise RuntimeError(f"{api} pi rotation cannot be in the space group")
 
+    @cached_property
+    def is_identity(self):
+        return np.allclose(self.rotation, np.eye(3)) and np.allclose(self.translation, 0) and not self.time_reversal and not self.inversion
+
 
     def _get_operation_type(self):
         """
@@ -307,7 +313,7 @@ class SymmetryOperation():
             if np.isclose(s, -1):
                 angle = 2 * np.pi - angle
             elif not np.isclose(s, 1):
-                raise RuntimeError("the sign of rotation should be +-1")
+                raise RuntimeError(f"the sign of rotation should be +-1, cannot determine for {rotxyz}")
         return (axis, angle, inversion)
 
     def rotation_refUC(self, refUC):
@@ -699,7 +705,10 @@ class SymmetryOperation():
 
     @cached_property
     def rotation_inv(self):
-        return np.linalg.inv(self.rotation)
+        rotinv = np.linalg.inv(self.rotation)
+        rotinv_int = np.array(rotinv.round(), dtype=int)
+        assert np.allclose(rotinv, rotinv_int, atol=1e-6), f"Inverse Rotation matrix is not integer: {rotinv}"
+        return rotinv_int
 
     @cached_property
     def spinor_rotation_TR(self):
@@ -783,3 +792,186 @@ class SymmetryOperation():
         if self.time_reversal:
             res = -res
         return res
+
+    def transform_grid_indices(self, size, inverse=False):
+        """
+        Transform a grid of k-points under the symmetry operation.
+
+        Parameters
+        ----------
+        size : array((3,), dtype=int)
+            Size of the grid in each direction.
+
+        Returns
+        -------
+        array
+            Transformed grid.
+        """
+        size = tuple(size)
+        assert len(size) == 3
+        if not hasattr(self, 'rotate_grid_cache'):
+            self.rotate_grid_cache = {}
+        if size not in self.rotate_grid_cache:
+            # First compute direct transformation
+            i_rot = self.rotation
+            i_trans = self.translation * np.array(size)
+            i_trans_int = np.round(i_trans).astype(int)
+            ind_original = np.indices(size).reshape((3, -1))
+            assert np.allclose(i_trans, i_trans_int), f"Translation {self.translation} not compatible with grid {size}"
+            indx = np.dot(i_rot, ind_original) + i_trans_int[:, None]
+            indx = np.ravel_multi_index(indx, size, 'wrap')
+            # now compute inverse transformation
+            i_rot_inv = self.rotation_inv
+            indx_inv = np.dot(i_rot_inv, ind_original - i_trans_int[:, None])
+            indx_inv = np.ravel_multi_index(indx_inv, size, 'wrap')
+            size_tot = np.prod(size)
+            assert np.all(np.sort(indx) == np.arange(size_tot)), f"Rotation does not permute the grid correctly: {indx}"
+            assert np.all(np.sort(indx_inv) == np.arange(size_tot)), f"Inverse Rotation does not permute the grid correctly: {indx_inv}"
+            assert np.all(indx[indx_inv] == np.arange(size_tot)), f"Inverse rotation is not consistent with direct rotation: {indx} and {indx_inv}, {indx[indx_inv]}"
+            self.rotate_grid_cache[size] = {True: indx_inv, False: indx}
+        return self.rotate_grid_cache[size][inverse]
+
+    def transform_grid_data(self, grid_data, inverse=False):
+        if grid_data.ndim < 3:
+            raise ValueError("data should have shape (...,Nx,Ny,Nz)")
+        Nc = grid_data.shape[-3:]
+        shape_front = grid_data.shape[:-3]
+        Nc_tot = np.prod(Nc)
+        NB = int(grid_data.size / Nc_tot)
+        assert NB * Nc_tot == grid_data.size, f"the data should have shape (...,Nx,Ny,Nz), but got {grid_data.shape}"
+        indx = self.transform_grid_indices(Nc, inverse=False)
+        grid_data = grid_data.reshape(NB, Nc_tot)
+        grid_data_new = np.zeros(grid_data.shape, dtype=grid_data.dtype)
+        grid_data_new[:, indx] = grid_data
+        return grid_data_new.reshape(shape_front + Nc)
+
+
+
+    def set_R_aii_gpaw(self, calc, reset=False):
+        """rotation matrices for the PAW projections."""
+        if not hasattr(self, 'R_aii') or reset:
+            from gpaw.atomrotations import AtomRotations
+            setups = calc.setups
+
+            class SymmetryGpaw1():
+                def __init__(self, symop):
+                    # self.op_scc = symop.rotation[None, :, :]
+                    # self.cell_cv = symop.real_lattice
+                    self.op_scc = symop.rotation_cart[None, :, :]
+                    self.cell_cv = np.eye(3)
+            symmetry = SymmetryGpaw1(self)
+            R_aii = AtomRotations(setups.setups, setups.id_a, symmetry).get_R_asii()
+            self.R_aii = [R_ii[0] for R_ii in R_aii]  # remove unnecessary nesting
+
+    # def get_U_aii_gpaw(self, kpoint):
+    #     """Phase corrected rotation matrices for the PAW projections."""
+    #     return [ R_ii.T * np.exp( 2j * np.pi * np.dot(kpoint, self.atom_map_T[a])) for a, R_ii in enumerate(self.R_aii)]
+    #     # return [ R_ii.T  for a, R_ii in enumerate(self.R_aii)]  # no phase factor, try this
+
+    def set_gpaw(self, calculator):
+        """Set all gpaw-related attributes."""
+        positions = calculator.atoms.get_scaled_positions()
+        self.atom_map, self.atom_map_T = get_atom_map(self, positions)
+        self.set_R_aii_gpaw(calculator)
+
+
+
+    def rotate_projection(self, projections, k_origin, k_target):
+        """
+        Rotate the projection coefficients according to the given symmetry operation
+
+        Parameters
+        ----------
+        proj : Projections
+            the projection coefficients
+        symop : irrep.SymmetryOperation
+            the symmetry operation
+        k_origin : np.ndarray(shape=(3,), dtype=float)
+            the original k-point in the basis of the reciprocal lattice
+        k_target : np.ndarray(shape=(3,), dtype=float)
+            the target k-point in the basis of the reciprocal lattice
+
+        Returns
+        -------
+        proj_rot : Projections
+            the rotated projection coefficients
+        """
+        mapped_projections = projections.new()
+        
+        for a, R_ii in enumerate(self.R_aii):
+            Pout_ni = (projections[a] @ R_ii.T) * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
+            if self.time_reversal:
+                Pout_ni = np.conj(Pout_ni)
+            I1, I2 = mapped_projections.map[self.atom_map[a]]
+            mapped_projections.array[..., I1:I2] = Pout_ni 
+        return mapped_projections
+
+    def rotate_pseudo_wavefunction(self, psi_n_grid, k_origin, k_target):
+        """
+        Rotate the pseudo wavefunction according to the given symmetry operation
+
+        Parameters
+        ----------
+        psi_nG : np.ndarray(shape=(NB, n1, n2, n3), dtype=complex)
+            the pseudo wavefunction in G-space
+        k_origin : np.ndarray(shape=(3,), dtype=float)
+            the original k-point in the basis of the reciprocal lattice
+        k_target : np.ndarray(shape=(3,), dtype=float)
+            the target k-point in the basis of the reciprocal lattice
+
+        Returns
+        -------
+        psi_nG_rot : np.ndarray(shape=(NB, NG), dtype=complex)
+            the rotated pseudo wavefunction in G-space
+        """
+        phase = np.exp(-2j * np.pi * self.transform_k(k_origin)  @ self.translation)
+
+        psi_n_grid = np.array(psi_n_grid).copy()
+        Nc = psi_n_grid.shape[1:]
+        # Nc_tot = np.prod(Nc)
+        if not self.is_identity:
+            psi_n_grid = self.transform_grid_data(psi_n_grid)
+
+        if self.time_reversal:
+            psi_n_grid = np.conj(psi_n_grid)
+        psi_n_grid *= phase  # should it be before or after time-reversal? TODO: check!
+        kpt_shift = k_target - self.transform_k(k_origin)
+        kpt_shift_int = np.round(kpt_shift).astype(int)
+        assert np.allclose(kpt_shift, kpt_shift_int), f"k-point shift {kpt_shift} is not a reciprocal lattice vector"
+        for i, ksh in enumerate(kpt_shift_int):
+            if ksh != 0:
+                phase = np.exp(-2j * np.pi * ksh * np.arange(Nc[i]) / Nc[i]).reshape((1,) * (i + 1) + (Nc[i],) + (1,) * (2 - i))
+                psi_n_grid = psi_n_grid * phase
+        return psi_n_grid
+
+
+
+
+
+
+
+def get_atom_map(symop, positions):
+    positions_list = UniqueListMod1(positions, tol=1e-4)
+    assert len(positions) == len(UniqueListMod1(positions)), f"some positions are equivalent mod 1: {positions}"
+    num_points = len(positions)
+    atommap = -np.ones((num_points), dtype=int)
+    T = np.zeros((num_points, 3), dtype=float)
+
+    for ip, p in enumerate(positions):
+        p2 = symop.transform_r(p)
+        ip2 = positions_list.index(p2)
+        atommap[ip] = ip2
+        p2a = positions[ip2]
+        T[ip] = p2a - p2
+    assert np.all(atommap >= 0), f"some positions are not mapped: atommap={atommap}"
+
+    T_round = np.round(T)
+    T_diff = np.abs(T - T_round).max()
+    if T_diff > 1e-6:
+        msg = f"the T vectors should result integer values, but the maximal deviation from integer is {T_diff} T=\n{T}, \nT_round=\n{T_round}, \n max_diff={T_diff}"
+        if T_diff > 1e-3:
+            raise ValueError(msg)
+        else:
+            warnings.warn(msg)
+    T = T_round.astype(int)
+    return atommap, T

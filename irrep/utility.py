@@ -578,7 +578,7 @@ def select_irreducible(kpoints, spacegroup):
     kpoints : array((nk, ndim), dtype=float)
         List of k-points in fractional coordinates.
     spacegroup : SpaceGroup
-        Space group object containing the symmetries.
+        Space/point group object containing the symmetries. 
 
     Returns
     -------
@@ -648,18 +648,9 @@ def get_mapping_irr(kpoints, kptirr, spacegroup):
                                                 f"kptirr= {kptirr}, \nkpt2kptirr= {kpt2kptirr}\n kptirr2kpt= {kptirr2kpt}")
     kptirr2kpt = np.array(kptirr2kpt)
     del kpoints_mod1
-    kpt_from_kptirr_isym = np.zeros((len(kptirr), Nsym), dtype=int)
-    for ik, ikirr in enumerate(kpt2kptirr):
-        for isym in range(Nsym):
-            if kptirr2kpt[ikirr, isym] == ik:
-                kpt_from_kptirr_isym[ikirr, isym] = ik
-                break
-        else:
-            raise RuntimeError("No Symmetry operation maps irreducible "
-                               "k-point {ikirr} to point {ik}, but kpt2kptirr[{ik}] = {ikirr}.")
+    kpt_from_kptirr_isym = get_kpt_from_kptirr_isym(kptirr2kpt=kptirr2kpt, kpt2kptirr=kpt2kptirr)
     assert np.all(kptirr2kpt >= 0)
-    assert np.all(kpt2kptirr >= 0
-                  )
+    assert np.all(kpt2kptirr >= 0)
     return kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym
 
 
@@ -731,14 +722,21 @@ def restore_full_grid(kpoints_irr, grid, spacegroup):
                 all_k.append(transformed_k)
 
 
-    kpt_from_kptirr_isym = -np.ones(len(all_k_grid_mod1), dtype=int)
+    kpt_from_kptirr_isym = get_kpt_from_kptirr_isym(kptirr2kpt=kptirr2kpt, kpt2kptirr=kpt2kptirr)
+
+    return np.array(all_k), kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym
+
+
+def get_kpt_from_kptirr_isym(kptirr2kpt, kpt2kptirr):
+    nsym = kptirr2kpt.shape[1]
+    nk = kpt2kptirr.shape[0]
+    kpt_from_kptirr_isym = -np.ones(nk, dtype=int)
     for ik, ikirr in enumerate(kpt2kptirr):
-        for isym in range(len(spacegroup.symmetries)):
+        for isym in range(nsym):
             if kptirr2kpt[ikirr, isym] == ik:
                 kpt_from_kptirr_isym[ik] = isym
                 break
         else:
             raise RuntimeError(f"No Symmetry operation maps irreducible "
                                f"k-point {ikirr} to point {ik}, but kpt2kptirr[{ik}] = {ikirr}.")
-
-    return np.array(all_k), kptirr2kpt, kpt2kptirr, kpt_from_kptirr_isym
+    return kpt_from_kptirr_isym
