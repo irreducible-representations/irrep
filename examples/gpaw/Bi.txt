@@ -1,0 +1,258 @@
+
+  ___ ___ ___ _ _ _  
+ |   |   |_  | | | | 
+ | | | | | . | | | | 
+ |__ |  _|___|_____|  25.7.0
+ |___|_|             
+
+User:   stepan@C3MP-C019202L
+Date:   Mon Sep  8 15:24:41 2025
+Arch:   x86_64
+Pid:    467460
+CWD:    /home/stepan/github/irrep/examples/gpaw
+Python: 3.11.11
+gpaw:   /home/stepan/github/irrep/.conda/lib/python3.11/site-packages/gpaw
+_gpaw:  /home/stepan/github/irrep/.conda/lib/python3.11/site-packages/
+        _gpaw.cpython-311-x86_64-linux-gnu.so
+ase:    /home/stepan/github/irrep/.conda/lib/python3.11/site-packages/ase (version 3.26.0)
+numpy:  /home/stepan/github/irrep/.conda/lib/python3.11/site-packages/numpy (version 2.2.4)
+scipy:  /home/stepan/github/irrep/.conda/lib/python3.11/site-packages/scipy (version 1.15.2)
+libxc:  5.2.3
+units:  Angstrom and eV
+cores: 16
+OpenMP: False
+OMP_NUM_THREADS: 1
+
+Input parameters:
+  kpts: {gamma: True,
+         size: (6, 6, 6)}
+  mode: {ecut: 300.0,
+         name: pw}
+  nbands: 20
+
+System changes: positions, numbers, cell, pbc, initial_charges, initial_magmoms 
+
+Initialize ...
+
+species:
+  Bi:
+    name: Bismuth
+    id: 559dd6f0aba17bfb5248c3a83c583a2d
+    Z: 83.0
+    valence: 15
+    core: 68
+    charge: 0.0
+    file: /home/stepan/gpaw-data/gpaw-setups-24.11.0/Bi.LDA.gz
+    compensation charges: {type: gauss,
+                           rc: 0.38,
+                           lmax: 2}
+    cutoffs: {filter: 2.23,
+              core: 2.33}
+    projectors:
+      #              energy  rcut
+      - 6s(2.00)   -14.665   1.286
+      - 6p(3.00)    -4.777   1.275
+      - 5d(10.00)   -27.225   1.349
+      -  s          12.546   1.286
+      -  p          22.434   1.275
+      -  d          -0.013   1.349
+  
+    # Using partial waves for Bi as LCAO basis
+
+Reference energy: -1169076.695349  # eV
+
+Spin-paired calculation
+
+Convergence criteria:
+ Maximum [total energy] change in last 3 cyles: 0.0005 eV / valence electron
+ Maximum integral of absolute [dens]ity change: 0.0001 electrons / valence electron
+ Maximum integral of absolute [eigenst]ate change: 4e-08 eV^2 / valence electron
+ Maximum number of scf [iter]ations: 333
+ (Square brackets indicate name in SCF output, whereas a 'c' in
+ the SCF output indicates the quantity has converged.)
+
+Symmetries present (total): 12
+
+  ( 1  0  0)  ( 1  0  0)  ( 0  1  0)  ( 0  1  0)  ( 0  0  1)  ( 0  0  1)
+  ( 0  1  0)  ( 0  0  1)  ( 1  0  0)  ( 0  0  1)  ( 1  0  0)  ( 0  1  0)
+  ( 0  0  1)  ( 0  1  0)  ( 0  0  1)  ( 1  0  0)  ( 0  1  0)  ( 1  0  0)
+
+  ( 0  0 -1)  ( 0  0 -1)  ( 0 -1  0)  ( 0 -1  0)  (-1  0  0)  (-1  0  0)
+  ( 0 -1  0)  (-1  0  0)  ( 0  0 -1)  (-1  0  0)  ( 0  0 -1)  ( 0 -1  0)
+  (-1  0  0)  ( 0 -1  0)  (-1  0  0)  ( 0  0 -1)  ( 0 -1  0)  ( 0  0 -1)
+
+216 k-points: 6 x 6 x 6 Monkhorst-Pack grid + [1/12,1/12,1/12]
+32 k-points in the irreducible part of the Brillouin zone
+       k-points in crystal coordinates                weights
+   0:     0.00000000    0.00000000    0.00000000          1/216
+   1:     0.16666667    0.00000000   -0.16666667          6/216
+   2:     0.16666667    0.00000000    0.00000000          6/216
+   3:     0.16666667    0.16666667   -0.16666667          6/216
+   4:     0.16666667    0.16666667    0.00000000          6/216
+   5:     0.16666667    0.16666667    0.16666667          2/216
+   6:     0.33333333   -0.16666667   -0.16666667          6/216
+   7:     0.33333333    0.00000000   -0.33333333          6/216
+   8:     0.33333333    0.00000000   -0.16666667         12/216
+   9:     0.33333333    0.00000000    0.00000000          6/216
+          ...
+  31:     0.50000000    0.50000000    0.50000000          1/216
+
+Wave functions: Plane wave expansion
+  Cutoff energy: 300.000 eV
+  Number of coefficients (min, max): 824, 845
+  Pulay-stress correction: 0.000000 eV/Ang^3 (de/decut=0.000000)
+  Using Numpy's FFT
+  ScaLapack parameters: grid=1x1, blocksize=None
+  Wavefunction extrapolation:
+    Improved wavefunction reuse through dual PAW basis 
+
+Occupation numbers: Fermi-Dirac:
+  width: 0.1000  # eV
+ 
+
+Eigensolver
+   Davidson(niter=2) 
+
+Densities:
+  Coarse grid: 20*20*20 grid
+  Fine grid: 40*40*40 grid
+  Total Charge: 0.000000 
+
+Density mixing:
+  Method: separate
+  Backend: pulay
+  Linear mixing parameter: 0.05
+  old densities: 5
+  Damping of long wavelength oscillations: 50 
+
+Hamiltonian:
+  XC and Coulomb potentials evaluated on a 40*40*40 grid
+  Using the LDA Exchange-Correlation functional
+  External potential:
+    NoExternalPotential
+ 
+
+Memory estimate:
+  Process memory now: 162.71 MiB
+  Calculator: 5.58 MiB
+    Density: 3.08 MiB
+      Arrays: 1.59 MiB
+      Localized functions: 0.88 MiB
+      Mixer: 0.61 MiB
+    Hamiltonian: 1.06 MiB
+      Arrays: 1.04 MiB
+      XC: 0.00 MiB
+      Poisson: 0.00 MiB
+      vbar: 0.02 MiB
+    Wavefunctions: 1.44 MiB
+      Arrays psit_nG: 0.52 MiB
+      Eigensolver: 0.38 MiB
+      Projections: 0.02 MiB
+      Projectors: 0.19 MiB
+      PW-descriptor: 0.33 MiB
+
+Total number of cores used: 16
+Parallelization over k-points: 16
+
+Number of atoms: 2
+Number of atomic orbitals: 18
+Number of bands in calculation: 20
+Number of valence electrons: 30
+Bands to converge: occupied
+
+... initialized
+
+Initializing position-dependent things.
+
+Density initialized from atomic densities
+Creating initial wave functions:
+  18 bands from LCAO basis set
+  2 bands from random numbers
+
+                
+                
+                
+       Bi       
+                
+                
+                
+                
+                
+                
+                
+       Bi       
+                
+                
+                
+
+Atomic positions and initial magnetic moments
+
+Positions:
+   0 Bi     0.000000    0.000000   -2.807983    ( 0.0000,  0.0000,  0.0000)
+   1 Bi    -0.000000   -0.000000    2.807983    ( 0.0000,  0.0000,  0.0000)
+
+Unit cell:
+           periodic     x           y           z      points  spacing
+  1. axis:    yes    2.273238    1.312455    3.949344    20     0.1868
+  2. axis:    yes   -2.273238    1.312455    3.949344    20     0.1868
+  3. axis:    yes    0.000000   -2.624910    3.949344    20     0.1868
+
+  Lengths:   4.742095   4.742095   4.742095
+  Angles:   57.289087  57.289087  57.289087
+
+Effective grid spacing dv^(1/3) = 0.2067
+
+     iter     time        total  log10-change:
+                         energy   eigst   dens
+iter:   1 15:24:42    -9.688443
+iter:   2 15:24:42    -9.698683   -1.93  -1.77
+iter:   3 15:24:42    -9.675793   -2.80  -1.79
+iter:   4 15:24:43    -9.679081   -3.55  -2.25
+iter:   5 15:24:43    -9.675799c  -3.57  -2.64
+iter:   6 15:24:43    -9.676506c  -4.34  -2.98
+iter:   7 15:24:43    -9.676111c  -5.74  -2.98
+iter:   8 15:24:43    -9.675689c  -4.33  -3.03
+iter:   9 15:24:44    -9.675737c  -5.05  -3.77
+iter:  10 15:24:44    -9.675748c  -6.21  -3.59
+iter:  11 15:24:44    -9.675696c  -5.82  -3.39
+iter:  12 15:24:44    -9.675696c  -7.30  -3.93
+iter:  13 15:24:44    -9.675703c  -6.48  -3.94
+iter:  14 15:24:45    -9.675708c  -7.29  -4.18c
+iter:  15 15:24:45    -9.675699c  -6.87  -4.07c
+iter:  16 15:24:45    -9.675699c  -7.13  -4.30c
+iter:  17 15:24:45    -9.675699c  -7.83c -4.39c
+
+Converged after 17 iterations.
+
+Dipole moment: (-0.000000, -0.000000, 0.000000) |e|*Ang
+
+Energy contributions relative to reference atoms: (reference = -1169076.695349)
+
+Kinetic:         +2.875069
+Potential:       -3.273556
+External:        +0.000000
+XC:              -8.165869
+Entropy (-ST):   -0.012341
+Local:           -1.105173
+SIC:             +0.000000
+--------------------------
+Free energy:     -9.681870
+Extrapolated:    -9.675699
+
+Showing only first 2 kpts
+ Kpt  Band  Eigenvalues  Occupancy
+  0    13      4.50561    1.99999
+  0    14      4.50561    1.99999
+  0    15      8.37343    0.00000
+  0    16      8.62175    0.00000
+
+  1    13      5.00669    1.99811
+  1    14      5.04448    1.99725
+  1    15      6.16562    0.01944
+  1    16      6.57961    0.00031
+
+
+Fermi level: 5.70325
+
+No gap
+No difference between direct/indirect transitions
