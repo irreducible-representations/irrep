@@ -798,6 +798,10 @@ class SpaceGroup:
             else:
                 raise ValueError(f"Inverse of symmetry {sym_i.ind} not found in the list of symmetries")
         return inv_table
+    
+    @cached_property
+    def translations_cart(self):
+        return np.array([symop.translation @ self.real_lattice for symop in self.symmetries])
 
     def set_gpaw(self, calculator):
         for sym in self.symmetries:

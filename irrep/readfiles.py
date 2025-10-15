@@ -1135,7 +1135,6 @@ class ParserGPAW:
             calculator = GPAW(calculator)
         self.calculator = calculator
         self.nband = self.calculator.get_number_of_bands()
-        print("spinor", spinor)
         self.spinor = spinor
         self.verbosity = verbosity
 
