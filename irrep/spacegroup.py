@@ -24,7 +24,7 @@ import spglib
 from irrep.readfiles import ParserAbinit, ParserEspresso, ParserGPAW, ParserVasp, ParserW90
 
 from .symmetry_operation import SymmetryOperation
-from .utility import BOHR, log_message, select_irreducible
+from .utility import BOHR, group_numbers, log_message, select_irreducible
 from packaging import version
 import os
 
@@ -810,9 +810,9 @@ class SpaceGroup:
     @classmethod
     def from_gpaw(cls,
                   calculator,
-                  symprec_magmom=0.05,
                   include_TR=True,
                   symprec=1e-5,
+                  mag_symprec=0.05,
                   typat=None,
                   magmoms=None):
         """Get the spacegroup of a GPAW calculator (non-spinor only).
@@ -820,7 +820,7 @@ class SpaceGroup:
         ----------
         calculator : GPAW
             The GPAW calculator.
-        symprec_magmom : float
+        mag_symprec : float
             The precision for distinguishing different magnetic moments.
         symprec : float
             The symmetry precision for spacegroup detection.
@@ -846,7 +846,7 @@ class SpaceGroup:
             if magmoms is None:
                 magmoms = calculator.get_magnetic_moments()
                 assert magmoms.shape == (len(calculator.atoms),)
-            magmoms = np.round(magmoms / symprec_magmom).astype(int).tolist()
+            magmoms = group_numbers(magmoms, precision=mag_symprec)
             magmoms_set = set(magmoms)
             if len(magmoms_set) > 1:
                 magmom_map = {m: i + 1 for i, m in enumerate(sorted(magmoms_set))}
@@ -861,7 +861,42 @@ class SpaceGroup:
                                 spinor=False,
                                 include_TR=include_TR,
                                 symprec=symprec,
-                                magmoms=magmoms)
+                                )
+    
+    @classmethod
+    def from_gpaw_magnetic(cls, calculator, theta=0, phi=0, include_TR=True, magmoms=None, mag_symprec=0.05, symprec=1e-5,
+                           ):
+        """
+        Get the spacegroup of a GPAW calculator (spinor magnetic version). 
+
+        Parameters:
+        calculator : GPAW
+            The GPAW calculator.
+        theta, phi : float
+            The angles defining the global spin quantization axis. (in radians) 
+            magnetic moments will be aligned along that direction (in positive or negative direction, as defined from dft calculation)
+        include_TR : bool
+            Whether to include time-reversal symmetry.
+        magmoms : array( Nat, 3)
+            if provided, overrides the magnetic moments of the calculator
+        """
+        lattice = calculator.atoms.cell
+        typat = calculator.atoms.get_atomic_numbers()
+        positions = calculator.atoms.get_scaled_positions()
+        if magmoms is None:
+            magmoms_axis = calculator.get_magnetic_moments()
+            magmoms_axis = group_numbers(magmoms_axis, precision=mag_symprec)
+            axis = np.array([np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)])
+            magmoms = magmoms_axis[:,None] * axis[None,:]
+        print(f"using magmoms \n {magmoms}")
+        return SpaceGroup.from_cell(real_lattice=lattice,
+                                positions=positions,
+                                typat=typat,
+                                spinor=True,
+                                include_TR=include_TR,
+                                symprec=symprec,
+                                mag_symprec=mag_symprec,
+                                magmom=magmoms)
 
     @classmethod
     def get_trivial(cls, lattice, spinor=False, time_reversal=False):
@@ -873,7 +908,7 @@ class SpaceGroup:
                               name="trivial+TR", spinor_rotations=[np.eye(2)] * 2)
 
 
-
+    
 
 def read_sym_file(fname):
     """

@@ -92,11 +92,6 @@ class OverlapPAW:
                 phases = np.ones(na, dtype=complex)
             else:
                 phases = np.exp(-2j * np.pi * (positions @ bk))
-                print(f"bk = {bk}, positions={positions}, Phases={np.angle(phases, deg=True)}")
             for a, dO_ii in self.dO_aii.items():
-                # proj1_tmp = proj1[a].copy()
-                # proj2_tmp = proj2[a].copy()
-                # proj1_tmp[:,1:] = 0
-                # proj2_tmp[:,1:] = 0
                 prod += (proj1[a].conj() @ dO_ii @ (proj2[a].T)) * phases[a]
         return prod

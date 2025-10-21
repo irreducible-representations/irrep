@@ -865,7 +865,7 @@ class SymmetryOperation():
 
     # def get_U_aii_gpaw(self, kpoint):
     #     """Phase corrected rotation matrices for the PAW projections."""
-    #     return [ R_ii.T * np.exp( 2j * np.pi * np.dot(kpoint, self.atom_map_T[a])) for a, R_ii in enumerate(self.R_aii)]
+    #     return [ R_ii.T * np.exp( 2j * np.pi * np.dot(kpoiMax errnt, self.atom_map_T[a])) for a, R_ii in enumerate(self.R_aii)]
     #     # return [ R_ii.T  for a, R_ii in enumerate(self.R_aii)]  # no phase factor, try this
 
     def set_gpaw(self, calculator):
@@ -899,9 +899,10 @@ class SymmetryOperation():
         mapped_projections = projections.new()
         
         for a, R_ii in enumerate(self.R_aii):
-            Pout_ni = (projections[a] @ R_ii.T) * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
+            Pout_ni = (projections[a] @ R_ii.T) #* np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
             if self.time_reversal:
                 Pout_ni = np.conj(Pout_ni)
+            Pout_ni = Pout_ni * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
             I1, I2 = mapped_projections.map[self.atom_map[a]]
             mapped_projections.array[..., I1:I2] = Pout_ni 
         return mapped_projections
