@@ -798,7 +798,7 @@ class SpaceGroup:
             else:
                 raise ValueError(f"Inverse of symmetry {sym_i.ind} not found in the list of symmetries")
         return inv_table
-    
+
     @cached_property
     def translations_cart(self):
         return np.array([symop.translation @ self.real_lattice for symop in self.symmetries])
@@ -862,7 +862,7 @@ class SpaceGroup:
                                 include_TR=include_TR,
                                 symprec=symprec,
                                 )
-    
+
     @classmethod
     def from_gpaw_magnetic(cls, calculator, theta=0, phi=0, include_TR=True, magmoms=None, mag_symprec=0.05, symprec=1e-5,
                            ):
@@ -887,7 +887,7 @@ class SpaceGroup:
             magmoms_axis = calculator.get_magnetic_moments()
             magmoms_axis = group_numbers(magmoms_axis, precision=mag_symprec)
             axis = np.array([np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)])
-            magmoms = magmoms_axis[:,None] * axis[None,:]
+            magmoms = magmoms_axis[:, None] * axis[None, :]
         print(f"using magmoms \n {magmoms}")
         return SpaceGroup.from_cell(real_lattice=lattice,
                                 positions=positions,
@@ -908,7 +908,7 @@ class SpaceGroup:
                               name="trivial+TR", spinor_rotations=[np.eye(2)] * 2)
 
 
-    
+
 
 def read_sym_file(fname):
     """

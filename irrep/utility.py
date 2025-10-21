@@ -741,6 +741,7 @@ def get_kpt_from_kptirr_isym(kptirr2kpt, kpt2kptirr):
                                f"k-point {ikirr} to point {ik}, but kpt2kptirr[{ik}] = {ikirr}.")
     return kpt_from_kptirr_isym
 
+
 def group_numbers(lst, precision):
     """
     Group numbers that are equal up to a given precision.
@@ -775,7 +776,7 @@ def group_numbers(lst, precision):
             current_group_ind = [ind]
     groups.append(current_group)
     groups_ind.append(current_group_ind)
-    
+
     lst_out = np.zeros(len(lst), dtype=float)
     for group_ind, group_num in zip(groups_ind, groups):
         avg_num = np.mean(group_num)
