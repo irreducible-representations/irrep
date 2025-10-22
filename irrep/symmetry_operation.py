@@ -187,7 +187,7 @@ class SymmetryOperation():
                                  translation_mod1=mod1,
                                  spinor_rotation=spinor_rot_new)
 
-    def equals(self, other, mod1=True):
+    def equals(self, other, mod1=True, tol=1e-6):
         """
         Check if two symmetry operations are equal.
 
@@ -212,7 +212,7 @@ class SymmetryOperation():
         dt = self.translation - other.translation
         if mod1:
             dt = dt - np.round(dt)
-        if not np.all(np.abs(dt) < 1e-6):
+        if not np.all(np.abs(dt) < tol):
             return False
         return True
 

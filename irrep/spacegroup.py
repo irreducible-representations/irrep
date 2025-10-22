@@ -908,6 +908,28 @@ class SpaceGroup:
                               name="trivial+TR", spinor_rotations=[np.eye(2)] * 2)
 
 
+    def equals(self, other, tol=1e-5, mod1=True):
+        if self.size != other.size:
+            return False
+        if not np.allclose(self.real_lattice, other.real_lattice, atol=tol):
+            return False
+        if not self.spinor == other.spinor:
+            return False
+        if self.magnetic != other.magnetic:
+            return False
+        # Check magnetic moments
+        if self.magnetic:
+            if not hasattr(self, 'positions') or not hasattr(other, 'positions'):
+                raise ValueError("Cannot compare magnetic spacegroups without positions")
+            if not np.allclose(self.positions, other.positions, atol=tol):
+                return False
+            if not np.allclose(self.typat, other.typat, atol=tol):
+                return False
+        # Check symmetries
+        for isym in range(len(self.symmetries)):
+            if not self.symmetries[isym].equals(other.symmetries[isym], tol=tol, mod1=mod1):
+                return False
+        return True
 
 
 def read_sym_file(fname):
