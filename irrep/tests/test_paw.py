@@ -82,12 +82,12 @@ def check_traces_gpaw():
                 return_msg += f"  Discrepancy in char: {diff}\n"
                 if diff > 1e-4:
                     return_msg += "  Warning: significant discrepancy detected!\n"
-                    return_msg += f"  Pseudo char: {   char[:,isym]}\n"
-                    return_msg += f"  PAW   char: {char_paw[:,isym]}\n"
+                    return_msg += f"  Pseudo char: {   char[:, isym]}\n"
+                    return_msg += f"  PAW   char: {char_paw[:, isym]}\n"
                     nonzero = np.where(np.abs(char[:, isym]) > 1e-5)[0]
                     ratio = char_paw[nonzero, isym] / char[nonzero, isym]
                     ratio = ratio[:-1]
-                    return_msg += f" ratio of nonzero elements:\n absolute {np.abs(ratio)},\n phase {np.round(np.angle(ratio)/np.pi*180,4)} degrees"
+                    return_msg += f" ratio of nonzero elements:\n absolute {np.abs(ratio)},\n phase {np.round(np.angle(ratio) / np.pi * 180, 4)} degrees"
         else:
             return_msg += "No significant discrepancies found."
             allgood = True
