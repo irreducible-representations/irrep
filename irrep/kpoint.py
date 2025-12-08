@@ -406,8 +406,6 @@ class Kpoint(KpointAbstract):
                 ]
             )[0]
         )
-        if self.spinor:
-            selectG = np.hstack((selectG, selectG + self.NG))
         WF = self.WF[:, selectG, :]
         result = []
         for b1, b2, E, matrices in self.get_rho_spin(degen_thresh):
