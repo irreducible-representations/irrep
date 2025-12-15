@@ -3,7 +3,7 @@ import numpy as np
 
 from irrep.tests.test_dmn import REF_FILES_PATH, TMP_FILES_PATH
 
-from .conftest import REF_DATA_PATH, TMP_DATA_PATH
+# from .conftest import REF_DATA_PATH, TMP_DATA_PATH
 from irrep.utility import group_numbers
 
 
@@ -75,3 +75,55 @@ def test_group_numbers():
     lst = [0.21, 0.09, 0.1, 0.2, 0.11, 0.22]
     grouped = group_numbers(lst, precision=0.05)
     assert np.allclose(grouped, [0.21, 0.1, 0.1, 0.21, 0.1, 0.21])
+
+def test_conventional_wyckoff_positions():
+    """ Test for spacegroups 221 and 225, manually"""
+
+    output_221 = ['x,y,z', 'x,x,z', '1/2,y,z', '0,y,z', '1/2,y,y', '0,y,y', 'x,1/2,0', 'x,x,x', 'x,1/2,1/2', 'x,0,0', '1/2,0,0', '0,1/2,1/2', '1/2,1/2,1/2', '0,0,0']
+    output_225 = ['x,y,z', 'x,x,z', '0,y,z', '1/2,y,y', '0,y,y', 'x,1/4,1/4', 'x,x,x', 'x,0,0', '0,1/4,1/4', '1/4,1/4,1/4', '1/2,1/2,1/2', '0,0,0']
+    
+    
+    assert SpaceGroup.conventional_wyckoff_positions(221) == output_221
+    assert SpaceGroup.conventional_wyckoff_positions(225) == output_225
+
+    return 
+
+def test_wyckoff_positions():
+    """ Test for NaCl """
+    a = 5.64  # lattice distance in Å
+
+    # Array with the 3 lattice base vectors {a_1, a_2, a_3}
+    lattice = [
+        [a,  0, 0],
+        [0, a, 0],
+        [0, 0, a]
+    ]
+
+    # Position of the atoms in the lattice
+    positions = np.array([
+        [0.0, 0.0, 0.0],        # Cl
+        [0.5, 0.5, 0.5]         # Na
+    ]) 
+    positions = positions + [1/2, 1/2, 0] # Shift to test the origin shift parameter
+
+    numbers = [17,11]  # Cl and Na atomi numbers
+
+    cell = (lattice, positions, numbers)
+    NaCl_wyckoffs = SpaceGroup.wyckoff_positions(cell)
+
+    first_NaCl_wyckoffs = [[0.5, 0.0, -0.5],
+        [0.0, 0.5, 0.0],
+        [0.5, 0.5, 0.0],
+        [0.0, 0.0, -0.5]]
+    
+    # Testing the first 4 wp because they are numerical arrays not symbols
+    # Then we can test without the numerical errors of the symbolic strings
+    for i, wp in enumerate(NaCl_wyckoffs[-4:]):
+        numerical_wp = wp.split(',')
+        numerical_wp = [ float(x) for x in numerical_wp]
+        assert np.allclose(numerical_wp, first_NaCl_wyckoffs[i])
+
+    return
+
+test_conventional_wyckoff_positions()
+test_wyckoff_positions()
