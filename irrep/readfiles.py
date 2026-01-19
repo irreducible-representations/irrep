@@ -560,7 +560,7 @@ class ParserEspresso:
         self.spinor = str2bool(self.bandstr.find("noncolin").text)
 
 
-    def parse_header(self):
+    def parse_header(self, spin_channel=None):
         '''
         Parse universal info of the bandstructure from `data-file-schema.xml` 
         file
@@ -586,15 +586,15 @@ class ParserEspresso:
         Ecut0 *= Hartree_eV
         NK = len(self.bandstr.findall("ks_energies"))
 
+        self.spin_channel_default = spin_channel
         # Parse number of bands
         try:
             NBin_dw = int(self.bandstr.find('nbnd_dw').text)
             NBin_up = int(self.bandstr.find('nbnd_up').text)
-            spinpol = True
+            self.spinpol = True
             print(f"spin-polarised bandstructure composed of {NBin_up} up and {NBin_dw} dw states")
-            NBin_dw + NBin_up
         except AttributeError:
-            spinpol = False
+            self.spinpol = False
             NBin = int(self.bandstr.find('nbnd').text)
 
         try:
@@ -602,11 +602,28 @@ class ParserEspresso:
         except Exception:
             EF = None
 
-        if spinpol:
-            NBin_list = [NBin_up, NBin_dw]
+        if self.spinpol:
+            self.NBin_list = [NBin_up, NBin_dw]
         else:
-            NBin_list = [NBin]
-        return spinpol, Ecut0, EF, NK, NBin_list
+            self.NBin_list = [NBin]
+
+        if self.spinor and self.spinpol:
+            raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
+        elif self.spinpol:
+            if spin_channel is None:
+                raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
+            assert (spin_channel in ['dw', 'up'])
+            if spin_channel == 'dw':
+                NBin = self.NBin_list[1]
+            else:
+                NBin = self.NBin_list[0]
+        else:
+            NBin = self.NBin_list[0]
+            if spin_channel is not None:
+                raise ValueError(f"Found a non-polarized bandstructure, but spin channel is set to {spin_channel}")
+
+
+        return self.spinpol, Ecut0, EF, NK, NBin
 
     def parse_lattice(self):
         '''
@@ -661,7 +678,7 @@ class ParserEspresso:
         return lattice, positions, typat, alat
 
 
-    def parse_kpoint(self, ik, NBin, spin_channel, verbosity=0):
+    def parse_kpoint(self, ik, spin_channel=None, verbosity=0):
         '''
         Parse block of a particular k-point from `data-file-schema.xml` file
 
@@ -692,9 +709,23 @@ class ParserEspresso:
         '''
 
         kptxml = self.bandstr.findall("ks_energies")[ik]
+        if self.spinpol:
+            if spin_channel is None:
+                spin_channel = self.spin_channel_default
+                log_message(f"spin channel not specified, using default: {spin_channel}", verbosity, 2)
+            assert (spin_channel in ['dw', 'up']), f"spin_channel must be set to 'up' or 'dw', found {spin_channel}"
+            if spin_channel == 'up':
+                NB_skip = 0
+                NBin = self.NBin_list[0]
+            else:
+                NB_skip = self.NBin_list[0]
+                NBin = self.NBin_list[1]
+        else:
+            NB_skip = 0
+            NBin = self.NBin_list[0]
 
         # Parse energy levels
-        Energy = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)
+        Energy = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)[NB_skip:NB_skip + NBin]
         Energy *= Hartree_eV
         npw = int(kptxml.find("npw").text)
         nspinor = 2 if self.spinor else 1

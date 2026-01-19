@@ -315,23 +315,8 @@ class BandStructure:
             Lattice, positions, typat, _alat = parser.parse_lattice()
             if alat is None:
                 alat = _alat
-            spinpol, self.Ecut0, EF_in, NK, NBin_list = parser.parse_header()
+            spinpol, self.Ecut0, EF_in, NK, NBin = parser.parse_header()
 
-            # Set NBin
-            if _spinor and spinpol:
-                raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
-            elif spinpol:
-                if spin_channel is None:
-                    raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
-                assert (spin_channel in ['dw', 'up'])
-                if spin_channel == 'dw':
-                    NBin = NBin_list[1]
-                else:
-                    NBin = NBin_list[0]
-            else:
-                NBin = NBin_list[0]
-                if spin_channel is not None:
-                    raise ValueError(f"Found a non-polarized bandstructure, but spin channel is set to {spin_channel}")
 
         elif code == "wannier90":
 
@@ -451,7 +436,7 @@ class BandStructure:
 
             elif code == 'espresso':
                 log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
-                WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel, verbosity=verbosity)
+                WF, Energy, kg, kpt = parser.parse_kpoint(ik, spin_channel, verbosity=verbosity)
                 if check_skip(kpt):
                     continue
                 WF, kg, eKG = sortIG(ik + 1, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, verbosity=verbosity)
