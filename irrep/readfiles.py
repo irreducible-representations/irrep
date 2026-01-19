@@ -253,14 +253,7 @@ class ParserAbinit():
         nband = record[1]
         istwfk = record[0]
         npwarr = record[2]
-
-        # istwfk and npwarr are int, should be set, array and array
-        if nkpt == 1:
-            istwfk = set([int(istwfk)])
-            npwarr = np.array([npwarr])
-            nband = np.array([nband])
-        else:
-            istwfk = set(istwfk)
+        istwfk = set(istwfk)
 
         # Check that istwfk was 1 and consistency of number of bands
         if istwfk != {1}:

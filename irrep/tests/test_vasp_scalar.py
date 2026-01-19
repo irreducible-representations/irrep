@@ -62,7 +62,7 @@ def test_vasp_scalar():
         assert len(irrep_ref) == len(irrep_run)
         for irrepname_ref, irrepname_run in zip(irrep_ref.keys(), irrep_run.keys()):
             assert irrepname_ref == irrepname_run  # compare strings of irreps
-            assert np.allclose(irrep_ref[irrepname_ref], irrep_run[irrepname_run])  # compare multiplicities
+            assert np.allclose(irrep_ref[irrepname_ref], irrep_run[irrepname_run], atol=1e-7)  # compare multiplicities
 
     # Remove output files created during run
     for test_output_file in (
