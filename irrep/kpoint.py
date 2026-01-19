@@ -402,12 +402,10 @@ class Kpoint(KpointAbstract):
             np.where(
                 [
                     is_round(dg, prec=1e-4)
-                    for dg in (self.ig[:3].T.dot(np.linalg.inv(supercell.T)) - g_shift)
+                    for dg in (self.ig[:, :3].dot(np.linalg.inv(supercell.T)) - g_shift)
                 ]
             )[0]
         )
-        if self.spinor:
-            selectG = np.hstack((selectG, selectG + self.NG))
         WF = self.WF[:, selectG, :]
         result = []
         for b1, b2, E, matrices in self.get_rho_spin(degen_thresh):
