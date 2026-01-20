@@ -465,9 +465,9 @@ class Kpoint(KpointAbstract):
                 #         for t in (0, 1) ]
                 #         for s in (0, 1) ]  # spin indices
                 Smatrix = cached_einsum('igs,jgt->ijst', self.WF[b1:b2].conj(), self.WF[b1:b2])
-                Sx = Smatrix[0][1] + Smatrix[1][0]
-                Sy = 1j * (-Smatrix[0][1] + Smatrix[1][0])
-                Sz = Smatrix[0][0] - Smatrix[1][1]
+                Sx = Smatrix[:,:,0,1] + Smatrix[:,:,1,0]
+                Sy = 1j * (-Smatrix[:,:,0,1] + Smatrix[:,:,1,0])
+                Sz = Smatrix[:,:,0,0] - Smatrix[:,:,1,1]
                 result.append((b1, b2, E, (W, Sx, Sy, Sz)))
             else:
                 result.append((b1, b2, E, (W,)))
