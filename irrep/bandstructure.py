@@ -73,9 +73,7 @@ class BandStructure:
     onlysym : bool, default=False
         Exit after printing info about space-group.
     spin_channel : str, default=None
-        Selection of the spin-channel. Foq QuantumEspresso 'up' for spin-up, 'dw' for spin-down. 
-        for wannier90 : 1 for spin-up, 2 for spin-down. (the last digit of the UNK file name)
-        for gpaw : 0 or 1
+        Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down. 
     refUC : array, default=None
         3x3 array describing the transformation of vectors defining the 
         unit cell to the standard setting.
@@ -200,6 +198,9 @@ class BandStructure:
 
         code = code.lower()
 
+        if spin_channel is not None:
+            assert spin_channel in ['up', 'dw'], f"spin_channel should be 'up' or 'dw' or None, got {spin_channel}"
+
         if irreps:
             cls_spacegroup = SpaceGroupIrreps
         else:
@@ -303,11 +304,6 @@ class BandStructure:
             NBin = max(nband)
 
         elif code == "espresso":
-            if spin_channel is not None:
-                spin_channel = spin_channel.lower()
-            if spin_channel == 'down':
-                spin_channel = 'dw'
-
 
             parser = ParserEspresso(prefix)
             _spinor = parser.spinor
@@ -436,7 +432,7 @@ class BandStructure:
 
             elif code == 'espresso':
                 log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
-                WF, Energy, kg, kpt = parser.parse_kpoint(ik, spin_channel, verbosity=verbosity)
+                WF, Energy, kg, kpt = parser.parse_kpoint(ik, verbosity=verbosity)
                 if check_skip(kpt):
                     continue
                 WF, kg, eKG = sortIG(ik + 1, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, verbosity=verbosity)
