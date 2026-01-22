@@ -659,7 +659,7 @@ class SpaceGroup:
             Lattice, positions, typat, _alat = parser.parse_lattice()
             if alat is None:
                 alat = _alat
-            spinpol, Ecut0, EF_in, NK, NBin_list = parser.parse_header()
+            # spinpol, Ecut0, EF_in, NK, NBin_list = parser.parse_header()
 
 
         elif code == "wannier90":

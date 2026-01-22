@@ -315,7 +315,7 @@ class BandStructure:
             Lattice, positions, typat, _alat = parser.parse_lattice()
             if alat is None:
                 alat = _alat
-            spinpol, self.Ecut0, EF_in, NK, NBin = parser.parse_header()
+            spinpol, self.Ecut0, EF_in, NK, NBin = parser.parse_header(spin_channel=spin_channel)
 
 
         elif code == "wannier90":
