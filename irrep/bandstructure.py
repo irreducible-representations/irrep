@@ -73,9 +73,7 @@ class BandStructure:
     onlysym : bool, default=False
         Exit after printing info about space-group.
     spin_channel : str, default=None
-        Selection of the spin-channel. Foq QuantumEspresso 'up' for spin-up, 'dw' for spin-down. 
-        for wannier90 : 1 for spin-up, 2 for spin-down. (the last digit of the UNK file name)
-        for gpaw : 0 or 1
+        Selection of the spin-channel. 'up' for spin-up, 'dw' for spin-down. 
     refUC : array, default=None
         3x3 array describing the transformation of vectors defining the 
         unit cell to the standard setting.
@@ -200,6 +198,9 @@ class BandStructure:
 
         code = code.lower()
 
+        if spin_channel is not None:
+            assert spin_channel in ['up', 'dw', 0, 1, 2], "spin_channel must be 'up', 'dw', 0, 1 or 2"
+
         if irreps:
             cls_spacegroup = SpaceGroupIrreps
         else:
@@ -303,11 +304,6 @@ class BandStructure:
             NBin = max(nband)
 
         elif code == "espresso":
-            if spin_channel is not None:
-                spin_channel = spin_channel.lower()
-            if spin_channel == 'down':
-                spin_channel = 'dw'
-
 
             parser = ParserEspresso(prefix)
             _spinor = parser.spinor
@@ -315,23 +311,8 @@ class BandStructure:
             Lattice, positions, typat, _alat = parser.parse_lattice()
             if alat is None:
                 alat = _alat
-            spinpol, self.Ecut0, EF_in, NK, NBin_list = parser.parse_header()
+            spinpol, self.Ecut0, EF_in, NK, NBin = parser.parse_header(spin_channel=spin_channel)
 
-            # Set NBin
-            if _spinor and spinpol:
-                raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
-            elif spinpol:
-                if spin_channel is None:
-                    raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
-                assert (spin_channel in ['dw', 'up'])
-                if spin_channel == 'dw':
-                    NBin = NBin_list[1]
-                else:
-                    NBin = NBin_list[0]
-            else:
-                NBin = NBin_list[0]
-                if spin_channel is not None:
-                    raise ValueError(f"Found a non-polarized bandstructure, but spin channel is set to {spin_channel}")
 
         elif code == "wannier90":
 
@@ -344,16 +325,6 @@ class BandStructure:
             Lattice, positions, typat, kpred = parser.parse_lattice()
             Energies = parser.parse_energies()
         elif code == "gpaw":
-            if spin_channel is None:
-                spin_channel = 0
-            elif isinstance(spin_channel, str):
-                if spin_channel.isdigit():
-                    spin_channel = int(spin_channel)
-                elif spin_channel.lower() == 'up':
-                    spin_channel = 0
-                elif spin_channel.lower() in ['dw', 'down']:
-                    spin_channel = 1
-
 
             parser = ParserGPAW(calculator=calculator_gpaw,
                                 spinor=bool(spinor),
@@ -451,7 +422,7 @@ class BandStructure:
 
             elif code == 'espresso':
                 log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
-                WF, Energy, kg, kpt = parser.parse_kpoint(ik, NBin, spin_channel, verbosity=verbosity)
+                WF, Energy, kg, kpt = parser.parse_kpoint(ik, verbosity=verbosity)
                 if check_skip(kpt):
                     continue
                 WF, kg, eKG = sortIG(ik + 1, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, verbosity=verbosity)
