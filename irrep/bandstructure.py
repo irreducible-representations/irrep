@@ -199,7 +199,7 @@ class BandStructure:
         code = code.lower()
 
         if spin_channel is not None:
-            assert spin_channel in ['up', 'dw'], f"spin_channel should be 'up' or 'dw' or None, got {spin_channel}"
+            assert spin_channel in ['up', 'dw', 0, 1, 2], "spin_channel must be 'up', 'dw', 0, 1 or 2"
 
         if irreps:
             cls_spacegroup = SpaceGroupIrreps

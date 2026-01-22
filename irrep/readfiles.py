@@ -798,7 +798,7 @@ class ParserW90:
         Number of k-points in DFT calculation
     '''
 
-    spin_channels = {'up': 1, 'dw': 2, None: None}
+    spin_channels = {'up': 1, 'dw': 2, None: None, 1: 1, 2: 2}
 
     def __init__(self, prefix, unk_formatted=False, spin_channel=None):
 
