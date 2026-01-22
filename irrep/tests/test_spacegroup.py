@@ -3,7 +3,7 @@ import numpy as np
 
 from irrep.tests.test_dmn import REF_FILES_PATH, TMP_FILES_PATH
 
-# from .conftest import REF_DATA_PATH, TMP_DATA_PATH
+from .conftest import REF_DATA_PATH, TMP_DATA_PATH
 from irrep.utility import group_numbers
 
 
