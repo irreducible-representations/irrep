@@ -169,6 +169,14 @@ do not hesitate to contact the author:
     type=str,
     help="Comma-separated list of k-point indices (starting from 1).",
 )
+
+@click.option(
+    "-spin_channel",
+    type=click.Choice(['up', 'dw']),
+    default=None,
+    help="Select spin channel to analyze (only for collinear calculations).",
+)
+
 @click.option(
     "-kpnames",
     type=str,
@@ -344,6 +352,7 @@ def cli(
     code,
     spinor,
     kpoints,
+    spin_channel,
     kpnames,
     refuc,
     shiftuc,
@@ -456,6 +465,7 @@ def cli(
         IBend=ibend,
         kplist=kpoints,
         spinor=spinor,
+        spin_channel=spin_channel,
         calculate_traces=True,
         code=code,
         EF=ef,

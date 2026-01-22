@@ -253,14 +253,7 @@ class ParserAbinit():
         nband = record[1]
         istwfk = record[0]
         npwarr = record[2]
-
-        # istwfk and npwarr are int, should be set, array and array
-        if nkpt == 1:
-            istwfk = set([int(istwfk)])
-            npwarr = np.array([npwarr])
-            nband = np.array([nband])
-        else:
-            istwfk = set(istwfk)
+        istwfk = set(istwfk)
 
         # Check that istwfk was 1 and consistency of number of bands
         if istwfk != {1}:
@@ -560,7 +553,7 @@ class ParserEspresso:
         self.spinor = str2bool(self.bandstr.find("noncolin").text)
 
 
-    def parse_header(self):
+    def parse_header(self, spin_channel=None):
         '''
         Parse universal info of the bandstructure from `data-file-schema.xml` 
         file
@@ -586,15 +579,15 @@ class ParserEspresso:
         Ecut0 *= Hartree_eV
         NK = len(self.bandstr.findall("ks_energies"))
 
+        self.spin_channel = spin_channel
         # Parse number of bands
         try:
             NBin_dw = int(self.bandstr.find('nbnd_dw').text)
             NBin_up = int(self.bandstr.find('nbnd_up').text)
-            spinpol = True
+            self.spinpol = True
             print(f"spin-polarised bandstructure composed of {NBin_up} up and {NBin_dw} dw states")
-            NBin_dw + NBin_up
         except AttributeError:
-            spinpol = False
+            self.spinpol = False
             NBin = int(self.bandstr.find('nbnd').text)
 
         try:
@@ -602,11 +595,28 @@ class ParserEspresso:
         except Exception:
             EF = None
 
-        if spinpol:
-            NBin_list = [NBin_up, NBin_dw]
+        if self.spinpol:
+            self.NBin_list = [NBin_up, NBin_dw]
         else:
-            NBin_list = [NBin]
-        return spinpol, Ecut0, EF, NK, NBin_list
+            self.NBin_list = [NBin]
+
+        if self.spinor and self.spinpol:
+            raise RuntimeError("bandstructure cannot be both noncollinear and spin-polarised. Smth is wrong with the 'data-file-schema.xml'")
+        elif self.spinpol:
+            if spin_channel is None:
+                raise ValueError("Need to select a spin channel for spin-polarised calculations set  'up' or 'dw'")
+            assert (spin_channel in ['dw', 'up'])
+            if spin_channel == 'dw':
+                NBin = self.NBin_list[1]
+            else:
+                NBin = self.NBin_list[0]
+        else:
+            NBin = self.NBin_list[0]
+            if spin_channel is not None:
+                raise ValueError(f"Found a non-polarized bandstructure, but spin channel is set to {spin_channel}")
+
+
+        return self.spinpol, Ecut0, EF, NK, NBin
 
     def parse_lattice(self):
         '''
@@ -661,7 +671,7 @@ class ParserEspresso:
         return lattice, positions, typat, alat
 
 
-    def parse_kpoint(self, ik, NBin, spin_channel, verbosity=0):
+    def parse_kpoint(self, ik, verbosity=0):
         '''
         Parse block of a particular k-point from `data-file-schema.xml` file
 
@@ -671,8 +681,6 @@ class ParserEspresso:
             Index of the k-point
         NBin : int
             Number of bands
-        spin_channel : str
-            `up` for spin up, `dw` for spin down, `None` if not spin polarized
         verbosity : int, default=0
             Verbosity level. Default set to minimalistic printing
 
@@ -692,16 +700,26 @@ class ParserEspresso:
         '''
 
         kptxml = self.bandstr.findall("ks_energies")[ik]
+        if self.spinpol:
+            if self.spin_channel == 'up':
+                NB_skip = 0
+                NBin = self.NBin_list[0]
+            else:
+                NB_skip = self.NBin_list[0]
+                NBin = self.NBin_list[1]
+        else:
+            NB_skip = 0
+            NBin = self.NBin_list[0]
 
         # Parse energy levels
-        Energy = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)
+        Energy = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)[NB_skip:NB_skip + NBin]
         Energy *= Hartree_eV
         npw = int(kptxml.find("npw").text)
         nspinor = 2 if self.spinor else 1
         npwtot = npw * nspinor
 
         # Open file with the wave functions
-        wfcname = f"wfc{'' if spin_channel is None else spin_channel}{ik + 1}"
+        wfcname = f"wfc{'' if self.spin_channel is None else self.spin_channel}{ik + 1}"
         fWFC = None
         checked_files = []
         for extension in ["hdf5", "dat"]:
@@ -780,9 +798,13 @@ class ParserW90:
         Number of k-points in DFT calculation
     '''
 
+    spin_channels = {'up': 1, 'dw': 2, None: None, 1: 1, 2: 2}
+
     def __init__(self, prefix, unk_formatted=False, spin_channel=None):
 
         self.prefix = prefix
+        spin_channel = self.spin_channels[spin_channel]
+            
         self.spin_channel = spin_channel
         self.path = os.path.dirname(prefix)
         self.fwin = [l.strip().lower() for l in open(prefix + ".win").readlines()]
@@ -1128,8 +1150,10 @@ class ParserGPAW:
         instance of GPAW class or the name of the file containing it
     """
 
+    spin_channels = {'up': 0, 'dw': 1, None: 0, 0:0, 1:1}
     def __init__(self, calculator, spinor=False, spin_channel=None,
                  verbosity=0):
+        spin_channel = self.spin_channels[spin_channel]
         from gpaw import GPAW
         if isinstance(calculator, str):
             calculator = GPAW(calculator)
@@ -1142,8 +1166,6 @@ class ParserGPAW:
             nspins = self.calculator.get_number_of_spins()
             self.spin_channels = np.arange(nspins)
         else:
-            if spin_channel is None:
-                spin_channel = 0
             self.spin_channels = [spin_channel]
 
 

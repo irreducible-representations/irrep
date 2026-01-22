@@ -402,12 +402,10 @@ class Kpoint(KpointAbstract):
             np.where(
                 [
                     is_round(dg, prec=1e-4)
-                    for dg in (self.ig[:3].T.dot(np.linalg.inv(supercell.T)) - g_shift)
+                    for dg in (self.ig[:, :3].dot(np.linalg.inv(supercell.T)) - g_shift)
                 ]
             )[0]
         )
-        if self.spinor:
-            selectG = np.hstack((selectG, selectG + self.NG))
         WF = self.WF[:, selectG, :]
         result = []
         for b1, b2, E, matrices in self.get_rho_spin(degen_thresh):
@@ -467,9 +465,9 @@ class Kpoint(KpointAbstract):
                 #         for t in (0, 1) ]
                 #         for s in (0, 1) ]  # spin indices
                 Smatrix = cached_einsum('igs,jgt->ijst', self.WF[b1:b2].conj(), self.WF[b1:b2])
-                Sx = Smatrix[0][1] + Smatrix[1][0]
-                Sy = 1j * (-Smatrix[0][1] + Smatrix[1][0])
-                Sz = Smatrix[0][0] - Smatrix[1][1]
+                Sx = Smatrix[:,:,0,1] + Smatrix[:,:,1,0]
+                Sy = 1j * (-Smatrix[:,:,0,1] + Smatrix[:,:,1,0])
+                Sz = Smatrix[:,:,0,0] - Smatrix[:,:,1,1]
                 result.append((b1, b2, E, (W, Sx, Sy, Sz)))
             else:
                 result.append((b1, b2, E, (W,)))

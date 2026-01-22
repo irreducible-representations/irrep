@@ -1,7 +1,7 @@
 import numpy as np
 from .kpoint import KpointAbstract
 from .utility import cached_einsum
-
+from .readfiles import ParserGPAW
 
 class KpointGPAW(KpointAbstract):
     """ a container to store wavefunctions and eigenvalues at a k-point from GPAW.
@@ -31,6 +31,7 @@ class KpointGPAW(KpointAbstract):
 
     @classmethod
     def from_gpaw(self, calc, ibz_index, ispin, RecLattice=None):
+        ispin = ParserGPAW.spin_channels[ispin]
         kpt = calc.wfs.kpt_qs[ibz_index][ispin]
         k = calc.get_ibz_k_points()[ibz_index]
         nbands = calc.wfs.bd.nbands

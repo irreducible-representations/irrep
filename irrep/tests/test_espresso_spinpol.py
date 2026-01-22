@@ -3,28 +3,31 @@ import subprocess
 from pathlib import Path
 from monty.serialization import loadfn
 import numpy as np
+import pytest
 
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 
+@pytest.mark.parametrize("spin_channel", ['up', 'dw'])
+def test_espresso_spinor(spin_channel):
 
-def test_vasp_scalar():
+    os.chdir(TEST_FILES_PATH / "espresso_spinpol")
 
-    os.chdir(TEST_FILES_PATH / "vasp_scalar")
-
-    # Test running of IrRep
     command = [
         "irrep",
-        "-code=vasp",
-        "-kpnames=GM",
-        "-kpoints=1",
-        "-Ecut=50",
+        "-spinor",
+        "-Ecut=100",
+        "-code=espresso",
+        f"-spin_channel={spin_channel}",
+        "-prefix=Fe",
+        "-kpoints=1,2,3,4",
+        "-kpnames=GM,P,N,H",
     ]
     output = subprocess.run(command, capture_output=True, text=True)
     return_code = output.returncode
     assert return_code == 0, output.stderr
 
     # Load generated and reference output data
-    data_ref = loadfn("ref_output.json")
+    data_ref = loadfn(f"ref_output_{spin_channel}.json")
     data_run = loadfn("irrep-output.json")
 
     # Check SpaceGroup
@@ -54,7 +57,7 @@ def test_vasp_scalar():
     kp_ref = bs_ref['k points'][0]
     kp_run = bs_run['k points'][0]
     assert np.allclose(kp_ref['symmetries'], kp_run['symmetries'])
-    assert np.allclose(kp_ref['energies'], kp_run['energies_mean'], rtol=0., atol=1e-4)
+    assert np.allclose(kp_ref['energies_mean'], kp_run['energies_mean'], rtol=0., atol=1e-4)
     assert np.allclose(kp_ref['characters'], kp_run['characters'], rtol=0., atol=1e-4)
     assert kp_ref['characters refUC is the same'] == kp_run['characters refUC is the same']
     assert np.allclose(kp_ref['dimensions'], kp_run['dimensions'], rtol=0., atol=1e-4)
@@ -62,7 +65,7 @@ def test_vasp_scalar():
         assert len(irrep_ref) == len(irrep_run)
         for irrepname_ref, irrepname_run in zip(irrep_ref.keys(), irrep_run.keys()):
             assert irrepname_ref == irrepname_run  # compare strings of irreps
-            assert np.allclose(irrep_ref[irrepname_ref], irrep_run[irrepname_run], atol=1e-7)  # compare multiplicities
+            assert np.allclose(irrep_ref[irrepname_ref], irrep_run[irrepname_run])  # compare multiplicities
 
     # Remove output files created during run
     for test_output_file in (
@@ -72,3 +75,5 @@ def test_vasp_scalar():
             "irrep-output.json"
     ):
         os.remove(test_output_file)
+
+
