@@ -325,16 +325,6 @@ class BandStructure:
             Lattice, positions, typat, kpred = parser.parse_lattice()
             Energies = parser.parse_energies()
         elif code == "gpaw":
-            if spin_channel is None:
-                spin_channel = 0
-            elif isinstance(spin_channel, str):
-                if spin_channel.isdigit():
-                    spin_channel = int(spin_channel)
-                elif spin_channel.lower() == 'up':
-                    spin_channel = 0
-                elif spin_channel.lower() in ['dw', 'down']:
-                    spin_channel = 1
-
 
             parser = ParserGPAW(calculator=calculator_gpaw,
                                 spinor=bool(spinor),
