@@ -16,8 +16,7 @@ setuptools.setup(
         "spglib>=2.5.0",
         "Click",
         "monty",
-        "ruamel.yaml",
-        "irreptables>=2.0",
+        # "ruamel.yaml", # Probably not needed anymore
         "fortio",
         "packaging",
         "h5py",
