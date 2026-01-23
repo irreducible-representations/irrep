@@ -6,7 +6,6 @@ import logging
 import os
 
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
@@ -229,9 +228,11 @@ class Irrep:
         ch = np.array(line[2: 2 + self.nsym], dtype=float)
         if not self.reality:
             ch = ch * \
-                np.exp( 1.0j * np.pi * np.array(line[2 + self.nsym: 2 + 2 * self.nsym], dtype=float))
+                np.exp(
+                    1.0j * np.pi * np.array(line[2 + self.nsym: 2 + 2 * self.nsym], dtype=float))
         self.characters = {k_point.isym[i]: ch[i] for i in range(self.nsym)}
-        log_message(f"## Irrep {self.name}\nCharacter:\n{self.characters}", v, 2)
+        log_message(
+            f"## Irrep {self.name}\nCharacter:\n{self.characters}", v, 2)
         assert len(self.characters) == self.nsym
 
     def show(self):
@@ -350,7 +351,8 @@ class IrrepTable:
                         pass
                 break
 
-        log_message("Symmetries are:\n" + "\n".join(s.str() for s in self.symmetries), v, 2)
+        log_message("Symmetries are:\n" + "\n".join(s.str()
+                    for s in self.symmetries), v, 2)
 
         self.irreps = []
         while len(lines) > 0:

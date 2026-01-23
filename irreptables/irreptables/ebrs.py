@@ -1,6 +1,7 @@
 import os
 import json
 
+
 def load_ebr_data(sg_number, spinor):
     '''
     Load data from file of EBRs
