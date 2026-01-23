@@ -185,7 +185,7 @@ def check_symm_matrix(example_dir, output_file="symm_matrix", ref_file=None, deg
                                   search_cell=True,
                                   Ecut=Ecut,
                                   spinor=True, normalize=False,
-                                  irreps=True,
+                                  irreps=True,  # Weirdly, with false the test fails.
                                   IBend=20)
     points = []
     matrices = []

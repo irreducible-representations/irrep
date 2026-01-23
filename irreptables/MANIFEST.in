@@ -1,2 +1,5 @@
-include irreptables/tables/*.dat
+include irreptables/data/tables/*.dat
 include irreptables/correptables/*.dat
+include irreptables/data/ebrs/*ebrs.json
+include irreptables/data/symmetry_indicators/*_indicators*.json
+
