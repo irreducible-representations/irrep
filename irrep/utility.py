@@ -790,9 +790,10 @@ class DummyMethod:
 
     def __call__(self, *args, **kwargs):
         raise RuntimeError(self.message)
-    
+
+
 class DummyMethodTables(DummyMethod):
-    
+
     def __init__(self, method_name):
         message = f"{method_name} requires irreptables package to be installed. " \
                   f"Please install irreptables via pip: pip install irreptables"

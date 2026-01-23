@@ -169,14 +169,12 @@ do not hesitate to contact the author:
     type=str,
     help="Comma-separated list of k-point indices (starting from 1).",
 )
-
 @click.option(
     "-spin_channel",
     type=click.Choice(['up', 'dw']),
     default=None,
     help="Select spin channel to analyze (only for collinear calculations).",
 )
-
 @click.option(
     "-kpnames",
     type=str,

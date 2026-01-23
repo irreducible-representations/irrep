@@ -804,7 +804,7 @@ class ParserW90:
 
         self.prefix = prefix
         spin_channel = self.spin_channels[spin_channel]
-            
+
         self.spin_channel = spin_channel
         self.path = os.path.dirname(prefix)
         self.fwin = [l.strip().lower() for l in open(prefix + ".win").readlines()]
@@ -1150,7 +1150,8 @@ class ParserGPAW:
         instance of GPAW class or the name of the file containing it
     """
 
-    spin_channels = {'up': 0, 'dw': 1, None: 0, 0:0, 1:1}
+    spin_channels = {'up': 0, 'dw': 1, None: 0, 0: 0, 1: 1}
+
     def __init__(self, calculator, spinor=False, spin_channel=None,
                  verbosity=0):
         spin_channel = self.spin_channels[spin_channel]

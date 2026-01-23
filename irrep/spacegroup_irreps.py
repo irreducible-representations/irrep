@@ -65,7 +65,7 @@ class SpaceGroupIrreps(SpaceGroup):
             no_match_symmetries=False,
             verbosity=0):
         # Load symmetries from the space group's table
-        
+
         irreptable = IrrepTable(self.number_str, self.spinor, magnetic=self.magnetic, v=verbosity)
         self.u_symmetries_tables = irreptable.u_symmetries
         self.au_symmetries_tables = irreptable.au_symmetries

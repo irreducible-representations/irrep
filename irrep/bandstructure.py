@@ -43,6 +43,7 @@ except ImportError:
     from .utility import DummyMethodTables
     load_si_table = DummyMethodTables("load_si_table")
 
+
 class BandStructure:
     """
     Parses files and organizes info about the whole band structure in 
@@ -1210,7 +1211,7 @@ class BandStructure:
             ORTOOLS_AVAILABLE,
             compute_ebr_decomposition,
         )
-        
+
         # Load data from EBR files
         ebr_data = load_ebr_data(self.spacegroup.number_str, self.spinor)
 
