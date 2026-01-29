@@ -29,7 +29,7 @@ from packaging import version
 import os
 
 from pyxtal import Group as PyxtalGroup
-from sympy import Matrix, sympify
+from sympy import sympify
 
 class SpaceGroup:
 
@@ -1018,16 +1018,16 @@ def wyckoff_positions(lattice, positions, typat):
     # Makes SymPy to execute a simbolic operation
     inverse_matrix = np.linalg.inv(symmetry_dataset.transformation_matrix)
 
-    inv_transformation_matrix = Matrix(inverse_matrix).applyfunc(sympify)
-    origin_shift = Matrix(symmetry_dataset.origin_shift).applyfunc(sympify)
+    inv_transformation_matrix = inverse_matrix
+    origin_shift = symmetry_dataset.origin_shift
 
     wyckoffs_in_cell_base = []
 
     for sim_vector in conventional_wyckoffs:
         
         # sim_vector is a string on array shape change to numeric or simbolic
-        vector = Matrix([sympify(v) for v in sim_vector.split(',')])
-        wyckoff_new_base = inv_transformation_matrix * (vector - origin_shift)
+        vector = np.array([sympify(v) for v in sim_vector.split(',')])
+        wyckoff_new_base = inv_transformation_matrix @ (vector - origin_shift)
         
         # Change to string again
         parts = [str(e).replace(" ", "") for e in wyckoff_new_base]
