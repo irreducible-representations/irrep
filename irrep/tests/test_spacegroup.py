@@ -1,4 +1,5 @@
 from irrep.spacegroup import SpaceGroup
+from irrep import spacegroup
 import numpy as np
 
 from irrep.tests.test_dmn import REF_FILES_PATH, TMP_FILES_PATH
@@ -83,8 +84,8 @@ def test_conventional_wyckoff_positions():
     output_225 = ['x,y,z', 'x,x,z', '0,y,z', '1/2,y,y', '0,y,y', 'x,1/4,1/4', 'x,x,x', 'x,0,0', '0,1/4,1/4', '1/4,1/4,1/4', '1/2,1/2,1/2', '0,0,0']
     
     
-    assert SpaceGroup.conventional_wyckoff_positions(221) == output_221
-    assert SpaceGroup.conventional_wyckoff_positions(225) == output_225
+    assert spacegroup.conventional_wyckoff_positions(221) == output_221
+    assert spacegroup.conventional_wyckoff_positions(225) == output_225
 
     return 
 
@@ -108,8 +109,8 @@ def test_wyckoff_positions():
 
     numbers = [17,11]  # Cl and Na atomi numbers
 
-    cell = (lattice, positions, numbers)
-    NaCl_wyckoffs = SpaceGroup.wyckoff_positions(cell)
+    
+    NaCl_wyckoffs = spacegroup.wyckoff_positions(lattice, positions, numbers)
 
     first_NaCl_wyckoffs = [[0.5, 0.0, -0.5],
         [0.0, 0.5, 0.0],
@@ -125,5 +126,3 @@ def test_wyckoff_positions():
 
     return
 
-test_conventional_wyckoff_positions()
-test_wyckoff_positions()

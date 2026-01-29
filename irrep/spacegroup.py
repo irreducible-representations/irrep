@@ -28,7 +28,7 @@ from .utility import BOHR, group_numbers, log_message, select_irreducible
 from packaging import version
 import os
 
-from pyxtal import Group
+from pyxtal import Group as PyxtalGroup
 from sympy import Matrix, sympify
 
 class SpaceGroup:
@@ -933,66 +933,110 @@ class SpaceGroup:
                 return False
         return True
     
-    def conventional_wyckoff_positions(spacegroup_num):
-        """
-            Returns an array of all Wyckoff Positions in string symbolic format
-            of a given space group of symmetries
-            Args:
-                spacegroup_num: int of the spacegroup number
-        """
-        group = Group(spacegroup_num, style="spglib")
-        conventional_wyckoff_poss = []
-
-        for position in group.Wyckoff_positions:
-            op = position.ops[0]
-            coordinate = op.as_xyz_str()
-            coordinate = coordinate.replace(' ','')
-            conventional_wyckoff_poss.append(coordinate)
-
-
-        return conventional_wyckoff_poss
-
     
-    def wyckoff_positions(cell_structure):
+    def get_sitesymmetry(self, position, tol=1e-5):
         """
-            Given a cell structure, returns all the wyckoff positions associated to its
-            symmetry group, in the lattice vector's basis. As symbolic strings
+        Get the site-symmetry group of a given position.
 
-            Args:
-                cell_structure: 3d tuple with
-                    1- numerical array of lattice vectors [[a1,a2,a3]]
-                    2- numerical array of atoms positions [[r1,r2]]
-                    3- numerical array with atomical numbers in the same order of their
-                        position [11,17]
+        Parameters
+        ----------
+        position : array, shape=(3,)
+            The position in fractional coordinates.
+        tol : float
+            Tolerance for comparing positions.
+        irreps : bool
+            If `True`, the irreducible representations of the site-symmetry group
+            are also computed and returned.
+        Returns
+        -------
+        list of int
+            The indices of the symmetries in the spacegroup that leave the position invariant.
+        np.array, shape=(Nsym_site, 3, 3)
+            The rotation matrices of the site-symmetry group.
         """
+        site_sym_indices = []
+        site_sym_rotations = []
+        for i, sym in enumerate(self.symmetries):
+            pos_transformed = sym.transform_r(position)
+            diff = pos_transformed - position
+            if np.allclose(np.round(diff), diff, atol=tol):
+                site_sym_indices.append(i)
+                site_sym_rotations.append(sym.rotation)
+        site_sym_rotations = np.array(site_sym_rotations)
+        return site_sym_indices, site_sym_rotations
+        
+    
 
 
-        symmetry_dataset = spglib.get_symmetry_dataset(cell_structure)
-        group_number = symmetry_dataset.number
+def conventional_wyckoff_positions(spacegroup_num):
+    """
+        Returns an array of all Wyckoff Positions in string symbolic format
+        of a given space group of symmetries
+        Args:
+            spacegroup_num: int of the spacegroup number
+    """
+    group = PyxtalGroup(spacegroup_num, style="spglib")
+    conventional_wyckoff_poss = []
 
-        conventional_wyckoffs = SpaceGroup.conventional_wyckoff_positions(group_number)
+    for position in group.Wyckoff_positions:
+        op = position.ops[0]
+        coordinate = op.as_xyz_str()
+        coordinate = coordinate.replace(' ','')
+        conventional_wyckoff_poss.append(coordinate)
+    return conventional_wyckoff_poss
 
-        # Makes SymPy to execute a simbolic operation
-        inverse_matrix = np.linalg.inv(symmetry_dataset.transformation_matrix)
 
-        inv_transformation_matrix = Matrix(inverse_matrix).applyfunc(sympify)
-        origin_shift = Matrix(symmetry_dataset.origin_shift).applyfunc(sympify)
+def wyckoff_positions(lattice, positions, typat):
+    """
+        Given a cell structure, returns all the wyckoff positions associated to its
+        symmetry group, in the lattice vector's basis. As symbolic strings
+        
+        Parameters
+        ----------
+        lattice : array, shape=(3, 3)
+            3x3 array with cartesian coordinates of basis row-vectors forming the
+                unit-cell in real space. 
+        positions : array, shape=(Nions, 3)
+            Each row contains the fractional coordinates of an atom in the unit cell.
+        typat : array, shape=(Nions,)
+            Each element is an integer identifying the atomic species of an ion.
+            Atoms of the same element share the same index.
 
-        wyckoffs_in_cell_base = []
+        Returns
+        -------
+        list of str
+            Each element is a string describing a Wyckoff position in the basis of the
+            unit cell used in the DFT calculation.
+    """
 
-        for sim_vector in conventional_wyckoffs:
-            
-            # sim_vector is a string on array shape change to numeric or simbolic
-            vector = Matrix([sympify(v) for v in sim_vector.split(',')])
-            wyckoff_new_base = inv_transformation_matrix * (vector - origin_shift)
-            
-            # Change to string again
-            parts = [str(e).replace(" ", "") for e in wyckoff_new_base]
-            wyckoff_new_base_str = ",".join(parts)
 
-            wyckoffs_in_cell_base.append(wyckoff_new_base_str)
+    symmetry_dataset = spglib.get_symmetry_dataset((lattice, positions, typat))
+    group_number = symmetry_dataset.number
 
-        return wyckoffs_in_cell_base
+    conventional_wyckoffs = conventional_wyckoff_positions(group_number)
+
+    # Makes SymPy to execute a simbolic operation
+    inverse_matrix = np.linalg.inv(symmetry_dataset.transformation_matrix)
+
+    inv_transformation_matrix = Matrix(inverse_matrix).applyfunc(sympify)
+    origin_shift = Matrix(symmetry_dataset.origin_shift).applyfunc(sympify)
+
+    wyckoffs_in_cell_base = []
+
+    for sim_vector in conventional_wyckoffs:
+        
+        # sim_vector is a string on array shape change to numeric or simbolic
+        vector = Matrix([sympify(v) for v in sim_vector.split(',')])
+        wyckoff_new_base = inv_transformation_matrix * (vector - origin_shift)
+        
+        # Change to string again
+        parts = [str(e).replace(" ", "") for e in wyckoff_new_base]
+        wyckoff_new_base_str = ",".join(parts)
+
+        wyckoffs_in_cell_base.append(wyckoff_new_base_str)
+
+    return wyckoffs_in_cell_base
+
 
 
 def read_sym_file(fname):
