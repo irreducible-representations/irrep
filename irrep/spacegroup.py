@@ -984,10 +984,10 @@ class SpaceGroup:
             translation[translation > 1 - 1e-8] = 0.0
             string = transformation_to_string(rotation, translation)
             if symbol:
-                string += f"({position.get_label()})"
+                string += f";({position.get_label()})"
             if sitesym:
                 position.get_site_symmetry()
-                string += f"[{position.site_symm}]"
+                string += f";[{position.site_symm}]"
             positions.append(string)
         return positions
 
