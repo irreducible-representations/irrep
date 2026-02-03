@@ -16,7 +16,9 @@
 ##################################################################
 
 
+from fractions import Fraction
 from functools import cached_property
+import math
 import warnings
 import numpy as np
 import spglib
@@ -29,7 +31,7 @@ from packaging import version
 import os
 
 from pyxtal import Group as PyxtalGroup
-from sympy import sympify
+
 
 class SpaceGroup:
 
@@ -250,7 +252,7 @@ class SpaceGroup:
         print(f'Number of symmetries: {self.size} (mod. lattice translations)')
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
-                symop.show(refUC=None, shiftUC=None)
+                symop.show(refUC=self.refUC, shiftUC=self.shiftUC)
 
     @property
     def lattice(self):
@@ -312,8 +314,8 @@ class SpaceGroup:
                 unit-cell in real space. 
         positions : array, shape=(Nions, 3), dtype=float
             Each row contains the fractional coordinates of an atom in the unit cell.
-        typat : array, shape=(Nions,), dtype=int
-            Each element is an integer identifying the atomic species of an ion.
+        typat : array, shape=(Nions,), dtype=int or str
+            Each element is an integer or string identifying the atomic species of an ion.
             Atoms of the same element share the same index.
         spinor : bool, default=True
             `True` if wave-functions are spinors (SOC), `False` if they are scalars.
@@ -361,6 +363,9 @@ class SpaceGroup:
         assert typat is not None, "typat must be provided"
         real_lattice = np.array(real_lattice, dtype=float)
         positions = np.array(positions, dtype=float)
+        if not all(type(x) in (int, np.integer) for x in typat):
+            dict_typat = {t: i + 1 for i, t in enumerate(sorted(set(typat)))}
+            typat = [dict_typat[t] for t in typat]
         typat = np.array(typat, dtype=int)
         magmom = magmom
         include_TR = include_TR
@@ -906,7 +911,7 @@ class SpaceGroup:
             return SpaceGroup(Lattice=lattice, spinor=spinor, rotations=[np.eye(3)], translations=[np.zeros(3)], time_reversals=[False], number=1,
                               name="trivial", spinor_rotations=[np.eye(2)])
         else:
-            return SpaceGroup(Lattice=lattice, spinor=spinor, rotations=[np.eye(3)] * 2, translations=[np.zeros(3)], time_reversals=[False, True], number=1,
+            return SpaceGroup(Lattice=lattice, spinor=spinor, rotations=[np.eye(3)] * 2, translations=[np.zeros(3)] * 2, time_reversals=[False, True], number=1,
                               name="trivial+TR", spinor_rotations=[np.eye(2)] * 2)
 
 
@@ -932,8 +937,8 @@ class SpaceGroup:
             if not self.symmetries[isym].equals(other.symmetries[isym], tol=tol, mod1=mod1):
                 return False
         return True
-    
-    
+
+
     def get_sitesymmetry(self, position, tol=1e-5):
         """
         Get the site-symmetry group of a given position.
@@ -964,78 +969,27 @@ class SpaceGroup:
                 site_sym_rotations.append(sym.rotation)
         site_sym_rotations = np.array(site_sym_rotations)
         return site_sym_indices, site_sym_rotations
-        
-    
 
+    def get_wyckoff_positions(self, symbol=False, sitesym=False):
 
-def conventional_wyckoff_positions(spacegroup_num):
-    """
-        Returns an array of all Wyckoff Positions in string symbolic format
-        of a given space group of symmetries
-        Args:
-            spacegroup_num: int of the spacegroup number
-    """
-    group = PyxtalGroup(spacegroup_num, style="spglib")
-    conventional_wyckoff_poss = []
-
-    for position in group.Wyckoff_positions:
-        op = position.ops[0]
-        coordinate = op.as_xyz_str()
-        coordinate = coordinate.replace(' ','')
-        conventional_wyckoff_poss.append(coordinate)
-    return conventional_wyckoff_poss
-
-
-def wyckoff_positions(lattice, positions, typat):
-    """
-        Given a cell structure, returns all the wyckoff positions associated to its
-        symmetry group, in the lattice vector's basis. As symbolic strings
-        
-        Parameters
-        ----------
-        lattice : array, shape=(3, 3)
-            3x3 array with cartesian coordinates of basis row-vectors forming the
-                unit-cell in real space. 
-        positions : array, shape=(Nions, 3)
-            Each row contains the fractional coordinates of an atom in the unit cell.
-        typat : array, shape=(Nions,)
-            Each element is an integer identifying the atomic species of an ion.
-            Atoms of the same element share the same index.
-
-        Returns
-        -------
-        list of str
-            Each element is a string describing a Wyckoff position in the basis of the
-            unit cell used in the DFT calculation.
-    """
-
-
-    symmetry_dataset = spglib.get_symmetry_dataset((lattice, positions, typat))
-    group_number = symmetry_dataset.number
-
-    conventional_wyckoffs = conventional_wyckoff_positions(group_number)
-
-    # Makes SymPy to execute a simbolic operation
-    inverse_matrix = np.linalg.inv(symmetry_dataset.transformation_matrix)
-
-    inv_transformation_matrix = inverse_matrix
-    origin_shift = symmetry_dataset.origin_shift
-
-    wyckoffs_in_cell_base = []
-
-    for sim_vector in conventional_wyckoffs:
-        
-        # sim_vector is a string on array shape change to numeric or simbolic
-        vector = np.array([sympify(v) for v in sim_vector.split(',')])
-        wyckoff_new_base = inv_transformation_matrix @ (vector - origin_shift)
-        
-        # Change to string again
-        parts = [str(e).replace(" ", "") for e in wyckoff_new_base]
-        wyckoff_new_base_str = ",".join(parts)
-
-        wyckoffs_in_cell_base.append(wyckoff_new_base_str)
-
-    return wyckoffs_in_cell_base
+        group_pyx = PyxtalGroup(self.number, style="spglib")
+        inverse_matrix = np.linalg.inv(self.refUC)
+        origin_shift = self.shiftUC
+        positions = []
+        for position in group_pyx.Wyckoff_positions:
+            op = position.ops[0]
+            rotation = inverse_matrix @ op.rotation_matrix
+            translation = inverse_matrix @ (op.translation_vector - origin_shift)
+            translation = translation - np.floor(translation)
+            translation[translation > 1 - 1e-8] = 0.0
+            string = transformation_to_string(rotation, translation)
+            if symbol:
+                string += f"({position.get_label()})"
+            if sitesym:
+                position.get_site_symmetry()
+                string += f"[{position.site_symm}]"
+            positions.append(string)
+        return positions
 
 
 
@@ -1107,3 +1061,48 @@ def cart_to_crystal(rot_cart, trans_cart, lattice, alat):
 
 # For compatibility with old code
 SpaceGroupBare = SpaceGroup
+
+
+
+
+def transformation_to_string(rotation, translation):
+    parts = []
+    variables = ['x', 'y', 'z']
+    for i in range(3):
+        col = rotation[:, i]
+        if np.all(abs(col - np.round(col)) < 1e-8):
+            col = np.round(col).astype(int)
+            col = col // math.gcd(*col)
+            rotation[:, i] = col
+
+    if np.all(abs(rotation) > 1e-4):
+        return "x,y,z"  # general position
+    for row, v in zip(rotation, translation):
+        string = "".join([num_to_string(num=r, var=var) for r, var in zip(row, variables)]) + num_to_string(num=v)
+        if len(string) == 0:
+            string = "0"
+        if string[0] == '+':
+            string = string[1:]
+        parts.append(string)
+    return ",".join(parts)
+
+
+def num_to_string(num, var=None):
+    if abs(num) < 1e-8:
+        return ""
+    str_num = ""
+    sign = "+" if num > 0 else "-"
+    if abs(np.round(num) - num) < 1e-8:
+        str_num = str(int(np.round(abs(num))))
+    else:
+        f = Fraction(abs(num)).limit_denominator(1000)
+        if abs(f.denominator) > 100:
+            str_num = f"{float(f):.8f}"
+        else:
+            str_num = f"{f}"
+    if var is not None:
+        if abs(abs(num) - 1) < 1e-8:
+            str_num = var
+        else:
+            str_num = str_num + "*" + var
+    return sign + str_num
