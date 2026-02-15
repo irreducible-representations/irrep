@@ -7,6 +7,7 @@ import pytest
 
 TEST_FILES_PATH = Path(__file__).parents[2] / "examples"
 
+
 @pytest.mark.parametrize("spin_channel", ['up', 'dw'])
 def test_espresso_spinor(spin_channel):
 
@@ -75,5 +76,3 @@ def test_espresso_spinor(spin_channel):
             "irrep-output.json"
     ):
         os.remove(test_output_file)
-
-

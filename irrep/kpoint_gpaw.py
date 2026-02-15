@@ -1,7 +1,10 @@
+from gpaw.utilities.partition import AtomPartition
 import numpy as np
 from .kpoint import KpointAbstract
 from .utility import cached_einsum
 from .readfiles import ParserGPAW
+
+
 
 class KpointGPAW(KpointAbstract):
     """ a container to store wavefunctions and eigenvalues at a k-point from GPAW.
@@ -30,20 +33,22 @@ class KpointGPAW(KpointAbstract):
         self.atom_positions = atom_positions
 
     @classmethod
-    def from_gpaw(self, calc, ibz_index, ispin, RecLattice=None):
+    def from_gpaw(self, calc, ibz_index, ispin, RecLattice,
+                  IBstart, IBend
+                  ):
         ispin = ParserGPAW.spin_channels[ispin]
         kpt = calc.wfs.kpt_qs[ibz_index][ispin]
         k = calc.get_ibz_k_points()[ibz_index]
-        nbands = calc.wfs.bd.nbands
+        nbands = IBend - IBstart
+        proj = new_paw_projection(kpt.projections, nbands=nbands)
+        proj.array[:] = kpt.projections.array[IBstart:IBend]
         # Get projections in ibz
-        proj = kpt.projections.new(nbands=nbands, bcomm=None)
-        proj.array[:] = kpt.projections.array[:nbands]
         if RecLattice is None:
             RecLattice = calc.wfs.gd.reciprocal_lattice
         atom_positions = calc.atoms.get_scaled_positions()
 
         wavefunction = np.array([calc.wfs.get_wave_function_array(n, ibz_index, ispin, periodic=True)
-                                 for n in range(nbands)])
+                                 for n in range(IBstart, IBend)])
         return KpointGPAW(kpt=k, wavefunction=wavefunction, proj=proj, nbands=nbands, RecLattice=RecLattice, atom_positions=atom_positions)
 
 
@@ -68,8 +73,11 @@ class OverlapPAW:
     def __init__(self, wfs):
         self.dO_aii = {}
         for a in wfs.kpt_u[0].projections.map:
-            self.dO_aii[a] = wfs.setups[a].dO_ii
-        self.dv = wfs.gd.dv
+            self.dO_aii[a] = np.copy(wfs.setups[a].dO_ii)
+        self.dv = np.copy(wfs.gd.dv)
+        # print ("Initialized PAW overlap with dO_ii for atoms", list(self.dO_aii.keys()))
+        # print ("dO_ii shapes", {a: dO.shape for a, dO in self.dO_aii.items()})
+        # print ("dv", self.dv)
 
     def product(self, KP1, KP2,
                 include_paw=True,
@@ -96,3 +104,24 @@ class OverlapPAW:
             for a, dO_ii in self.dO_aii.items():
                 prod += (proj1[a].conj() @ dO_ii @ (proj2[a].T)) * phases[a]
         return prod
+
+
+
+
+
+
+class AtomPartitionSerial(AtomPartition):
+    def __init__(self, at_part):
+        self.comm = None
+        self.rank_a = None
+        self.my_indices = at_part.my_indices
+        self.natoms = at_part.natoms
+        self.name = "serial"
+
+
+def new_paw_projection(proj,
+                       **kwargs):
+    ap = AtomPartitionSerial(proj.atom_partition)
+    new_projection = proj.new(bcomm=None, atom_partition=ap, **kwargs)
+    new_projection.atom_partition = ap
+    return new_projection

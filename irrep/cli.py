@@ -140,16 +140,16 @@ do not hesitate to contact the author:
 @click.option(
     "-IBstart",
     type=int,
-    default=0,
-    help="The first band to be considered. "
-    "If <= 0 starting from the lowest band (count from one).",
+    default=1,
+    help="The first band to be considered. (count from 1 for the lowest band) "
+    "If <= 0 the NB-IBstart is considered the first band, e.g., 0 for the highest band, -1 for the second highest band, etc.  ",
 )
 @click.option(
     "-IBend",
     type=int,
     default=0,
-    help="The last band to be considered. "
-    "If <=0 up to  the highest band (count from one).",
+    help="The last band to be considered (inclusive, counting from 1), i.e. NB for all bands. "
+    "If <=0, the IBend upper bands are ecluded, e.g., -1 to exclude the highest band, -2 to exclude the two highest bands, etc.   ",
 )
 @click.option(
     "-code",
@@ -169,14 +169,12 @@ do not hesitate to contact the author:
     type=str,
     help="Comma-separated list of k-point indices (starting from 1).",
 )
-
 @click.option(
     "-spin_channel",
     type=click.Choice(['up', 'dw']),
     default=None,
     help="Select spin channel to analyze (only for collinear calculations).",
 )
-
 @click.option(
     "-kpnames",
     type=str,
@@ -416,7 +414,7 @@ def cli(
     if symmetries:
         symmetries = str2list(symmetries)
     if kpoints:
-        kpoints = str2list(kpoints)
+        kpoints = [k - 1 for k in str2list(kpoints)]
     if isymsep:
         isymsep = str2list(isymsep)
     if kpnames:
@@ -461,7 +459,7 @@ def cli(
         prefix=prefix,
         fPOS=fpos,
         Ecut=ecut,
-        IBstart=ibstart,
+        IBstart=ibstart - 1,
         IBend=ibend,
         kplist=kpoints,
         spinor=spinor,
@@ -539,7 +537,7 @@ def cli(
         for isym in isymsep:
             print(f"\n-------- SEPARATING BY SYMMETRY # {isym} --------")
             for s_old, bs in subbands.items():
-                separated = bs.Separate(isym, groupKramers=groupkramers, verbosity=verbosity)
+                separated = bs.Separate(isym - 1, groupKramers=groupkramers, verbosity=verbosity)
                 for s_new, bs_separated in separated.items():
                     # Later, the sorting of evals will be based on the
                     # argument of each eval in terms of [0,2pi). So it's
