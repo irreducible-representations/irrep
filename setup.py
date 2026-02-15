@@ -20,6 +20,7 @@ setuptools.setup(
         "fortio",
         "packaging",
         "h5py",
+        "pyxtal==1.1.1"
     ],
     include_package_data=True,
     url="https://github.com/irreducible-representations/irrep.git",

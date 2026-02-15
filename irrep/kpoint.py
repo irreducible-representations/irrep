@@ -409,12 +409,6 @@ class Kpoint(KpointAbstract):
         WF = self.WF[:, selectG, :]
         result = []
         for b1, b2, E, matrices in self.get_rho_spin(degen_thresh):
-            # proj = np.array(
-            #     [
-            #         [WF[i].reshape(-1).conj().dot(WF[j].reshape(-1)) for j in range(b1, b2)]
-            #         for i in range(b1, b2)
-            #     ]
-            # )
             proj = cached_einsum('igs,jgs->ij', WF[b1:b2].conj(), WF[b1:b2])
             result.append([E,] + [np.trace(proj.dot(M)).real for M in matrices])
         return np.array(result)
@@ -453,17 +447,7 @@ class Kpoint(KpointAbstract):
         for b1, b2 in block_indices:
             E = self.Energy_raw[b1:b2].mean()
             W = cached_einsum('igs,jgs->ij', self.WF[b1:b2].conj(), self.WF[b1:b2])
-            # np.array( [ [self.WF[i].conj().dot(self.WF[j])
-            #                  for j in range(b1, b2)] for i in range(b1, b2)])
             if self.spinor:
-                # ng = self.NG
-                # [
-                #     [ np.array( [
-                #         [self.WF[i, ng * s: ng * (s + 1)].conj().dot(
-                #             self.WF[j, ng * t: ng * (t + 1)]) for j in range(b1, b2)]
-                #                 for i in range(b1, b2)] )# band indices
-                #         for t in (0, 1) ]
-                #         for s in (0, 1) ]  # spin indices
                 Smatrix = cached_einsum('igs,jgt->ijst', self.WF[b1:b2].conj(), self.WF[b1:b2])
                 Sx = Smatrix[:, :, 0, 1] + Smatrix[:, :, 1, 0]
                 Sy = 1j * (-Smatrix[:, :, 0, 1] + Smatrix[:, :, 1, 0])
