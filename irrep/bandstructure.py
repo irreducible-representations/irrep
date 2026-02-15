@@ -18,8 +18,6 @@
 
 import copy
 import functools
-import os
-import json
 
 import numpy as np
 from functools import cached_property
@@ -32,6 +30,18 @@ from .spacegroup import SpaceGroup
 from .spacegroup_irreps import SpaceGroupIrreps
 from .gvectors import sortIG, calc_gvectors
 from .utility import get_block_indices, get_mapping_irr, grid_from_kpoints, log_message, UniqueListMod1, restore_full_grid, select_irreducible
+
+try:
+    from irreptables.ebrs import load_ebr_data
+except ImportError:
+    from .utility import DummyMethodTables
+    load_ebr_data = DummyMethodTables("load_ebr_data")
+
+try:
+    from irreptables.symmetry_indicators import load_si_table
+except ImportError:
+    from .utility import DummyMethodTables
+    load_si_table = DummyMethodTables("load_si_table")
 
 
 class BandStructure:
@@ -1205,7 +1215,6 @@ class BandStructure:
             compute_topological_classification_vector,
             ORTOOLS_AVAILABLE,
             compute_ebr_decomposition,
-            load_ebr_data
         )
 
         # Load data from EBR files
@@ -1279,7 +1288,6 @@ class BandStructure:
             get_ebr_names_and_positions,
             compose_ebr_string,
             get_smith_form,
-            load_ebr_data
         )
         from .utility import vector_pprint
 
@@ -1334,14 +1342,7 @@ class BandStructure:
         dict
             Data loaded from the file of symmetry indicators
         '''
-
-        root = os.path.dirname(__file__)
-        filename = (
-            f"{'double' if self.spinor else 'single'}_indicators"
-            f"{'_magnetic' if self.magnetic else ''}.json"
-        )
-        si_table = json.load(open(root + "/data/symmetry_indicators/" + filename, 'r'))
-        return si_table
+        return load_si_table(magnetic=self.magnetic, spinor=self.spinor)
 
 
 def check_multiplicity(multi):

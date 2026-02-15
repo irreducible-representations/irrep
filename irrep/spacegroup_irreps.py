@@ -17,12 +17,18 @@
 
 
 import numpy as np
-from irreptables import IrrepTable
 from scipy.optimize import minimize
 
 from .spacegroup import SpaceGroup
 
 from .utility import log_message
+
+try:
+    from irreptables.irreps import IrrepTable
+except ImportError:
+    from .utility import DummyMethodTables
+    IrrepTable = DummyMethodTables("IrrepTable")
+
 
 
 class SpaceGroupIrreps(SpaceGroup):
@@ -59,6 +65,7 @@ class SpaceGroupIrreps(SpaceGroup):
             no_match_symmetries=False,
             verbosity=0):
         # Load symmetries from the space group's table
+
         irreptable = IrrepTable(self.number_str, self.spinor, magnetic=self.magnetic, v=verbosity)
         self.u_symmetries_tables = irreptable.u_symmetries
         self.au_symmetries_tables = irreptable.au_symmetries

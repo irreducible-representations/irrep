@@ -782,3 +782,19 @@ def group_numbers(lst, precision):
         avg_num = np.mean(group_num)
         lst_out[group_ind] = avg_num
     return lst_out
+
+
+class DummyMethod:
+    def __init__(self, message):
+        self.message = message
+
+    def __call__(self, *args, **kwargs):
+        raise RuntimeError(self.message)
+
+
+class DummyMethodTables(DummyMethod):
+
+    def __init__(self, method_name):
+        message = f"{method_name} requires irreptables package to be installed. " \
+                  f"Please install irreptables>=3.0.0 via pip: pip install irreptables"
+        super().__init__(message)

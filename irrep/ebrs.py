@@ -1,8 +1,6 @@
 """Module to compute EBR decompositions.
 """
 import numpy as np
-import os
-import json
 
 # Actual EBR decomposition requires OR-Tool's SAT problem solver.
 try:
@@ -16,7 +14,7 @@ def get_ebr_matrix(ebr_data):
     """
     Gets the EBR matrix from a dictionary of EBR data.
 
-    Parameters
+    Parameters3.11
     ----------
     ebr_data : dict
         Dictionary containing the EBR data as saved in the package files
@@ -306,27 +304,3 @@ def compose_ebr_string(vec, ebrs):
     s = " + ".join(terms)
 
     return s
-
-
-def load_ebr_data(sg_number, spinor):
-    '''
-    Load data from file of EBRs
-
-    Parameters
-    ----------
-    sg_number : int
-        Number of the space group
-    spinor : bool
-        Whether wave functions are spinors (SOC) or not
-
-    Returns
-    -------
-    dict
-        EBR data
-    '''
-
-    root = os.path.dirname(__file__)
-    filename = f"{sg_number}_ebrs.json"
-    ebr_data = json.load(open(root + "/data/ebrs/" + filename, 'r'))
-    ebr_data = ebr_data["double" if spinor else "single"]
-    return ebr_data
