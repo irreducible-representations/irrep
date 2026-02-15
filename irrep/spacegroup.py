@@ -31,6 +31,7 @@ import os
 from pyxtal import Group
 from sympy import Matrix, sympify
 
+
 class SpaceGroup:
 
     """
@@ -932,7 +933,7 @@ class SpaceGroup:
             if not self.symmetries[isym].equals(other.symmetries[isym], tol=tol, mod1=mod1):
                 return False
         return True
-    
+
     def conventional_wyckoff_positions(spacegroup_num):
         """
             Returns an array of all Wyckoff Positions in string symbolic format
@@ -946,13 +947,13 @@ class SpaceGroup:
         for position in group.Wyckoff_positions:
             op = position.ops[0]
             coordinate = op.as_xyz_str()
-            coordinate = coordinate.replace(' ','')
+            coordinate = coordinate.replace(' ', '')
             conventional_wyckoff_poss.append(coordinate)
 
 
         return conventional_wyckoff_poss
 
-    
+
     def wyckoff_positions(cell_structure):
         """
             Given a cell structure, returns all the wyckoff positions associated to its
@@ -981,11 +982,11 @@ class SpaceGroup:
         wyckoffs_in_cell_base = []
 
         for sim_vector in conventional_wyckoffs:
-            
+
             # sim_vector is a string on array shape change to numeric or simbolic
             vector = Matrix([sympify(v) for v in sim_vector.split(',')])
             wyckoff_new_base = inv_transformation_matrix * (vector - origin_shift)
-            
+
             # Change to string again
             parts = [str(e).replace(" ", "") for e in wyckoff_new_base]
             wyckoff_new_base_str = ",".join(parts)

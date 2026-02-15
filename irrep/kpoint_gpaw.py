@@ -3,6 +3,7 @@ from .kpoint import KpointAbstract
 from .utility import cached_einsum
 from .readfiles import ParserGPAW
 
+
 class KpointGPAW(KpointAbstract):
     """ a container to store wavefunctions and eigenvalues at a k-point from GPAW.
 

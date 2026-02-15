@@ -17,7 +17,7 @@ def test_gpaw_spinorbit(spinor):
     print("Fermi level", calc.get_fermi_level())
     bandstructure = BandStructure(code="gpaw", calculator_gpaw=calc,
                                   spinor=spinor,
-                                  IBstart=10 * nspinor + 1,
+                                  IBstart=10 * nspinor,
                                   IBend=15 * nspinor,
                                   Ecut=50,
                                   degen_thresh=2e-4,

@@ -58,9 +58,11 @@ class BandStructure:
         Plane-wave cutoff in eV to consider in the expansion of wave-functions.
         mandatory for GPAW and Wannier90.
     IBstart : int, default=None
-        First band to be considered.
+        First band to be considered. Pythonic indexing, i.e., starting from 0 for the lowest band
+        If negative, it will be counted from the top, i.e., -1 for the highest band.
     IBend : int, default=None
-        Last band to be considered.
+        Last band to be considered (Not included). Pythonic indexing, i.e., NBin for the highest band, 
+        NBin-2 to exclude the two highest bands. If negative, it will be counted from the top, i.e., -3 is equaivalent to NBin-3. (exclude 3 upper bands)
     kplist : array, default=None
         List of indices of k-points to be considered.
     spinor : bool, default=None
@@ -362,12 +364,14 @@ class BandStructure:
         log_message(f"Efermi: {self.efermi:.4f} eV", verbosity, 1)
 
         # Fix indices of bands to be considered
-        if IBstart is None or IBstart <= 0:
+        if IBstart is None:
             IBstart = 0
-        else:
-            IBstart -= 1
-        if IBend is None or IBend <= 0 or IBend > NBin:
+        elif IBstart < 0:
+            IBstart = NBin + IBstart
+        if IBend is None:
             IBend = NBin
+        elif IBend <= 0:
+            IBend = NBin + IBend
         NBout = IBend - IBstart
         if NBout <= 0:
             raise RuntimeError("No bands to calculate")
