@@ -21,6 +21,7 @@ import numpy as np
 from scipy.linalg import expm
 from .utility import UniqueListMod1, str_, BOHR, cached_einsum
 from .gvectors import transform_gk
+from .kpoint_gpaw import new_paw_projection
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -896,7 +897,7 @@ class SymmetryOperation():
         proj_rot : Projections
             the rotated projection coefficients
         """
-        mapped_projections = projections.new()
+        mapped_projections = new_paw_projection(projections)
 
         for a, R_ii in enumerate(self.R_aii):
             Pout_ni = (projections[a] @ R_ii.T)  # * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
@@ -944,10 +945,6 @@ class SymmetryOperation():
                 phase = np.exp(-2j * np.pi * ksh * np.arange(Nc[i]) / Nc[i]).reshape((1,) * (i + 1) + (Nc[i],) + (1,) * (2 - i))
                 psi_n_grid = psi_n_grid * phase
         return psi_n_grid
-
-
-
-
 
 
 

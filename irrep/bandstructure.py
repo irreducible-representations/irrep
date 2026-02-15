@@ -457,7 +457,8 @@ class BandStructure:
                 if read_paw:
                     # read projections and reconstruct pseudo wavefunctions on a grid
                     kp_gpaw = KpointGPAW.from_gpaw(calc=calculator_gpaw, ibz_index=ik, ispin=spin_channel,
-                                                   RecLattice=self.RecLattice)
+                                                   RecLattice=self.RecLattice,
+                                                   IBstart=IBstart, IBend=IBend)
                     self.kpoints_paw.append(kp_gpaw)
 
             # Pick energy of IBend+1 band to calculate gaps

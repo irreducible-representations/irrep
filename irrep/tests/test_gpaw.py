@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 from irrep.bandstructure import BandStructure
 from pytest import approx
+import pickle
 
 
 
@@ -23,8 +24,11 @@ def test_gpaw_spinorbit(spinor):
                                   degen_thresh=2e-4,
                                   calculate_traces=True,
                                   irreps=True,
+                                  read_paw=not spinor,  # for now, read_pae does not work with spinor calculations
                                   search_cell=True,
                                   kplist=[0])
+    output_file = "../../examples/gpaw/Bi-gamma_bandstructure.pickle"
+    pickle.dump(bandstructure, open(output_file, "wb"))
     # print ("Bandstructure",bandstructure)
     bandstructure.spacegroup.show()
     bandstructure.identify_irreps(kpnames=["GM"], verbosity=0)
