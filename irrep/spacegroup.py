@@ -774,7 +774,7 @@ class SpaceGroup:
 
     def get_identity_index(self):
         for i, sym in enumerate(self.symmetries):
-            if sym.is_identity():
+            if sym.is_identity:
                 return i
         raise ValueError("Identity symmetry not found in the list of symmetries")
 

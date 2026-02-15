@@ -24,7 +24,7 @@ def test_gpaw_spinorbit(spinor):
                                   calculate_traces=True,
                                   irreps=True,
                                   search_cell=True,
-                                  kplist=[1])
+                                  kplist=[0])
     # print ("Bandstructure",bandstructure)
     bandstructure.spacegroup.show()
     bandstructure.identify_irreps(kpnames=["GM"], verbosity=0)

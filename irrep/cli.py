@@ -414,7 +414,7 @@ def cli(
     if symmetries:
         symmetries = str2list(symmetries)
     if kpoints:
-        kpoints = str2list(kpoints)
+        kpoints = [k - 1 for k in str2list(kpoints)]
     if isymsep:
         isymsep = str2list(isymsep)
     if kpnames:
@@ -537,7 +537,7 @@ def cli(
         for isym in isymsep:
             print(f"\n-------- SEPARATING BY SYMMETRY # {isym} --------")
             for s_old, bs in subbands.items():
-                separated = bs.Separate(isym, groupKramers=groupkramers, verbosity=verbosity)
+                separated = bs.Separate(isym - 1, groupKramers=groupkramers, verbosity=verbosity)
                 for s_new, bs_separated in separated.items():
                     # Later, the sorting of evals will be based on the
                     # argument of each eval in terms of [0,2pi). So it's

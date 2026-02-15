@@ -64,7 +64,8 @@ class BandStructure:
         Last band to be considered (Not included). Pythonic indexing, i.e., NBin for the highest band, 
         NBin-2 to exclude the two highest bands. If negative, it will be counted from the top, i.e., -3 is equaivalent to NBin-3. (exclude 3 upper bands)
     kplist : array, default=None
-        List of indices of k-points to be considered.
+        List of indices of k-points to be considered. (counting from 0), if None, all k-points will be considered.
+        indices outside the ranfge [0,NK) will be ignored.]
     spinor : bool, default=None
         `True` if wave functions are spinors, `False` if they are scalars. 
         Mandatory for VASP.
@@ -393,7 +394,6 @@ class BandStructure:
         if kplist is None:
             kplist = range(NK)
         else:
-            kplist = np.array(kplist) - 1
             kplist = np.array([k for k in kplist if k >= 0 and k < NK])
 
         # Parse wave functions at each k-point
@@ -744,11 +744,11 @@ class BandStructure:
         Parameters
         ----------
         isymop : int
-            Index of symmetry used for the separation.
+            Index of symmetry used for the separation. (counting from 0)
         groupKramers : bool, default=True
             If `True`, states will be coupled by Kramers' pairs.
         verbosity : int, default=0
-            Verbosity level. Default is set to minimalistic printing
+            Verbosity level. Default is set to minimalistic printingcode 
 
         Returns
         -------
@@ -758,11 +758,11 @@ class BandStructure:
             the subspace of that eigenvalue.
         """
 
-        if isymop == 1:
-            return {1: self}
+        if isymop == self.spacegroup.get_identity_index():
+            return {isymop: self}
 
         # Print description of symmetry used for separation
-        symop = self.spacegroup.symmetries[isymop - 1]
+        symop = self.spacegroup.symmetries[isymop]
         symop.show()
 
         # to do: allow for separation in terms of antiunitary symmetries
