@@ -796,5 +796,5 @@ class DummyMethodTables(DummyMethod):
 
     def __init__(self, method_name):
         message = f"{method_name} requires irreptables package to be installed. " \
-                  f"Please install irreptables via pip: pip install irreptables"
+                  f"Please install irreptables>=3.0.0 via pip: pip install irreptables"
         super().__init__(message)
