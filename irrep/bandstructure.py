@@ -22,7 +22,6 @@ import functools
 import numpy as np
 from functools import cached_property
 
-from irrep.kpoint_gpaw import KpointGPAW, OverlapPAW
 
 from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
@@ -347,6 +346,7 @@ class BandStructure:
             if read_paw:
                 self.kpoints_paw = []
                 self.spacegroup.set_gpaw(calculator=parser.calculator)
+                from irrep.kpoint_gpaw import OverlapPAW
                 self.overlap_paw = OverlapPAW(wfs=parser.calculator.wfs)
 
             NBin, kpred, Lattice, _spinor, typat, positions, EF_in = parser.parse_header()
@@ -466,6 +466,7 @@ class BandStructure:
                                                  Ecut=self.Ecut)
                 if read_paw:
                     # read projections and reconstruct pseudo wavefunctions on a grid
+                    from irrep.kpoint_gpaw import KpointGPAW
                     kp_gpaw = KpointGPAW.from_gpaw(calc=calculator_gpaw, ibz_index=ik, ispin=spin_channel,
                                                    RecLattice=self.RecLattice,
                                                    IBstart=IBstart, IBend=IBend)
