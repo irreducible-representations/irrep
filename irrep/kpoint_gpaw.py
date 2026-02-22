@@ -106,9 +106,6 @@ class OverlapPAW:
 
 
 
-
-
-
 class AtomPartitionSerial(AtomPartition):
     def __init__(self, at_part):
         self.comm = None

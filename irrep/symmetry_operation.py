@@ -21,7 +21,6 @@ import numpy as np
 from scipy.linalg import expm
 from .utility import UniqueListMod1, str_, BOHR, cached_einsum
 from .gvectors import transform_gk
-from .kpoint_gpaw import new_paw_projection
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -897,6 +896,7 @@ class SymmetryOperation():
         proj_rot : Projections
             the rotated projection coefficients
         """
+        from .kpoint_gpaw import new_paw_projection
         mapped_projections = new_paw_projection(projections)
 
         for a, R_ii in enumerate(self.R_aii):
