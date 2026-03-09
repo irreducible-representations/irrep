@@ -206,7 +206,7 @@ class SpaceGroup:
         return dictionary with info essential about the spacegroup
         """
         keys_dict_optional = ['refUC', 'shiftUC', 'positions', 'typat', 'alat',
-                              'magnetic', 'magmom', 'number_str']
+                              'magnetic', 'magmom']
         dic = dict(
             Lattice=self.real_lattice,
             spinor=self.spinor,
@@ -214,8 +214,8 @@ class SpaceGroup:
             translations=[s.translation for s in self.symmetries],
             spinor_rotations=[s.spinor_rotation for s in self.symmetries],
             time_reversals=[s.time_reversal for s in self.symmetries],
-            number=self.number if self.number is not None else -1,
-            name=self.name if self.name is not None else "unknown"
+            name=self.name if self.name is not None else "unknown",
+            number_str=self.number_str if self.number_str is not None else "0",
         )
         for key in keys_dict_optional:
             if hasattr(self, key):
