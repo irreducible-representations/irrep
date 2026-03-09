@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=67", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "irrep"
+dynamic = ["version"]
+authors = [{ name = "Stepan S. Tsirkin", email = "stepan.tsirkin@ehu.eus" }]
+description = "A tool to get symmetry proberties of ab-initio wavefunctions, irreduible representations and more."
+readme = "README.md"
+license = { text = "GNU General Public License v3 (GPLv3)" }
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "numpy",
+  "scipy>=1.0",
+  "spglib>=2.5.0",
+  "Click",
+  "monty",
+  "fortio",
+  "packaging",
+  "h5py",
+  "pyxtal==1.1.1",
+]
+
+[project.scripts]
+irrep = "irrep.cli:cli"
+
+[project.urls]
+Homepage = "https://github.com/irreducible-representations/irrep.git"
+
+[tool.setuptools]
+packages = ["irrep"]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = { attr = "irrep.__version__" }
+
+[tool.setuptools.package-data]
+irrep = ["data/msg_numbers.data"]
