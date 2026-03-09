@@ -186,7 +186,7 @@ def check_symm_matrix(example_dir, output_file="symm_matrix", ref_file=None, deg
                                   Ecut=Ecut,
                                   spinor=True, normalize=False,
                                   irreps=True,  # with false the test fails, because s
-                                                #  symmetries matching the tables are reordered, 
+                                                #  symmetries matching the tables are reordered,
                                                 # and possible spinor rotation/sign change
                                                 # Therefore, keep irreps=True to maintain consistency with
                                                 # the reference data
