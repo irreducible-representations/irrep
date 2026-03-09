@@ -133,6 +133,7 @@ class SpaceGroup:
                  copy_symops=False,
                  typat=None,
                  positions=None,
+                 magmom=None,
                  magnetic=None,
                  refUC=None,
                  shiftUC=None,
@@ -153,6 +154,7 @@ class SpaceGroup:
         self.typat = typat
         self.positions = positions
         self.magnetic = magnetic
+        self.magmom = magmom
         self.refUC = refUC
         self.shiftUC = shiftUC
         self.alat = alat
@@ -197,12 +199,15 @@ class SpaceGroup:
         else:
             self.symmetries = symmetry_operations
 
+    
 
     def as_dict(self):
         """
         return dictionary with info essential about the spacegroup
         """
-        return dict(
+        keys_dict_optional = ['refUC', 'shiftUC', 'positions', 'typat', 'alat', 
+                              'magnetic', 'magmom', 'number_str']
+        dic = dict(
             Lattice=self.real_lattice,
             spinor=self.spinor,
             rotations=[s.rotation for s in self.symmetries],
@@ -212,6 +217,12 @@ class SpaceGroup:
             number=self.number if self.number is not None else -1,
             name=self.name if self.name is not None else "unknown"
         )
+        for key in keys_dict_optional:
+            if hasattr(self, key):
+                val = getattr(self, key)
+                if val is not None:
+                    dic[key] = val
+        return dic
 
     @property
     def size(self):
@@ -468,6 +479,7 @@ class SpaceGroup:
             positions=positions,
             typat=typat,
             alat=alat,
+            magmom=magmom,
             verbosity=verbosity,
         )
         if CLS.__name__ == "SpaceGroupIrreps":
