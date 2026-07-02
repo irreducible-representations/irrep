@@ -2,7 +2,7 @@ from gpaw.utilities.partition import AtomPartition
 import numpy as np
 from .kpoint import KpointAbstract
 from .utility import cached_einsum
-from .readfiles import ParserGPAW
+from .parsers import ParserGPAW
 
 
 class KpointGPAW(KpointAbstract):

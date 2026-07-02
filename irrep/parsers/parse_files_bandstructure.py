@@ -1,4 +1,4 @@
-from .bandstructure import BandStructure
+from ..bandstructure import BandStructure
 
 
 def parse_files(

@@ -21,7 +21,7 @@ import warnings
 import numpy as np
 import spglib
 
-from irrep.readfiles import ParserAbinit, ParserEspresso, ParserVasp, ParserW90
+from irrep.parsers import ParserAbinit, ParserEspresso, ParserVasp, ParserW90
 
 from .symmetry_operation import SymmetryOperation
 from .utility import BOHR, group_numbers, log_message, select_irreducible

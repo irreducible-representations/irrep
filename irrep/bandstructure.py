@@ -23,7 +23,7 @@ import numpy as np
 from functools import cached_property
 
 
-from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
+from .parsers import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .spacegroup_irreps import SpaceGroupIrreps
