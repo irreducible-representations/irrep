@@ -21,7 +21,7 @@ import warnings
 import numpy as np
 import spglib
 
-from irrep.readfiles import ParserAbinit, ParserEspresso, ParserGPAW, ParserVasp, ParserW90
+from irrep.readfiles import ParserAbinit, ParserEspresso, ParserVasp, ParserW90
 
 from .symmetry_operation import SymmetryOperation
 from .utility import BOHR, group_numbers, log_message, select_irreducible
@@ -584,131 +584,6 @@ class SpaceGroup:
             for symop in self.symmetries:
                 f.write(symop.str_sym(alat))
 
-    @classmethod
-    def parse_files(
-        CLS,
-        fWAV=None,
-        fWFK=None,
-        prefix=None,
-        calculator_gpaw=None,
-        fPOS=None,
-        spinor=None,
-        code="vasp",
-        verbosity=0,
-        alat=None,
-        from_sym_file=None,
-        magmom=None,
-        include_TR=False,
-        ############
-        symprec=1e-5,
-        angle_tolerance=-1,
-        mag_symprec=-1,
-        ############
-        **kwargs_tables
-    ):
-        """
-        Parse files to create a space-group object.
-        Parameters
-        ----------
-        fWAV : str, default=None
-            Name of the file with wavefunctions (e.g. WAVECAR for VASP).
-        fWFK : str, default=None
-            Name of the file with wavefunctions (e.g. WFK for ABINIT).
-        prefix : str, default=None
-            Prefix of the files (e.g. prefix for Quantum Espresso).
-        calculator_gpaw : GPAW calculator, default=None     
-            GPAW calculator object. If provided, it is used to parse the 
-            wavefunctions.
-        fPOS : str, default=None
-            Name of the file with positions (e.g. POSCAR for VASP).
-        spinor : bool, default=None
-            `True` if wave-functions are spinors (SOC), `False` if they are scalars.
-            If not specified, it is determined from the code.
-        code : str, default="vasp"
-            Code used to generate the files. Supported codes: "vasp", "abinit", 
-            "espresso", "wannier90", "gpaw". If not specified, it is assumed to be "vasp".
-        verbosity : int, default=0
-            Verbosity level. Default set to minimalistic printing.
-        alat : float, default=None
-            Lattice parameter in angstroms (quantum espresso convention).
-            If not specified, it is determined from the code.
-        from_sym_file : str, default=None
-            If provided, the symmetry operations are read from this file.
-            (format of pw2wannier90 prefix.sym  file)
-        magmom : array, default=None
-            Each element is the magnetic moment of an ion. If None, non-magnetic calculation.
-            If True, magnetic moments are set to zero, i.e. time-reversal symmetry is included in the spacegroup.
-        include_TR : bool, default=False
-            If `True`, the time-reversal symmetries are included in the space-group.
-            If `False`, the time-reversal symmetries are removed from the space-group.
-        symprec, angle_tolerance, mag_symprec: float
-            see `get_symmetry` and 'get_magnetic_symmetry` in 
-            `Spglib documentation <https://spglib.readthedocs.io/en/stable/api/python-api.html#spglib.spglib.get_magnetic_symmetry>'__
-        **kwargs_tables : dict
-            Additional keyword arguments to pass to the `SpaceGroupIrrep.set_irreptables` method.
-
-        Returns
-        -------
-        SpaceGroup
-            An instance of the `SpaceGroup` class with the parsed symmetry operations.
-        """
-        code = code.lower()
-
-        if code == "vasp":
-            if spinor is None:
-                log_message("Spinor is not specified (for VASP), assuming non-spinor calculation", verbosity, 2)
-                spinor = False
-            parser = ParserVasp(fPOS, fWAV, onlysym=True, verbosity=verbosity)
-            Lattice, positions, typat = parser.parse_poscar()
-
-        elif code == "abinit":
-            parser = ParserAbinit(fWFK)
-            (nband, NK, Lattice, Ecut0, spinor, typat, positions, EF_in) = \
-                parser.parse_header(verbosity=verbosity)
-
-
-        elif code == "espresso":
-            parser = ParserEspresso(prefix)
-            spinor = parser.spinor
-            # alat is saved to be used to write the prefix.sym file
-            Lattice, positions, typat, _alat = parser.parse_lattice()
-            if alat is None:
-                alat = _alat
-            # spinpol, Ecut0, EF_in, NK, NBin_list = parser.parse_header()
-
-
-        elif code == "wannier90":
-            parser = ParserW90(prefix, unk_formatted=None)
-            NK, NBin, spinor, EF_in = parser.parse_header()
-            Lattice, positions, typat, kpred = parser.parse_lattice()
-
-        elif code == "gpaw":
-            parser = ParserGPAW(calculator=calculator_gpaw,
-                                spinor=False if spinor is None else spinor)
-            NBin, kpred, Lattice, spinor, typat, positions, EF_in = parser.parse_header()
-
-        else:
-            raise RuntimeError(f"Unknown/unsupported code :{code}")
-
-
-        return CLS.from_cell(
-            real_lattice=Lattice,
-            positions=positions,
-            typat=typat,
-            spinor=spinor,
-            alat=alat,
-            from_sym_file=from_sym_file,
-            magmom=magmom,
-            include_TR=include_TR,
-            verbosity=verbosity,
-            ############
-            symprec=symprec,
-            angle_tolerance=angle_tolerance,
-            mag_symprec=mag_symprec,
-            ####################
-            **kwargs_tables
-        )
-
 
     def get_product_table(self, get_diff=False):
         """
@@ -818,6 +693,180 @@ class SpaceGroup:
     def translations_cart(self):
         return np.array([symop.translation @ self.real_lattice for symop in self.symmetries])
 
+    @classmethod
+    def from_espresso(CLS,
+                      prefix,
+                      spinor=None,
+                      alat=None,
+                      from_sym_file=None,
+                      verbosity=0,
+                      **kwargs_cell
+                      ):
+        """
+        Parse files to create a space-group object from Quantum ESPRESSO output.
+
+        Parameters
+        ----------
+        prefix : str
+            Prefix of the Quantum ESPRESSO output files (e.g. 'prefix' for 'prefix.save').
+        spinor : bool
+            `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+            If not specified, it is determined from the code.
+        alat : float, default=None
+            Lattice parameter in angstroms (quantum espresso convention).
+        from_sym_file : str
+            If provided, the symmetry operations are read from this file.
+            (format of pw2wannier90 prefix.sym  file)
+        verbosity : int
+            Verbosity level. Default set to minimalistic printing.
+        **kwargs_cell : dict
+            Additional keyword arguments to pass to the 'SpaceGroup.from_cell()` and `SpaceGroupIrrep.set_irreptables` method.
+
+        Returns
+        -------
+        SpaceGroup
+            An instance of the `SpaceGroup` class with the parsed symmetry operations.
+        """
+        parser = ParserEspresso(prefix)
+        _spinor = parser.spinor
+        # alat is saved to be used to write the prefix.sym file
+        Lattice, positions, typat, _alat = parser.parse_lattice()
+        if alat is None:
+            alat = _alat
+        return CLS.from_cell(
+            real_lattice=Lattice,
+            positions=positions,
+            typat=typat,
+            spinor=spinor if spinor is not None else _spinor,
+            alat=alat,
+            from_sym_file=from_sym_file,
+            verbosity=verbosity,
+            **kwargs_cell
+        )
+
+    @classmethod
+    def from_vasp(
+        CLS,
+        fWAV=None,
+        fPOS=None,
+        verbosity=0,
+        spinor=None,
+        **kwargs_cell
+    ):
+        """
+        Parse files to create a space-group object.
+        Parameters
+        ----------
+        fWAV : str, default=None
+            Name of the file with wavefunctions (e.g. WAVECAR for VASP).
+        fWFK : str, default=None
+            Name of the file with wavefunctions (e.g. WFK for ABINIT).
+        fPOS : str, default=None
+            Name of the file with positions (e.g. POSCAR for VASP).
+        spinor : bool, default=None
+            `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+            If not specified, it is determined from the code.
+        verbosity : int, default=0
+            Verbosity level. Default set to minimalistic printing.
+        **kwargs_cell : dict
+            Additional keyword arguments to pass to the 'SpaceGroup.from_cell()` and `SpaceGroupIrrep.set_irreptables` method.
+
+        Returns
+        -------
+        SpaceGroup
+            An instance of the `SpaceGroup` class with the parsed symmetry operations.
+        """
+        if spinor is None:
+            log_message("Spinor is not specified (for VASP), assuming non-spinor calculation", verbosity, 2)
+            spinor = False
+        parser = ParserVasp(fPOS, fWAV, onlysym=True, verbosity=verbosity)
+        Lattice, positions, typat = parser.parse_poscar()
+
+        return CLS.from_cell(
+            real_lattice=Lattice,
+            positions=positions,
+            typat=typat,
+            spinor=spinor,
+            verbosity=verbosity,
+            **kwargs_cell
+        )
+
+
+    @classmethod
+    def from_abinit(CLS,
+                    fWFK=None,
+                    verbosity=0,
+                    spinor=None,
+                    **kwargs_cell):
+        """
+        Parse files to create a space-group object from ABINIT output.
+        Parameters
+        ----------
+        fWFK : str, default=None
+            Name of the file with wavefunctions (e.g. WFK for ABINIT).
+        verbosity : int, default=0
+            Verbosity level. Default set to minimalistic printing.
+        spinor : bool, default=None
+            `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+            If not specified, it is determined from the code.
+        **kwargs_cell : dict
+            Additional keyword arguments to pass to the 'SpaceGroup.from_cell()` and `SpaceGroupIrrep.set_irreptables` method.
+
+        Returns
+        -------
+        SpaceGroup
+            An instance of the `SpaceGroup` class with the parsed symmetry operations.
+        """
+        parser = ParserAbinit(fWFK)
+        (nband, NK, Lattice, Ecut0, _spinor, typat, positions, EF_in) = \
+            parser.parse_header(verbosity=verbosity)
+        return CLS.from_cell(
+            real_lattice=Lattice,
+            positions=positions,
+            typat=typat,
+            spinor=spinor if spinor is not None else _spinor,
+            verbosity=verbosity,
+            **kwargs_cell
+        )
+
+
+    @classmethod
+    def from_wannier90(CLS,
+                       prefix,
+                       spinor=None,
+                       verbosity=0,
+                       **kwargs_cell):
+        """
+        Parse files to create a space-group object from Wannier90 output.
+        Parameters
+        ----------
+        prefix : str
+            Prefix of the Wannier90 output files (e.g. 'prefix' for 'prefix.win').
+        spinor : bool, default=None
+            `True` if wave-functions are spinors (SOC), `False` if they are scalars.
+            If not specified, it is determined from the code.
+        verbosity : int, default=0
+            Verbosity level. Default set to minimalistic printing.
+        **kwargs_cell : dict        
+            Additional keyword arguments to pass to the 'SpaceGroup.from_cell()` and `SpaceGroupIrrep.set_irreptables` method.
+        Returns
+        -------
+        SpaceGroup
+            An instance of the `SpaceGroup` class with the parsed symmetry operations.
+        """
+        parser = ParserW90(prefix, unk_formatted=None)
+        NK, NBin, _spinor, EF_in = parser.parse_header()
+        Lattice, positions, typat, kpred = parser.parse_lattice()
+        return CLS.from_cell(
+            real_lattice=Lattice,
+            positions=positions,
+            typat=typat,
+            spinor=spinor if spinor is not None else _spinor,
+            verbosity=verbosity,
+            **kwargs_cell
+        )
+
+
     def set_gpaw(self, calculator):
         for sym in self.symmetries:
             sym.set_gpaw(calculator)
@@ -825,12 +874,12 @@ class SpaceGroup:
     @classmethod
     def from_gpaw(cls,
                   calculator,
-                  include_TR=True,
-                  symprec=1e-5,
                   mag_symprec=0.05,
                   typat=None,
                   magmom=None,
-                  magmoms=None):
+                  spinor=None,
+                  verbosity=0,
+                  **kwargs_cell):
         """Get the spacegroup of a GPAW calculator (non-spinor only).
         Parameters
         ----------
@@ -851,15 +900,11 @@ class SpaceGroup:
             The final typat will be atomic_number*1000 + mapped_magnetic_moment.
         magmom : list of float, optional
             The magnetic moments to use for spacegroup detection. If None, the magnetic moments from the calculator are used.
-        magmoms : list of float, optional
-            The older argument for magmom, kept for backward compatibility. Used only if magmom is None.
         Returns
         -------
         spacegroup : irrep.spacegroup.SpaceGroup
             The detected spacegroup.
         """
-        if magmom is None:
-            magmom = magmoms
         lattice = calculator.atoms.cell
         if typat is None:
             typat = calculator.atoms.get_atomic_numbers()
@@ -873,60 +918,59 @@ class SpaceGroup:
                 typat = [int(typat[i] * 1000 + magmom_map[mag]) for i, mag in enumerate(magmom)]
         else:
             assert len(typat) == len(calculator.atoms), "typat should have the same length as the number of atoms"
-        print("typat used for spacegroup detection (accounting magmom):", typat)
+        log_message(f"typat used for spacegroup detection (accounting magmom): {typat}", verbosity, 1)
         positions = calculator.atoms.get_scaled_positions()
-        return SpaceGroup.from_cell(real_lattice=lattice,
-                                positions=positions,
-                                typat=typat,
-                                spinor=False,
-                                include_TR=include_TR,
-                                symprec=symprec,
+        return cls.from_cell(real_lattice=lattice,
+                             positions=positions,
+                             typat=typat,
+                             spinor=spinor if spinor is not None else False,
+                             **kwargs_cell
                                 )
 
-    @classmethod
-    def from_gpaw_magnetic(cls, calculator, theta=0, phi=0, include_TR=True,
-                           magmom=None, magmoms=None,
-                           mag_symprec=0.05, symprec=1e-5,
-                           ):
-        """
-        Get the spacegroup of a GPAW calculator (spinor magnetic version). 
+    # @classmethod
+    # def from_gpaw_magnetic(cls, calculator, theta=0, phi=0, include_TR=True,
+    #                        magmom=None, magmoms=None,
+    #                        mag_symprec=0.05, symprec=1e-5,
+    #                        ):
+    #     """
+    #     Get the spacegroup of a GPAW calculator (spinor magnetic version).
 
-        Parameters:
-        calculator : GPAW
-            The GPAW calculator.
-        theta, phi : float
-            The angles defining the global spin quantization axis. (in radians) 
-            magnetic moments will be aligned along that direction (in positive or negative direction, as defined from dft calculation)
-        include_TR : bool
-            Whether to include time-reversal symmetry.
-        magmom : array( Nat, 3), optional
-            if provided, overrides the magnetic moments of the calculator
-        magmoms : array(Nat,), optional
-            The older argument for magmom, kept for backward compatibility. Used only if magmom is None.
-        mag_symprec : float
-            The precision for distinguishing different magnetic moments. Only used if magmom is None.
-        symprec : float
-            The symmetry precision for spacegroup detection.
-        """
-        lattice = calculator.atoms.cell
-        typat = calculator.atoms.get_atomic_numbers()
-        positions = calculator.atoms.get_scaled_positions()
-        if magmom is None:
-            magmom = magmoms
-        if magmom is None:
-            magmom_axis = calculator.get_magnetic_moments()
-            magmom_axis = group_numbers(magmom_axis, precision=mag_symprec)
-            axis = np.array([np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)])
-            magmom = magmom_axis[:, None] * axis[None, :]
-        print(f"using magmom \n {magmom}")
-        return SpaceGroup.from_cell(real_lattice=lattice,
-                                positions=positions,
-                                typat=typat,
-                                spinor=True,
-                                include_TR=include_TR,
-                                symprec=symprec,
-                                mag_symprec=mag_symprec,
-                                magmom=magmom)
+    #     Parameters:
+    #     calculator : GPAW
+    #         The GPAW calculator.
+    #     theta, phi : float
+    #         The angles defining the global spin quantization axis. (in radians)
+    #         magnetic moments will be aligned along that direction (in positive or negative direction, as defined from dft calculation)
+    #     include_TR : bool
+    #         Whether to include time-reversal symmetry.
+    #     magmom : array( Nat, 3), optional
+    #         if provided, overrides the magnetic moments of the calculator
+    #     magmoms : array(Nat,), optional
+    #         The older argument for magmom, kept for backward compatibility. Used only if magmom is None.
+    #     mag_symprec : float
+    #         The precision for distinguishing different magnetic moments. Only used if magmom is None.
+    #     symprec : float
+    #         The symmetry precision for spacegroup detection.
+    #     """
+    #     lattice = calculator.atoms.cell
+    #     typat = calculator.atoms.get_atomic_numbers()
+    #     positions = calculator.atoms.get_scaled_positions()
+    #     if magmom is None:
+    #         magmom = magmoms
+    #     if magmom is None:
+    #         magmom_axis = calculator.get_magnetic_moments()
+    #         magmom_axis = group_numbers(magmom_axis, precision=mag_symprec)
+    #         axis = np.array([np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)])
+    #         magmom = magmom_axis[:, None] * axis[None, :]
+    #     print(f"using magmom \n {magmom}")
+    #     return SpaceGroup.from_cell(real_lattice=lattice,
+    #                             positions=positions,
+    #                             typat=typat,
+    #                             spinor=True,
+    #                             include_TR=include_TR,
+    #                             symprec=symprec,
+    #                             mag_symprec=mag_symprec,
+    #                             magmom=magmom)
 
     @classmethod
     def get_trivial(cls, lattice, spinor=False, time_reversal=False):

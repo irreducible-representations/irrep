@@ -218,29 +218,34 @@ class BandStructure:
         else:
             cls_spacegroup = SpaceGroup
 
+        print(f"got spinor={spinor} and include_TR={include_TR} and magmom={magmom}")
+        # exit()
+        kwargs_spacegroup = dict(
+            magmom=magmom,
+            include_TR=include_TR,
+            verbosity=verbosity,
+            symprec=symprec,
+            angle_tolerance=angle_tolerance,
+            mag_symprec=mag_symprec,
+            ######## Parameters for irreps ########
+            refUC=refUC,
+            shiftUC=shiftUC,
+            search_cell=search_cell,
+            trans_thresh=trans_thresh,
+        )
+
         if spacegroup is None:
-            spacegroup = cls_spacegroup.parse_files(
-                fWAV=fWAV,
-                fWFK=fWFK,
-                calculator_gpaw=calculator_gpaw,
-                prefix=prefix,
-                fPOS=fPOS,
-                code=code,
-                alat=alat,
-                from_sym_file=from_sym_file,
-                magmom=magmom,
-                include_TR=include_TR,
-                verbosity=verbosity,
-                spinor=spinor,
-                symprec=symprec,
-                angle_tolerance=angle_tolerance,
-                mag_symprec=mag_symprec,
-                ######## Parameters for irreps ########
-                refUC=refUC,
-                shiftUC=shiftUC,
-                search_cell=search_cell,
-                trans_thresh=trans_thresh,
-            )
+            if code == 'vasp':
+                spacegroup = cls_spacegroup.from_vasp(fWAV=fWAV, fPOS=fPOS, spinor=spinor, **kwargs_spacegroup)
+            elif code == 'abinit':
+                spacegroup = cls_spacegroup.from_abinit(fWFK=fWFK, **kwargs_spacegroup)
+            elif code == 'gpaw':
+                spacegroup = cls_spacegroup.from_gpaw(calculator=calculator_gpaw, spinor=spinor, **kwargs_spacegroup)
+            elif code == 'wannier90':
+                spacegroup = cls_spacegroup.from_wannier90(prefix=prefix, **kwargs_spacegroup)
+            elif code == 'espresso':
+                spacegroup = cls_spacegroup.from_espresso(prefix=prefix, alat=alat, from_sym_file=from_sym_file, **kwargs_spacegroup)
+
         self.spacegroup = spacegroup
         self.spinor = self.spacegroup.spinor
         self.magnetic = self.spacegroup.magnetic
@@ -513,6 +518,26 @@ class BandStructure:
             else:
                 self.kwargs_kpoint = None
             self.kpoints.append(kp)
+
+
+    @classmethod
+    def from_gpaw(CLS, calculator, **kwargs):
+        """
+        Create an instance of BandStructure from a GPAW calculator.
+
+        Parameters
+        ----------
+        calculator : GPAW
+            GPAW calculator with the wave functions.
+        kwargs : dict
+            Additional keyword arguments to be passed to the constructor.
+
+        Returns
+        -------
+        BandStructure
+            Instance of BandStructure.
+        """
+        return CLS(calculator_gpaw=calculator, code='gpaw', **kwargs)
 
 
     @property
