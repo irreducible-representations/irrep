@@ -179,18 +179,18 @@ def check_symm_matrix(example_dir, output_file="symm_matrix", ref_file=None, deg
     if ref_file is None:
         ref_file = output_file
     path = os.path.join(TEST_FILES_PATH, example_dir)
-    bandstructure = BandStructure(code='vasp',
-                                  fPOS=os.path.join(path, 'POSCAR'),
-                                  fWAV=os.path.join(path, 'WAVECAR'),
-                                  search_cell=True,
-                                  Ecut=Ecut,
-                                  spinor=True, normalize=False,
-                                  irreps=True,  # with false the test fails, because s
-                                                #  symmetries matching the tables are reordered,
-                                                # and possible spinor rotation/sign change
-                                                # Therefore, keep irreps=True to maintain consistency with
-                                                # the reference data
-                                  IBend=20)
+    bandstructure = BandStructure.from_vasp(
+        fPOS=os.path.join(path, 'POSCAR'),
+        fWAV=os.path.join(path, 'WAVECAR'),
+        search_cell=True,
+        Ecut=Ecut,
+        spinor=True, normalize=False,
+        irreps=True,  # with false the test fails, because s
+        #  symmetries matching the tables are reordered,
+        # and possible spinor rotation/sign change
+        # Therefore, keep irreps=True to maintain consistency with
+        # the reference data
+        IBend=20)
     points = []
     matrices = []
     matrices2 = []  # calculate blocks separately, but collect to one big matrix
