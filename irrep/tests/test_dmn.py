@@ -12,12 +12,11 @@ TMP_FILES_PATH = Path(__file__).parent / "tmp_data"
 def check_Fe_qe(include_TR, irreducible=False):
     path = TEST_FILES_PATH / "Fe_qe"
 
-    bandstructure = BandStructure(prefix=str(path / "Fe"),
-                                  code="espresso",
+    bandstructure = BandStructure.from_espresso(prefix=str(path / "Fe"),
                                   degen_thresh=1e-3,
                                   Ecut=100.,
                                   magmom=[[0, 0, 1]],
-                                  include_TR=include_TR)
+        include_TR=include_TR)
     # bandstructure.spacegroup.show()
 
     data = bandstructure.get_dmn(degen_thresh=1e-3, unitary=True,

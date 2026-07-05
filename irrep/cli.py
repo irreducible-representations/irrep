@@ -24,7 +24,7 @@ import numpy as np
 import click
 from monty.serialization import dumpfn, loadfn
 
-from .bandstructure import BandStructure
+from .parsers.parse_files_bandstructure import parse_files
 from .utility import sort_vectors, str2list, short, log_message
 from . import __version__ as version
 
@@ -452,7 +452,7 @@ def cli(
     if print_hs_kpoints:  # don't read wave functions, only identify SG
         onlysym = True
 
-    bandstr = BandStructure(
+    bandstr = parse_files(
         fWAV=fwav,
         fWFK=fwfk,
         calculator_gpaw=gpaw_calc,

@@ -10,14 +10,14 @@ from gpaw import GPAW
 @pytest.fixture(scope="module", autouse=True)
 def BandstrGpawDiamond():
     calc = GPAW(os.path.join(TEST_FILES_PATH, "diamond-gpaw", "diamond-nscf-irred.gpw"))
-    bandstructure = BandStructure(calculator_gpaw=calc, read_paw=True, code='gpaw', Ecut=300)
+    bandstructure = BandStructure.from_gpaw(calculator_gpaw=calc, read_paw=True, Ecut=300)
     return bandstructure
 
 
 @pytest.fixture(scope="module", autouse=True)
 def BandstrGpawBismuth():
     calc = GPAW(os.path.join(TEST_FILES_PATH, "gpaw", "Bi.gpw"))
-    bandstructure = BandStructure(calculator_gpaw=calc, read_paw=True, code='gpaw', Ecut=300)
+    bandstructure = BandStructure.from_gpaw(calculator_gpaw=calc, read_paw=True, Ecut=300)
     return bandstructure
 
 

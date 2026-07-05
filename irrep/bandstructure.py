@@ -23,7 +23,7 @@ import numpy as np
 from functools import cached_property
 
 
-from .readfiles import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
+from .parsers import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .spacegroup_irreps import SpaceGroupIrreps
@@ -168,48 +168,356 @@ class BandStructure:
         Property that returns the number of bands. Used to write trace.txt.
     """
 
-    def __init__(
-        self,
+
+    def __init__(self,
+                 kpoints,
+                 spacegroup,
+                 kpoints_paw=None,
+                 overlap_paw=None,
+                 mp_grid=None,
+                 efermi=0.0,
+                 Ecut=None,
+                 kwargs_kpoint=None,
+                 **kwargs_parser):
+        if len(kwargs_parser) > 0:
+            raise ValueError(f"the following kwargs are not recognized by BandStructure-__init__(): {list(kwargs_parser.keys())}, please use BandStructure.from_???() class methods to parse files instead of calling BandStructure.__init__() directly.")
+        self.kpoints = kpoints
+        self.kpoints_paw = kpoints_paw
+        self.spacegroup = spacegroup
+        self.overlap_paw = overlap_paw
+        self.mp_grid = mp_grid
+        self.efermi = efermi
+        self.Ecut = Ecut
+        self.kwargs_kpoint = kwargs_kpoint
+
+
+    @classmethod
+    def from_vasp(
+        cls,
         fWAV=None,
-        fWFK=None,
-        prefix=None,
-        calculator_gpaw=None,
         fPOS=None,
         Ecut=None,
         IBstart=None,
         IBend=None,
         kplist=None,
         spinor=None,
-        code="vasp",
-        calculate_traces=False,
-        EF='0.0',
         onlysym=False,
         spin_channel=None,
-        refUC=None,
-        shiftUC=None,
-        search_cell=False,
-        trans_thresh=1e-5,
-        degen_thresh=1e-8,
-        save_wf=True,
         verbosity=0,
-        alat=None,
-        from_sym_file=None,
-        normalize=True,
-        magmom=None,
-        include_TR=False,
-        unk_formatted=False,
         irreps=False,
-        symprec=1e-5,
-        angle_tolerance=-1,
-        mag_symprec=-1,
         spacegroup=None,
-        select_grid=None,
-        irreducible=False,
-        read_paw=False
+        **kwargs
     ):
 
-        code = code.lower()
 
+        if spacegroup is None:
+            cls_spacegroup, kwargs_spacegroup = cls.get_spacegroup_cls(spin_channel=spin_channel, irreps=irreps, **kwargs)
+            spacegroup = cls_spacegroup.from_vasp(fWAV=fWAV, fPOS=fPOS, spinor=spinor, **kwargs_spacegroup)
+
+        check_skip, mp_grid = cls.get_check_mpgrid(spacegroup=spacegroup, verbosity=verbosity, **kwargs)
+
+        if onlysym:
+            return cls(kpoints=[], spacegroup=spacegroup, Ecut=Ecut)
+
+        if spinor is None:
+            raise RuntimeError(
+                "spinor should be specified in the command line for VASP bandstructure"
+            )
+        parser = ParserVasp(fPOS, fWAV, onlysym, verbosity=verbosity)
+        Lattice, positions, typat = parser.parse_poscar()
+        if not onlysym:
+            NK, NBin, Ecut0, lattice_wavecar = parser.parse_header()
+            if not np.allclose(Lattice, lattice_wavecar):
+                raise RuntimeError(f"POSCAR and WAVECAR contain different lattices\n Lattice in WAVECAR:\n{lattice_wavecar} \n Lattice in POSCAR: \n{Lattice}")
+            EF_in = None  # not written in WAVECAR
+
+        kplist, NBout, NBin, IBstart, IBend, Ecut, efermi = cls.__init__3(kplist=kplist, EF_in=EF_in, Ecut=Ecut, Ecut0=Ecut0,
+                                                                          IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, verbosity=verbosity, **kwargs)
+
+        kpoints = []
+        for ik in kplist:
+            log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
+            WF, Energy, kpt, npw = parser.parse_kpoint(ik, NBin, spinor)
+            if check_skip(kpt):
+                continue
+            kg, eKG = calc_gvectors(kpt,
+                                spacegroup.reciprocal_lattice,
+                                Ecut0,
+                                npw,
+                                Ecut,
+                                spinor=spinor,
+                                verbosity=verbosity
+                                )
+            WF = WF[:, kg[:, 3], :]
+            kp, kwargs_kpoint = cls._set_kpoint(
+                spacegroup=spacegroup, efermi=efermi, rec_lattice=spacegroup.reciprocal_lattice, spinor=spinor, irreps=irreps,
+                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, verbosity=verbosity, **kwargs)
+            kpoints.append(kp)
+
+        return cls(kpoints=kpoints, spacegroup=spacegroup, Ecut=Ecut, mp_grid=mp_grid, efermi=efermi, kwargs_kpoint=kwargs_kpoint)
+
+    @classmethod
+    def from_abinit(
+        cls,
+        fWFK=None,
+        Ecut=None,
+        IBstart=None,
+        IBend=None,
+        kplist=None,
+        onlysym=False,
+        spin_channel=None,
+        verbosity=0,
+        irreps=False,
+        spacegroup=None,
+        **kwargs
+    ):
+
+        if spacegroup is None:
+            cls_spacegroup, kwargs_spacegroup = cls.get_spacegroup_cls(spin_channel=spin_channel, irreps=irreps, **kwargs)
+            spacegroup = cls_spacegroup.from_abinit(fWFK=fWFK, **kwargs_spacegroup)
+        check_skip, mp_grid = cls.get_check_mpgrid(spacegroup=spacegroup, verbosity=verbosity, **kwargs)
+
+        if onlysym:
+            return cls(kpoints=[], spacegroup=spacegroup, Ecut=Ecut)
+
+        spinor = spacegroup.spinor
+
+        parser = ParserAbinit(fWFK)
+        (nband, NK, Lattice, Ecut0, _spinor, typat, positions, EF_in) = parser.parse_header(verbosity=verbosity)
+        NBin = max(nband)
+
+        kplist, NBout, NBin, IBstart, IBend, Ecut, efermi = cls.__init__3(kplist=kplist, EF_in=EF_in, Ecut=Ecut, Ecut0=Ecut0,
+                                                                          IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, verbosity=verbosity, **kwargs)
+
+        kpoints = []
+        for ik in kplist:
+
+            NBin = parser.nband[ik]
+            kpt = parser.kpt[ik]
+            if check_skip(kpt):
+                continue
+            log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
+            WF, Energy, kg = parser.parse_kpoint(ik)
+            WF, kg, eKG = sortIG(ik, kg, kpt, WF, spacegroup.reciprocal_lattice, Ecut0, Ecut, verbosity=verbosity)
+
+            kp, kwargs_kpoint = cls._set_kpoint(
+                spacegroup=spacegroup, efermi=efermi, rec_lattice=spacegroup.reciprocal_lattice, spinor=spinor, irreps=irreps,
+                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, verbosity=verbosity, **kwargs)
+            kpoints.append(kp)
+
+        return cls(kpoints=kpoints, spacegroup=spacegroup, Ecut=Ecut, mp_grid=mp_grid, efermi=efermi, kwargs_kpoint=kwargs_kpoint)
+
+
+    @classmethod
+    def from_espresso(
+        cls,
+        prefix=None,
+        Ecut=None,
+        IBstart=None,
+        IBend=None,
+        kplist=None,
+        onlysym=False,
+        spin_channel=None,
+        verbosity=0,
+        alat=None,
+        irreps=False,
+        from_sym_file=None,
+        spacegroup=None,
+        **kwargs
+    ):
+
+        if spacegroup is None:
+            cls_spacegroup, kwargs_spacegroup = cls.get_spacegroup_cls(spin_channel=spin_channel, irreps=irreps, **kwargs)
+            spacegroup = cls_spacegroup.from_espresso(prefix=prefix, alat=alat, from_sym_file=from_sym_file, **kwargs_spacegroup)
+
+        check_skip, mp_grid = cls.get_check_mpgrid(spacegroup=spacegroup, verbosity=verbosity, **kwargs)
+
+        if onlysym:
+            return cls(kpoints=[], spacegroup=spacegroup, Ecut=Ecut)
+
+        spinor = spacegroup.spinor
+        parser = ParserEspresso(prefix)
+        # alat is saved to be used to write the prefix.sym file
+        Lattice, positions, typat, _alat = parser.parse_lattice()
+        if alat is None:
+            alat = _alat
+        spinpol, Ecut0, EF_in, NK, NBin = parser.parse_header(spin_channel=spin_channel)
+
+        kplist, NBout, NBin, IBstart, IBend, Ecut, efermi = cls.__init__3(kplist=kplist, EF_in=EF_in, Ecut=Ecut, Ecut0=Ecut0,
+                                                                          IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, verbosity=verbosity, **kwargs)
+        kpoints = []
+        for ik in kplist:
+            log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
+            WF, Energy, kg, kpt = parser.parse_kpoint(ik, verbosity=verbosity)
+            if check_skip(kpt):
+                continue
+            WF, kg, eKG = sortIG(ik + 1, kg, kpt, WF, spacegroup.reciprocal_lattice, Ecut0, Ecut, verbosity=verbosity)
+
+            kp, kwargs_kpoint = cls._set_kpoint(
+                spacegroup=spacegroup, efermi=efermi, rec_lattice=spacegroup.reciprocal_lattice, spinor=spinor, irreps=irreps,
+                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, verbosity=verbosity, **kwargs)
+            kpoints.append(kp)
+        return cls(kpoints=kpoints, spacegroup=spacegroup, Ecut=Ecut, mp_grid=mp_grid, efermi=efermi, kwargs_kpoint=kwargs_kpoint)
+
+
+
+    @classmethod
+    def from_wannier90(
+        cls,
+        prefix=None,
+        Ecut=None,
+        IBstart=None,
+        IBend=None,
+        kplist=None,
+        spinor=None,
+        onlysym=False,
+        spin_channel=None,
+        verbosity=0,
+        irreps=False,
+        unk_formatted=False,
+        spacegroup=None,
+        **kwargs
+    ):
+        if spacegroup is None:
+            cls_spacegroup, kwargs_spacegroup = cls.get_spacegroup_cls(spin_channel=spin_channel, irreps=irreps, **kwargs)
+            spacegroup = cls_spacegroup.from_wannier90(prefix=prefix, **kwargs_spacegroup)
+
+        check_skip, mp_grid = cls.get_check_mpgrid(spacegroup=spacegroup, sverbosity=verbosity, **kwargs)
+
+        if onlysym:
+            return cls(kpoints=[], spacegroup=spacegroup, Ecut=Ecut)
+        spinor = spacegroup.spinor
+
+
+        if Ecut is None:
+            raise RuntimeError("Ecut mandatory for Wannier90")
+
+        Ecut0 = Ecut
+        parser = ParserW90(prefix, unk_formatted=unk_formatted, spin_channel=spin_channel)
+        NK, NBin, _spinor, EF_in = parser.parse_header()
+        Lattice, positions, typat, kpred = parser.parse_lattice()
+        Energies = parser.parse_energies()
+
+        kplist, NBout, NBin, IBstart, IBend, Ecut, efermi = cls.__init__3(kplist=kplist, EF_in=EF_in, Ecut=Ecut, Ecut0=Ecut0,
+                                                                          IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, verbosity=verbosity, **kwargs)
+
+        kpoints = []
+        for ik in kplist:
+            kpt = kpred[ik]
+            if check_skip(kpt):
+                continue
+            Energy = Energies[ik]
+            ngx, ngy, ngz = parser.parse_grid(ik + 1)
+            kg, eKG = calc_gvectors(K=kpred[ik],
+                                RecLattice=spacegroup.reciprocal_lattice,
+                                Ecut=Ecut,
+                                spinor=spinor,
+                                nplanemax=np.max([ngx, ngy, ngz]) // 2,
+                                verbosity=verbosity
+                                )
+            selectG = tuple(kg[:, 0:3].T)
+            log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
+            WF = parser.parse_kpoint(ik + 1, selectG)
+
+            kp, kwargs_kpoint = cls._set_kpoint(
+                spacegroup=spacegroup, efermi=efermi, rec_lattice=spacegroup.reciprocal_lattice, spinor=spinor, irreps=irreps,
+                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, verbosity=verbosity, **kwargs)
+            kpoints.append(kp)
+
+        return cls(kpoints=kpoints, spacegroup=spacegroup, Ecut=Ecut, mp_grid=mp_grid, efermi=efermi, kwargs_kpoint=kwargs_kpoint)
+
+
+    @classmethod
+    def from_gpaw(
+        cls,
+        calculator_gpaw=None,
+        Ecut=None,
+        IBstart=None,
+        IBend=None,
+        kplist=None,
+        spinor=None,
+        onlysym=False,
+        spin_channel=None,
+        verbosity=0,
+        irreps=False,
+        spacegroup=None,
+        read_paw=False,
+        **kwargs
+    ):
+
+        if spacegroup is None:
+            cls_spacegroup, kwargs_spacegroup = cls.get_spacegroup_cls(spin_channel=spin_channel, irreps=irreps, **kwargs)
+            spacegroup = cls_spacegroup.from_gpaw(calculator=calculator_gpaw, spinor=spinor, **kwargs_spacegroup)
+        check_skip, mp_grid = cls.get_check_mpgrid(spacegroup=spacegroup, verbosity=verbosity, **kwargs)
+
+        if onlysym:
+            return cls(kpoints=[], spacegroup=spacegroup, Ecut=Ecut)
+        spinor = spacegroup.spinor
+
+
+        parser = ParserGPAW(calculator=calculator_gpaw,
+                            spinor=bool(spinor),
+                            spin_channel=spin_channel,
+                            verbosity=verbosity
+                            )
+        if read_paw:
+            kpoints_paw = []
+            spacegroup.set_gpaw(calculator=parser.calculator)
+            from irrep.kpoint_gpaw import OverlapPAW
+            overlap_paw = OverlapPAW(wfs=parser.calculator.wfs)
+        else:
+            kpoints_paw = None
+            overlap_paw = None
+
+        NBin, kpred, Lattice, _spinor, typat, positions, EF_in = parser.parse_header()
+        if Ecut is None:
+            raise RuntimeError("Ecut mandatory for GPAW")
+        Ecut0 = Ecut
+        NK = kpred.shape[0]
+
+        kplist, NBout, NBin, IBstart, IBend, Ecut, efermi = cls.__init__3(kplist=kplist, EF_in=EF_in, Ecut=Ecut, Ecut0=Ecut0,
+                                                                          IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, verbosity=verbosity, **kwargs)
+
+        kpoints = []
+        for ik in kplist:
+            kpt = kpred[ik]
+            if check_skip(kpt):
+                continue
+            Energy, WF, kg, kpt, eKG = parser.parse_kpoint(ik,
+                                                RecLattice=spacegroup.reciprocal_lattice,
+                                                Ecut=Ecut)
+            if read_paw:
+                # read projections and reconstruct pseudo wavefunctions on a grid
+                from irrep.kpoint_gpaw import KpointGPAW
+                kp_gpaw = KpointGPAW.from_gpaw(calc=calculator_gpaw, ibz_index=ik, ispin=spin_channel,
+                                               RecLattice=spacegroup.reciprocal_lattice,
+                                               IBstart=IBstart, IBend=IBend)
+                kpoints_paw.append(kp_gpaw)
+
+            kp, kwargs_kpoint = cls._set_kpoint(
+                spacegroup=spacegroup, efermi=efermi, rec_lattice=spacegroup.reciprocal_lattice, spinor=spinor, irreps=irreps,
+                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, verbosity=verbosity, **kwargs)
+            kpoints.append(kp)
+        return cls(kpoints=kpoints, spacegroup=spacegroup, Ecut=Ecut, kpoints_paw=kpoints_paw, overlap_paw=overlap_paw, mp_grid=mp_grid, efermi=efermi, kwargs_kpoint=kwargs_kpoint)
+
+
+
+    @classmethod
+    def get_spacegroup_cls(cls,
+                  spin_channel,
+                  magmom=None,
+                  include_TR=False,
+                  verbosity=0,
+                  symprec=1e-5,
+                  angle_tolerance=-1,
+                  mag_symprec=-1,
+                  refUC=None,
+                  shiftUC=None,
+                  search_cell=False,
+                  trans_thresh=1e-5,
+                  irreps=False,
+                  **kwargs
+                  ):
         if spin_channel is not None:
             assert spin_channel in ['up', 'dw', 0, 1, 2], "spin_channel must be 'up', 'dw', 0, 1 or 2"
 
@@ -218,41 +526,37 @@ class BandStructure:
         else:
             cls_spacegroup = SpaceGroup
 
-        if spacegroup is None:
-            spacegroup = cls_spacegroup.parse_files(
-                fWAV=fWAV,
-                fWFK=fWFK,
-                calculator_gpaw=calculator_gpaw,
-                prefix=prefix,
-                fPOS=fPOS,
-                code=code,
-                alat=alat,
-                from_sym_file=from_sym_file,
-                magmom=magmom,
-                include_TR=include_TR,
-                verbosity=verbosity,
-                spinor=spinor,
-                symprec=symprec,
-                angle_tolerance=angle_tolerance,
-                mag_symprec=mag_symprec,
-                ######## Parameters for irreps ########
-                refUC=refUC,
-                shiftUC=shiftUC,
-                search_cell=search_cell,
-                trans_thresh=trans_thresh,
-            )
-        self.spacegroup = spacegroup
-        self.spinor = self.spacegroup.spinor
-        self.magnetic = self.spacegroup.magnetic
+        kwargs_spacegroup = dict(
+            magmom=magmom,
+            include_TR=include_TR,
+            verbosity=verbosity,
+            symprec=symprec,
+            angle_tolerance=angle_tolerance,
+            mag_symprec=mag_symprec,
+            ######## Parameters for irreps ########
+            refUC=refUC,
+            shiftUC=shiftUC,
+            search_cell=search_cell,
+            trans_thresh=trans_thresh,
+        )
+        return cls_spacegroup, kwargs_spacegroup
+
+    @classmethod
+    def get_check_mpgrid(cls,
+                  spacegroup,
+                  select_grid=None,
+                  irreducible=False,
+                  verbosity=0,
+                  **kwargs):
 
         if select_grid is not None:
-            self.mp_grid = tuple(select_grid)
+            mp_grid = tuple(select_grid)
 
             def is_on_grid(kpt):
                 a = np.array(kpt) * np.array(select_grid)
                 return np.allclose(a, np.round(a))
         else:
-            self.mp_grid = None
+            mp_grid = None
 
             def is_on_grid(kpt):
                 return True
@@ -261,7 +565,7 @@ class BandStructure:
             irreducible_list = UniqueListMod1()
 
             def is_reducible(kpt):
-                for symop in self.spacegroup.symmetries:
+                for symop in spacegroup.symmetries:
                     if symop.transform_k(kpt) in irreducible_list:
                         return True
                 else:
@@ -279,100 +583,26 @@ class BandStructure:
                 log_message(f'k-point {kpt} is reducible, skipping', verbosity, 1)
                 return True
             return False
+        return check_skip, mp_grid
 
 
-        if onlysym:
-            return
-        # this way the headers are parsed twice (once for spacegroup and once for bandstructure)
-        # but it is not a big problem, I think, and the onlysym requires less parameters (no Ecut, spinor, spin_channel....)
-
-
-        if code == "vasp":
-
-            if spinor is None:
-                raise RuntimeError(
-                    "spinor should be specified in the command line for VASP bandstructure"
-                )
-            _spinor = spinor
-            parser = ParserVasp(fPOS, fWAV, onlysym, verbosity=verbosity)
-            Lattice, positions, typat = parser.parse_poscar()
-            if not onlysym:
-                NK, NBin, self.Ecut0, lattice_wavecar = parser.parse_header()
-                if not np.allclose(Lattice, lattice_wavecar):
-                    raise RuntimeError(f"POSCAR and WAVECAR contain different lattices\n Lattice in WAVECAR:\n{lattice_wavecar} \n Lattice in POSCAR: \n{Lattice}")
-                EF_in = None  # not written in WAVECAR
-
-        elif code == "abinit":
-
-            parser = ParserAbinit(fWFK)
-            (nband,
-             NK,
-             Lattice,
-             self.Ecut0,
-             _spinor,
-             typat,
-             positions,
-             EF_in) = parser.parse_header(verbosity=verbosity)
-            NBin = max(nband)
-
-        elif code == "espresso":
-
-            parser = ParserEspresso(prefix)
-            _spinor = parser.spinor
-            # alat is saved to be used to write the prefix.sym file
-            Lattice, positions, typat, _alat = parser.parse_lattice()
-            if alat is None:
-                alat = _alat
-            spinpol, self.Ecut0, EF_in, NK, NBin = parser.parse_header(spin_channel=spin_channel)
-
-
-        elif code == "wannier90":
-
-            if Ecut is None:
-                raise RuntimeError("Ecut mandatory for Wannier90")
-
-            self.Ecut0 = Ecut
-            parser = ParserW90(prefix, unk_formatted=unk_formatted, spin_channel=spin_channel)
-            NK, NBin, _spinor, EF_in = parser.parse_header()
-            Lattice, positions, typat, kpred = parser.parse_lattice()
-            Energies = parser.parse_energies()
-        elif code == "gpaw":
-
-            parser = ParserGPAW(calculator=calculator_gpaw,
-                                spinor=bool(spinor),
-                                spin_channel=spin_channel,
-                                verbosity=verbosity
-                                )
-            if read_paw:
-                self.kpoints_paw = []
-                self.spacegroup.set_gpaw(calculator=parser.calculator)
-                from irrep.kpoint_gpaw import OverlapPAW
-                self.overlap_paw = OverlapPAW(wfs=parser.calculator.wfs)
-
-            NBin, kpred, Lattice, _spinor, typat, positions, EF_in = parser.parse_header()
-            if Ecut is None:
-                raise RuntimeError("Ecut mandatory for GPAW")
-            self.Ecut0 = Ecut
-            NK = kpred.shape[0]
-        else:
-            raise RuntimeError(f"Unknown/unsupported code :{code}")
-
-        assert _spinor == self.spinor, f"the spinor flag in the header ({_spinor}) does not match the one in the spacegroup ({self.spinor})"
+    @classmethod
+    def __init__3(cls, kplist, EF_in, Ecut, Ecut0, IBstart, IBend, NBin, NK, verbosity, EF="0.0", **kwargs):
 
         # Set Fermi energy
         if EF.lower() == "auto":
             if EF_in is None:
-                self.efermi = 0.0
+                efermi = 0.0
                 log_message("WARNING : fermi-energy not found. Setting it as 0 eV", verbosity, 1)
             else:
-                self.efermi = EF_in
+                efermi = EF_in
         else:
             try:
-                self.efermi = float(EF)
+                efermi = float(EF)
             except ValueError:
                 raise ValueError("Invalid value for keyword EF. It must be a number or 'auto'")
 
-        log_message(f"Efermi: {self.efermi:.4f} eV", verbosity, 1)
+        log_message(f"Efermi: {efermi:.4f} eV", verbosity, 1)
 
         # Fix indices of bands to be considered
         if IBstart is None:
@@ -388,17 +618,17 @@ class BandStructure:
             raise RuntimeError("No bands to calculate")
 
         # Set cutoff to calculate traces
-        if Ecut is None or Ecut > self.Ecut0 or Ecut <= 0:
-            self.Ecut = self.Ecut0
+        if Ecut is None or Ecut > Ecut0 or Ecut <= 0:
+            Ecut = Ecut0
         else:
-            self.Ecut = Ecut
+            Ecut = Ecut
 
 
         # To do: create writer of description for this class
         log_message((f"Input files contain {NK} k-points and {NBin} bands.\n"
                      f"Saving {NBout} bands starting from {IBstart + 1} in the output"), verbosity, 1)
-        log_message(f"Energy cutoff in WAVECAR : {self.Ecut0}", verbosity, 1)
-        log_message(f"Energy cutoff reduced to : {self.Ecut}", verbosity, 1)
+        log_message(f"Energy cutoff in WAVECAR : {Ecut0}", verbosity, 1)
+        log_message(f"Energy cutoff reduced to : {Ecut}", verbosity, 1)
 
         # Create list of indices for k-points
         if kplist is None:
@@ -407,113 +637,57 @@ class BandStructure:
             kplist = np.array([k for k in kplist if k >= 0 and k < NK])
 
         # Parse wave functions at each k-point
-        self.kpoints = []
-        for ik in kplist:
+        return kplist, NBout, NBin, IBstart, IBend, Ecut, efermi
 
-            if code == 'vasp':
-                log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
-                WF, Energy, kpt, npw = parser.parse_kpoint(ik, NBin, self.spinor)
-                if check_skip(kpt):
-                    continue
-                kg, eKG = calc_gvectors(kpt,
-                                   self.RecLattice,
-                                   self.Ecut0,
-                                   npw,
-                                   self.Ecut,
-                                   spinor=self.spinor,
-                                   verbosity=verbosity
-                                   )
-                WF = WF[:, kg[:, 3], :]
+    @classmethod
+    def _set_kpoint(cls, spacegroup, efermi, rec_lattice, spinor,
+                    IBstart, IBend, NBout, ik, kpt, WF, Energy, kg, eKG, verbosity, irreps,
+                    calculate_traces=False,
+                    degen_thresh=1e-8,
+                    save_wf=True,
+                    normalize=True,
+                    **kwargs):
+        # Pick energy of IBend+1 band to calculate gaps
+        try:
+            upper = Energy[IBend] - efermi
+        except BaseException:
+            upper = np.nan
 
-            elif code == 'abinit':
-                NBin = parser.nband[ik]
-                kpt = parser.kpt[ik]
-                if check_skip(kpt):
-                    continue
-                log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
-                WF, Energy, kg = parser.parse_kpoint(ik)
-                WF, kg, eKG = sortIG(ik, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, verbosity=verbosity)
-
-            elif code == 'espresso':
-                log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
-                WF, Energy, kg, kpt = parser.parse_kpoint(ik, verbosity=verbosity)
-                if check_skip(kpt):
-                    continue
-                WF, kg, eKG = sortIG(ik + 1, kg, kpt, WF, self.RecLattice, self.Ecut0, self.Ecut, verbosity=verbosity)
-
-            elif code == 'wannier90':
-                kpt = kpred[ik]
-                if check_skip(kpt):
-                    continue
-                Energy = Energies[ik]
-                ngx, ngy, ngz = parser.parse_grid(ik + 1)
-                kg, eKG = calc_gvectors(K=kpred[ik],
-                                   RecLattice=self.RecLattice,
-                                   Ecut=self.Ecut,
-                                   spinor=self.spinor,
-                                   nplanemax=np.max([ngx, ngy, ngz]) // 2,
-                                   verbosity=verbosity
-                                   )
-                selectG = tuple(kg[:, 0:3].T)
-                log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
-                WF = parser.parse_kpoint(ik + 1, selectG)
-            elif code == 'gpaw':
-                kpt = kpred[ik]
-                if check_skip(kpt):
-                    continue
-                Energy, WF, kg, kpt, eKG = parser.parse_kpoint(ik,
-                                                 RecLattice=self.RecLattice,
-                                                 Ecut=self.Ecut)
-                if read_paw:
-                    # read projections and reconstruct pseudo wavefunctions on a grid
-                    from irrep.kpoint_gpaw import KpointGPAW
-                    kp_gpaw = KpointGPAW.from_gpaw(calc=calculator_gpaw, ibz_index=ik, ispin=spin_channel,
-                                                   RecLattice=self.RecLattice,
-                                                   IBstart=IBstart, IBend=IBend)
-                    self.kpoints_paw.append(kp_gpaw)
-
-            # Pick energy of IBend+1 band to calculate gaps
-            try:
-                upper = Energy[IBend] - self.efermi
-            except BaseException:
-                upper = np.nan
-
-            # Preserve only bands in between IBstart and IBend
-            WF = WF[IBstart:IBend]
-            Energy = Energy[IBstart:IBend] - self.efermi
+        # Preserve only bands in between IBstart and IBend
+        WF = WF[IBstart:IBend]
+        Energy = Energy[IBstart:IBend] - efermi
 
 
-            kp = Kpoint(
-                ik=ik,
-                kpt=kpt,
-                WF=WF,
-                Energy=Energy,
-                ig=kg,
-                upper=upper,
-                num_bands=NBout,
-                RecLattice=self.RecLattice,
-                spinor=self.spinor,
-                normalize=normalize,
-                eKG=eKG,
+        kp = Kpoint(
+            ik=ik,
+            kpt=kpt,
+            WF=WF,
+            Energy=Energy,
+            ig=kg,
+            upper=upper,
+            num_bands=NBout,
+            RecLattice=rec_lattice,
+            spinor=spinor,
+            normalize=normalize,
+            eKG=eKG,
+        )
+        kp.set_little_group(symmetries=spacegroup.u_symmetries)
+
+        if irreps:
+            # saved to further use in Separate()
+            kwargs_kpoint = dict(
+                degen_thresh=degen_thresh,
+                refUC=spacegroup.refUC,
+                shiftUC=spacegroup.shiftUC,
+                symmetries_tables=spacegroup.u_symmetries_tables,
+                save_wf=save_wf,
+                verbosity=verbosity,
+                calculate_traces=calculate_traces,
             )
-            kp.set_little_group(symmetries=self.spacegroup.u_symmetries)
-
-            if irreps:
-                # saved to further use in Separate()
-                self.kwargs_kpoint = dict(
-                    degen_thresh=degen_thresh,
-                    refUC=self.spacegroup.refUC,
-                    shiftUC=self.spacegroup.shiftUC,
-                    symmetries_tables=self.spacegroup.u_symmetries_tables,
-                    save_wf=save_wf,
-                    verbosity=verbosity,
-                    calculate_traces=calculate_traces,
-                )
-                kp.init_traces(**self.kwargs_kpoint)
-            else:
-                self.kwargs_kpoint = None
-            self.kpoints.append(kp)
-
+            kp.init_traces(**kwargs_kpoint)
+        else:
+            kwargs_kpoint = None
+        return kp, kwargs_kpoint
 
     @property
     def lattice(self):
@@ -526,6 +700,14 @@ class BandStructure:
     @property
     def RecLattice(self):
         return self.spacegroup.reciprocal_lattice
+
+    @property
+    def spinor(self):
+        return self.spacegroup.spinor
+
+    @property
+    def magnetic(self):
+        return self.spacegroup.magnetic
 
     @property
     def num_k(self):
