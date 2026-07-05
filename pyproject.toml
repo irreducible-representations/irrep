@@ -14,6 +14,7 @@ classifiers = [
   "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
   "Operating System :: OS Independent",
 ]
+
 dependencies = [
   "numpy",
   "scipy>=1.0",
@@ -33,7 +34,6 @@ irrep = "irrep.cli:cli"
 Homepage = "https://github.com/irreducible-representations/irrep.git"
 
 [tool.setuptools]
-packages = ["irrep"]
 include-package-data = true
 
 [tool.setuptools.dynamic]
@@ -41,3 +41,7 @@ version = { attr = "irrep.__version__" }
 
 [tool.setuptools.package-data]
 irrep = ["data/msg_numbers.data"]
+
+[tool.setuptools.packages.find]
+include = ["irrep*"]
+exclude = ["irrep.tests*"]
