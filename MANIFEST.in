@@ -1,3 +1,7 @@
+[tool.setuptools.packages.find]
+include = ["irrep*"]
+exclude = ["irrep.tests*"]
+
 prune examples
 prune irreptables
 include irrep/data/msg_numbers.data

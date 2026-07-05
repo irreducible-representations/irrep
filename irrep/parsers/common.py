@@ -15,9 +15,3 @@ class ParserCommon(ABC):
     @abstractmethod
     def parse_kpoint(self, ik):
         pass
-
-
-def record_abinit(fWFK, st):
-    """Read one Fortran record using scipy compatibility handling."""
-    r = fWFK.read_record(st)
-    return r
