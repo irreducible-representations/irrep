@@ -20,7 +20,7 @@ def test_abinit_scalar_example():
         "-IBend=15",
         "-kpnames=GM",
     ]
-    output = subprocess.run(command, capture_output=True, text=True)
+    output = subprocess.run(command, capture_output=False, text=True)
     return_code = output.returncode
     assert return_code == 0, output.stderr
 

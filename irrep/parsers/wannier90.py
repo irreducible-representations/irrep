@@ -94,12 +94,12 @@ class ParserW90(ParserCommon):
                         positions = positions.dot(np.linalg.inv(lattice))
 
         return lattice, positions, typat, kpred
-    
+
     def get_kpt_coord(self, ik):
         for l in self.iterwin:
             if l[0].startswith("begin"):
                 if l[1] == "kpoints":
-                    for i in range(ik+1):
+                    for i in range(ik + 1):
                         kpred = next(self.iterwin)[:3]
                     return np.array(kpred, dtype=float)
 

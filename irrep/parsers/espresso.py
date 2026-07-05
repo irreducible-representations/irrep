@@ -99,7 +99,7 @@ class ParserEspresso(ParserCommon):
             typat.append(atnumbers[at.attrib["name"]])
 
         return lattice, positions, typat, alat
-    
+
     def get_kpt_coord(self, ik):
         kptxml = self.bandstr.findall("ks_energies")[ik]
         kpt = np.array(kptxml.find("k_point").text.split(), dtype=float)
