@@ -4,7 +4,7 @@ import numpy as np
 from scipy.io import FortranFile as FF
 
 from ..utility import BOHR, split, str2bool
-from .common import ParserCommon, record_abinit
+from .common import ParserCommon
 
 
 class ParserW90(ParserCommon):
@@ -156,7 +156,7 @@ class ParserW90(ParserCommon):
     def parse_kpoint_unformatted(self, ik, selectG):
         fname = self.get_UNK_name(ik)
         fUNK = FF(fname, "r")
-        ngx, ngy, ngz, ik_in, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
+        ngx, ngy, ngz, ik_in, nbnd = fUNK.read_record("i4,i4,i4,i4,i4")[0]
         ngtot = ngx * ngy * ngz
         nspinor = 2 if self.spinor else 1
 
@@ -166,7 +166,7 @@ class ParserW90(ParserCommon):
         WF = np.zeros((self.NBin, ng_loc, nspinor), dtype=complex)
         for ib in range(self.NBin):
             for i in range(nspinor):
-                cg_tmp = record_abinit(fUNK, f"{ngtot * 2}f8")
+                cg_tmp = fUNK.read_record(f"{ngtot * 2}f8")
                 cg_tmp = (cg_tmp[0::2] + 1.0j * cg_tmp[1::2]).reshape((ngx, ngy, ngz), order="F")
                 cg_tmp = np.fft.fftn(cg_tmp)
                 WF[ib, :, i] = cg_tmp[selectG]
@@ -180,7 +180,7 @@ class ParserW90(ParserCommon):
             fUNK.close()
         else:
             fUNK = FF(fname, "r")
-            ngx, ngy, ngz, ik_in, nbnd = record_abinit(fUNK, "i4,i4,i4,i4,i4")[0]
+            ngx, ngy, ngz, ik_in, nbnd = fUNK.read_record("i4,i4,i4,i4,i4")[0]
             fUNK.close()
         return ngx, ngy, ngz
 

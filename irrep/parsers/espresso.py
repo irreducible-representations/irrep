@@ -7,7 +7,7 @@ from scipy.io import FortranFile as FF
 
 from ..gvectors import Hartree_eV
 from ..utility import BOHR, log_message, str2bool
-from .common import ParserCommon, record_abinit
+from .common import ParserCommon
 
 
 class ParserEspresso(ParserCommon):
@@ -153,21 +153,21 @@ class ParserEspresso(ParserCommon):
                         WF = evc[:, 0::2] + 1.0j * evc[:, 1::2]
                     else:
                         fWFC = FF(filename, "r")
-                        rec = record_abinit(fWFC, "i4,3f8,i4,i4,f8")[0]
+                        rec = fWFC.read_record("i4,3f8,i4,i4,f8")[0]
                         kpt = rec[1]
 
-                        rec = record_abinit(fWFC, "4i4")
+                        rec = fWFC.read_record("4i4")
                         igwx = rec[1]
 
-                        rec = record_abinit(fWFC, "(3,3)f8")
+                        rec = fWFC.read_record("(3,3)f8")
                         B = np.array(rec)
-                        rec = record_abinit(fWFC, f"({igwx},3)i4")
+                        rec = fWFC.read_record(f"({igwx},3)i4")
                         kg = np.array(rec)
                         log_message(f"npwtot: {npwtot}, igwx: {igwx}", verbosity, 2)
                         kpt = kpt.dot(np.linalg.inv(B))
                         WF = np.zeros((NBin, npwtot), dtype=complex)
                         for ib in range(NBin):
-                            rec = record_abinit(fWFC, f"{npwtot * 2}f8")
+                            rec = fWFC.read_record(f"{npwtot * 2}f8")
                             WF[ib] = rec[0::2] + 1.0j * rec[1::2]
                     WF = WF.reshape((NBin, npw, nspinor), order="F")
                     return WF, Energy, kg, kpt

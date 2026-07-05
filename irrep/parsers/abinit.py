@@ -4,7 +4,7 @@ from sys import stdout
 from ..gvectors import Hartree_eV
 from ..utility import FortranFileR as FFR
 from ..utility import BOHR, log_message
-from .common import ParserCommon, record_abinit
+from .common import ParserCommon
 
 
 class ParserAbinit(ParserCommon):
@@ -17,10 +17,11 @@ class ParserAbinit(ParserCommon):
 
     def parse_header(self, verbosity=0):
         try:
-            record = record_abinit(self.fWFK, "a6,2i4")
-        except Exception:
+            record = self.fWFK.read_record("S6,2i4")
+        except Exception as err:
+            print(f"Error reading header of Abinit WFK file: {err}")
             self.fWFK.goto_record(0)
-            record = record_abinit(self.fWFK, "a8,2i4")
+            record = self.fWFK.read_record( "S8,2i4")
         stdout.flush()
 
         codsvn = record[0][0].decode("ascii").strip()
@@ -35,7 +36,7 @@ class ParserAbinit(ParserCommon):
         if headform < 80:
             raise ValueError(f"Head form {headform}<80 is not supported")
 
-        record = record_abinit(self.fWFK, "18i4,19f8,4i4")[0]
+        record = self.fWFK.read_record("18i4,19f8,4i4")[0]
         stdout.flush()
         (bandtot, natom, nkpt, nsym, npsp, nsppol, ntypat, usepaw, nspinor, occopt) = np.array(record[0])[
             [0, 4, 8, 12, 13, 11, 14, 17, 10, 15]
@@ -61,7 +62,7 @@ class ParserAbinit(ParserCommon):
             f"({nsym},3,3)i4,{natom}i4,({nkpt},3)f8,{bandtot}f8,"
             f"({nsym},3)f8,{ntypat}f8,{nkpt}f8"
         )
-        record = record_abinit(self.fWFK, fmt)[0]
+        record = self.fWFK.read_record(fmt)[0]
         typat = record[6]
         kpt = record[7]
         nband = record[1]
@@ -72,19 +73,19 @@ class ParserAbinit(ParserCommon):
             raise ValueError(f"istwfk should be 1 for all kpoints. Found {istwfk}")
         assert np.sum(nband) == bandtot, "Probably a bug in Abinit"
 
-        record = record_abinit(self.fWFK, f"f8,({natom},3)f8,f8,f8,{ntypat}f8")[0]
+        record = self.fWFK.read_record(f"f8,({natom},3)f8,f8,f8,{ntypat}f8")[0]
         xred = record[1]
         efermi = record[3] * Hartree_eV
 
         fmt = f"i4,i4,f8,f8,i4,(3,3)i4,(3,3)i4,({nshiftk_orig},3)f8,({nshiftk},3)f8"
-        record = record_abinit(self.fWFK, fmt)[0]
+        record = self.fWFK.read_record(fmt)[0]
 
         for ipsp in range(npsp):
-            record = record_abinit(self.fWFK, "a132,f8,f8,5i4,a32")[0]
+            record = self.fWFK.read_record("S132,f8,f8,5i4,S32")[0]
 
         if usepaw == 1:
-            record_abinit(self.fWFK, "i4")
-            record_abinit(self.fWFK, "i4")
+            self.fWFK.read_record("i4")
+            self.fWFK.read_record("i4")
 
         self.nband = nband
         self.spinor = spinor
@@ -101,25 +102,25 @@ class ParserAbinit(ParserCommon):
             else:
                 skip = False
 
-            record = record_abinit(self.fWFK, "i4")
+            record = self.fWFK.read_record("i4")
             npw, nspinor_loc, nband = record
             assert npw == self.npwarr[ik], ("Different number of plane waves in header and k-point's block. Probably a bug in Abinit...")
             assert nspinor_loc == nspinor, ("Different values of nspinor in header and k-point's block. Probably a bug in Abinit...")
             assert nband == self.nband[ik], ("Different number of bands in header and k-point's block. Probably a bug in Abinit...")
 
-            kg = record_abinit(self.fWFK, "i4").reshape(npw, 3)
+            kg = self.fWFK.read_record("i4").reshape(npw, 3)
 
-            record = record_abinit(self.fWFK, "f8")
+            record = self.fWFK.read_record("f8")
             if not skip:
                 eigen = record[:nband]
                 eigen *= Hartree_eV
 
             if skip:
-                record = record_abinit(self.fWFK, "f8")
+                record = self.fWFK.read_record("f8")
             else:
                 WF = np.zeros((nband, npw, nspinor), dtype=complex)
                 for iband in range(nband):
-                    record = record_abinit(self.fWFK, "f8")
+                    record = self.fWFK.read_record("f8")
                     WF[iband, :] = (
                         record[0::2] + 1.0j * record[1::2]
                     ).reshape((npw, nspinor), order="F")
