@@ -185,7 +185,8 @@ class BandStructure:
         if len(kwargs_parser) > 0:
             raise ValueError(f"the following kwargs are not recognized by BandStructure-__init__(): {list(kwargs_parser.keys())}, please use BandStructure.from_???() class methods to parse files instead of calling BandStructure.__init__() directly.")
         self.kpoints = kpoints
-        self.kpoints_paw = kpoints_paw
+        if kpoints_paw is not None:
+            self.kpoints_paw = kpoints_paw
         self.spacegroup = spacegroup
         self.overlap_paw = overlap_paw
         self.mp_grid = mp_grid
@@ -685,7 +686,7 @@ class BandStructure:
 
 
         # Set Fermi energy
-        if EF.lower() == "auto":
+        if isinstance(EF, str) and EF.lower() == "auto":
             if EF_in is None:
                 efermi = 0.0
                 log_message("WARNING : fermi-energy not found. Setting it as 0 eV", verbosity, 1)
