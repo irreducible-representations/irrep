@@ -204,10 +204,11 @@ class BandStructure:
         with open(filename, "wb") as f:
             pickle.dump(self, f)
 
-    def read_all_kpoints(self):
+    def read_all_kpoints(self, shuffle=False):
         from random import shuffle
         iklist = list(range(len(self.kplist)))
-        shuffle(iklist)
+        if shuffle:
+            shuffle(iklist)
         for ik in iklist:
             self.set_kpoint(ik, getWF=True, getE=True, paw=False)
 
