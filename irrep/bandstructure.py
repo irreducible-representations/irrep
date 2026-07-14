@@ -221,12 +221,12 @@ class BandStructure:
 
 
     def set_kpoint(self, ik, getWF=True, getE=True, paw=False):
-        if self.kpoints is None:
+        if not hasattr(self, 'kpoints') or self.kpoints is None:
             self.kpoints = [None for _ in self.kplist]
         self.kpoints[ik], self.kwargs_kpoint = self.kpoint_getter(self.kplist[ik], getWF=getWF, getE=getE, paw=paw)
 
     def set_kpoint_paw(self, ik):
-        if self.kpoints_paw is None:
+        if not hasattr(self, 'kpoints_paw') or self.kpoints_paw is None:
             self.kpoints_paw = [None for _ in self.kplist]
         self.kpoints_paw[ik] = self.kpoint_getter_paw(self.kplist[ik])
 
