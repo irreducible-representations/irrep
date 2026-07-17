@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=67", "wheel"]
+requires = ["setuptools>=67", "wheel", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -36,8 +36,8 @@ Homepage = "https://github.com/irreducible-representations/irrep.git"
 [tool.setuptools]
 include-package-data = true
 
-[tool.setuptools.dynamic]
-version = { attr = "irrep.__version__" }
+[tool.setuptools_scm]
+version_file = "irrep/_version.py"
 
 [tool.setuptools.package-data]
 irrep = ["data/msg_numbers.data"]
