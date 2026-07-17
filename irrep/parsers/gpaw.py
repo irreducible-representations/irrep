@@ -45,6 +45,9 @@ class ParserGPAW(ParserCommon):
             EF_in,
         )
 
+    def get_kpt_coord(self, ik):
+        return self.calculator.get_ibz_k_points()[ik]
+
     def parse_kpoint(self, ik, RecLattice, Ecut):
         WFupdw = [
             np.array(

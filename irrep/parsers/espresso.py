@@ -100,7 +100,12 @@ class ParserEspresso(ParserCommon):
 
         return lattice, positions, typat, alat
 
-    def parse_kpoint(self, ik, verbosity=0):
+    def get_kpt_coord(self, ik):
+        kptxml = self.bandstr.findall("ks_energies")[ik]
+        kpt = np.array(kptxml.find("k_point").text.split(), dtype=float)
+        return kpt
+
+    def parse_kpoint(self, ik, verbosity=0, getE=True, getWF=True):
         kptxml = self.bandstr.findall("ks_energies")[ik]
         if self.spinpol:
             if self.spin_channel == "up":
@@ -113,63 +118,67 @@ class ParserEspresso(ParserCommon):
             NB_skip = 0
             NBin = self.NBin_list[0]
 
-        Energy = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)[NB_skip: NB_skip + NBin]
-        Energy *= Hartree_eV
+        if getE:
+            Energy = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)[NB_skip: NB_skip + NBin]
+            Energy *= Hartree_eV
+        else:
+            Energy = None
         npw = int(kptxml.find("npw").text)
         nspinor = 2 if self.spinor else 1
         npwtot = npw * nspinor
 
-        wfcname = f"wfc{'' if self.spin_channel is None else self.spin_channel}{ik + 1}"
-        fWFC = None
-        checked_files = []
-        for extension in ["hdf5", "dat"]:
-            for strcase in [str.lower, str.upper]:
-                filename = f"{self.prefix}.save/{strcase(wfcname)}.{extension}"
-                if os.path.exists(filename):
-                    if extension == "hdf5":
-                        fWFC = h5py.File(filename, "r")
-                        attrnames = [
-                            "gamma_only",
-                            "igwx",
-                            "ik",
-                            "ispin",
-                            "nbnd",
-                            "ngw",
-                            "npol",
-                            "scale_factor",
-                            "xk",
-                        ]
-                        attributes = []
-                        for atr in attrnames:
-                            attributes.append(fWFC.attrs[atr])
+        if getWF:
+            wfcname = f"wfc{'' if self.spin_channel is None else self.spin_channel}{ik + 1}"
+            fWFC = None
+            checked_files = []
+            for extension in ["hdf5", "dat"]:
+                for strcase in [str.lower, str.upper]:
+                    filename = f"{self.prefix}.save/{strcase(wfcname)}.{extension}"
+                    if os.path.exists(filename):
+                        if extension == "hdf5":
+                            fWFC = h5py.File(filename, "r")
+                            attrnames = [
+                                "gamma_only",
+                                "igwx",
+                                "ik",
+                                "ispin",
+                                "nbnd",
+                                "ngw",
+                                "npol",
+                                "scale_factor",
+                                "xk",
+                            ]
+                            attributes = []
+                            for atr in attrnames:
+                                attributes.append(fWFC.attrs[atr])
 
-                        _gamma_only, _igwx, ik, _ispin, _nbnd, _ngw, _npol, _scale_factor, xk = attributes
-                        kpt = np.array(xk)
-                        Miller_Indices = fWFC["MillerIndices"]
-                        B = np.array([Miller_Indices.attrs[f"bg{i}"] for i in range(1, 4)])
-                        kg = np.array(Miller_Indices[::])
-                        kpt = kpt.dot(np.linalg.inv(B))
-                        evc = np.array(fWFC["evc"], dtype=float)
-                        WF = evc[:, 0::2] + 1.0j * evc[:, 1::2]
-                    else:
-                        fWFC = FF(filename, "r")
-                        rec = fWFC.read_record("i4,3f8,i4,i4,f8")[0]
-                        kpt = rec[1]
+                            _gamma_only, _igwx, ik, _ispin, _nbnd, _ngw, _npol, _scale_factor, xk = attributes
+                            kpt = np.array(xk)
+                            Miller_Indices = fWFC["MillerIndices"]
+                            B = np.array([Miller_Indices.attrs[f"bg{i}"] for i in range(1, 4)])
+                            kg = np.array(Miller_Indices[::])
+                            kpt = kpt.dot(np.linalg.inv(B))
+                            evc = np.array(fWFC["evc"], dtype=float)
+                            WF = evc[:, 0::2] + 1.0j * evc[:, 1::2]
+                        else:
+                            fWFC = FF(filename, "r")
+                            rec = fWFC.read_record("i4,3f8,i4,i4,f8")[0]
+                            kpt = rec[1]
 
-                        rec = fWFC.read_record("4i4")
-                        igwx = rec[1]
+                            rec = fWFC.read_record("4i4")
+                            igwx = rec[1]
 
-                        rec = fWFC.read_record("(3,3)f8")
-                        B = np.array(rec)
-                        rec = fWFC.read_record(f"({igwx},3)i4")
-                        kg = np.array(rec)
-                        log_message(f"npwtot: {npwtot}, igwx: {igwx}", verbosity, 2)
-                        kpt = kpt.dot(np.linalg.inv(B))
-                        WF = np.zeros((NBin, npwtot), dtype=complex)
-                        for ib in range(NBin):
-                            rec = fWFC.read_record(f"{npwtot * 2}f8")
-                            WF[ib] = rec[0::2] + 1.0j * rec[1::2]
-                    WF = WF.reshape((NBin, npw, nspinor), order="F")
-                    return WF, Energy, kg, kpt
-                checked_files.append(filename)
+                            rec = fWFC.read_record("(3,3)f8")
+                            B = np.array(rec)
+                            rec = fWFC.read_record(f"({igwx},3)i4")
+                            kg = np.array(rec)
+                            log_message(f"npwtot: {npwtot}, igwx: {igwx}", verbosity, 2)
+                            kpt = kpt.dot(np.linalg.inv(B))
+                            WF = np.zeros((NBin, npwtot), dtype=complex)
+                            for ib in range(NBin):
+                                rec = fWFC.read_record(f"{npwtot * 2}f8")
+                                WF[ib] = rec[0::2] + 1.0j * rec[1::2]
+                        WF = WF.reshape((NBin, npw, nspinor), order="F")
+                        return WF, Energy, kg, kpt
+                    checked_files.append(filename)
         raise RuntimeError(f"Wavefunction file not found. Tried files: {checked_files}")

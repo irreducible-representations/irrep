@@ -119,7 +119,13 @@ class ParserVasp(ParserCommon):
         lattice = np.array(tmp[3:12]).reshape(3, 3)
         return NK, NBin, Ecut0, lattice
 
-    def parse_kpoint(self, ik, NBin, spinor):
+
+    def get_kpt_coord(self, ik):
+        tmp = self.fWAV.record_k_header(ik)
+        kpt = tmp[1:4]
+        return kpt
+
+    def parse_kpoint(self, ik, NBin, spinor, getE=True, getWF=True):
         r = self.fWAV.record_k_header(ik)
         nspinor = 2 if spinor else 1
         npw = int(r[0])
@@ -128,8 +134,14 @@ class ParserVasp(ParserCommon):
             assert npw % 2 == 0, f"odd number of coefs {npw} for spinor wavefunctions"
         npw //= nspinor
         kpt = r[1:4]
-        Energy = np.array(r[4: 4 + NBin * 3]).reshape(NBin, 3)[:, 0]
-        WF = np.zeros((NBin, npw, nspinor), dtype=np.complex64)
-        for ib in range(NBin):
-            WF[ib] = self.fWAV.record_k_band(ik=ik, ib=ib, cnt=npw * nspinor).reshape((npw, nspinor), order="F")
+        if getE:
+            Energy = np.array(r[4: 4 + NBin * 3]).reshape(NBin, 3)[:, 0]
+        else:
+            Energy = None
+        if getWF:
+            WF = np.zeros((NBin, npw, nspinor), dtype=np.complex64)
+            for ib in range(NBin):
+                WF[ib] = self.fWAV.record_k_band(ik=ik, ib=ib, cnt=npw * nspinor).reshape((npw, nspinor), order="F")
+        else:
+            WF = None
         return WF, Energy, kpt, npw
