@@ -163,3 +163,4 @@ examples/C2B2Gd-vasp-spinor/irrep-output.json
 examples/wannier-scalar-NaAs/irrep-output.json
 examples/wannier-spinors-NaAs/irrep-output.json
 .DS_Store
+irrep/_version.py
