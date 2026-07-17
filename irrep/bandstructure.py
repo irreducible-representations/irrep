@@ -205,10 +205,10 @@ class BandStructure:
             pickle.dump(self, f)
 
     def read_all_kpoints(self, shuffle=False):
-        from random import shuffle
         iklist = list(range(len(self.kplist)))
         if shuffle:
-            shuffle(iklist)
+            from random import shuffle as shuffle_list
+            shuffle_list(iklist)
         for ik in iklist:
             self.set_kpoint(ik, getWF=True, getE=True, paw=False)
 
@@ -687,7 +687,7 @@ class BandStructure:
 
 
         # Set Fermi energy
-        if isinstance(EF, str) and EF.lower() == "auto":
+        if isinstance(EF, str) and EF.lower() == "auto" or EF is None:
             if EF_in is None:
                 efermi = 0.0
                 log_message("WARNING : fermi-energy not found. Setting it as 0 eV", verbosity, 1)
