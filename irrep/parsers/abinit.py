@@ -17,11 +17,10 @@ class ParserAbinit(ParserCommon):
 
     def parse_header(self, verbosity=0):
         try:
-            record = self.fWFK.read_record("S6,2i4")
+            record = self.fWFK.read_record("S6,2i4", rec=0)
         except Exception as err:
             print(f"Error reading header of Abinit WFK file: {err}")
-            self.fWFK.goto_record(0)
-            record = self.fWFK.read_record( "S8,2i4")
+            record = self.fWFK.read_record( "S8,2i4", rec=0)
         stdout.flush()
 
         codsvn = record[0][0].decode("ascii").strip()
@@ -36,7 +35,7 @@ class ParserAbinit(ParserCommon):
         if headform < 80:
             raise ValueError(f"Head form {headform}<80 is not supported")
 
-        record = self.fWFK.read_record("18i4,19f8,4i4")[0]
+        record = self.fWFK.read_record("18i4,19f8,4i4", rec=1)[0]
         stdout.flush()
         (bandtot, natom, nkpt, nsym, npsp, nsppol, ntypat, usepaw, nspinor, occopt) = np.array(record[0])[
             [0, 4, 8, 12, 13, 11, 14, 17, 10, 15]
@@ -62,7 +61,7 @@ class ParserAbinit(ParserCommon):
             f"({nsym},3,3)i4,{natom}i4,({nkpt},3)f8,{bandtot}f8,"
             f"({nsym},3)f8,{ntypat}f8,{nkpt}f8"
         )
-        record = self.fWFK.read_record(fmt)[0]
+        record = self.fWFK.read_record(fmt, rec=2)[0]
         typat = record[6]
         kpt = record[7]
         nband = record[1]
@@ -73,19 +72,19 @@ class ParserAbinit(ParserCommon):
             raise ValueError(f"istwfk should be 1 for all kpoints. Found {istwfk}")
         assert np.sum(nband) == bandtot, "Probably a bug in Abinit"
 
-        record = self.fWFK.read_record(f"f8,({natom},3)f8,f8,f8,{ntypat}f8")[0]
+        record = self.fWFK.read_record(f"f8,({natom},3)f8,f8,f8,{ntypat}f8", rec=3)[0]
         xred = record[1]
         efermi = record[3] * Hartree_eV
 
         fmt = f"i4,i4,f8,f8,i4,(3,3)i4,(3,3)i4,({nshiftk_orig},3)f8,({nshiftk},3)f8"
-        record = self.fWFK.read_record(fmt)[0]
+        record = self.fWFK.read_record(fmt, rec=4)[0]
 
         for ipsp in range(npsp):
-            record = self.fWFK.read_record("S132,f8,f8,5i4,S32")[0]
+            record = self.fWFK.read_record("S132,f8,f8,5i4,S32", rec=5 + ipsp)[0]
 
+        self.num_rec_header = 5 + npsp
         if usepaw == 1:
-            self.fWFK.read_record("i4")
-            self.fWFK.read_record("i4")
+            self.num_rec_header += 2
 
         self.nband = nband
         self.spinor = spinor
@@ -93,38 +92,39 @@ class ParserAbinit(ParserCommon):
         self.kpt = kpt
         return (nband, nkpt, rprimd, ecut, spinor, typat, xred, efermi)
 
-    def parse_kpoint(self, ik):
+    def get_kpt_coord(self, ik):
+        return self.kpt[ik]
+
+    def get_record_start(self, ik):
+        nband = sum(self.nband[:ik])
+        return self.num_rec_header + nband + ik * 3
+
+    def parse_kpoint(self, ik, getWF=True, getE=True):
         nspinor = 2 if self.spinor else 1
+        irec_start = self.get_record_start(ik)
+        record = self.fWFK.read_record("i4", rec=irec_start)
+        npw, nspinor_loc, nband = record
+        assert npw == self.npwarr[ik], ("Different number of plane waves in header and k-point's block. Probably a bug in Abinit...")
+        assert nspinor_loc == nspinor, ("Different values of nspinor in header and k-point's block. Probably a bug in Abinit...")
+        assert nband == self.nband[ik], ("Different number of bands in header and k-point's block. Probably a bug in Abinit...")
 
-        for _ in range(self.kpt_count, ik + 1):
-            if self.kpt_count < ik:
-                skip = True
-            else:
-                skip = False
+        if getE:
+            record = self.fWFK.read_record("f8", rec=irec_start + 2)
+            eigen = record[:nband]
+            eigen *= Hartree_eV
+        else:
+            eigen = None
 
-            record = self.fWFK.read_record("i4")
-            npw, nspinor_loc, nband = record
-            assert npw == self.npwarr[ik], ("Different number of plane waves in header and k-point's block. Probably a bug in Abinit...")
-            assert nspinor_loc == nspinor, ("Different values of nspinor in header and k-point's block. Probably a bug in Abinit...")
-            assert nband == self.nband[ik], ("Different number of bands in header and k-point's block. Probably a bug in Abinit...")
-
-            kg = self.fWFK.read_record("i4").reshape(npw, 3)
-
-            record = self.fWFK.read_record("f8")
-            if not skip:
-                eigen = record[:nband]
-                eigen *= Hartree_eV
-
-            if skip:
-                record = self.fWFK.read_record("f8")
-            else:
-                WF = np.zeros((nband, npw, nspinor), dtype=complex)
-                for iband in range(nband):
-                    record = self.fWFK.read_record("f8")
-                    WF[iband, :] = (
-                        record[0::2] + 1.0j * record[1::2]
-                    ).reshape((npw, nspinor), order="F")
-
-            self.kpt_count += 1
+        if getWF:
+            kg = self.fWFK.read_record("i4", rec=irec_start + 1).reshape(npw, 3)
+            WF = np.zeros((nband, npw, nspinor), dtype=complex)
+            for iband in range(nband):
+                record = self.fWFK.read_record("f8", rec=irec_start + 3 + iband)
+                WF[iband, :] = (
+                    record[0::2] + 1.0j * record[1::2]
+                ).reshape((npw, nspinor), order="F")
+        else:
+            WF = None
+            kg = None
 
         return WF, eigen, kg
