@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 from irrep.bandstructure import BandStructure
 from pytest import approx
+from .conftest import TEST_FILES_PATH
 
 
 
@@ -10,7 +11,7 @@ from pytest import approx
 
 @pytest.mark.parametrize("spinor", [True, False])
 def test_gpaw_spinorbit(spinor):
-    calc = GPAW("../../examples/gpaw/Bi-gamma.gpw")
+    calc = GPAW(f"{TEST_FILES_PATH}/gpaw/Bi-gamma.gpw")
 
     nspinor = 2 if spinor else 1
 
@@ -26,7 +27,7 @@ def test_gpaw_spinorbit(spinor):
                                   read_paw=not spinor,  # for now, read_pae does not work with spinor calculations
                                   search_cell=True,
                                   kplist=[0])
-    output_file = "../../examples/gpaw/Bi-gamma_bandstructure.pickle"
+    output_file = f"{TEST_FILES_PATH}/gpaw/Bi-gamma_bandstructure.pickle"
     bandstructure.pickle(output_file)
     # print ("Bandstructure",bandstructure)
     bandstructure.spacegroup.show()
