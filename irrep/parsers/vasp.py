@@ -134,6 +134,7 @@ class ParserVasp(ParserCommon):
             assert npw % 2 == 0, f"odd number of coefs {npw} for spinor wavefunctions"
         npw //= nspinor
         kpt = r[1:4]
+        assert np.allclose(kpt, self.get_kpt_coord(ik)), f"Found kpt[{ik}] {kpt} in the wavefunction file, but expected {self.get_kpt_coord(ik)}"
         if getE:
             Energy = np.array(r[4: 4 + NBin * 3]).reshape(NBin, 3)[:, 0]
         else:

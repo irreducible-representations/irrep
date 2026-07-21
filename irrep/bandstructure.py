@@ -682,6 +682,8 @@ class BandStructure:
                 return True
             return False
 
+        kpt_coords = [parser.get_kpt_coord(ik) for ik in kplist]
+        log_message(f'Input files contain {NK} k-points:\n {kpt_coords}', verbosity, 1)
         kplist_noskip = [ik for ik in kplist if not check_skip(parser.get_kpt_coord(ik))]
 
 

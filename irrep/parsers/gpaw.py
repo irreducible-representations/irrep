@@ -63,6 +63,7 @@ class ParserGPAW(ParserCommon):
         log_message(f"shapes of WFupdw: {[wf.shape for wf in WFupdw]}", self.verbosity, 2)
         ngx, ngy, ngz = WFupdw[0].shape[1:]
         kpt = self.calculator.get_ibz_k_points()[ik]
+        assert np.allclose(kpt, self.get_kpt_coord(ik)), f"Found kpt[{ik}] {kpt} in the wavefunction file, but expected {self.get_kpt_coord(ik)}"
         kg, eKG = calc_gvectors(
             kpt,
             RecLattice,

@@ -23,6 +23,9 @@ class ParserEspresso(ParserCommon):
         outp = myroot.find("output")
         self.bandstr = outp.find("band_structure")
         self.spinor = str2bool(self.bandstr.find("noncolin").text)
+        recip_lattice_alat = outp.find("basis_set").find("reciprocal_lattice")
+        recip_lattice_alat = np.array([recip_lattice_alat.find(f"b{i}").text.split() for i in range(1, 4)], dtype=float)
+        self.recip_lattice_alat_inv = np.linalg.inv(recip_lattice_alat)
 
     def parse_header(self, spin_channel=None):
         Ecut0 = float(self.input.find("basis").find("ecutwfc").text)
@@ -103,6 +106,7 @@ class ParserEspresso(ParserCommon):
     def get_kpt_coord(self, ik):
         kptxml = self.bandstr.findall("ks_energies")[ik]
         kpt = np.array(kptxml.find("k_point").text.split(), dtype=float)
+        kpt = kpt.dot(self.recip_lattice_alat_inv)
         return kpt
 
     def parse_kpoint(self, ik, verbosity=0, getE=True, getWF=True):
@@ -133,6 +137,7 @@ class ParserEspresso(ParserCommon):
             checked_files = []
             for extension in ["hdf5", "dat"]:
                 for strcase in [str.lower, str.upper]:
+                    print(f"{ik=}, {wfcname=}, {extension=}, {strcase=}")
                     filename = f"{self.prefix}.save/{strcase(wfcname)}.{extension}"
                     if os.path.exists(filename):
                         if extension == "hdf5":
@@ -152,7 +157,8 @@ class ParserEspresso(ParserCommon):
                             for atr in attrnames:
                                 attributes.append(fWFC.attrs[atr])
 
-                            _gamma_only, _igwx, ik, _ispin, _nbnd, _ngw, _npol, _scale_factor, xk = attributes
+                            _gamma_only, _igwx, ik_read, _ispin, _nbnd, _ngw, _npol, _scale_factor, xk = attributes
+                            assert ik_read == ik + 1, f"Found ik={ik_read} in the wavefunction file {filename}, but expected ik={ik + 1}"
                             kpt = np.array(xk)
                             Miller_Indices = fWFC["MillerIndices"]
                             B = np.array([Miller_Indices.attrs[f"bg{i}"] for i in range(1, 4)])
@@ -178,6 +184,7 @@ class ParserEspresso(ParserCommon):
                             for ib in range(NBin):
                                 rec = fWFC.read_record(f"{npwtot * 2}f8")
                                 WF[ib] = rec[0::2] + 1.0j * rec[1::2]
+                        assert np.allclose(kpt, self.get_kpt_coord(ik)), f"Found kpt[{ik}] {kpt} in the wavefunction file {filename}, but expected {self.get_kpt_coord(ik)}"
                         WF = WF.reshape((NBin, npw, nspinor), order="F")
                         return WF, Energy, kg, kpt
                     checked_files.append(filename)
