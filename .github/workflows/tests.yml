@@ -37,12 +37,6 @@ jobs:
     - name: Install irrep and dependencies
       run: |
         pip install -e .
-    - name: Set PYTHONPATH
-      run: echo "PYTHONPATH=$(pwd):$(pwd)/irreptables" >> $GITHUB_ENV
-    - name: Run tests
-      run: pytest
-      env:
-        PYTHONPATH: ${{ env.PYTHONPATH }}
     - name: pytest
       run: |
-        pytest --color=yes
+        pytest
