@@ -683,9 +683,7 @@ class BandStructure:
             return False
 
         kpt_coords = [parser.get_kpt_coord(ik) for ik in kplist]
-        log_message(f'Input files contain {NK} k-points:\n {kpt_coords}', verbosity, 1)
         kplist_noskip = [ik for ik in kplist if not check_skip(parser.get_kpt_coord(ik))]
-
 
 
         # Set Fermi energy
@@ -724,8 +722,10 @@ class BandStructure:
 
 
         # To do: create writer of description for this class
-        log_message((f"Input files contain {NK} k-points and {NBin} bands.\n"
-                     f"Saving {NBout} bands starting from {IBstart + 1} in the output"), verbosity, 1)
+        log_message(f"Wave function file contains total {NK} k-points and {NBin} bands.", verbosity, 1)
+        log_message(f"Saving {len(kpt_coords)} k-points and {NBout} bands in the output.", verbosity, 1)
+        log_message(f'Saving k-points with coordinates: \n {kpt_coords}', verbosity, 2)
+        log_message(f'Saving bands with band indices: {IBstart+1} to {IBend+1}', verbosity, 2)
         log_message(f"Energy cutoff in WAVECAR : {Ecut0}", verbosity, 1)
         log_message(f"Energy cutoff reduced to : {Ecut}", verbosity, 1)
 
