@@ -5,7 +5,8 @@ from irrep.tests.test_dmn import REF_FILES_PATH, TMP_FILES_PATH
 
 from .conftest import REF_DATA_PATH, TMP_DATA_PATH
 from irrep.utility import group_numbers
-
+import sympy
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 
 a = 4.456
 c = 5.926
@@ -128,5 +129,50 @@ def test_wyckoff_positions():
     return
 
 
-test_conventional_wyckoff_positions()
-test_wyckoff_positions()
+def test_wyckoff_positions_2():
+    """ Test for MnTe, which has a spacegroup containing WP of the form (2x,...,...), which can break the sympify parser """
+    a = 4.17349018
+
+    cell = (
+        np.array([
+            [a, 0, 0],
+            [-a / 2, np.sqrt(3) * a / 2, 0],
+            [0, 0, 6.75345133],
+        ]),
+
+        np.array([
+            [0, 0, 0],
+            [0, 0, 0.5],
+            [1 / 3, 2 / 3, 1 / 4],
+            [2 / 3, 1 / 3, 3 / 4],
+        ]),
+
+        np.array([25, 25, 52, 52]),
+    )
+
+    MnTe_wyckoffs = SpaceGroup.wyckoff_positions(cell)
+
+    first_MnTe_wyckoffs = [
+        [1 / 3, 2 / 3, 0.75],
+        [1 / 3, 2 / 3, 0.25],
+        [0, 0, 0.25],
+        [0, 0, 0],
+    ]
+    print(MnTe_wyckoffs)
+    # Testing the first 4 wp because they are numerical arrays not symbols
+    for i, wp in enumerate(MnTe_wyckoffs[-4:]):
+        numerical_wp = wp.split(',')
+        numerical_wp = [ float(x) for x in numerical_wp]
+        assert np.allclose(numerical_wp, first_MnTe_wyckoffs[i])
+    # checking correct parsing of the symbolic strings
+    assert MnTe_wyckoffs[4].split(',')[1] == '2.0*x'
+    return
+    
+
+def test_implicit_multiplication_parsing():
+    """test lines 1060-1061 of spacegroup.py, which use parse_expr with implicit multiplication"""
+    x, y = sympy.symbols('x y')
+    _TRANSFORMS = standard_transformations + (implicit_multiplication_application,)
+    assert parse_expr('2x', transformations=_TRANSFORMS) == 2 * x
+    assert parse_expr('-2x+1', transformations=_TRANSFORMS) == -2 * x + 1
+    assert parse_expr('2x-y', transformations=_TRANSFORMS) == 2 * x - y
