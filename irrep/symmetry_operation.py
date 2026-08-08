@@ -862,6 +862,7 @@ class SymmetryOperation():
             symmetry = SymmetryGpaw1(self)
             R_aii = AtomRotations(setups.setups, setups.id_a, symmetry).get_R_asii()
             self.R_aii = [R_ii[0] for R_ii in R_aii]  # remove unnecessary nesting
+            self.orb_atom_indices = np.cumsum([0] + [R.shape[0] for R in self.R_aii])
 
     # def get_U_aii_gpaw(self, kpoint):
     #     """Phase corrected rotation matrices for the PAW projections."""
@@ -896,16 +897,17 @@ class SymmetryOperation():
         proj_rot : Projections
             the rotated projection coefficients
         """
-        from .kpoint_gpaw import new_paw_projection
-        mapped_projections = new_paw_projection(projections)
-
+        # from .kpoint_gpaw import new_paw_projection
+        mapped_projections = np.zeros_like(projections)
         for a, R_ii in enumerate(self.R_aii):
-            Pout_ni = (projections[a] @ R_ii.T)  # * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
+            b = self.atom_map[a]
+            I1, I2 = self.orb_atom_indices[ [a, a + 1]]
+            J1, J2 = self.orb_atom_indices[ [b, b + 1]]
+            Pout_ni = (projections[..., I1:I2] @ R_ii.T)  # * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
             if self.time_reversal:
                 Pout_ni = np.conj(Pout_ni)
             Pout_ni = Pout_ni * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
-            I1, I2 = mapped_projections.map[self.atom_map[a]]
-            mapped_projections.array[..., I1:I2] = Pout_ni
+            mapped_projections[..., J1:J2] = Pout_ni
         return mapped_projections
 
     def rotate_pseudo_wavefunction(self, psi_n_grid, k_origin, k_target):

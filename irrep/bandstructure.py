@@ -544,7 +544,7 @@ class BandStructure:
         if read_paw:
             spacegroup.set_gpaw(calculator=parser.calculator)
             from irrep.kpoint_gpaw import OverlapPAW
-            overlap_paw = OverlapPAW(wfs=parser.calculator.wfs)
+            overlap_paw = OverlapPAW(calc=parser.calculator)
 
         NBin, kpred, Lattice, _spinor, typat, positions, EF_in = parser.parse_header()
         if Ecut is None:
@@ -725,7 +725,7 @@ class BandStructure:
         log_message(f"Wave function file contains total {NK} k-points and {NBin} bands.", verbosity, 1)
         log_message(f"Saving {len(kpt_coords)} k-points and {NBout} bands in the output.", verbosity, 1)
         log_message(f'Saving k-points with coordinates: \n {kpt_coords}', verbosity, 2)
-        log_message(f'Saving bands with band indices: {IBstart+1} to {IBend+1}', verbosity, 2)
+        log_message(f'Saving bands with band indices: {IBstart + 1} to {IBend + 1}', verbosity, 2)
         log_message(f"Energy cutoff in WAVECAR : {Ecut0}", verbosity, 1)
         log_message(f"Energy cutoff reduced to : {Ecut}", verbosity, 1)
 

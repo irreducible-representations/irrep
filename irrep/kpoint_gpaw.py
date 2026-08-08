@@ -1,4 +1,3 @@
-from gpaw.utilities.partition import AtomPartition
 import numpy as np
 from .kpoint import KpointAbstract
 from .utility import cached_einsum
@@ -23,7 +22,8 @@ class KpointGPAW(KpointAbstract):
 
     def __init__(self, kpt, wavefunction=None, proj=None, nbands=None,
                  RecLattice=None,
-                 atom_positions=None):
+                 atom_positions=None
+                 ):
         super().__init__(kpt=kpt, num_bands=nbands)
         self.wavefunction = wavefunction
         self.proj = proj
@@ -39,8 +39,8 @@ class KpointGPAW(KpointAbstract):
         kpt = calc.wfs.kpt_qs[ibz_index][ispin]
         k = calc.get_ibz_k_points()[ibz_index]
         nbands = IBend - IBstart
-        proj = new_paw_projection(kpt.projections, nbands=nbands)
-        proj.array[:] = kpt.projections.array[IBstart:IBend]
+        proj = np.hstack([kpt.P_ani[a][IBstart:IBend] for a in range(len(calc.wfs.setups))])
+
         # Get projections in ibz
         if RecLattice is None:
             RecLattice = calc.wfs.gd.reciprocal_lattice
@@ -48,7 +48,10 @@ class KpointGPAW(KpointAbstract):
 
         wavefunction = np.array([calc.wfs.get_wave_function_array(n, ibz_index, ispin, periodic=True)
                                  for n in range(IBstart, IBend)])
-        return KpointGPAW(kpt=k, wavefunction=wavefunction, proj=proj, nbands=nbands, RecLattice=RecLattice, atom_positions=atom_positions)
+        return KpointGPAW(kpt=k, wavefunction=wavefunction, proj=proj, nbands=nbands,
+                          RecLattice=RecLattice,
+                          atom_positions=atom_positions)
+
 
 
     def get_transformed_copy(self, symmetry_operation, k_new):
@@ -69,14 +72,26 @@ class KpointGPAW(KpointAbstract):
 
 class OverlapPAW:
 
-    def __init__(self, wfs):
+    def __init__(self, calc, get_soc=True):
+
         self.dO_aii = {}
-        for a in wfs.kpt_u[0].projections.map:
-            self.dO_aii[a] = np.copy(wfs.setups[a].dO_ii)
-        self.dv = np.copy(wfs.gd.dv)
+        for a, setup in enumerate(calc.wfs.setups):
+            self.dO_aii[a] = np.copy(setup.dO_ii)
+        self.orb_atom_indices = np.cumsum([0] + [dO.shape[0] for dO in self.dO_aii.values()])
+        self.dv = np.copy(calc.wfs.gd.dv)
+        if get_soc:
+            from gpaw.spinorbit import soc
+            self.dVL_avii = [
+                soc(calc.wfs.setups[a], calc.hamiltonian.xc, calc.density.D_asp[a])
+                for a in range(len(calc.wfs.setups))]
+
         # print ("Initialized PAW overlap with dO_ii for atoms", list(self.dO_aii.keys()))
         # print ("dO_ii shapes", {a: dO.shape for a, dO in self.dO_aii.items()})
         # print ("dv", self.dv)
+
+    def get_orb_indices_on_atom(self, atom_index):
+        """Get the orbital indices corresponding to a specific atom index."""
+        return self.orb_atom_indices[[atom_index, atom_index + 1]]
 
     def product(self, KP1, KP2,
                 include_paw=True,
@@ -101,23 +116,19 @@ class OverlapPAW:
             else:
                 phases = np.exp(-2j * np.pi * (positions @ bk))
             for a, dO_ii in self.dO_aii.items():
-                prod += (proj1[a].conj() @ dO_ii @ (proj2[a].T)) * phases[a]
+                I1, I2 = self.get_orb_indices_on_atom(a)
+                prod += (proj1[:, I1:I2].conj() @ dO_ii @ (proj2[:, I1:I2].T)) * phases[a]
         return prod
 
 
-
-class AtomPartitionSerial(AtomPartition):
-    def __init__(self, at_part):
-        self.comm = None
-        self.rank_a = None
-        self.my_indices = at_part.my_indices
-        self.natoms = at_part.natoms
-        self.name = "serial"
-
-
-def new_paw_projection(proj,
-                       **kwargs):
-    ap = AtomPartitionSerial(proj.atom_partition)
-    new_projection = proj.new(bcomm=None, atom_partition=ap, **kwargs)
-    new_projection.atom_partition = ap
-    return new_projection
+    def soc(self, KP1, KP2):
+        from ase.units import Hartree
+        dVsoc = np.zeros((3, KP1.nbands, KP2.nbands), dtype=complex)
+        for a, dVL_vii in enumerate(self.dVL_avii):
+            I1, I2 = self.get_orb_indices_on_atom(a)
+            P1_mi = KP1.proj[:, I1:I2].conj()
+            P2_mi = KP2.proj[:, I1:I2].T
+            for t in range(3):
+                dVsoc[t] += P1_mi @ dVL_vii[t] @ P2_mi
+        dVsoc *= Hartree
+        return dVsoc
