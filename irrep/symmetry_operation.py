@@ -903,11 +903,11 @@ class SymmetryOperation():
             b = self.atom_map[a]
             I1, I2 = self.orb_atom_indices[ [a, a + 1]]
             J1, J2 = self.orb_atom_indices[ [b, b + 1]]
-            Pout_ni = (projections[..., I1:I2] @ R_ii.T)  # * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
+            Pout_ni = (projections[:, I1:I2] @ R_ii.T)  # * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
             if self.time_reversal:
                 Pout_ni = np.conj(Pout_ni)
             Pout_ni = Pout_ni * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
-            mapped_projections[..., J1:J2] = Pout_ni
+            mapped_projections[:, J1:J2] = Pout_ni
         return mapped_projections
 
     def rotate_pseudo_wavefunction(self, psi_n_grid, k_origin, k_target):
