@@ -32,9 +32,9 @@ class AltermagneticTransformer:
         self.k_intermediate = np.zeros((NKirr, 3))
         for ikirr, kirr in enumerate(symmetrizer_up.kptirr):
             kpt_red = symmetrizer_up.kpoints_all[kirr]
-            kpt_red_transformed = alter_symop.transform_k(kpt_red, inverse=True)
+            kpt_red_before_transform = alter_symop.transform_k(kpt_red, inverse=True)
             for ik, kpt in enumerate(symmetrizer_up.kpoints_all):
-                if all_close_mod1(kpt, kpt_red_transformed):
+                if all_close_mod1(kpt, kpt_red_before_transform):
                     self.alter_map[ikirr] = symmetrizer_up.kpt2kptirr[ik]
                     isym = symmetrizer_up.kpt2kptirr_sym[ik]
                     self.alter_map_isym[ikirr] = isym
@@ -42,7 +42,7 @@ class AltermagneticTransformer:
                     self.k_intermediate[ikirr] = kpt
                     break
             else:
-                raise RuntimeError(f"No corresponding k-point found for R({kpt_red})={kpt_red_transformed} out of \n{symmetrizer_up.kpoints_all} under the altermagnetic symmetry operation.")
+                raise RuntimeError(f"No corresponding k-point found for R({kpt_red})={kpt_red_before_transform} out of \n{symmetrizer_up.kpoints_all} under the altermagnetic symmetry operation.")
 
     @classmethod
     def from_gpaw(cls, calculator, symmetrizer_up):
@@ -58,7 +58,7 @@ class AltermagneticTransformer:
     def get_kpoint_down(self, ikirr, kpoints_up):
         ik_origin = self.alter_map[ikirr]
         KPtransformed = kpoints_up[ik_origin].get_transformed_copy(
-            symmetry_operation=self.alter_symop,
+            symmetry_operation=self.symmetry_operations[ikirr],
             k_new=self.k_intermediate[ikirr])
         KPtransformed = KPtransformed.get_transformed_copy(
             symmetry_operation=self.alter_symop,
