@@ -22,13 +22,11 @@ class KpointGPAW(KpointAbstract):
 
     def __init__(self, kpt, wavefunction=None, proj=None, nbands=None,
                  RecLattice=None,
-                 atom_positions=None
-                 ):
-        super().__init__(kpt=kpt, num_bands=nbands)
+                 atom_positions=None):
+        super().__init__(kpt=kpt, num_bands=nbands, RecLattice=RecLattice)
         self.wavefunction = wavefunction
         self.proj = proj
         self.nbands = nbands
-        self.RecLattice = RecLattice
         self.atom_positions = atom_positions
 
     @classmethod

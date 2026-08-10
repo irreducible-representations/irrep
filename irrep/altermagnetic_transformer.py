@@ -22,37 +22,31 @@ class AltermagneticTransformer:
                                       )
         self.alter_symop = alter_symop
         self.alter_symop.set_gpaw(calculator)
-        self.symops = [symop * alter_symop for symop in spacegroup_up.symmetries]
-        # ibz_kpoints = calculator.get_ibz_k_points()
-        # nq = len(ibz_kpoints)
-        NKirr = symmetrizer_up.NKirr
-        self.alter_map = -np.ones(NKirr, dtype=int)  # alter_map[i] = j means ki = alter_map_symops[i] * kj
-        self.alter_map_isym = -np.ones(NKirr, dtype=int)
+        # self.symops = [symop * alter_symop for symop in spacegroup_up.symmetries]
+        self.alter_map = []  # alter_map[i] = j means ki = alter_map_symops[i] * kj
+        self.alter_map_isym = []
         self.symmetry_operations = []
-        self.k_intermediate = np.zeros((NKirr, 3))
-        for ikirr, kirr in enumerate(symmetrizer_up.kptirr):
+        self.k_intermediate = []
+        for kirr in symmetrizer_up.kptirr:
             kpt_red = symmetrizer_up.kpoints_all[kirr]
             kpt_red_before_transform = alter_symop.transform_k(kpt_red, inverse=True)
             for ik, kpt in enumerate(symmetrizer_up.kpoints_all):
                 if all_close_mod1(kpt, kpt_red_before_transform):
-                    self.alter_map[ikirr] = symmetrizer_up.kpt2kptirr[ik]
+                    self.alter_map.append(symmetrizer_up.kpt2kptirr[ik])
                     isym = symmetrizer_up.kpt2kptirr_sym[ik]
-                    self.alter_map_isym[ikirr] = isym
+                    self.alter_map_isym.append(isym)
                     self.symmetry_operations.append(symmetrizer_up.spacegroup.symmetries[isym])
-                    self.k_intermediate[ikirr] = kpt
+                    self.k_intermediate.append(kpt)
                     break
             else:
                 raise RuntimeError(f"No corresponding k-point found for R({kpt_red})={kpt_red_before_transform} out of \n{symmetrizer_up.kpoints_all} under the altermagnetic symmetry operation.")
 
     @classmethod
     def from_gpaw(cls, calculator, symmetrizer_up):
-        magmom = calculator.get_magnetic_moments()
-        # spacegroup_up = symmetrizer_up.spacegroup
-        spacegroup_nomag = SpaceGroup.from_gpaw(calculator, include_TR=False, magmom=magmom * 0)
-        symop = find_altermagnetic_symmetry(lattice=spacegroup_nomag.Lattice,
-                                            positions=spacegroup_nomag.positions,
-                                            typat=spacegroup_nomag.typat,
-                                            magmom=magmom)
+        symop = find_altermagnetic_symmetry(lattice=calculator.atoms.cell,
+                                            positions=calculator.atoms.get_scaled_positions(),
+                                            typat=calculator.atoms.get_atomic_numbers(),
+                                            magmom=calculator.get_magnetic_moments())
         return cls(calculator, symmetrizer_up, rotation_latt=symop.rotation, translation_latt=symop.translation)
 
     def get_kpoint_down(self, ikirr, kpoints_up):
@@ -83,7 +77,7 @@ def find_altermagnetic_symmetry(lattice, positions, typat, magmom):
         # print (f"Checking symmetry operation: {symop}, {atommap=}, {T=}")
         assert np.all(typat[atommap] == typat), "Atom types must match under symmetry operation."
         magmom_transformed = magmom[atommap]
-        print (f"{magmom_transformed=}, {atommap=},")
+        print(f"{magmom_transformed=}, {atommap=},")
         if np.allclose(magmom_transformed, -magmom):
             return symop
     else:

@@ -1066,6 +1066,24 @@ class SpaceGroup:
 
         return wyckoffs_in_cell_base
 
+    def get_transformed_group_index(self, symmetry_operation):
+        """
+        calculates the operations S^-1*g*S for a given symmetry operation S and each symmetry operation g in the group. Returns the index of the transformed operation in the group.
+        Also returns the translation difference between the transformed operation and the corresponding operation in the group.
+        """
+        transformed_group_index = []
+        translation_difference = []
+        for sym in self.symmetries:
+            transformed_sym = symmetry_operation.inverse().multiply_keeptransl(sym).multiply_keeptransl(symmetry_operation)
+            for i, sym2 in enumerate(self.symmetries):
+                if transformed_sym.equals(sym2, mod1=True):
+                    transformed_group_index.append(i)
+                    translation_difference.append(transformed_sym.translation - sym2.translation)
+                    break
+            else:
+                raise ValueError(f"Transformed symmetry operation {transformed_sym.str()} not found in the group")
+        return np.array(transformed_group_index), np.array(translation_difference).astype(int)
+
 
 def read_sym_file(fname):
     """
