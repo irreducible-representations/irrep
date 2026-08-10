@@ -655,7 +655,7 @@ class SymmetryOperation():
 
         return d
 
-    def transform_r(self, vector, inverse=False):
+    def transform_r(self, vector, inverse=False, translation=True):
         """
         Transform a real-space vector (in lattice coordinates) under the symmetry operation.
 
@@ -670,9 +670,15 @@ class SymmetryOperation():
             Transformed vector.
         """
         if inverse:
-            return (np.array(vector) - self.translation[..., :]).dot(self.rotation_inv.T)
+            result = np.array(vector)
+            if translation:
+                result -= self.translation[..., :]
+            return result.dot(self.rotation_inv.T)
         else:
-            return np.array(vector).dot(self.rotation.T) + self.translation[..., :]
+            result = np.array(vector).dot(self.rotation.T).astype(float)
+            if translation:
+                result += self.translation[..., :]
+            return result
 
 
     @cached_property
