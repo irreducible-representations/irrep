@@ -877,6 +877,7 @@ class SpaceGroup:
                   mag_symprec=0.05,
                   typat=None,
                   magmom=None,
+                  magnetic=True,
                   spinor=None,
                   verbosity=0,
                   **kwargs_cell):
@@ -908,9 +909,12 @@ class SpaceGroup:
         lattice = calculator.atoms.cell
         if typat is None:
             typat = calculator.atoms.get_atomic_numbers()
-            if magmom is None:
-                magmom = calculator.get_magnetic_moments()
-                assert magmom.shape == (len(calculator.atoms),)
+            if magnetic:
+                if magmom is None:
+                    magmom = calculator.get_magnetic_moments()
+                    assert magmom.shape == (len(calculator.atoms),)
+            else:
+                magmom = np.zeros(len(calculator.atoms), dtype=float)
             magmom = group_numbers(magmom, precision=mag_symprec)
             magmom_set = set(magmom)
             if len(magmom_set) > 1:
@@ -1090,7 +1094,6 @@ class SpaceGroup:
             else:
                 raise ValueError(f"Transformed symmetry operation {transformed_sym.str()} not found in the group")
         return np.array(transformed_group_index), np.array(translation_difference).astype(int)
-
 
 
 
