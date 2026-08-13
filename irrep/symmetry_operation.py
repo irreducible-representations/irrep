@@ -469,7 +469,7 @@ class SymmetryOperation():
 
         matrix = self.rotation_inv.T
         if self.time_reversal:
-            matrix *= -1
+            matrix = -matrix
         kstring = "gk = [" + ", ".join(
             [parse_row_transform(r) for r in matrix]
         ) + "]"
@@ -478,7 +478,7 @@ class SymmetryOperation():
         if write_ref:
             matrix = np.linalg.inv(R).T
             if self.time_reversal:
-                matrix *= -1
+                matrix = -matrix
             kstring += "  |   refUC:  gk = [" + ", ".join(
                 [parse_row_transform(r) for r in matrix]
             ) + "]"

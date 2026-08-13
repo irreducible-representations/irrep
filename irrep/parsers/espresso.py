@@ -28,8 +28,7 @@ class ParserEspresso(ParserCommon):
         self.recip_lattice_alat_inv = np.linalg.inv(recip_lattice_alat)
 
     def parse_header(self, spin_channel=None):
-        Ecut0 = float(self.input.find("basis").find("ecutwfc").text)
-        Ecut0 *= Hartree_eV
+        Ecut0 = float(self.input.find("basis").find("ecutwfc").text) * Hartree_eV
         NK = len(self.bandstr.findall("ks_energies"))
 
         self.spin_channel = spin_channel
@@ -123,8 +122,7 @@ class ParserEspresso(ParserCommon):
             NBin = self.NBin_list[0]
 
         if getE:
-            Energy = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)[NB_skip: NB_skip + NBin]
-            Energy *= Hartree_eV
+            Energy = np.array(kptxml.find("eigenvalues").text.split(), dtype=float)[NB_skip: NB_skip + NBin] * Hartree_eV
         else:
             Energy = None
         npw = int(kptxml.find("npw").text)

@@ -128,5 +128,4 @@ class OverlapPAW:
             P2_mi = KP2.proj[:, I1:I2].T
             for t in range(3):
                 dVsoc[t] += P1_mi @ dVL_vii[t] @ P2_mi
-        dVsoc *= Hartree
-        return dVsoc
+        return dVsoc * Hartree
