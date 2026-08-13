@@ -91,7 +91,10 @@ class SymmetryOperation():
                  positions=None,
                  translation_mod1=True, spinor_rotation=None):
         self.ind = ind
-        self.rotation = rot
+        rot_int = np.array(rot.round(), dtype=int)
+        if not np.allclose(rot, rot_int, atol=1e-6):
+            raise ValueError(f"Rotation matrix is not integer: {rot}")
+        self.rotation = rot_int
         self.positions = positions
         self.time_reversal = bool(time_reversal)
         self.real_lattice = Lattice
@@ -111,7 +114,7 @@ class SymmetryOperation():
             self.spinor_rotation = spinor_rotation
         self.sign = 1  # May be changed later externally
 
-    def inverse(self):
+    def inverse(self, mod1=None):
         """
         Create the inverse symmetry operation.
 
@@ -120,7 +123,7 @@ class SymmetryOperation():
         SymmetryOperation
             A new instance of the symmetry operation representing the inverse.
         """
-        rot_inv = np.linalg.inv(self.rotation)
+        rot_inv = self.rotation_inv
         trans_inv = -rot_inv @ self.translation
         spinor_rot_inv = self.spinor_rotation.conj().T
         if self.time_reversal:
@@ -132,7 +135,7 @@ class SymmetryOperation():
                                  time_reversal=self.time_reversal,
                                  ind=self.ind,
                                  spinor=self.spinor,
-                                 translation_mod1=self.translation_mod1,
+                                 translation_mod1=self.translation_mod1 if mod1 is None else mod1,
                                  spinor_rotation=spinor_rot_inv)
 
     def __mul__(self, other):
@@ -216,6 +219,12 @@ class SymmetryOperation():
             return False
         return True
 
+    @cached_property
+    def rotation_inv(self):
+        rotinv = np.linalg.inv(self.rotation)
+        rotinv_int = np.array(rotinv.round(), dtype=int)
+        assert np.allclose(rotinv, rotinv_int, atol=1e-6), f"Inverse Rotation matrix is not integer: {rotinv}"
+        return rotinv_int
 
     @property
     def lattice(self):
@@ -458,18 +467,18 @@ class SymmetryOperation():
             ]
             rotstr = [r + r1 for r, r1 in zip(rotstr, rotstr1)]
 
-        matrix = np.transpose(np.linalg.inv(self.rotation))
+        matrix = self.rotation_inv.T
         if self.time_reversal:
-            matrix *= -1
+            matrix = -matrix
         kstring = "gk = [" + ", ".join(
             [parse_row_transform(r) for r in matrix]
         ) + "]"
 
 
         if write_ref:
-            matrix = np.transpose(np.linalg.inv(R))
+            matrix = np.linalg.inv(R).T
             if self.time_reversal:
-                matrix *= -1
+                matrix = -matrix
             kstring += "  |   refUC:  gk = [" + ", ".join(
                 [parse_row_transform(r) for r in matrix]
             ) + "]"
@@ -655,7 +664,7 @@ class SymmetryOperation():
 
         return d
 
-    def transform_r(self, vector, inverse=False):
+    def transform_r(self, vector, inverse=False, translation=True):
         """
         Transform a real-space vector (in lattice coordinates) under the symmetry operation.
 
@@ -670,9 +679,15 @@ class SymmetryOperation():
             Transformed vector.
         """
         if inverse:
-            return (np.array(vector) - self.translation[..., :]).dot(self.rotation_inv.T)
+            result = np.array(vector)
+            if translation:
+                result -= self.translation[..., :]
+            return result.dot(self.rotation_inv.T)
         else:
-            return np.array(vector).dot(self.rotation.T) + self.translation[..., :]
+            result = np.array(vector).dot(self.rotation.T).astype(float)
+            if translation:
+                result += self.translation[..., :]
+            return result
 
 
     @cached_property
@@ -701,14 +716,6 @@ class SymmetryOperation():
     @cached_property
     def det(self):
         return np.linalg.det(self.rotation)
-
-
-    @cached_property
-    def rotation_inv(self):
-        rotinv = np.linalg.inv(self.rotation)
-        rotinv_int = np.array(rotinv.round(), dtype=int)
-        assert np.allclose(rotinv, rotinv_int, atol=1e-6), f"Inverse Rotation matrix is not integer: {rotinv}"
-        return rotinv_int
 
     @cached_property
     def spinor_rotation_TR(self):
@@ -862,6 +869,7 @@ class SymmetryOperation():
             symmetry = SymmetryGpaw1(self)
             R_aii = AtomRotations(setups.setups, setups.id_a, symmetry).get_R_asii()
             self.R_aii = [R_ii[0] for R_ii in R_aii]  # remove unnecessary nesting
+            self.orb_atom_indices = np.cumsum([0] + [R.shape[0] for R in self.R_aii])
 
     # def get_U_aii_gpaw(self, kpoint):
     #     """Phase corrected rotation matrices for the PAW projections."""
@@ -896,16 +904,17 @@ class SymmetryOperation():
         proj_rot : Projections
             the rotated projection coefficients
         """
-        from .kpoint_gpaw import new_paw_projection
-        mapped_projections = new_paw_projection(projections)
-
+        # from .kpoint_gpaw import new_paw_projection
+        mapped_projections = np.zeros_like(projections)
         for a, R_ii in enumerate(self.R_aii):
-            Pout_ni = (projections[a] @ R_ii.T)  # * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
+            b = self.atom_map[a]
+            I1, I2 = self.orb_atom_indices[ [a, a + 1]]
+            J1, J2 = self.orb_atom_indices[ [b, b + 1]]
+            Pout_ni = (projections[:, I1:I2] @ R_ii.T)  # * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
             if self.time_reversal:
                 Pout_ni = np.conj(Pout_ni)
             Pout_ni = Pout_ni * np.exp(2j * np.pi * k_target @ self.atom_map_T[a])
-            I1, I2 = mapped_projections.map[self.atom_map[a]]
-            mapped_projections.array[..., I1:I2] = Pout_ni
+            mapped_projections[:, J1:J2] = Pout_ni
         return mapped_projections
 
     def rotate_pseudo_wavefunction(self, psi_n_grid, k_origin, k_target):

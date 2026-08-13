@@ -879,6 +879,7 @@ class SpaceGroup:
                   mag_symprec=0.05,
                   typat=None,
                   magmom=None,
+                  magnetic=True,
                   spinor=None,
                   verbosity=0,
                   **kwargs_cell):
@@ -910,9 +911,12 @@ class SpaceGroup:
         lattice = calculator.atoms.cell
         if typat is None:
             typat = calculator.atoms.get_atomic_numbers()
-            if magmom is None:
-                magmom = calculator.get_magnetic_moments()
-                assert magmom.shape == (len(calculator.atoms),)
+            if magnetic:
+                if magmom is None:
+                    magmom = calculator.get_magnetic_moments()
+                    assert magmom.shape == (len(calculator.atoms),)
+            else:
+                magmom = np.zeros(len(calculator.atoms), dtype=float)
             magmom = group_numbers(magmom, precision=mag_symprec)
             magmom_set = set(magmom)
             if len(magmom_set) > 1:
@@ -1068,6 +1072,32 @@ class SpaceGroup:
             wyckoffs_in_cell_base.append(wyckoff_new_base_str)
 
         return wyckoffs_in_cell_base
+
+
+    def get_transformed_group_index(self, symmetry_operation):
+        """
+        calculates the operations S^-1*g*S for a given symmetry operation S and each symmetry operation g in the group. Returns the index of the transformed operation in the group.
+        Also returns the translation difference between the transformed operation and the corresponding operation in the group.
+        """
+        transformed_group_index = []
+        translation_difference = []
+        symmetry_operation_inv = symmetry_operation.inverse(mod1=False)
+        for sym in self.symmetries:
+            transformed_sym = symmetry_operation_inv.multiply_keeptransl(sym).multiply_keeptransl(symmetry_operation)
+            sym.show()
+            transformed_sym.show()
+            for i, sym2 in enumerate(self.symmetries):
+                if transformed_sym.equals(sym2, mod1=True) and transformed_sym.time_reversal == sym2.time_reversal:
+                    transl_diff = transformed_sym.translation - sym2.translation
+                    transl_diff_int = np.round(transl_diff).astype(int)
+                    if np.allclose(transl_diff, transl_diff_int):
+                        transformed_group_index.append(i)
+                        translation_difference.append(transl_diff_int)
+                        break
+            else:
+                raise ValueError(f"Transformed symmetry operation {transformed_sym.str()} not found in the group")
+        return np.array(transformed_group_index), np.array(translation_difference).astype(int)
+
 
 
 def read_sym_file(fname):

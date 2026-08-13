@@ -158,11 +158,10 @@ def get_soc_gpaw(calc, ik, flatten=True, theta=0, phi=0):
                     P2_mi = calc.wfs.kpt_qs[q][0].P_ani[a]
 
                 h_soc[s1, s2] += np.dot(np.dot(P1_mi.conj(), h_ii), P2_mi.T)
-    h_soc[:] *= Hartree
     if flatten:
         h_soc_old = h_soc.copy()
         h_soc = np.zeros((2 * m, 2 * m), complex)
         for s1 in range(2):
             for s2 in range(2):
                 h_soc[s1::2, s2::2] = h_soc_old[s1, s2]
-    return h_soc
+    return h_soc * Hartree
