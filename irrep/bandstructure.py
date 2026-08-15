@@ -29,7 +29,7 @@ from .spacegroup import SpaceGroup
 from .spacegroup_irreps import SpaceGroupIrreps
 from .gvectors import sortIG, calc_gvectors
 from .utility import get_block_indices, get_mapping_irr, grid_from_kpoints, log_message, UniqueListMod1, restore_full_grid, select_irreducible
-
+from .storage import DummyStorage
 try:
     from irreptables.ebrs import load_ebr_data
 except ImportError:
@@ -181,9 +181,10 @@ class BandStructure:
                  efermi=0.0,
                  Ecut=None,
                  kwargs_kpoint=None,
+                 storage=None,
                  **kwargs_parser):
         if len(kwargs_parser) > 0:
-            raise ValueError(f"the following kwargs are not recognized by BandStructure-__init__(): {list(kwargs_parser.keys())}, please use BandStructure.from_???() class methods to parse files instead of calling BandStructure.__init__() directly.")
+            raise ValueError(f"the following kwargs are not recognized by BandStructure-__init__(): {list(kwargs_parser.keys())}, \n If you meant the old API, please use BandStructure.from_???() class methods to parse files instead of calling BandStructure.__init__() directly.")
         self.kpoints = kpoints
         if kpoints_paw is not None:
             self.kpoints_paw = kpoints_paw
@@ -193,6 +194,9 @@ class BandStructure:
         self.efermi = efermi
         self.Ecut = Ecut
         self.kwargs_kpoint = kwargs_kpoint
+        if storage is None:
+            storage = DummyStorage()
+        self.storage = storage
         self.kpoint_getter = kpoint_getter
         self.kpoint_getter_paw = kpoint_getter_paw
         self.kplist = kplist
@@ -525,6 +529,8 @@ class BandStructure:
         spacegroup=None,
         read_kpoints=True,
         read_paw=False,
+        store_paw=True,
+        storage="tmp_irrep_storage",
         **kwargs
     ):
 
@@ -542,6 +548,13 @@ class BandStructure:
                             verbosity=verbosity
                             )
         if read_paw:
+            if isinstance(storage, str):
+                if store_paw:
+                    from .storage import Storage
+                    storage = Storage(storage)
+                else:
+                    from .storage import DummyStorage
+                    storage = DummyStorage()
             spacegroup.set_gpaw(calculator=parser.calculator)
             from irrep.kpoint_gpaw import OverlapPAW
             overlap_paw = OverlapPAW(calc=parser.calculator)
@@ -574,7 +587,8 @@ class BandStructure:
                 from irrep.kpoint_gpaw import KpointGPAW
                 kp_gpaw = KpointGPAW.from_gpaw(calc=calculator_gpaw, ibz_index=ik, ispin=spin_channel,
                                                RecLattice=spacegroup.reciprocal_lattice,
-                                               IBstart=IBstart, IBend=IBend)
+                                               IBstart=IBstart, IBend=IBend,
+                                               storage=storage)
                 return kp_gpaw
         else:
             get_kpoint_paw = None
@@ -582,7 +596,8 @@ class BandStructure:
         bandstr = cls(kplist=kplist_noskip, spacegroup=spacegroup, Ecut=Ecut, mp_grid=mp_grid, efermi=efermi,
                    overlap_paw=overlap_paw if read_paw else None,
                    kpoint_getter_paw=get_kpoint_paw,
-                   kpoint_getter=get_kpoint)
+                   kpoint_getter=get_kpoint,
+                   storage=storage)
         if read_kpoints:
             bandstr.read_all_kpoints()
             if read_paw:
