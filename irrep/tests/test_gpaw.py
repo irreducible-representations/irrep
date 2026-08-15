@@ -1,3 +1,5 @@
+import pickle
+
 from gpaw import GPAW
 import numpy as np
 import pytest
@@ -66,3 +68,31 @@ def test_gpaw_spinorbit(spinor):
         for k in irr:
             if abs(irr[k]) > 1e-3:
                 assert k in irref, f"at energy {E}, extra irrep {k}({irr[k]}) found in calculated irreps {irr}, not in reference {irref}"
+
+
+
+def test_gpaw_storage():
+    calc = GPAW(f"{TEST_FILES_PATH}/gpaw/Bi-gamma.gpw")
+
+    print("Fermi level", calc.get_fermi_level())
+    bandstructure = BandStructure.from_gpaw(calculator_gpaw=calc,
+                                  IBstart=10,
+                                  IBend=15,
+                                  Ecut=50,
+                                  degen_thresh=2e-4,
+                                  calculate_traces=True,
+                                  irreps=True,
+                                  read_paw=True,
+                                  search_cell=True,
+                                  store_paw=True,
+                                  kplist=[0])
+    output_file = f"{TEST_FILES_PATH}/gpaw/Bi-gamma_bandstructure_tmp.pickle"
+    bandstructure.pickle(output_file)
+    bandstructure2 = pickle.load(open(output_file, "rb"))
+    assert len(bandstructure.kpoints_paw) == len(bandstructure2.kpoints_paw), "Number of k-points in bandstructure and loaded bandstructure do not match."
+    assert len(bandstructure.kpoints) > 0, "No k-points found in bandstructure."
+    for kp1, kp2 in zip(bandstructure.kpoints_paw, bandstructure2.kpoints_paw):
+        assert np.allclose(kp1.get_wavefunction(), kp2.get_wavefunction()), f"Wavefunctions differ for k-point {kp1.k} and {kp2.k}"
+        assert np.allclose(kp1.proj, kp2.proj), f"Projections differ for k-point {kp1.k} and {kp2.k}"
+    bandstructure.spacegroup.show()
+    bandstructure.identify_irreps(kpnames=["GM"], verbosity=0)
