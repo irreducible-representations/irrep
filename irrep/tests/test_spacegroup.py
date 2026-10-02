@@ -167,7 +167,7 @@ def test_wyckoff_positions_2():
     # checking correct parsing of the symbolic strings
     assert MnTe_wyckoffs[4].split(',')[1] == '2.0*x'
     return
-    
+
 
 def test_implicit_multiplication_parsing():
     """test lines 1060-1061 of spacegroup.py, which use parse_expr with implicit multiplication"""

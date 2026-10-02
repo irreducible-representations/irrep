@@ -1,4 +1,6 @@
 import numpy as np
+
+from irrep.storage import DummyStorage
 from .kpoint import KpointAbstract
 from .utility import cached_einsum
 from .parsers import ParserGPAW
@@ -24,14 +26,15 @@ class KpointGPAW(KpointAbstract):
                  RecLattice=None,
                  atom_positions=None):
         super().__init__(kpt=kpt, num_bands=nbands, RecLattice=RecLattice)
-        self.wavefunction = wavefunction
+        self._wavefunction = wavefunction
         self.proj = proj
         self.nbands = nbands
         self.atom_positions = atom_positions
 
     @classmethod
     def from_gpaw(self, calc, ibz_index, ispin, RecLattice,
-                  IBstart, IBend
+                  IBstart, IBend,
+                  storage
                   ):
         ispin = ParserGPAW.spin_channels[ispin]
         kpt = calc.wfs.kpt_qs[ibz_index][ispin]
@@ -46,13 +49,16 @@ class KpointGPAW(KpointAbstract):
 
         wavefunction = np.array([calc.wfs.get_wave_function_array(n, ibz_index, ispin, periodic=True)
                                  for n in range(IBstart, IBend)])
+        wavefunction = storage.store_array(wavefunction)
+
         return KpointGPAW(kpt=k, wavefunction=wavefunction, proj=proj, nbands=nbands,
                           RecLattice=RecLattice,
                           atom_positions=atom_positions)
 
+    def get_wavefunction(self):
+        return self._wavefunction.get()
 
-
-    def get_transformed_copy(self, symmetry_operation, k_new):
+    def get_transformed_copy(self, symmetry_operation, k_new, store=False):
         """Get a transformed copy of the KpointGPAW object according to the given symmetry operation.
 
         Args:
@@ -62,10 +68,16 @@ class KpointGPAW(KpointAbstract):
         Returns:
             KpointGPAW: Transformed copy of the KpointGPAW object.
         """
-        new_wavefunction = symmetry_operation.rotate_pseudo_wavefunction(psi_n_grid=self.wavefunction, k_origin=self.k, k_target=k_new)
+        new_wavefunction = symmetry_operation.rotate_pseudo_wavefunction(psi_n_grid=self.get_wavefunction(), k_origin=self.k, k_target=k_new)
         new_proj = symmetry_operation.rotate_projection(self.proj, self.k, k_new)
+        if store:
+            storage = self._wavefunction.storage
+        else:
+            storage = DummyStorage()
+        new_wavefunction = storage.store_array(new_wavefunction)
         return KpointGPAW(kpt=k_new, wavefunction=new_wavefunction, proj=new_proj, nbands=self.nbands,
-                          RecLattice=self.RecLattice, atom_positions=self.atom_positions)
+                          RecLattice=self.RecLattice, atom_positions=self.atom_positions,
+                          )
 
 
 class OverlapPAW:
@@ -96,9 +108,9 @@ class OverlapPAW:
                 include_pseudo=True,
                 bk=None,
                 ):
-        wf1 = KP1.wavefunction
+        wf1 = KP1.get_wavefunction()
         proj1 = KP1.proj
-        wf2 = KP2.wavefunction
+        wf2 = KP2.get_wavefunction()
         proj2 = KP2.proj
         assert wf1.ndim == 4
         assert wf2.ndim == 4

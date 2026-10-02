@@ -751,7 +751,7 @@ class Kpoint(KpointAbstract):
 
 
 
-    def get_transformed_copy(self, symmetry_operation, k_new=None):
+    def get_transformed_copy(self, symmetry_operation, k_new=None, store=False):
         """
         Get a copy of the k-point transformed by a symmetry operation.
 

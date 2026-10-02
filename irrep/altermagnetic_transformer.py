@@ -42,27 +42,29 @@ class AltermagneticTransformer:
                 raise RuntimeError(f"No corresponding k-point found for R({kpt_red})={kpt_red_before_transform} out of \n{symmetrizer_up.kpoints_all} under the altermagnetic symmetry operation.")
 
     @classmethod
-    def from_gpaw(cls, calculator, symmetrizer_up, nskip_symmetries=0):
+    def from_gpaw(cls, calculator, symmetrizer_up, nskip_symmetries=0, tol_magmom=1e-4):
         symop = find_altermagnetic_symmetry(lattice=calculator.atoms.cell,
                                             positions=calculator.atoms.get_scaled_positions(),
                                             typat=calculator.atoms.get_atomic_numbers(),
                                             magmom=calculator.get_magnetic_moments(),
-                                            nskip=nskip_symmetries)
+                                            nskip=nskip_symmetries,
+                                            tol=tol_magmom)
         return cls(calculator, symmetrizer_up, rotation_latt=symop.rotation, translation_latt=symop.translation)
 
     def get_kpoint_down(self, ikirr, kpoints_up):
         ik_origin = self.alter_map[ikirr]
         KPtransformed = kpoints_up[ik_origin].get_transformed_copy(
             symmetry_operation=self.symmetry_operations[ikirr],
-            k_new=self.k_intermediate[ikirr])
+            k_new=self.k_intermediate[ikirr], store=False)
         KPtransformed = KPtransformed.get_transformed_copy(
             symmetry_operation=self.alter_symop,
-            k_new=kpoints_up[ikirr].k)
+            k_new=kpoints_up[ikirr].k, store=False)
         # TODO : unify the transformations, using just their product
         return KPtransformed
 
 
-def find_altermagnetic_symmetry(lattice, positions, typat, magmom, nskip=0):
+def find_altermagnetic_symmetry(lattice, positions, typat, magmom, nskip=0,
+                                all=False, tol=1e-4):
     magmom = np.array(magmom)
     assert magmom.ndim == 1, "Magnetic moments must be a 1D array."
     positions = np.array(positions)
@@ -76,15 +78,22 @@ def find_altermagnetic_symmetry(lattice, positions, typat, magmom, nskip=0):
     if nskip >= len(spacegroup_nomag.symmetries) // 2:
         raise ValueError(f"nskip={nskip} is too large for the number of symmetries={len(spacegroup_nomag.symmetries)}.")
     cnt = 0
+    if all:
+        symop_list = []
     for symop in spacegroup_nomag.symmetries:
         atommap, T = get_atom_map(symop, positions)
         # print (f"Checking symmetry operation: {symop}, {atommap=}, {T=}")
         assert np.all(typat[atommap] == typat), "Atom types must match under symmetry operation."
         magmom_transformed = magmom[atommap]
-        print(f"{magmom_transformed=}, {atommap=},")
-        if np.allclose(magmom_transformed, -magmom):
+        print(f"{magmom_transformed=}, {atommap=}, m-transformed={magmom_transformed + magmom}")
+        if np.allclose(magmom_transformed, -magmom, atol=tol):
             cnt += 1
             if cnt > nskip:
-                return symop
+                if all:
+                    symop_list.append(symop)
+                else:
+                    return symop
+    if all:
+        return symop_list
     else:
         raise ValueError("No altermagnetic symmetry operation found for the given magnetic moments.")

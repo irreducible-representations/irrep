@@ -280,8 +280,11 @@ class SymmetryOperation():
 
     @cached_property
     def is_identity(self):
-        return np.allclose(self.rotation, np.eye(3)) and np.allclose(self.translation, 0) and not self.time_reversal and not self.inversion
+        return self.is_identity_space and not self.time_reversal
 
+    @cached_property
+    def is_identity_space(self):
+        return np.allclose(self.rotation, np.eye(3)) and np.allclose(self.translation, 0)
 
     def _get_operation_type(self):
         """
