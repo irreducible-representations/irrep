@@ -135,7 +135,6 @@ class ParserEspresso(ParserCommon):
             checked_files = []
             for extension in ["hdf5", "dat"]:
                 for strcase in [str.lower, str.upper]:
-                    print(f"{ik=}, {wfcname=}, {extension=}, {strcase=}")
                     filename = f"{self.prefix}.save/{strcase(wfcname)}.{extension}"
                     if os.path.exists(filename):
                         if extension == "hdf5":
