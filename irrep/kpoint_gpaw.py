@@ -108,6 +108,9 @@ class OverlapPAW:
                 include_pseudo=True,
                 bk=None,
                 ):
+        if bk is None:
+            bk = np.zeros(3)
+        assert np.allclose(KP2.k - KP1.k, bk), f"K-points must differ by bk for overlap calculation, but KP1={KP1.k}, KP2={KP2.k}, KP2.k - KP1.k = {KP2.k - KP1.k}, bk={bk}"
         wf1 = KP1.get_wavefunction()
         proj1 = KP1.proj
         wf2 = KP2.get_wavefunction()
@@ -119,12 +122,7 @@ class OverlapPAW:
         if include_pseudo:
             prod += cached_einsum('aijk,bijk->ab', wf1.conj(), wf2) * self.dv
         if include_paw:
-            positions = KP1.atom_positions
-            na = len(positions)
-            if bk is None:
-                phases = np.ones(na, dtype=complex)
-            else:
-                phases = np.exp(-2j * np.pi * (positions @ bk))
+            phases = np.exp(-2j * np.pi * (KP1.atom_positions @ bk))
             for a, dO_ii in self.dO_aii.items():
                 I1, I2 = self.get_orb_indices_on_atom(a)
                 prod += (proj1[:, I1:I2].conj() @ dO_ii @ (proj2[:, I1:I2].T)) * phases[a]
@@ -133,6 +131,7 @@ class OverlapPAW:
 
     def soc(self, KP1, KP2):
         from ase.units import Hartree
+        assert np.allclose(KP1.k, KP2.k), "K-points must be at the same coordinate for SOC calculation"
         dVsoc = np.zeros((3, KP1.nbands, KP2.nbands), dtype=complex)
         for a, dVL_vii in enumerate(self.dVL_avii):
             I1, I2 = self.get_orb_indices_on_atom(a)

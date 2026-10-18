@@ -1010,8 +1010,6 @@ class Kpoint(KpointAbstract):
         igmax = igall.max(axis=0)
         igmin = igall.min(axis=0)
         igsize = igmax - igmin + 1
-        #        print (self.ig.T)
-        #        print (igsize)
         res = np.zeros((self.num_bands, other.num_bands), dtype=complex)
 
         # short again coefficients of expansions
