@@ -397,8 +397,15 @@ class SymmetryOperation():
         S *= self.sign
         return S
 
+    def show_short(self, to_stdout=False):
+        out_str = f"axis: {self.axis.round(6)} ; angle = {self.angle_str}, inversion: {self.inversion}, time reversal: {self.time_reversal}"
+        if to_stdout:
+            print(out_str)
+        return out_str
 
-    def show(self, refUC=np.eye(3), shiftUC=np.zeros(3), U=np.eye(2)):
+
+
+    def show(self, refUC=np.eye(3), shiftUC=np.zeros(3), U=np.eye(2), to_stdout=True, short=False):
         """
         Print description of symmetry operation.
 
@@ -413,7 +420,13 @@ class SymmetryOperation():
         U : array, default=np.zeros(2)
             Unitary transformation of spin quantization axis from spglib's 
             choice to reference cell's choice
+        print : bool, default=True
+            If True, print the description. If False, return it as a string.
+        short : bool, default=False
+            If True, print a short description. If False, print a full description.
         """
+        if short:
+            return self.show_short(to_stdout=to_stdout)
 
         def parse_row_transform(mrow):
             s = ""
@@ -447,7 +460,7 @@ class SymmetryOperation():
             write_ref = False
 
         # Print header
-        print(f"\n ### {self.ind} \n")
+        out_str = f"\n ### {self.ind} \n\n"
 
         # Print rotation part
         rotstr = [
@@ -486,8 +499,7 @@ class SymmetryOperation():
                 [parse_row_transform(r) for r in matrix]
             ) + "]"
 
-        print("\n".join(rotstr))
-        print("\n\n", kstring)
+        out_str += "\n".join(rotstr) + "\n\n" + kstring + "\n"
 
         # Print spinor transformation matrix
         if self.spinor:
@@ -497,28 +509,32 @@ class SymmetryOperation():
                            self.spinor_rotation,
                            [" |", " |"])
             ]
-            print("\n".join(spinstr))
+            out_str += "\n".join(spinstr) + "\n"
             if write_ref:
                 spinstr = [s + " ".join(f"{x.real:6.3f}{x.imag:+6.3f}j" for x in row) + t
                            for s, row, t in zip(["spinor rot. (refUC) : |", " " * 22 + "|",],
                                                 self.spinrotation_refUC(U),
                                                 [" |", " |"])
                             ]
-                print("\n".join(spinstr))
+                out_str += "\n".join(spinstr) + "\n"
 
         # Print translation part
         trastr = ("\ntranslation         :  [ " +
                   " ".join(f"{x:8.4f}" for x in self.get_transl_mod1(self.translation.round(6))) +
                   " ] ")
-        print(trastr)
+        out_str += trastr
 
         if write_ref:
             _t = self.translation_refUC(refUC, shiftUC)
             trastr = f"translation (refUC) :  [ {' '.join(f'{x:8.4f}' for x in self.get_transl_mod1(_t.round(6)))} ] "
-            print(trastr)
+            out_str += trastr
+        out_str += "\n\n"
+        out_str += self.show_short(to_stdout=False) + "\n"
 
-        print(f"\naxis: {self.axis.round(6)} ; angle = {self.angle_str}, "
-              f"inversion: {self.inversion}, time reversal: {self.time_reversal}")
+        if to_stdout:
+            print(out_str)
+        return out_str
+
 
     def copy(self):
         """
