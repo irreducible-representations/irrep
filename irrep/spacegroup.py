@@ -254,7 +254,7 @@ class SpaceGroup:
         """
         return len(self.symmetries)
 
-    def show(self, symmetries=None):
+    def show(self, symmetries=None, short=False, to_stdout=True):
         """
         Print description of space-group and symmetry operations.
 
@@ -265,27 +265,26 @@ class SpaceGroup:
             Run `IrRep` with flag `onlysym` to check the index corresponding 
             to each symmetry operation.
         """
-
-        print('')
-        print("\n ---------- CRYSTAL STRUCTURE ---------- \n")
-        print('')
-
-        # Print cell vectors in DFT cell only
-        print('Cell vectors in angstroms:\n')
-        print(f"{'Vectors of DFT cell':^32}")
+        out_str = ""
+        if not short:
+            out_str += f"\n ---------- CRYSTAL STRUCTURE ---------- \n\n"
+            out_str += f'Cell vectors in angstroms:\n\n'
+        out_str += f'{"Vectors of DFT cell":^32}\n'
         for i in range(3):
             vec1 = self.real_lattice[i]
-            print(f'a{i:d} = {vec1[0]:7.4f}  {vec1[1]:7.4f}  {vec1[2]:7.4f}  ')
-        print()
+            out_str += f'a{i:d} = {vec1[0]:7.4f}  {vec1[1]:7.4f}  {vec1[2]:7.4f}  \n'
+        out_str += '\n'
 
-        print()
-        print('\n ---------- SPACE GROUP ----------- \n')
-        print()
-        print(f'Space group: {self.name} (# {self.number_str})')
-        print(f'Number of symmetries: {self.size} (mod. lattice translations)')
+        if not short:
+            out_str += f'\n ---------- SPACE GROUP ----------- \n\n'
+        out_str += f'Space group: {self.name} (# {self.number_str})\n'
+        out_str += f'Number of symmetries: {self.size} (mod. lattice translations)\n'   
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
-                symop.show(refUC=None, shiftUC=None)
+                out_str += symop.show(refUC=None, shiftUC=None, to_stdout=False, short=short)+'\n'
+        if to_stdout:
+            print(out_str)
+        return out_str
 
     @property
     def lattice(self):
