@@ -267,8 +267,8 @@ class SpaceGroup:
         """
         out_str = ""
         if not short:
-            out_str += f"\n ---------- CRYSTAL STRUCTURE ---------- \n\n"
-            out_str += f'Cell vectors in angstroms:\n\n'
+            out_str += "\n ---------- CRYSTAL STRUCTURE ---------- \n\n"
+            out_str += 'Cell vectors in angstroms:\n\n'
         out_str += f'{"Vectors of DFT cell":^32}\n'
         for i in range(3):
             vec1 = self.real_lattice[i]
@@ -276,12 +276,12 @@ class SpaceGroup:
         out_str += '\n'
 
         if not short:
-            out_str += f'\n ---------- SPACE GROUP ----------- \n\n'
+            out_str += '\n ---------- SPACE GROUP ----------- \n\n'
         out_str += f'Space group: {self.name} (# {self.number_str})\n'
-        out_str += f'Number of symmetries: {self.size} (mod. lattice translations)\n'   
+        out_str += f'Number of symmetries: {self.size} (mod. lattice translations)\n'
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
-                out_str += symop.show(refUC=None, shiftUC=None, to_stdout=False, short=short)+'\n'
+                out_str += symop.show(refUC=None, shiftUC=None, to_stdout=False, short=short) + '\n'
         if to_stdout:
             print(out_str)
         return out_str
