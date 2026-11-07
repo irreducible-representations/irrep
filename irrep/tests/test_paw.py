@@ -1,4 +1,5 @@
 
+from .conftest import CALC_TYPE_LIST
 import os
 import pytest
 from irrep.bandstructure import BandStructure
@@ -7,18 +8,27 @@ from .conftest import TEST_FILES_PATH
 from gpaw import GPAW
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def BandstrGpawDiamond():
-    calc = GPAW(os.path.join(TEST_FILES_PATH, "diamond-gpaw", "diamond-nscf-irred.gpw"))
-    bandstructure = BandStructure.from_gpaw(calculator_gpaw=calc, read_paw=True, Ecut=300)
-    return bandstructure
+    bands = {}
+    for calc_type in CALC_TYPE_LIST:
+        calc = GPAW(os.path.join(TEST_FILES_PATH, f"diamond-gpaw_{calc_type}", "diamond-nscf-irred.gpw"))
+        bandstructure = BandStructure.from_gpaw(calculator_gpaw=calc, read_paw=True, Ecut=300)
+        bands[calc_type] = bandstructure
+    return bands
 
 
-@pytest.fixture(scope="module", autouse=True)
+
+@pytest.fixture(scope="module")
 def BandstrGpawBismuth():
-    calc = GPAW(os.path.join(TEST_FILES_PATH, "gpaw", "Bi.gpw"))
-    bandstructure = BandStructure.from_gpaw(calculator_gpaw=calc, read_paw=True, Ecut=300)
-    return bandstructure
+    bands = {}
+    for calc_type in CALC_TYPE_LIST:
+        calc = GPAW(os.path.join(TEST_FILES_PATH, f"gpaw_{calc_type}", "Bi.gpw"))
+        bandstructure = BandStructure.from_gpaw(calculator_gpaw=calc, read_paw=True, Ecut=300)
+        bands[calc_type] = bandstructure
+    return bands
+
+
 
 
 @pytest.fixture
@@ -96,18 +106,22 @@ def check_traces_gpaw():
     return __inner__
 
 
+@pytest.mark.parametrize("calc_type", CALC_TYPE_LIST)
 @pytest.mark.parametrize("incl_paw_pseudo", [(True, True), (True, False), (False, True)], ids=lambda p: f"paw={p[0]}_pseudo={p[1]}")
 @pytest.mark.parametrize("ik", range(8), ids=lambda k: f"ik={k}")
-def test_traces_gpaw_diamond(BandstrGpawDiamond, check_traces_gpaw, incl_paw_pseudo, ik):
+def test_traces_gpaw_diamond(BandstrGpawDiamond, check_traces_gpaw, incl_paw_pseudo, ik, calc_type):
+    bandstructure = BandstrGpawDiamond[calc_type]
     include_paw, include_pseudo = incl_paw_pseudo
-    good, msg = check_traces_gpaw(BandstrGpawDiamond, include_paw=include_paw, include_pseudo=include_pseudo, ik=ik)
+    good, msg = check_traces_gpaw(bandstructure, include_paw=include_paw, include_pseudo=include_pseudo, ik=ik)
     assert good, msg
 
 
+@pytest.mark.parametrize("calc_type", CALC_TYPE_LIST)
 @pytest.mark.parametrize("incl_paw_pseudo", [(True, True), (True, False), (False, True)], ids=lambda p: f"paw={p[0]}_pseudo={p[1]}")
 @pytest.mark.parametrize("ik", range(32), ids=lambda k: f"ik={k}")
-def test_traces_gpaw_bismuth(BandstrGpawBismuth, check_traces_gpaw, incl_paw_pseudo, ik):
-    print(f"Testing ik={ik} (out of {BandstrGpawBismuth.num_k}) with incl_paw_pseudo={incl_paw_pseudo}")
+def test_traces_gpaw_bismuth(BandstrGpawBismuth, check_traces_gpaw, incl_paw_pseudo, ik, calc_type):
+    bandstructure = BandstrGpawBismuth[calc_type]
+    print(f"Testing ik={ik} (out of {bandstructure.num_k}) with incl_paw_pseudo={incl_paw_pseudo}")
     include_paw, include_pseudo = incl_paw_pseudo
-    good, msg = check_traces_gpaw(BandstrGpawBismuth, include_paw=include_paw, include_pseudo=include_pseudo, ik=ik)
+    good, msg = check_traces_gpaw(bandstructure, include_paw=include_paw, include_pseudo=include_pseudo, ik=ik)
     assert good, msg

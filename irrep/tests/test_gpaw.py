@@ -8,17 +8,7 @@ import pickle
 
 import gpaw
 
-from packaging.version import parse, Version
-if parse(gpaw.__version__) >= Version("26.0.0"):
-    GPAW_VERSION = 26
-else:
-    GPAW_VERSION = 25
-
-
-CALC_TYPE_LIST = ["OLD"]
-if GPAW_VERSION == 26:
-    CALC_TYPE_LIST.append("NEW")
-
+from .conftest import CALC_TYPE_LIST, GPAW_VERSION
 
 
 
@@ -68,7 +58,7 @@ def test_gpaw_spinorbit(spinor, calc_type):
         if calc_type == "OLD":
             energies_ref = np.array([-7.30428916, -1.83041608, 2.4278237, 5.2004299, 5.499876])
         else:
-            energies_ref = np.array([-6.70145955, -1.03681746, 3.00361925, 5.69355761, 5.99636715])
+            energies_ref = np.array([-7.30393384, -1.83000555, 2.42808016, 5.20057551, 5.5001332])
     else:
         irreps_ref = [ {'GM1+': 1},
                        {'GM2-': 1},
@@ -78,7 +68,7 @@ def test_gpaw_spinorbit(spinor, calc_type):
         if calc_type == "OLD":
             energies_ref = np.array([-7.30392234, -1.82969316, 4.11551033, 4.50561308])
         else:
-            energies_ref = np.array([-6.70105470188984, -1.0362028101572425, 4.633924948438371, 5.029094450662426])
+            energies_ref = np.array([-7.30356775, -1.82928119, 4.11561034, 4.5058931])
 
     assert kGM.Energy_mean == approx(energies_ref, abs=1e-6), f"calculated energies {kGM.Energy_mean} differ from reference {energies_ref} by {abs(kGM.Energy_mean - energies_ref).max()}"
 
