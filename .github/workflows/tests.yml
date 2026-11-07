@@ -30,7 +30,7 @@ jobs:
       run: |
         sudo apt install libxc-dev libfftw3-dev libblas-dev liblapack-dev
         python -m pip install --upgrade pip
-        pip install pytest gpaw
+        pip install pytest gpaw==25.7.0
     - name: Install tables from local repo, not from pypi
       working-directory: ./irreptables
       run: |
