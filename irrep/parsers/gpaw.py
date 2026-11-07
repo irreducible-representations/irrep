@@ -152,10 +152,11 @@ def get_soc_gpaw(calc, ik, flatten=True, theta=0, phi=0):
                 h_ii = h_ssii[s1, s2]
                 if is_new_gpaw(calc):
                     if nspin == 2:
-                        P1_mi = calc.dft.ibzwfs._wfs_u[q][s1].P_ani[a]
-                        P2_mi = calc.dft.ibzwfs._wfs_u[q][s2].P_ani[a]
+                        # maybe need to use get_wfs_on_master for parallel runs, but needs testing
+                        P1_mi = calc.dft.ibzwfs._get_wfs(kpt=q, spin=s1).P_ani[a]
+                        P2_mi = calc.dft.ibzwfs._get_wfs(kpt=q, spin=s2).P_ani[a]
                     else:
-                        P1_mi = calc.dft.ibzwfs._wfs_u[q].P_ani[a]
+                        P1_mi = calc.dft.ibzwfs._get_wfs(kpt=q, spin=0).P_ani[a]
                         P2_mi = P1_mi
                 else:
                     if nspin == 2:
@@ -203,31 +204,27 @@ def read_new_gpaw(calc, ibz_index, ispin, IBstart, IBend, RecLattice):
     if is_new_gpaw(calc):
         # proj, wavefunction, RecLattice = read_new_gpaw(
         # calc, ibz_index, ispin, IBstart, IBend, RecLattice)
-        ibzwfs = calc.dft.ibzwfs
-        wfs = None
-        for w in ibzwfs._wfs_u:                 # local k-points/spins (all of them in serial)
-            if w.k == ibz_index and w.spin == ispin:
-                wfs = w
-                break
-        if wfs is None:
-            raise KeyError(f'k-point {ibz_index}, spin {ispin} not on this MPI rank')
+        wfs = calc.dft.ibzwfs._get_wfs(kpt=ibz_index, spin=ispin)
         P_ani = wfs.P_ani.to_cpu()              # AtomArrays; P_ani[a] -> (nbands, nproj_a)
-        proj = np.hstack([P_ani[a][IBstart:IBend] for a in range(len(calc.atoms))])
-        wavefunction = np.array([
-            calc.get_pseudo_wave_function(band=n, kpt=ibz_index, spin=ispin, periodic=True)
-            for n in range(IBstart, IBend)])
+        # proj = np.hstack([P_ani[a][IBstart:IBend] for a in range(len(calc.atoms))])
+        # wavefunction = np.array([
+        #     calc.get_pseudo_wave_function(band=n, kpt=ibz_index, spin=ispin, periodic=True)
+        #     for n in range(IBstart, IBend)])
+        wavefunction = calc.dft.wave_functions(n1=IBstart, n2=IBend, kpt=ibz_index, spin=ispin, periodic=True).data
+
         if RecLattice is None:
             RecLattice = 2 * np.pi * np.linalg.inv(calc.atoms.cell.array).T  # check units vs 25.7
 
     else:
-        kpt = calc.wfs.kpt_qs[ibz_index][ispin]
-        proj = np.hstack([kpt.P_ani[a][IBstart:IBend]
-                        for a in range(len(calc.wfs.setups))])
+        P_ani = calc.wfs.kpt_qs[ibz_index][ispin].P_ani
         if RecLattice is None:
             RecLattice = calc.wfs.gd.reciprocal_lattice
         wavefunction = np.array([
             calc.wfs.get_wave_function_array(n, ibz_index, ispin, periodic=True)
             for n in range(IBstart, IBend)])
+
+    proj = np.hstack([P_ani[a][IBstart:IBend] for a in range(len(calc.atoms))])
+
     atom_positions = calc.atoms.get_scaled_positions()
 
     return k, proj, wavefunction, RecLattice, atom_positions

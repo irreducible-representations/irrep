@@ -39,13 +39,12 @@ class KpointGPAW(KpointAbstract):
         from .parsers.gpaw import read_new_gpaw
         ispin = ParserGPAW.spin_channels[ispin]
 
-        nbands = IBend - IBstart
         k, proj, wavefunction, RecLattice, atom_positions = read_new_gpaw(
-            calc, ibz_index, ispin, IBstart, IBend, RecLattice)
+            calc=calc, ibz_index=ibz_index, ispin=ispin, IBstart=IBstart, IBend=IBend, RecLattice=RecLattice)
 
         wavefunction = storage.store_array(wavefunction)
 
-        return KpointGPAW(kpt=k, wavefunction=wavefunction, proj=proj, nbands=nbands,
+        return KpointGPAW(kpt=k, wavefunction=wavefunction, proj=proj, nbands=IBend - IBstart,
                           RecLattice=RecLattice,
                           atom_positions=atom_positions)
 
