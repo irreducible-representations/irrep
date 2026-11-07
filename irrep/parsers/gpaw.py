@@ -181,6 +181,22 @@ def is_new_gpaw(calc):
     return hasattr(calc, 'dft')
 
 
+def is_collinear(calc):
+    if hasattr(calc, 'dft'):                 # new GPAW (26 default)
+        return calc.dft.ibzwfs.collinear
+    return calc.wfs.collinear
+
+
+def get_magnetic_moments(calc, project_collinear_axis=(0, 0, 1)):
+    if hasattr(calc, 'dft'):                 # new GPAW (26 default)
+        magmoms = calc.dft.magmoms()[1]
+        if is_collinear(calc) and project_collinear_axis:
+            magmoms = np.dot(magmoms, project_collinear_axis)
+    else:
+        magmoms = calc.get_magnetic_moments()
+    return magmoms
+
+
 @staticmethod
 def read_new_gpaw(calc, ibz_index, ispin, IBstart, IBend, RecLattice):
     k = calc.get_ibz_k_points()[ibz_index]

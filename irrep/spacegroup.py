@@ -21,7 +21,8 @@ import warnings
 import numpy as np
 import spglib
 
-from irrep.parsers import ParserAbinit, ParserEspresso, ParserVasp, ParserW90
+from .parsers import ParserAbinit, ParserEspresso, ParserVasp, ParserW90
+from .parsers.gpaw import get_magnetic_moments
 
 from .symmetry_operation import SymmetryOperation
 from .utility import BOHR, clean_np_load, group_numbers, log_message, select_irreducible
@@ -934,7 +935,7 @@ class SpaceGroup:
             typat = calculator.atoms.get_atomic_numbers()
             if magnetic:
                 if magmom is None:
-                    magmom = calculator.get_magnetic_moments()
+                    magmom = get_magnetic_moments(calculator)
                     assert magmom.shape == (len(calculator.atoms),)
             else:
                 magmom = np.zeros(len(calculator.atoms), dtype=float)
@@ -954,50 +955,6 @@ class SpaceGroup:
                              **kwargs_cell
                                 )
 
-    # @classmethod
-    # def from_gpaw_magnetic(cls, calculator, theta=0, phi=0, include_TR=True,
-    #                        magmom=None, magmoms=None,
-    #                        mag_symprec=0.05, symprec=1e-5,
-    #                        ):
-    #     """
-    #     Get the spacegroup of a GPAW calculator (spinor magnetic version).
-
-    #     Parameters:
-    #     calculator : GPAW
-    #         The GPAW calculator.
-    #     theta, phi : float
-    #         The angles defining the global spin quantization axis. (in radians)
-    #         magnetic moments will be aligned along that direction (in positive or negative direction, as defined from dft calculation)
-    #     include_TR : bool
-    #         Whether to include time-reversal symmetry.
-    #     magmom : array( Nat, 3), optional
-    #         if provided, overrides the magnetic moments of the calculator
-    #     magmoms : array(Nat,), optional
-    #         The older argument for magmom, kept for backward compatibility. Used only if magmom is None.
-    #     mag_symprec : float
-    #         The precision for distinguishing different magnetic moments. Only used if magmom is None.
-    #     symprec : float
-    #         The symmetry precision for spacegroup detection.
-    #     """
-    #     lattice = calculator.atoms.cell
-    #     typat = calculator.atoms.get_atomic_numbers()
-    #     positions = calculator.atoms.get_scaled_positions()
-    #     if magmom is None:
-    #         magmom = magmoms
-    #     if magmom is None:
-    #         magmom_axis = calculator.get_magnetic_moments()
-    #         magmom_axis = group_numbers(magmom_axis, precision=mag_symprec)
-    #         axis = np.array([np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)])
-    #         magmom = magmom_axis[:, None] * axis[None, :]
-    #     print(f"using magmom \n {magmom}")
-    #     return SpaceGroup.from_cell(real_lattice=lattice,
-    #                             positions=positions,
-    #                             typat=typat,
-    #                             spinor=True,
-    #                             include_TR=include_TR,
-    #                             symprec=symprec,
-    #                             mag_symprec=mag_symprec,
-    #                             magmom=magmom)
 
     @classmethod
     def get_trivial(cls, lattice, spinor=False, time_reversal=False):
