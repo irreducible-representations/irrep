@@ -1,5 +1,13 @@
 import pickle
 
+import gpaw
+
+from packaging.version import parse, Version
+if parse(gpaw.__version__) >= Version("26.0.0"):
+    GPAW_VERSION = 26
+else:
+    GPAW_VERSION = 25
+
 from gpaw import GPAW
 import numpy as np
 import pytest
@@ -13,7 +21,9 @@ from .conftest import TEST_FILES_PATH
 
 @pytest.mark.parametrize("spinor", [True, False])
 def test_gpaw_spinorbit(spinor):
-    calc = GPAW(f"{TEST_FILES_PATH}/gpaw/Bi-gamma.gpw")
+    print(f"GPAW version: {gpaw.__version__}, using GPAW_VERSION={GPAW_VERSION}")
+
+    calc = GPAW(f"{TEST_FILES_PATH}/gpaw{GPAW_VERSION}/Bi-gamma.gpw")
 
     nspinor = 2 if spinor else 1
 
@@ -29,7 +39,7 @@ def test_gpaw_spinorbit(spinor):
                                   read_paw=not spinor,  # for now, read_pae does not work with spinor calculations
                                   search_cell=True,
                                   kplist=[0])
-    output_file = f"{TEST_FILES_PATH}/gpaw/Bi-gamma_bandstructure.pickle"
+    output_file = f"{TEST_FILES_PATH}/gpaw{GPAW_VERSION}/Bi-gamma_bandstructure.pickle"
     bandstructure.pickle(output_file)
     # print ("Bandstructure",bandstructure)
     bandstructure.spacegroup.show()
@@ -72,7 +82,7 @@ def test_gpaw_spinorbit(spinor):
 
 
 def test_gpaw_storage():
-    calc = GPAW(f"{TEST_FILES_PATH}/gpaw/Bi-gamma.gpw")
+    calc = GPAW(f"{TEST_FILES_PATH}/gpaw{GPAW_VERSION}/Bi-gamma.gpw")
 
     print("Fermi level", calc.get_fermi_level())
     bandstructure = BandStructure.from_gpaw(calculator_gpaw=calc,
@@ -86,7 +96,7 @@ def test_gpaw_storage():
                                   search_cell=True,
                                   store_paw=True,
                                   kplist=[0])
-    output_file = f"{TEST_FILES_PATH}/gpaw/Bi-gamma_bandstructure_tmp.pickle"
+    output_file = f"{TEST_FILES_PATH}/gpaw{GPAW_VERSION}/Bi-gamma_bandstructure_tmp.pickle"
     bandstructure.pickle(output_file)
     bandstructure2 = pickle.load(open(output_file, "rb"))
     assert len(bandstructure.kpoints_paw) == len(bandstructure2.kpoints_paw), "Number of k-points in bandstructure and loaded bandstructure do not match."
