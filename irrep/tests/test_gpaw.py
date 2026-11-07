@@ -60,7 +60,10 @@ def test_gpaw_spinorbit(spinor):
                       {'-GM8': 1},
                       {'-GM8': 1},
                       {'-GM4': 1, '-GM5': 1}]
-        energies_ref = np.array([-7.30428916, -1.83041608, 2.4278237, 5.2004299, 5.499876])
+        if GPAW_VERSION == 25:
+            energies_ref = np.array([-7.30428916, -1.83041608, 2.4278237, 5.2004299, 5.499876])
+        else:
+            energies_ref = np.array([-6.70145955, -1.03681746, 3.00361925, 5.69355761, 5.99636715])
     else:
         irreps_ref = [ {'GM1+': 1},
                        {'GM2-': 1},

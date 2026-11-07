@@ -150,12 +150,20 @@ def get_soc_gpaw(calc, ik, flatten=True, theta=0, phi=0):
         for s1 in range(2):
             for s2 in range(2):
                 h_ii = h_ssii[s1, s2]
-                if nspin == 2:
-                    P1_mi = calc.wfs.kpt_qs[q][s1].P_ani[a]
-                    P2_mi = calc.wfs.kpt_qs[q][s2].P_ani[a]
-                if nspin == 1:
-                    P1_mi = calc.wfs.kpt_qs[q][0].P_ani[a]
-                    P2_mi = calc.wfs.kpt_qs[q][0].P_ani[a]
+                if is_new_gpaw(calc):
+                    if nspin == 2:
+                        P1_mi = calc.dft.ibzwfs._wfs_u[q][s1].P_ani[a]
+                        P2_mi = calc.dft.ibzwfs._wfs_u[q][s2].P_ani[a]
+                    else:
+                        P1_mi = calc.dft.ibzwfs._wfs_u[q].P_ani[a]
+                        P2_mi = P1_mi
+                else:
+                    if nspin == 2:
+                        P1_mi = calc.wfs.kpt_qs[q][s1].P_ani[a]
+                        P2_mi = calc.wfs.kpt_qs[q][s2].P_ani[a]
+                    else:
+                        P1_mi = calc.wfs.kpt_qs[q][0].P_ani[a]
+                        P2_mi = P1_mi
 
                 h_soc[s1, s2] += np.dot(np.dot(P1_mi.conj(), h_ii), P2_mi.T)
     if flatten:
