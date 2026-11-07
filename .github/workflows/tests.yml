@@ -8,42 +8,39 @@ on:
     branches:
     - master
 
-
 jobs:
   build:
-
     strategy:
       max-parallel: 20
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.13"]
+        gpaw-version: ["25.7", "26"]
 
     runs-on: ${{ matrix.os }}
 
+    defaults:
+      run:
+        shell: bash -el {0}   # needed so the conda env is activated in every step
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v4
+    - name: Set up conda
+      uses: conda-incubator/setup-miniconda@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: install pip, pytest
+        channels: conda-forge
+        channel-priority: strict
+        activate-environment: test
+    - name: Install GPAW ${{ matrix.gpaw-version }} from conda-forge
       run: |
-        sudo apt install libxc-dev libfftw3-dev libblas-dev liblapack-dev
-        python -m pip install --upgrade pip
-        pip install pytest gpaw
-    - name: Install GPAW 26
-      env:
-        CC: g++
-        CXX: g++
-        LDSHARED: g++ -shared
-      run: pip install gpaw
+        conda install -y "gpaw=${{ matrix.gpaw-version }}" pytest
+        python -c "import gpaw; print('GPAW', gpaw.__version__)"
     - name: Install tables from local repo, not from pypi
       working-directory: ./irreptables
-      run: |
-        pip install -e .
+      run: pip install -e .
     - name: Install irrep and dependencies
-      run: |
-        pip install -e .
+      run: pip install -e .
     - name: pytest
-      run: |
-        pytest
+      run: pytest
