@@ -1,3 +1,9 @@
+from .conftest import TEST_FILES_PATH
+from pytest import approx
+from irrep.bandstructure import BandStructure
+import pytest
+import numpy as np
+from gpaw import GPAW
 import pickle
 
 import gpaw
@@ -8,22 +14,21 @@ if parse(gpaw.__version__) >= Version("26.0.0"):
 else:
     GPAW_VERSION = 25
 
-from gpaw import GPAW
-import numpy as np
-import pytest
-from irrep.bandstructure import BandStructure
-from pytest import approx
-from .conftest import TEST_FILES_PATH
+
+CALC_TYPE_LIST = ["OLD"]
+if GPAW_VERSION == 26:
+    CALC_TYPE_LIST.append("NEW")
 
 
 
 
 
+@pytest.mark.parametrize("calc_type", CALC_TYPE_LIST)
 @pytest.mark.parametrize("spinor", [True, False])
-def test_gpaw_spinorbit(spinor):
+def test_gpaw_spinorbit(spinor, calc_type):
     print(f"GPAW version: {gpaw.__version__}, using GPAW_VERSION={GPAW_VERSION}")
 
-    calc = GPAW(f"{TEST_FILES_PATH}/gpaw{GPAW_VERSION}/Bi-gamma.gpw")
+    calc = GPAW(f"{TEST_FILES_PATH}/gpaw_{calc_type}/Bi-gamma.gpw")
 
     nspinor = 2 if spinor else 1
 
@@ -39,7 +44,7 @@ def test_gpaw_spinorbit(spinor):
                                   read_paw=not spinor,  # for now, read_pae does not work with spinor calculations
                                   search_cell=True,
                                   kplist=[0])
-    output_file = f"{TEST_FILES_PATH}/gpaw{GPAW_VERSION}/Bi-gamma_bandstructure.pickle"
+    output_file = f"{TEST_FILES_PATH}/gpaw_{calc_type}/Bi-gamma_bandstructure.pickle"
     bandstructure.pickle(output_file)
     # print ("Bandstructure",bandstructure)
     bandstructure.spacegroup.show()
@@ -60,7 +65,7 @@ def test_gpaw_spinorbit(spinor):
                       {'-GM8': 1},
                       {'-GM8': 1},
                       {'-GM4': 1, '-GM5': 1}]
-        if GPAW_VERSION == 25:
+        if calc_type == "OLD":
             energies_ref = np.array([-7.30428916, -1.83041608, 2.4278237, 5.2004299, 5.499876])
         else:
             energies_ref = np.array([-6.70145955, -1.03681746, 3.00361925, 5.69355761, 5.99636715])
@@ -70,7 +75,7 @@ def test_gpaw_spinorbit(spinor):
                        {'GM1+': 1},
                        {'GM3+': 1},
                         ]
-        if GPAW_VERSION == 25:
+        if calc_type == "OLD":
             energies_ref = np.array([-7.30392234, -1.82969316, 4.11551033, 4.50561308])
         else:
             energies_ref = np.array([-6.70105470188984, -1.0362028101572425, 4.633924948438371, 5.029094450662426])
@@ -86,9 +91,9 @@ def test_gpaw_spinorbit(spinor):
                 assert k in irref, f"at energy {E}, extra irrep {k}({irr[k]}) found in calculated irreps {irr}, not in reference {irref}"
 
 
-
-def test_gpaw_storage():
-    calc = GPAW(f"{TEST_FILES_PATH}/gpaw{GPAW_VERSION}/Bi-gamma.gpw")
+@pytest.mark.parametrize("calc_type", CALC_TYPE_LIST)
+def test_gpaw_storage(calc_type):
+    calc = GPAW(f"{TEST_FILES_PATH}/gpaw_{calc_type}/Bi-gamma.gpw")
 
     print("Fermi level", calc.get_fermi_level())
     bandstructure = BandStructure.from_gpaw(calculator_gpaw=calc,
@@ -102,7 +107,7 @@ def test_gpaw_storage():
                                   search_cell=True,
                                   store_paw=True,
                                   kplist=[0])
-    output_file = f"{TEST_FILES_PATH}/gpaw{GPAW_VERSION}/Bi-gamma_bandstructure_tmp.pickle"
+    output_file = f"{TEST_FILES_PATH}/gpaw_{calc_type}/Bi-gamma_bandstructure_tmp.pickle"
     bandstructure.pickle(output_file)
     bandstructure2 = pickle.load(open(output_file, "rb"))
     assert len(bandstructure.kpoints_paw) == len(bandstructure2.kpoints_paw), "Number of k-points in bandstructure and loaded bandstructure do not match."

@@ -36,30 +36,13 @@ class KpointGPAW(KpointAbstract):
                   IBstart, IBend,
                   storage
                   ):
-        from .parsers.gpaw import is_new_gpaw, read_new_gpaw
+        from .parsers.gpaw import read_new_gpaw
         ispin = ParserGPAW.spin_channels[ispin]
-        k = calc.get_ibz_k_points()[ibz_index]
+
         nbands = IBend - IBstart
+        k, proj, wavefunction, RecLattice, atom_positions = read_new_gpaw(
+            calc, ibz_index, ispin, IBstart, IBend, RecLattice)
 
-        if is_new_gpaw(calc):
-            proj, wavefunction, RecLattice = read_new_gpaw(
-                calc, ibz_index, ispin, IBstart, IBend, RecLattice)
-        else:
-            # ---- unchanged 25.x code ----
-            kpt = calc.wfs.kpt_qs[ibz_index][ispin]
-            proj = np.hstack([kpt.P_ani[a][IBstart:IBend]
-                            for a in range(len(calc.wfs.setups))])
-            if RecLattice is None:
-                RecLattice = calc.wfs.gd.reciprocal_lattice
-            wavefunction = np.array([
-                calc.wfs.get_wave_function_array(n, ibz_index, ispin, periodic=True)
-                for n in range(IBstart, IBend)])
-
-
-        atom_positions = calc.atoms.get_scaled_positions()
-
-        wavefunction = np.array([calc.wfs.get_wave_function_array(n, ibz_index, ispin, periodic=True)
-                                 for n in range(IBstart, IBend)])
         wavefunction = storage.store_array(wavefunction)
 
         return KpointGPAW(kpt=k, wavefunction=wavefunction, proj=proj, nbands=nbands,

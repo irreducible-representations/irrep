@@ -183,23 +183,35 @@ def is_new_gpaw(calc):
 
 @staticmethod
 def read_new_gpaw(calc, ibz_index, ispin, IBstart, IBend, RecLattice):
-    ibzwfs = calc.dft.ibzwfs
+    k = calc.get_ibz_k_points()[ibz_index]
+    if is_new_gpaw(calc):
+        # proj, wavefunction, RecLattice = read_new_gpaw(
+        # calc, ibz_index, ispin, IBstart, IBend, RecLattice)
+        ibzwfs = calc.dft.ibzwfs
+        wfs = None
+        for w in ibzwfs._wfs_u:                 # local k-points/spins (all of them in serial)
+            if w.k == ibz_index and w.spin == ispin:
+                wfs = w
+                break
+        if wfs is None:
+            raise KeyError(f'k-point {ibz_index}, spin {ispin} not on this MPI rank')
+        P_ani = wfs.P_ani.to_cpu()              # AtomArrays; P_ani[a] -> (nbands, nproj_a)
+        proj = np.hstack([P_ani[a][IBstart:IBend] for a in range(len(calc.atoms))])
+        wavefunction = np.array([
+            calc.get_pseudo_wave_function(band=n, kpt=ibz_index, spin=ispin, periodic=True)
+            for n in range(IBstart, IBend)])
+        if RecLattice is None:
+            RecLattice = 2 * np.pi * np.linalg.inv(calc.atoms.cell.array).T  # check units vs 25.7
 
-    wfs = None
-    for w in ibzwfs._wfs_u:                 # local k-points/spins (all of them in serial)
-        if w.k == ibz_index and w.spin == ispin:
-            wfs = w
-            break
-    if wfs is None:
-        raise KeyError(f'k-point {ibz_index}, spin {ispin} not on this MPI rank')
+    else:
+        kpt = calc.wfs.kpt_qs[ibz_index][ispin]
+        proj = np.hstack([kpt.P_ani[a][IBstart:IBend]
+                        for a in range(len(calc.wfs.setups))])
+        if RecLattice is None:
+            RecLattice = calc.wfs.gd.reciprocal_lattice
+        wavefunction = np.array([
+            calc.wfs.get_wave_function_array(n, ibz_index, ispin, periodic=True)
+            for n in range(IBstart, IBend)])
+    atom_positions = calc.atoms.get_scaled_positions()
 
-    P_ani = wfs.P_ani.to_cpu()              # AtomArrays; P_ani[a] -> (nbands, nproj_a)
-    proj = np.hstack([P_ani[a][IBstart:IBend] for a in range(len(calc.atoms))])
-
-    wavefunction = np.array([
-        calc.get_pseudo_wave_function(band=n, kpt=ibz_index, spin=ispin, periodic=True)
-        for n in range(IBstart, IBend)])
-
-    if RecLattice is None:
-        RecLattice = 2 * np.pi * np.linalg.inv(calc.atoms.cell.array).T  # check units vs 25.7
-    return proj, wavefunction, RecLattice
+    return k, proj, wavefunction, RecLattice, atom_positions
