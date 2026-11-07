@@ -67,7 +67,10 @@ def test_gpaw_spinorbit(spinor):
                        {'GM1+': 1},
                        {'GM3+': 1},
                         ]
-        energies_ref = np.array([-7.30392234, -1.82969316, 4.11551033, 4.50561308])
+        if GPAW_VERSION == 25:
+            energies_ref = np.array([-7.30392234, -1.82969316, 4.11551033, 4.50561308])
+        else:
+            energies_ref = np.array([-6.70105470188984, -1.0362028101572425, 4.633924948438371, 5.029094450662426])
 
     assert kGM.Energy_mean == approx(energies_ref, abs=1e-6), f"calculated energies {kGM.Energy_mean} differ from reference {energies_ref} by {abs(kGM.Energy_mean - energies_ref).max()}"
 

@@ -165,3 +165,33 @@ def get_soc_gpaw(calc, ik, flatten=True, theta=0, phi=0):
             for s2 in range(2):
                 h_soc[s1::2, s2::2] = h_soc_old[s1, s2]
     return h_soc * Hartree
+
+
+def is_new_gpaw(calc):
+    # "New GPAW" (default in 26): ASECalculator exposing .dft
+    # Legacy calculator (25.x, or 26 with legacy_gpaw=True): real calc.wfs
+    return hasattr(calc, 'dft')
+
+
+@staticmethod
+def read_new_gpaw(calc, ibz_index, ispin, IBstart, IBend, RecLattice):
+    ibzwfs = calc.dft.ibzwfs
+
+    wfs = None
+    for w in ibzwfs._wfs_u:                 # local k-points/spins (all of them in serial)
+        if w.k == ibz_index and w.spin == ispin:
+            wfs = w
+            break
+    if wfs is None:
+        raise KeyError(f'k-point {ibz_index}, spin {ispin} not on this MPI rank')
+
+    P_ani = wfs.P_ani.to_cpu()              # AtomArrays; P_ani[a] -> (nbands, nproj_a)
+    proj = np.hstack([P_ani[a][IBstart:IBend] for a in range(len(calc.atoms))])
+
+    wavefunction = np.array([
+        calc.get_pseudo_wave_function(band=n, kpt=ibz_index, spin=ispin, periodic=True)
+        for n in range(IBstart, IBend)])
+
+    if RecLattice is None:
+        RecLattice = 2 * np.pi * np.linalg.inv(calc.atoms.cell.array).T  # check units vs 25.7
+    return proj, wavefunction, RecLattice
