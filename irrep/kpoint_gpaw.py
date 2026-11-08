@@ -34,24 +34,18 @@ class KpointGPAW(KpointAbstract):
     @classmethod
     def from_gpaw(self, calc, ibz_index, ispin, RecLattice,
                   IBstart, IBend,
-                  storage
+                  storage, legacy_gpaw=None
                   ):
+        from .parsers.gpaw import read_gpaw_wf
         ispin = ParserGPAW.spin_channels[ispin]
-        kpt = calc.wfs.kpt_qs[ibz_index][ispin]
-        k = calc.get_ibz_k_points()[ibz_index]
-        nbands = IBend - IBstart
-        proj = np.hstack([kpt.P_ani[a][IBstart:IBend] for a in range(len(calc.wfs.setups))])
 
-        # Get projections in ibz
-        if RecLattice is None:
-            RecLattice = calc.wfs.gd.reciprocal_lattice
-        atom_positions = calc.atoms.get_scaled_positions()
+        k, proj, wavefunction, RecLattice, atom_positions = read_gpaw_wf(
+            calc=calc, ibz_index=ibz_index, ispin=ispin, IBstart=IBstart, IBend=IBend, RecLattice=RecLattice,
+            legacy_gpaw=legacy_gpaw)
 
-        wavefunction = np.array([calc.wfs.get_wave_function_array(n, ibz_index, ispin, periodic=True)
-                                 for n in range(IBstart, IBend)])
         wavefunction = storage.store_array(wavefunction)
 
-        return KpointGPAW(kpt=k, wavefunction=wavefunction, proj=proj, nbands=nbands,
+        return KpointGPAW(kpt=k, wavefunction=wavefunction, proj=proj, nbands=IBend - IBstart,
                           RecLattice=RecLattice,
                           atom_positions=atom_positions)
 
@@ -83,12 +77,12 @@ class KpointGPAW(KpointAbstract):
 class OverlapPAW:
 
     def __init__(self, calc, get_soc=True):
-
         self.dO_aii = {}
         for a, setup in enumerate(calc.wfs.setups):
             self.dO_aii[a] = np.copy(setup.dO_ii)
         self.orb_atom_indices = np.cumsum([0] + [dO.shape[0] for dO in self.dO_aii.values()])
-        self.dv = np.copy(calc.wfs.gd.dv)
+        from ase.units import Bohr
+        self.dv = np.copy(calc.wfs.gd.dv) * Bohr ** 3
         if get_soc:
             from gpaw.spinorbit import soc
             self.dVL_avii = [

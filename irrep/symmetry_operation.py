@@ -15,6 +15,7 @@
 ##################################################################
 
 
+from gpaw.rotation import rotation   # rotation(l, U_vv) -> (2l+1, 2l+1)
 from functools import cached_property
 import warnings
 import numpy as np
@@ -876,24 +877,20 @@ class SymmetryOperation():
     def set_R_aii_gpaw(self, calc, reset=False):
         """rotation matrices for the PAW projections."""
         if not hasattr(self, 'R_aii') or reset:
-            from gpaw.atomrotations import AtomRotations
-            setups = calc.setups
-
-            class SymmetryGpaw1():
-                def __init__(self, symop):
-                    # self.op_scc = symop.rotation[None, :, :]
-                    # self.cell_cv = symop.real_lattice
-                    self.op_scc = symop.rotation_cart[None, :, :]
-                    self.cell_cv = np.eye(3)
-            symmetry = SymmetryGpaw1(self)
-            R_aii = AtomRotations(setups.setups, setups.id_a, symmetry).get_R_asii()
-            self.R_aii = [R_ii[0] for R_ii in R_aii]  # remove unnecessary nesting
+            """One block-diagonal projector-space rotation matrix per atom."""
+            self.R_aii = []
+            for id_ in calc.setups.id_a:                 # one entry per atom
+                setup = calc.setups.setups[id_]          # dict: id -> Setup
+                n = sum(2 * l + 1 for l in setup.l_j)
+                R = np.zeros((n, n))
+                i = 0
+                for l in setup.l_j:
+                    m = 2 * l + 1
+                    R[i:i + m, i:i + m] = rotation(l, self.rotation_cart)
+                    i += m
+                self.R_aii.append(R)
             self.orb_atom_indices = np.cumsum([0] + [R.shape[0] for R in self.R_aii])
 
-    # def get_U_aii_gpaw(self, kpoint):
-    #     """Phase corrected rotation matrices for the PAW projections."""
-    #     return [ R_ii.T * np.exp( 2j * np.pi * np.dot(kpoiMax errnt, self.atom_map_T[a])) for a, R_ii in enumerate(self.R_aii)]
-    #     # return [ R_ii.T  for a, R_ii in enumerate(self.R_aii)]  # no phase factor, try this
 
     def set_gpaw(self, calculator):
         """Set all gpaw-related attributes."""

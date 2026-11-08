@@ -22,7 +22,7 @@ import functools
 import numpy as np
 from functools import cached_property
 
-
+from .parsers.gpaw import check_legacy_gpaw
 from .parsers import ParserAbinit, ParserVasp, ParserEspresso, ParserW90, ParserGPAW
 from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
@@ -531,8 +531,10 @@ class BandStructure:
         read_paw=False,
         store_paw=True,
         storage="tmp_irrep_storage",
+        legacy_gpaw=None,
         **kwargs
     ):
+        legacy_gpaw = check_legacy_gpaw(legacy_gpaw, calculator_gpaw)
 
         if spacegroup is None:
             cls_spacegroup, kwargs_spacegroup = cls.get_spacegroup_cls(spin_channel=spin_channel, irreps=irreps, **kwargs)
