@@ -224,12 +224,14 @@ def read_gpaw_wf(calc, ibz_index, ispin, IBstart, IBend, RecLattice, legacy_gpaw
         wavefunction = np.array([
             calc.wfs.get_wave_function_array(n, ibz_index, ispin, periodic=True)
             for n in range(IBstart, IBend)])
+        from ase.units import Bohr
+        wavefunction /= Bohr ** 1.5
     else:
         wfs = calc.dft.ibzwfs._get_wfs(kpt=ibz_index, spin=ispin)
         P_ani = wfs.P_ani.to_cpu()              # AtomArrays; P_ani[a] -> (nbands, nproj_a)
         wavefunction = calc.dft.wave_functions(n1=IBstart, n2=IBend, kpt=ibz_index, spin=ispin, periodic=True).data
-        from ase.units import Bohr
-        wavefunction *= Bohr ** 1.5
+        # from ase.units import Bohr
+        # wavefunction *= Bohr ** 1.5
 
         if RecLattice is None:
             RecLattice = 2 * np.pi * np.linalg.inv(calc.atoms.cell.array).T  # check units vs 25.7

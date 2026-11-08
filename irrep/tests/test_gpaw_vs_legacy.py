@@ -13,6 +13,11 @@ def test_bandstructure_gpaw(bandstructure_fixture, request):
     bandstructure_old = bandstructure_dict["OLD"]
     bandstructure_legacy = bandstructure_dict["LEGACY"]
     assert bandstructure_old.spacegroup.equals(bandstructure_legacy.spacegroup)
+    for symop_old, symop_legacy in zip(bandstructure_old.spacegroup.symmetries, bandstructure_legacy.spacegroup.symmetries):
+        for key in ["rotation", "translation", "translation_mod1", "axis", "angle", "inversion"]:
+            assert np.allclose(getattr(symop_old, key), getattr(symop_legacy, key)), f"Mismatch in {key} for symmetry operation {symop_old}: {getattr(symop_old, key)} vs {getattr(symop_legacy, key)}"
+    for R_old, R_legacy in zip(symop_old.R_aii, symop_legacy.R_aii):
+        assert np.allclose(R_old, R_legacy), f"Mismatch in rotation matrix for symmetry operation {symop_old}: {R_old} vs {R_legacy}"
     assert np.allclose(bandstructure_old.kplist, bandstructure_legacy.kplist)
     for ik, k in enumerate(bandstructure_old.kplist):
         kp_old = bandstructure_old.kpoints[ik]

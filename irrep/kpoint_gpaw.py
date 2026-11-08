@@ -77,12 +77,12 @@ class KpointGPAW(KpointAbstract):
 class OverlapPAW:
 
     def __init__(self, calc, get_soc=True):
-
         self.dO_aii = {}
         for a, setup in enumerate(calc.wfs.setups):
             self.dO_aii[a] = np.copy(setup.dO_ii)
         self.orb_atom_indices = np.cumsum([0] + [dO.shape[0] for dO in self.dO_aii.values()])
-        self.dv = np.copy(calc.wfs.gd.dv)
+        from ase.units import Bohr
+        self.dv = np.copy(calc.wfs.gd.dv) * Bohr ** 3
         if get_soc:
             from gpaw.spinorbit import soc
             self.dVL_avii = [
