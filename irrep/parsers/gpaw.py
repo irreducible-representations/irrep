@@ -103,11 +103,12 @@ class ParserGPAW(ParserCommon):
         return energies, WFout, kg, kpt, eKG
 
 
-def get_soc_gpaw(calc, ik, flatten=True, theta=0, phi=0):
+def get_soc_gpaw(calc, ik, flatten=True, theta=0, phi=0, legacy_gpaw=None):
     """Calculate SOC Hamiltonian in KS basis for a given k-point."""
     from ase.units import Hartree
     from gpaw.spinorbit import soc
 
+    legacy_gpaw = check_legacy_gpaw(calc, legacy_gpaw)
     nspin = calc.get_number_of_spins()
 
     C_ss = np.array(
@@ -150,20 +151,20 @@ def get_soc_gpaw(calc, ik, flatten=True, theta=0, phi=0):
         for s1 in range(2):
             for s2 in range(2):
                 h_ii = h_ssii[s1, s2]
-                if is_new_gpaw(calc):
+                if legacy_gpaw:
+                    if nspin == 2:
+                        P1_mi = calc.wfs.kpt_qs[q][s1].P_ani[a]
+                        P2_mi = calc.wfs.kpt_qs[q][s2].P_ani[a]
+                    else:
+                        P1_mi = calc.wfs.kpt_qs[q][0].P_ani[a]
+                        P2_mi = P1_mi
+                else:
                     if nspin == 2:
                         # maybe need to use get_wfs_on_master for parallel runs, but needs testing
                         P1_mi = calc.dft.ibzwfs._get_wfs(kpt=q, spin=s1).P_ani[a]
                         P2_mi = calc.dft.ibzwfs._get_wfs(kpt=q, spin=s2).P_ani[a]
                     else:
                         P1_mi = calc.dft.ibzwfs._get_wfs(kpt=q, spin=0).P_ani[a]
-                        P2_mi = P1_mi
-                else:
-                    if nspin == 2:
-                        P1_mi = calc.wfs.kpt_qs[q][s1].P_ani[a]
-                        P2_mi = calc.wfs.kpt_qs[q][s2].P_ani[a]
-                    else:
-                        P1_mi = calc.wfs.kpt_qs[q][0].P_ani[a]
                         P2_mi = P1_mi
 
                 h_soc[s1, s2] += np.dot(np.dot(P1_mi.conj(), h_ii), P2_mi.T)
@@ -176,10 +177,22 @@ def get_soc_gpaw(calc, ik, flatten=True, theta=0, phi=0):
     return h_soc * Hartree
 
 
+def check_legacy_gpaw(calc, legacy_gpaw=None):
+    if legacy_gpaw is not None:
+        return legacy_gpaw
+    else:
+        return not is_new_gpaw(calc)
+
+
 def is_new_gpaw(calc):
     # "New GPAW" (default in 26): ASECalculator exposing .dft
     # Legacy calculator (25.x, or 26 with legacy_gpaw=True): real calc.wfs
-    return hasattr(calc, 'dft')
+    if hasattr(calc, '_wfs_dft'):
+        return True
+    if hasattr(calc, 'get_realspace_wfs'):
+        return False
+    raise ValueError("Cannot determine if GPAW is new or legacy. Please check the GPAW version and calculator type.")
+
 
 
 def is_collinear(calc):
@@ -188,40 +201,38 @@ def is_collinear(calc):
     return calc.wfs.collinear
 
 
-def get_magnetic_moments(calc, project_collinear_axis=(0, 0, 1)):
-    if hasattr(calc, 'dft'):                 # new GPAW (26 default)
+def get_magnetic_moments(calc, project_collinear_axis=(0, 0, 1), legacy_gpaw=None):
+    legacy_gpaw = check_legacy_gpaw(calc, legacy_gpaw)
+    if legacy_gpaw:
+        magmoms = calc.get_magnetic_moments()
+    else:
         magmoms = calc.dft.magmoms()[1]
         if is_collinear(calc) and project_collinear_axis:
             magmoms = np.dot(magmoms, project_collinear_axis)
-    else:
-        magmoms = calc.get_magnetic_moments()
     return magmoms
 
 
 @staticmethod
-def read_new_gpaw(calc, ibz_index, ispin, IBstart, IBend, RecLattice):
+def read_gpaw_wf(calc, ibz_index, ispin, IBstart, IBend, RecLattice, legacy_gpaw=None):
+    legacy_gpaw = check_legacy_gpaw(calc, legacy_gpaw)
     k = calc.get_ibz_k_points()[ibz_index]
-    if is_new_gpaw(calc):
-        # proj, wavefunction, RecLattice = read_new_gpaw(
-        # calc, ibz_index, ispin, IBstart, IBend, RecLattice)
-        wfs = calc.dft.ibzwfs._get_wfs(kpt=ibz_index, spin=ispin)
-        P_ani = wfs.P_ani.to_cpu()              # AtomArrays; P_ani[a] -> (nbands, nproj_a)
-        # proj = np.hstack([P_ani[a][IBstart:IBend] for a in range(len(calc.atoms))])
-        # wavefunction = np.array([
-        #     calc.get_pseudo_wave_function(band=n, kpt=ibz_index, spin=ispin, periodic=True)
-        #     for n in range(IBstart, IBend)])
-        wavefunction = calc.dft.wave_functions(n1=IBstart, n2=IBend, kpt=ibz_index, spin=ispin, periodic=True).data
 
-        if RecLattice is None:
-            RecLattice = 2 * np.pi * np.linalg.inv(calc.atoms.cell.array).T  # check units vs 25.7
-
-    else:
+    if legacy_gpaw:
         P_ani = calc.wfs.kpt_qs[ibz_index][ispin].P_ani
         if RecLattice is None:
             RecLattice = calc.wfs.gd.reciprocal_lattice
         wavefunction = np.array([
             calc.wfs.get_wave_function_array(n, ibz_index, ispin, periodic=True)
             for n in range(IBstart, IBend)])
+    else:
+        wfs = calc.dft.ibzwfs._get_wfs(kpt=ibz_index, spin=ispin)
+        P_ani = wfs.P_ani.to_cpu()              # AtomArrays; P_ani[a] -> (nbands, nproj_a)
+        wavefunction = calc.dft.wave_functions(n1=IBstart, n2=IBend, kpt=ibz_index, spin=ispin, periodic=True).data
+        from ase.units import Bohr
+        wavefunction *= Bohr ** 1.5
+
+        if RecLattice is None:
+            RecLattice = 2 * np.pi * np.linalg.inv(calc.atoms.cell.array).T  # check units vs 25.7
 
     proj = np.hstack([P_ani[a][IBstart:IBend] for a in range(len(calc.atoms))])
 

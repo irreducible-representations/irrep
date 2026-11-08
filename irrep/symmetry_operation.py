@@ -875,10 +875,6 @@ class SymmetryOperation():
                 self.R_aii.append(R)
             self.orb_atom_indices = np.cumsum([0] + [R.shape[0] for R in self.R_aii])
 
-    # def get_U_aii_gpaw(self, kpoint):
-    #     """Phase corrected rotation matrices for the PAW projections."""
-    #     return [ R_ii.T * np.exp( 2j * np.pi * np.dot(kpoiMax errnt, self.atom_map_T[a])) for a, R_ii in enumerate(self.R_aii)]
-    #     # return [ R_ii.T  for a, R_ii in enumerate(self.R_aii)]  # no phase factor, try this
 
     def set_gpaw(self, calculator):
         """Set all gpaw-related attributes."""

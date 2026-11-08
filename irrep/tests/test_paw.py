@@ -8,22 +8,34 @@ from .conftest import TEST_FILES_PATH
 from gpaw import GPAW
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def BandstrGpawDiamond():
     bands = {}
     for calc_type in CALC_TYPE_LIST:
-        calc = GPAW(os.path.join(TEST_FILES_PATH, f"diamond-gpaw_{calc_type}", "diamond-nscf-irred.gpw"))
+        if calc_type == "LEGACY":
+            kwargs = dict(legacy_gpaw=True)
+            calc_type_read = "OLD"
+        else:
+            kwargs = {}
+            calc_type_read = calc_type
+        calc = GPAW(os.path.join(TEST_FILES_PATH, f"diamond-gpaw_{calc_type_read}", "diamond-nscf-irred.gpw"), **kwargs)
         bandstructure = BandStructure.from_gpaw(calculator_gpaw=calc, read_paw=True, Ecut=300)
         bands[calc_type] = bandstructure
     return bands
 
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def BandstrGpawBismuth():
     bands = {}
     for calc_type in CALC_TYPE_LIST:
-        calc = GPAW(os.path.join(TEST_FILES_PATH, f"gpaw_{calc_type}", "Bi.gpw"))
+        if calc_type == "LEGACY":
+            kwargs = dict(legacy_gpaw=True)
+            calc_type_read = "OLD"
+        else:
+            kwargs = {}
+            calc_type_read = calc_type
+        calc = GPAW(os.path.join(TEST_FILES_PATH, f"gpaw_{calc_type_read}", "Bi.gpw"), **kwargs)
         bandstructure = BandStructure.from_gpaw(calculator_gpaw=calc, read_paw=True, Ecut=300)
         bands[calc_type] = bandstructure
     return bands

@@ -18,4 +18,4 @@ else:
 
 CALC_TYPE_LIST = ["OLD"]
 if GPAW_VERSION == 26:
-    CALC_TYPE_LIST.append("NEW")
+    CALC_TYPE_LIST += ["NEW", "LEGACY"]

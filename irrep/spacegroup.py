@@ -904,6 +904,7 @@ class SpaceGroup:
                   magnetic=True,
                   spinor=None,
                   verbosity=0,
+                  legacy_gpaw=None,
                   **kwargs_cell):
         """Get the spacegroup of a GPAW calculator (non-spinor only).
         Parameters
@@ -935,7 +936,7 @@ class SpaceGroup:
             typat = calculator.atoms.get_atomic_numbers()
             if magnetic:
                 if magmom is None:
-                    magmom = get_magnetic_moments(calculator)
+                    magmom = get_magnetic_moments(calculator, legacy_gpaw=legacy_gpaw)
                     assert magmom.shape == (len(calculator.atoms),)
             else:
                 magmom = np.zeros(len(calculator.atoms), dtype=float)
