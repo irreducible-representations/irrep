@@ -23,6 +23,8 @@ import numpy.linalg as la
 import copy
 from .gvectors import symm_eigenvalues, symm_matrix, get_pw_energies
 from .utility import cached_einsum, compstr, get_block_indices, is_round, format_matrix, log_message, orthogonalize, vector_pprint
+import logging
+logger = logging.getLogger(__name__)
 
 
 class KpointAbstract(abc.ABC):
@@ -287,14 +289,14 @@ class Kpoint(KpointAbstract):
                     break
             if found:
                 # Number of inversion odd states (not pairs!)
-                print(f"kpoint {self.ik0} = {vector_pprint(self.k)} ")
-                print(f"inversion is {i}-th symmetry in the little group")
+                logger.output(f"kpoint {self.ik0} = {vector_pprint(self.k)} ")
+                logger.output(f"inversion is {i}-th symmetry in the little group")
                 # print(f"characters of inversion symmetry: {self.char[:, i]}")
-                print(f"degeneracies: {self.degeneracies}")
+                logger.output(f"degeneracies: {self.degeneracies}")
                 self.num_bandinvs = int(round(sum(self.degeneracies - self.char[:, i].real) / 2))
             else:
                 self.num_bandinvs = None
-            print(f"number of inversion-odd states: {self.num_bandinvs}")
+            logger.output(f"number of inversion-odd states: {self.num_bandinvs}")
 
         if not save_wf:
             self.WF = None
@@ -721,9 +723,9 @@ class Kpoint(KpointAbstract):
                             multiplicities[ir] = multipl
                     irreps.append(multiplicities)
             except KeyError as ke:
-                print(ke)
-                print("irreptable:", irreptable)
-                print([sym.ind for sym in self.little_group])
+                logger.output(ke)
+                logger.output(f"irreptable: {irreptable}")
+                logger.output([sym.ind for sym in self.little_group])
                 raise ke
 
         self.irreps = irreps
@@ -785,7 +787,7 @@ class Kpoint(KpointAbstract):
         '''
 
         # Print header for k-point
-        print(f"\n\n k-point {self.ik0:3d} : {vector_pprint(np.round(self.k, 5))} (in DFT cell)\n" +
+        logger.output(f"\n\n k-point {self.ik0:3d} : {vector_pprint(np.round(self.k, 5))} (in DFT cell)\n" +
               f"               {vector_pprint(np.round(self.k_refUC, 5))} (after cell trasformation)\n\n" if refcell else "" +
               f" number of states : {self.num_bands}\n"
               )
@@ -824,7 +826,7 @@ class Kpoint(KpointAbstract):
         else:
             aux3 = aux2 + " "
 
-        print(f"   Energy  |   degeneracy  | {aux2} irreps {aux3} | sym. operations  ")
+        logger.output(f"   Energy  |   degeneracy  | {aux2} irreps {aux3} | sym. operations  ")
 
         # Print indices of little-group symmetries
         s = f"           |               | {aux2}        {aux3} | "
@@ -832,7 +834,7 @@ class Kpoint(KpointAbstract):
         for sym in self.little_group:
             inds.append(f"{aux1}{sym.ind:4d}    {aux1}")
         s += " ".join(inds)
-        print(s)
+        logger.output(s)
 
         # Print line associated to a set of degenerate states
         for e, d, ir, ch1, ch2 in zip(self.Energy_mean, self.degeneracies, str_irreps, self.char, self.char_refUC):
@@ -853,12 +855,12 @@ class Kpoint(KpointAbstract):
             if dftcell:
                 # Energy, degeneracy, irrep's label and character in DFT cell
                 left_str = f" {e:8.4f}  |    {d:5d}      | {ir:{irreplen}s} |"
-                print(left_str + " " + right_str1)
+                logger.output(left_str + " " + right_str1)
 
             if refcell:
                 # Line for character in reference cell
                 left_str = f"           |               | {' ' * len(ir):{irreplen}s} |"
-                print(left_str + " " + right_str2)  # line for character in DFT
+                logger.output(left_str + " " + right_str2)  # line for character in DFT
 
 
     def json(self):

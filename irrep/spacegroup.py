@@ -32,6 +32,8 @@ import os
 from pyxtal import Group
 from sympy import Matrix, sympify
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
+import logging
+logger = logging.getLogger(__name__)
 
 
 
@@ -284,7 +286,7 @@ class SpaceGroup:
             if symmetries is None or symop.ind in symmetries:
                 out_str += symop.show(refUC=None, shiftUC=None, to_stdout=False, short=short) + '\n'
         if to_stdout:
-            print(out_str)
+            logger.output(out_str)
         return out_str
 
     @property

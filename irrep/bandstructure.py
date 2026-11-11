@@ -42,6 +42,9 @@ except ImportError:
     from .utility import DummyMethodTables
     load_si_table = DummyMethodTables("load_si_table")
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class BandStructure:
     """
@@ -867,30 +870,30 @@ class BandStructure:
 
             # Print number of inversion odd Kramers pairs
             if KP.num_bandinvs is None:
-                print("\nInvariant under inversion: No")
+                logger.output("\nInvariant under inversion: No")
             else:
-                print("\nInvariant under inversion: Yes")
+                logger.output("\nInvariant under inversion: Yes")
                 if self.spinor and not self.magnetic:
-                    print(f"Number of inversions-odd Kramers pairs : {int(KP.num_bandinvs / 2)}")
+                    logger.output(f"Number of inversions-odd Kramers pairs : {int(KP.num_bandinvs / 2)}")
                 else:
-                    print(f"Number of inversions-odd states : {KP.num_bandinvs}")
+                    logger.output(f"Number of inversions-odd states : {KP.num_bandinvs}")
 
             # Print gap with respect to next band
             if not np.isnan(KP.upper):
-                print("Gap with upper bands: ", KP.upper - KP.Energy_mean[-1])
+                logger.output(f"Gap with upper bands: {KP.upper - KP.Energy_mean[-1]}")
 
         # Print total number of band inversions
         if self.spinor and not self.magnetic:
-            print(f"\nTOTAL number of inversions-odd Kramers pairs : {int(self.num_bandinvs / 2)}")
+            logger.output(f"\nTOTAL number of inversions-odd Kramers pairs : {int(self.num_bandinvs / 2)}")
         else:
-            print(f"TOTAL number of inversions-odd states : {self.num_bandinvs}")
+            logger.output(f"TOTAL number of inversions-odd states : {self.num_bandinvs}")
         if not self.magnetic:
-            print(f'Z2 invariant: {int(self.num_bandinvs / 2 % 2)}')
-            print(f'Z4 invariant: {int(self.num_bandinvs / 2 % 4)}')
+            logger.output(f'Z2 invariant: {int(self.num_bandinvs / 2 % 2)}')
+            logger.output(f'Z4 invariant: {int(self.num_bandinvs / 2 % 4)}')
 
         # Print indirect gap and smallest direct gap
-        print(f'Indirect gap: {self.gap_indirect}')
-        print(f'Smallest direct gap in the given set of k-points: {self.gap_direct}')
+        logger.output(f'Indirect gap: {self.gap_indirect}')
+        logger.output(f'Smallest direct gap in the given set of k-points: {self.gap_direct}')
 
 
     def json(self, kpnames=None):
@@ -1152,10 +1155,10 @@ class BandStructure:
             x.overlap(y)
             for x, y in zip(self.kpoints, self.kpoints[1:] + [self.kpoints[0]])
         ]
-        print("overlaps")
+        logger.output("overlaps")
         for O in overlaps:
-            print(np.abs(O[0, 0]), np.angle(O[0, 0]))
-        print("   sum  ", np.sum(np.angle(O[0, 0]) for O in overlaps) / np.pi)
+            logger.output(f"{np.abs(O[0, 0])} {np.angle(O[0, 0])}")
+        logger.output(f"   sum   {np.sum(np.angle(O[0, 0]) for O in overlaps) / np.pi}")
         nmax = np.min([o.shape for o in overlaps])
         # calculate zak phase in incresing dimension of the subspace (1 band,
         # 2 bands, 3 bands,...)
@@ -1448,8 +1451,8 @@ class BandStructure:
         # Load symmetry indicators file
         si_table = self.load_si_table()
         if self.spacegroup.number_str not in si_table:
-            print("There are no non-trivial symmetry indicators for this space "
-                  "group")
+            logger.output("There are no non-trivial symmetry indicators for this space "
+                          "group")
             indicators_dict = None
 
         else:
@@ -1474,11 +1477,11 @@ class BandStructure:
         Method identify_irreps must have been called beforehand
         """
 
-        print("\n---------- SYMMETRY INDICATORS ----------\n")
+        logger.output("\n---------- SYMMETRY INDICATORS ----------\n")
 
         if self.symmetry_indicators is None:
-            print(f"Space group {self.spacegroup.name} has no nontrivial "
-                  "indicators")
+            logger.output(f"Space group {self.spacegroup.name} has no nontrivial "
+                          "indicators")
 
         else:
             si_table = self.load_si_table()
@@ -1494,8 +1497,8 @@ class BandStructure:
                 ]
                 definition_str = " + ".join(terms)
 
-                print(f"{indicator} =", self.symmetry_indicators[indicator])
-                print(f"\tDefinition: ({definition_str}) mod {si_table[indicator]['mod']}")
+                logger.output(f"{indicator} = {self.symmetry_indicators[indicator]}")
+                logger.output(f"\tDefinition: ({definition_str}) mod {si_table[indicator]['mod']}")
 
     def compute_ebr_decomposition(self):
         '''
@@ -1520,7 +1523,7 @@ class BandStructure:
         try:
             irrep_counts = self.get_irrep_counts()
         except RuntimeError:
-            print(
+            logger.output(
                 "Could not compute the EBR decomposition because counting of "
                 "irreps failed."
             )
@@ -1540,15 +1543,15 @@ class BandStructure:
         # Fragile or trivial, but cannot ortools not installed
         elif not ORTOOLS_AVAILABLE:
             self.ebr_decomposition = None
-            print(
+            logger.output(
                 "There exists integer-valued solutions to the EBR decomposition "
                 "problem, so the set of bands is TRIVIAL or displays FRAGILE TOPOLOGY. "
                 "Install OR-Tools to compute decompositions."
             )
 
         else:
-            print('Calculating decomposition in terms of EBRs. '
-                  'This can take some time...')
+            logger.output('Calculating decomposition in terms of EBRs. '
+                          'This can take some time...')
             self.ebr_decompositions, is_positive = compute_ebr_decomposition(ebr_data, self.y)
             if is_positive:
                 self.classification = 'ATOMIC LIMIT'
@@ -1589,13 +1592,13 @@ class BandStructure:
         from .utility import vector_pprint
 
         # General block printed always
-        print("\n---------- EBR DECOMPOSITION ----------\n")
-        print(f'Classification: {self.classification}')
+        logger.output("\n---------- EBR DECOMPOSITION ----------\n")
+        logger.output(f'Classification: {self.classification}')
 
         try:
             irrep_counts = self.get_irrep_counts()
         except RuntimeError:
-            print(
+            logger.output(
                 "Could not compute the EBR decomposition because counting of "
                 "irreps failed."
             )
@@ -1603,7 +1606,7 @@ class BandStructure:
         basis_labels = ebr_data["basis"]["irrep_labels"]
         _, d, _ = get_smith_form(ebr_data)
         smith_diagonal = d.diagonal()
-        print(
+        logger.output(
             f"Irrep decomposition at high-symmetry points:\n\n{compose_irrep_string(irrep_counts)}"
             f"\n\nIrrep basis:\n{vector_pprint(basis_labels, fmt='s')}"
             f"\n\nSymmetry vector (y):\n{vector_pprint(self.y, fmt='d')}"
@@ -1615,7 +1618,7 @@ class BandStructure:
         # If EBR decomposition wasn't computed because ortools isn't installed
         if (self.classification != 'STABLE TOPOLOGICAL' and
                 self.ebr_decompositions is None):
-            print(
+            logger.output(
                 "There exists integer-valued solutions to the EBR decomposition "
                 "problem, so the set of bands is TRIVIAL or displays FRAGILE TOPOLOGY. "
                 "Install OR-Tools and compute decompositions again"
@@ -1623,11 +1626,11 @@ class BandStructure:
 
         # If EBR decomposition was computed
         elif self.classification in ['ATOMIC LIMIT', 'FRAGILE TOPOLOGIVAL']:
-            print('Printing EBR decompositions:')
+            logger.output('Printing EBR decompositions:')
             ebr_list = get_ebr_names_and_positions(ebr_data)
             for i, sol in enumerate(self.ebr_decompositions):
-                print("Solution", i + 1, "\n")
-                print(compose_ebr_string(sol, ebr_list), "\n")
+                logger.output(f"Solution {i + 1} \n")
+                logger.output(f"{compose_ebr_string(sol, ebr_list)} \n")
 
 
     def load_si_table(self):

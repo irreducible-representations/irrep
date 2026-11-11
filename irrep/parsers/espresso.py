@@ -8,6 +8,8 @@ from scipy.io import FortranFile as FF
 from ..gvectors import Hartree_eV
 from ..utility import BOHR, log_message, str2bool
 from .common import ParserCommon
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ParserEspresso(ParserCommon):
@@ -36,7 +38,7 @@ class ParserEspresso(ParserCommon):
             NBin_dw = int(self.bandstr.find("nbnd_dw").text)
             NBin_up = int(self.bandstr.find("nbnd_up").text)
             self.spinpol = True
-            print(f"spin-polarised bandstructure composed of {NBin_up} up and {NBin_dw} dw states")
+            logger.output(f"spin-polarised bandstructure composed of {NBin_up} up and {NBin_dw} dw states")
         except AttributeError:
             self.spinpol = False
             NBin = int(self.bandstr.find("nbnd").text)

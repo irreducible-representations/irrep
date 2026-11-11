@@ -27,6 +27,8 @@ from monty.serialization import dumpfn, loadfn
 from .parsers.parse_files_bandstructure import parse_files
 from .utility import sort_vectors, str2list, short, log_message
 from . import __version__ as version
+import logging
+logger = logging.getLogger(__name__)
 
 
 class LoadContextFromConfig(click.Command):
@@ -433,17 +435,17 @@ def cli(
             if magnetic_moments.ndim == 1:
                 magnetic_moments = np.expand_dims(magnetic_moments, axis=0)
         except FileNotFoundError:
-            print(f"The magnetic moments file was not found: {magmom}")
+            logger.output(f"The magnetic moments file was not found: {magmom}")
         except ValueError:
-            print(f"Error reading magnetic moments file: {magmom}")
+            logger.output(f"Error reading magnetic moments file: {magmom}")
     elif time_reversal:
         magnetic_moments = True
-        print("WARNING: --time-reversal set without providing magnetic moments "
+        logger.output("WARNING: --time-reversal set without providing magnetic moments "
               "via --magmom. Magnetic grey groups will be used. Results are "
               "still valid.")
     elif symmetry_indicators:
         magnetic_moments = True
-        print("WARNING:\nusing --symmetry-indicators with a non-magnetic "
+        logger.output("WARNING:\nusing --symmetry-indicators with a non-magnetic "
               "crystal invariant under time-reversal. Switching to the "
               "grey group with time-reversal. Results are still valid.")
     else:
@@ -535,7 +537,7 @@ def cli(
         json_data["separating symmetries"] = isymsep
         tmp_subbands = {}
         for isym in isymsep:
-            print(f"\n-------- SEPARATING BY SYMMETRY # {isym} --------")
+            logger.output(f"\n-------- SEPARATING BY SYMMETRY # {isym} --------")
             for s_old, bs in subbands.items():
                 separated = bs.Separate(isym - 1, groupKramers=groupkramers, verbosity=verbosity)
                 for s_new, bs_separated in separated.items():
@@ -554,9 +556,9 @@ def cli(
         for k in sort_vectors(subbands.keys()):
             sub = subbands[k]
             if isymsep is not None:
-                print(
-                    "\n\n\n\n ################################################ \n\n\n NEXT SUBSPACE:  ",
-                    " , ".join(f"sym # {s} -> eigenvalue {short(ev)}" for s, ev in zip(isymsep, k)),
+                logger.output(
+                    f"\n\n\n\n ################################################ \n\n\n NEXT SUBSPACE:   "
+                    f"{' , '.join(f'sym # {s} -> eigenvalue {short(ev)}' for s, ev in zip(isymsep, k))}",
                 )
                 sub.write_characters()
                 json_data["characters and irreps"].append({"symmetry eigenvalues": np.array(k),
@@ -569,29 +571,29 @@ def cli(
 
     if zak:
         for k in subbands:
-            print(f"symmetry eigenvalue : {k} \n Traces are : ")
+            logger.output(f"symmetry eigenvalue : {k} \n Traces are : ")
             subbands[k].write_characters()
-            print(f"symmetry eigenvalue : {k} \n Zak phases are : ")
+            logger.output(f"symmetry eigenvalue : {k} \n Zak phases are : ")
             zak = subbands[k].zakphase()
             for n, (z, gw, gc, lgw) in enumerate(zip(*zak)):
-                print(f"   {n + 1:4d}    {z / np.pi:8.5f} pi gapwidth = {gw:8.4f}"
+                logger.output(f"   {n + 1:4d}    {z / np.pi:8.5f} pi gapwidth = {gw:8.4f}"
                       f" gapcenter = {gc:8.3f} localgap= {lgw:8.4f}")
             exit()
 
     if wcc:
         for k in subbands:
-            print(f"symmetry eigenvalue {k}")
+            logger.output(f"symmetry eigenvalue {k}")
             # subbands[k].write_characters(degen_thresh=0.001,refUC=refUC,symmetries=symmetries)
             wcc_val = subbands[k].wcc()
-            print(f"symmetry eigenvalue : {k} \n  WCC are : {wcc_val} \n sumWCC={np.sum(wcc_val) % 1}")
+            logger.output(f"symmetry eigenvalue : {k} \n  WCC are : {wcc_val} \n sumWCC={np.sum(wcc_val) % 1}")
         exit()
 
     if plotbands:
-        print("\nplotbands = True --> writing bands")
+        logger.output("\nplotbands = True --> writing bands")
         for k, sub in subbands.items():
             if isymsep is not None:
-                print("\n\n\n\n ################################################ \n\n\n next subspace:  ",
-                    " , ".join(f"{s}:{short(ev)}" for s, ev in zip(isymsep, k)), )
+                logger.output("\n\n\n\n ################################################ \n\n\n next subspace:   "
+                              f"{' , '.join(f'{s}:{short(ev)}' for s, ev in zip(isymsep, k))}")
                 fname = (
                     "bands-" + suffix + "-" +
                     "-".join(f"{s}:{short(ev)}" for s, ev in zip(isymsep, k)) +

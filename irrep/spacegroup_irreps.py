@@ -29,6 +29,9 @@ except ImportError:
     from .utility import DummyMethodTables
     IrrepTable = DummyMethodTables("IrrepTable")
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 
 class SpaceGroupIrreps(SpaceGroup):
@@ -140,43 +143,43 @@ class SpaceGroupIrreps(SpaceGroup):
             to each symmetry operation.
         """
 
-        print('')
-        print("\n ---------- CRYSTAL STRUCTURE ---------- \n")
-        print('')
+        logger.output("")
+        logger.output("\n ---------- CRYSTAL STRUCTURE ---------- \n")
+        logger.output("")
 
         # Print cell vectors in DFT and reference cells
         vecs_refUC = np.dot(self.real_lattice, self.refUC).T
-        print('Cell vectors in angstroms:\n')
-        print(f"{'Vectors of DFT cell':^32}|{'Vectors of REF. cell':^32}")
+        logger.output('Cell vectors in angstroms:\n')
+        logger.output(f"{'Vectors of DFT cell':^32}|{'Vectors of REF. cell':^32}")
         for i in range(3):
             vec1 = self.real_lattice[i]
             vec2 = vecs_refUC[i]
             s = f"a{i:1d} = {vec1[0]:7.4f}  {vec1[1]:7.4f}  {vec1[2]:7.4f}  "
             s += "|  "
             s += f"a{i:1d} = {vec2[0]:7.4f}  {vec2[1]:7.4f}  {vec2[2]:7.4f}"
-            print(s)
-        print()
+            logger.output(s)
+        logger.output("")
 
         # Print atomic positions
-        print('Atomic positions in direct coordinates:\n')
-        print(f"{'Atom type':^} | {'Position in DFT cell':^25} | {'Position in REF cell':^25}")
+        logger.output('Atomic positions in direct coordinates:\n')
+        logger.output(f"{'Atom type':^} | {'Position in DFT cell':^25} | {'Position in REF cell':^25}")
         positions_refUC = np.linalg.inv(self.refUC) @ np.transpose(self.positions - self.shiftUC)
         positions_refUC = positions_refUC.T % 1.0
         for itype, pos1, pos2 in zip(self.typat, self.positions, positions_refUC):
             s = f'{itype:^9d} | '
             s += '  '.join(f'{x:7.4f}' for x in pos1) + ' | '
             s += '  '.join(f'{x:7.4f}' for x in pos2)
-            print(s)
+            logger.output(s)
 
-        print()
-        print('\n ---------- SPACE GROUP ----------- \n')
-        print()
-        print(f"Space group: {self.name} (# {self.number_str})")
-        print(f"Number of unitary symmetries: {len(self.u_symmetries)} (mod. lattice translations)")
+        logger.output("")
+        logger.output('\n ---------- SPACE GROUP ----------- \n')
+        logger.output("")
+        logger.output(f"Space group: {self.name} (# {self.number_str})")
+        logger.output(f"Number of unitary symmetries: {len(self.u_symmetries)} (mod. lattice translations)")
         if self.magnetic:
-            print(f"Number of antiunitary symmetries: {len(self.au_symmetries)} (mod. lattice translations)")
+            logger.output(f"Number of antiunitary symmetries: {len(self.au_symmetries)} (mod. lattice translations)")
         refUC_print = self.refUC.T  # print following convention in paper
-        print(
+        logger.output(
             "\nThe transformation from the DFT cell to the reference cell of tables is given by:\n"
             f"        | {''.join(f'{el:8.4f}' for el in refUC_print[0])} |\n"
             f"refUC = | {''.join(f'{el:8.4f}' for el in refUC_print[1])} |    shiftUC = {np.round(self.shiftUC, 5)}\n"
@@ -667,26 +670,26 @@ class SpaceGroupIrreps(SpaceGroup):
                          "\t\t| {: .2f} {: .2f} {: .2f} |\n"
                          "\t\t| {: .2f} {: .2f} {: .2f} |\n\n")
 
-        print("\n---------- HS-KPOINTS FOR IRREP IDENTIFICATION ----------\n")
+        logger.output("\n---------- HS-KPOINTS FOR IRREP IDENTIFICATION ----------\n")
 
-        print("\nChange of coordinates from conventional to DFT cell:\n")
-        print(matrix_format.format(*refUC_kspace.ravel()))
+        logger.output("\nChange of coordinates from conventional to DFT cell:\n")
+        logger.output(matrix_format.format(*refUC_kspace.ravel()))
 
-        print("\nChange of coordinates from DFT to conventional cell:\n")
-        print(matrix_format.format(*np.linalg.inv(refUC_kspace).ravel()))
+        logger.output("\nChange of coordinates from DFT to conventional cell:\n")
+        logger.output(matrix_format.format(*np.linalg.inv(refUC_kspace).ravel()))
 
         _, kp_index = np.unique([irr.kpname for irr in table.irreps], return_index=True)
-        print("Coordinates in symmetry tables:\n")
+        logger.output("Coordinates in symmetry tables:\n")
         for i in kp_index:
             name = table.irreps[i].kpname
             coords = table.irreps[i].k
-            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *coords))
-        print("\nCoordinates for DFT calculation:\n")
+            logger.output("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *coords))
+        logger.output("\nCoordinates for DFT calculation:\n")
         for i in kp_index:
             name = table.irreps[i].kpname
             coords = table.irreps[i].k
             k_dft = np.round(refUC_kspace.dot(coords), 6) % 1
-            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *k_dft))
+            logger.output("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *k_dft))
 
     def kpoints_to_calculation_cell(self, kpoints):
         """Transforms kpoints form standard cell to calculation cell

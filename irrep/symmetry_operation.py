@@ -22,6 +22,8 @@ import numpy as np
 from scipy.linalg import expm
 from .utility import UniqueListMod1, str_, BOHR, cached_einsum
 from .gvectors import transform_gk
+import logging
+logger = logging.getLogger(__name__)
 
 pauli_sigma = np.array(
     [[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
@@ -401,7 +403,7 @@ class SymmetryOperation():
     def show_short(self, to_stdout=False):
         out_str = f"axis: {self.axis.round(6)} ; angle = {self.angle_str}, inversion: {self.inversion}, time reversal: {self.time_reversal}"
         if to_stdout:
-            print(out_str)
+            logger.output(out_str)
         return out_str
 
 
@@ -533,7 +535,7 @@ class SymmetryOperation():
         out_str += self.show_short(to_stdout=False) + "\n"
 
         if to_stdout:
-            print(out_str)
+            logger.output(out_str)
         return out_str
 
 

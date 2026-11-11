@@ -23,6 +23,8 @@ from scipy import constants
 import fortio
 import sys
 from typing import Any
+import logging
+logger = logging.getLogger(__name__)
 BOHR = constants.physical_constants['Bohr radius'][0] / constants.angstrom
 
 
@@ -62,7 +64,7 @@ class FortranFileR(fortio.FortranFile):
 
     def __init__(self, filename):
 
-        print("Using fortio to read")
+        logger.output("Using fortio to read")
 
         try:  # assuming there are not subrecords
             super().__init__(filename,
@@ -71,9 +73,9 @@ class FortranFileR(fortio.FortranFile):
                              auto_endian=True,
                              check_file=True
                              )
-            print("Long records not found in ", filename)
+            logger.output(f"Long records not found in  {filename}")
         except ValueError:  # there are subrecords, allow negative markers
-            print(f"File '{filename}' contains subrecords - using header_dtype='int32'")
+            logger.output(f"File '{filename}' contains subrecords - using header_dtype='int32'")
             super().__init__(filename,
                              mode='r',
                              header_dtype='int32',
@@ -287,7 +289,7 @@ def log_message(msg, verbosity, level):
     '''
 
     if verbosity >= level:
-        print(msg)
+        logger.output(msg)
 
 
 def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf, verbosity=1,
@@ -320,9 +322,9 @@ def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf, verbosity
 
 def sort_vectors(list_of_vectors):
     list_of_vectors = list(list_of_vectors)
-    print(list_of_vectors)
+    logger.output(list_of_vectors)
     srt = arg_sort_vectors(list_of_vectors)
-    print(list_of_vectors, srt)
+    logger.output(f"{list_of_vectors} {srt}")
     return [list_of_vectors[i] for i in srt]
 
 
@@ -434,7 +436,6 @@ def grid_from_kpoints(kpoints, grid=None, allow_missing=False):
     if grid is None:
         grid = tuple(np.lcm.reduce([Fraction(k).limit_denominator(100).denominator for k in kp]) for kp in kpoints.T)
     npgrid = np.array(grid)
-    print(f"mpgrid = {npgrid}, {len(kpoints)}")
     kpoints_unique = UniqueListMod1()
     selected_kpoints = []
     for i, k in enumerate(kpoints):
@@ -452,6 +453,7 @@ def grid_from_kpoints(kpoints, grid=None, allow_missing=False):
     if len(kpoints_unique) < len(kpoints):
         warnings.warn("Some k-points are not on the grid or are repeated")
     return grid, np.array(selected_kpoints, dtype=int)
+
 
 
 class UniqueList(list):
