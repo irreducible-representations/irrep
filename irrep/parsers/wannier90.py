@@ -139,7 +139,7 @@ class ParserW90(ParserCommon):
 
     def parse_kpoint_formatted(self, ik, selectG):
         fname = self.get_UNK_name(ik)
-        logger.output(f"parse_kpoint_formatted: {fname}")
+        logger.output("parse_kpoint_formatted: %s", fname)
         fUNK = open(fname, "r")
         ngx, ngy, ngz, ik_in, nbnd = (int(x) for x in fUNK.readline().split())
         ngtot = ngx * ngy * ngz

@@ -435,9 +435,9 @@ def cli(
             if magnetic_moments.ndim == 1:
                 magnetic_moments = np.expand_dims(magnetic_moments, axis=0)
         except FileNotFoundError:
-            logger.output(f"The magnetic moments file was not found: {magmom}")
+            logger.output("The magnetic moments file was not found: %s", magmom)
         except ValueError:
-            logger.output(f"Error reading magnetic moments file: {magmom}")
+            logger.output("Error reading magnetic moments file: %s", magmom)
     elif time_reversal:
         magnetic_moments = True
         logger.output("WARNING: --time-reversal set without providing magnetic moments "
@@ -537,7 +537,7 @@ def cli(
         json_data["separating symmetries"] = isymsep
         tmp_subbands = {}
         for isym in isymsep:
-            logger.output(f"\n-------- SEPARATING BY SYMMETRY # {isym} --------")
+            logger.output("\n-------- SEPARATING BY SYMMETRY # %s --------", isym)
             for s_old, bs in subbands.items():
                 separated = bs.Separate(isym - 1, groupKramers=groupkramers, verbosity=verbosity)
                 for s_new, bs_separated in separated.items():
@@ -571,21 +571,21 @@ def cli(
 
     if zak:
         for k in subbands:
-            logger.output(f"symmetry eigenvalue : {k} \n Traces are : ")
+            logger.output("symmetry eigenvalue : %s \n Traces are : ", k)
             subbands[k].write_characters()
-            logger.output(f"symmetry eigenvalue : {k} \n Zak phases are : ")
+            logger.output("symmetry eigenvalue : %s \n Zak phases are : ", k)
             zak = subbands[k].zakphase()
             for n, (z, gw, gc, lgw) in enumerate(zip(*zak)):
-                logger.output(f"   {n + 1:4d}    {z / np.pi:8.5f} pi gapwidth = {gw:8.4f}"
-                      f" gapcenter = {gc:8.3f} localgap= {lgw:8.4f}")
+                logger.output("   %4d    %8.5f pi gapwidth = %8.4f gapcenter = %8.3f localgap= %8.4f",
+                      n + 1, z / np.pi, gw, gc, lgw)
             exit()
 
     if wcc:
         for k in subbands:
-            logger.output(f"symmetry eigenvalue {k}")
+            logger.output("symmetry eigenvalue %s", k)
             # subbands[k].write_characters(degen_thresh=0.001,refUC=refUC,symmetries=symmetries)
             wcc_val = subbands[k].wcc()
-            logger.output(f"symmetry eigenvalue : {k} \n  WCC are : {wcc_val} \n sumWCC={np.sum(wcc_val) % 1}")
+            logger.output("symmetry eigenvalue : %s \n  WCC are : %s \n sumWCC=%s", k, wcc_val, np.sum(wcc_val) % 1)
         exit()
 
     if plotbands:

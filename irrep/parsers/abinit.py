@@ -21,7 +21,7 @@ class ParserAbinit(ParserCommon):
         try:
             record = self.fWFK.read_record("S6,2i4", rec=0)
         except Exception as err:
-            logger.output(f"Error reading header of Abinit WFK file: {err}")
+            logger.output("Error reading header of Abinit WFK file: %s", err)
             record = self.fWFK.read_record( "S8,2i4", rec=0)
         stdout.flush()
 

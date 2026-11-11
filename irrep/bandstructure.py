@@ -874,26 +874,26 @@ class BandStructure:
             else:
                 logger.output("\nInvariant under inversion: Yes")
                 if self.spinor and not self.magnetic:
-                    logger.output(f"Number of inversions-odd Kramers pairs : {int(KP.num_bandinvs / 2)}")
+                    logger.output("Number of inversions-odd Kramers pairs : %s", int(KP.num_bandinvs / 2))
                 else:
-                    logger.output(f"Number of inversions-odd states : {KP.num_bandinvs}")
+                    logger.output("Number of inversions-odd states : %s", KP.num_bandinvs)
 
             # Print gap with respect to next band
             if not np.isnan(KP.upper):
-                logger.output(f"Gap with upper bands: {KP.upper - KP.Energy_mean[-1]}")
+                logger.output("Gap with upper bands: %s", KP.upper - KP.Energy_mean[-1])
 
         # Print total number of band inversions
         if self.spinor and not self.magnetic:
-            logger.output(f"\nTOTAL number of inversions-odd Kramers pairs : {int(self.num_bandinvs / 2)}")
+            logger.output("\nTOTAL number of inversions-odd Kramers pairs : %s", int(self.num_bandinvs / 2))
         else:
-            logger.output(f"TOTAL number of inversions-odd states : {self.num_bandinvs}")
+            logger.output("TOTAL number of inversions-odd states : %s", self.num_bandinvs)
         if not self.magnetic:
-            logger.output(f'Z2 invariant: {int(self.num_bandinvs / 2 % 2)}')
-            logger.output(f'Z4 invariant: {int(self.num_bandinvs / 2 % 4)}')
+            logger.output('Z2 invariant: %s', int(self.num_bandinvs / 2 % 2))
+            logger.output('Z4 invariant: %s', int(self.num_bandinvs / 2 % 4))
 
         # Print indirect gap and smallest direct gap
-        logger.output(f'Indirect gap: {self.gap_indirect}')
-        logger.output(f'Smallest direct gap in the given set of k-points: {self.gap_direct}')
+        logger.output('Indirect gap: %s', self.gap_indirect)
+        logger.output('Smallest direct gap in the given set of k-points: %s', self.gap_direct)
 
 
     def json(self, kpnames=None):
@@ -1157,8 +1157,8 @@ class BandStructure:
         ]
         logger.output("overlaps")
         for O in overlaps:
-            logger.output(f"{np.abs(O[0, 0])} {np.angle(O[0, 0])}")
-        logger.output(f"   sum   {np.sum(np.angle(O[0, 0]) for O in overlaps) / np.pi}")
+            logger.output("%s %s", np.abs(O[0, 0]), np.angle(O[0, 0]))
+        logger.output("   sum   %s", np.sum(np.angle(O[0, 0]) for O in overlaps) / np.pi)
         nmax = np.min([o.shape for o in overlaps])
         # calculate zak phase in incresing dimension of the subspace (1 band,
         # 2 bands, 3 bands,...)
@@ -1480,8 +1480,7 @@ class BandStructure:
         logger.output("\n---------- SYMMETRY INDICATORS ----------\n")
 
         if self.symmetry_indicators is None:
-            logger.output(f"Space group {self.spacegroup.name} has no nontrivial "
-                          "indicators")
+            logger.output("Space group %s has no nontrivial indicators", self.spacegroup.name)
 
         else:
             si_table = self.load_si_table()
@@ -1497,8 +1496,8 @@ class BandStructure:
                 ]
                 definition_str = " + ".join(terms)
 
-                logger.output(f"{indicator} = {self.symmetry_indicators[indicator]}")
-                logger.output(f"\tDefinition: ({definition_str}) mod {si_table[indicator]['mod']}")
+                logger.output("%s = %s", indicator, self.symmetry_indicators[indicator])
+                logger.output("\tDefinition: (%s) mod %s", definition_str, si_table[indicator]['mod'])
 
     def compute_ebr_decomposition(self):
         '''
@@ -1593,7 +1592,7 @@ class BandStructure:
 
         # General block printed always
         logger.output("\n---------- EBR DECOMPOSITION ----------\n")
-        logger.output(f'Classification: {self.classification}')
+        logger.output('Classification: %s', self.classification)
 
         try:
             irrep_counts = self.get_irrep_counts()
@@ -1629,8 +1628,8 @@ class BandStructure:
             logger.output('Printing EBR decompositions:')
             ebr_list = get_ebr_names_and_positions(ebr_data)
             for i, sol in enumerate(self.ebr_decompositions):
-                logger.output(f"Solution {i + 1} \n")
-                logger.output(f"{compose_ebr_string(sol, ebr_list)} \n")
+                logger.output("Solution %s \n", i + 1)
+                logger.output("%s \n", compose_ebr_string(sol, ebr_list))
 
 
     def load_si_table(self):

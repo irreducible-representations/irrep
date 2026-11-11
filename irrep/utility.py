@@ -73,9 +73,9 @@ class FortranFileR(fortio.FortranFile):
                              auto_endian=True,
                              check_file=True
                              )
-            logger.output(f"Long records not found in  {filename}")
+            logger.output("Long records not found in  %s", filename)
         except ValueError:  # there are subrecords, allow negative markers
-            logger.output(f"File '{filename}' contains subrecords - using header_dtype='int32'")
+            logger.output("File '%s' contains subrecords - using header_dtype='int32'", filename)
             super().__init__(filename,
                              mode='r',
                              header_dtype='int32',
@@ -324,7 +324,7 @@ def sort_vectors(list_of_vectors):
     list_of_vectors = list(list_of_vectors)
     logger.output(list_of_vectors)
     srt = arg_sort_vectors(list_of_vectors)
-    logger.output(f"{list_of_vectors} {srt}")
+    logger.output("%s %s", list_of_vectors, srt)
     return [list_of_vectors[i] for i in srt]
 
 

@@ -38,7 +38,7 @@ class ParserEspresso(ParserCommon):
             NBin_dw = int(self.bandstr.find("nbnd_dw").text)
             NBin_up = int(self.bandstr.find("nbnd_up").text)
             self.spinpol = True
-            logger.output(f"spin-polarised bandstructure composed of {NBin_up} up and {NBin_dw} dw states")
+            logger.output("spin-polarised bandstructure composed of %d up and %d dw states", NBin_up, NBin_dw)
         except AttributeError:
             self.spinpol = False
             NBin = int(self.bandstr.find("nbnd").text)

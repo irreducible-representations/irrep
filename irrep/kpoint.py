@@ -289,14 +289,14 @@ class Kpoint(KpointAbstract):
                     break
             if found:
                 # Number of inversion odd states (not pairs!)
-                logger.output(f"kpoint {self.ik0} = {vector_pprint(self.k)} ")
-                logger.output(f"inversion is {i}-th symmetry in the little group")
+                logger.output("kpoint %s = %s ", self.ik0, vector_pprint(self.k))
+                logger.output("inversion is %s-th symmetry in the little group", i)
                 # print(f"characters of inversion symmetry: {self.char[:, i]}")
-                logger.output(f"degeneracies: {self.degeneracies}")
+                logger.output("degeneracies: %s", self.degeneracies)
                 self.num_bandinvs = int(round(sum(self.degeneracies - self.char[:, i].real) / 2))
             else:
                 self.num_bandinvs = None
-            logger.output(f"number of inversion-odd states: {self.num_bandinvs}")
+            logger.output("number of inversion-odd states: %s", self.num_bandinvs)
 
         if not save_wf:
             self.WF = None
@@ -724,7 +724,7 @@ class Kpoint(KpointAbstract):
                     irreps.append(multiplicities)
             except KeyError as ke:
                 logger.output(ke)
-                logger.output(f"irreptable: {irreptable}")
+                logger.output("irreptable: %s", irreptable)
                 logger.output([sym.ind for sym in self.little_group])
                 raise ke
 
@@ -787,10 +787,18 @@ class Kpoint(KpointAbstract):
         '''
 
         # Print header for k-point
-        logger.output(f"\n\n k-point {self.ik0:3d} : {vector_pprint(np.round(self.k, 5))} (in DFT cell)\n" +
-              f"               {vector_pprint(np.round(self.k_refUC, 5))} (after cell trasformation)\n\n" if refcell else "" +
-              f" number of states : {self.num_bands}\n"
-              )
+        if refcell:
+            logger.output(
+                "\n\n k-point %3d : %s (in DFT cell)\n"
+                "               %s (after cell trasformation)\n\n"
+                " number of states : %s\n",
+                self.ik0,
+                vector_pprint(np.round(self.k, 5)),
+                vector_pprint(np.round(self.k_refUC, 5)),
+                self.num_bands,
+            )
+        else:
+            logger.output(" number of states : %s\n", self.num_bands)
 
         # Generate str describing irrep corresponding to sets of states
         str_irreps = []
@@ -826,7 +834,7 @@ class Kpoint(KpointAbstract):
         else:
             aux3 = aux2 + " "
 
-        logger.output(f"   Energy  |   degeneracy  | {aux2} irreps {aux3} | sym. operations  ")
+        logger.output("   Energy  |   degeneracy  | %s irreps %s | sym. operations  ", aux2, aux3)
 
         # Print indices of little-group symmetries
         s = f"           |               | {aux2}        {aux3} | "

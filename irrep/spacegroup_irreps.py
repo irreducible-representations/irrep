@@ -150,7 +150,7 @@ class SpaceGroupIrreps(SpaceGroup):
         # Print cell vectors in DFT and reference cells
         vecs_refUC = np.dot(self.real_lattice, self.refUC).T
         logger.output('Cell vectors in angstroms:\n')
-        logger.output(f"{'Vectors of DFT cell':^32}|{'Vectors of REF. cell':^32}")
+        logger.output("%s|%s", 'Vectors of DFT cell'.center(32), 'Vectors of REF. cell'.center(32))
         for i in range(3):
             vec1 = self.real_lattice[i]
             vec2 = vecs_refUC[i]
@@ -162,7 +162,7 @@ class SpaceGroupIrreps(SpaceGroup):
 
         # Print atomic positions
         logger.output('Atomic positions in direct coordinates:\n')
-        logger.output(f"{'Atom type':^} | {'Position in DFT cell':^25} | {'Position in REF cell':^25}")
+        logger.output("%s | %s | %s", 'Atom type'.center(9), 'Position in DFT cell'.center(25), 'Position in REF cell'.center(25))
         positions_refUC = np.linalg.inv(self.refUC) @ np.transpose(self.positions - self.shiftUC)
         positions_refUC = positions_refUC.T % 1.0
         for itype, pos1, pos2 in zip(self.typat, self.positions, positions_refUC):
@@ -174,10 +174,10 @@ class SpaceGroupIrreps(SpaceGroup):
         logger.output("")
         logger.output('\n ---------- SPACE GROUP ----------- \n')
         logger.output("")
-        logger.output(f"Space group: {self.name} (# {self.number_str})")
-        logger.output(f"Number of unitary symmetries: {len(self.u_symmetries)} (mod. lattice translations)")
+        logger.output("Space group: %s (# %s)", self.name, self.number_str)
+        logger.output("Number of unitary symmetries: %s (mod. lattice translations)", len(self.u_symmetries))
         if self.magnetic:
-            logger.output(f"Number of antiunitary symmetries: {len(self.au_symmetries)} (mod. lattice translations)")
+            logger.output("Number of antiunitary symmetries: %s (mod. lattice translations)", len(self.au_symmetries))
         refUC_print = self.refUC.T  # print following convention in paper
         logger.output(
             "\nThe transformation from the DFT cell to the reference cell of tables is given by:\n"
