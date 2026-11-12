@@ -125,7 +125,7 @@ class SpaceGroupIrreps(SpaceGroup):
         assert self.irreps_are_set, "Cannot proceed before `SpaceGroupIrreps.set_irreptables()` is called. " \
 
 
-    def show(self, symmetries=None):
+    def show(self, symmetries=None, short=False, to_stdout=True):
         """
         Print description of space-group and symmetry operations.
 
@@ -182,7 +182,7 @@ class SpaceGroupIrreps(SpaceGroup):
 
         for symop in self.symmetries:
             if symmetries is None or symop.ind in symmetries:
-                symop.show(refUC=self.refUC, shiftUC=self.shiftUC, U=self.spin_transf)
+                symop.show(refUC=self.refUC, shiftUC=self.shiftUC, U=self.spin_transf, short=short)
 
 
     def json(self, symmetries=None):

@@ -107,6 +107,7 @@ class SymmetryOperation():
         iangle = (round(self.angle / np.pi * 6) + 6) % 12 - 6
         if iangle == -6:
             iangle = 6
+        self.iangle = iangle
         self.angle = iangle * np.pi / 6
         self.angle_str = self.get_angle_str()
         self.spinor = spinor
@@ -253,6 +254,8 @@ class SymmetryOperation():
         else:
             return t
 
+
+
     def get_angle_str(self):
         """
         Give str of rotation angle.
@@ -260,7 +263,7 @@ class SymmetryOperation():
         Returns
         -------
         str
-            Rotation angle in radians.
+            Rotation angle as
 
         Raises
         ------
@@ -401,7 +404,19 @@ class SymmetryOperation():
         return S
 
     def show_short(self, to_stdout=False):
-        out_str = f"axis: {self.axis.round(6)} ; angle = {self.angle_str}, inversion: {self.inversion}, time reversal: {self.time_reversal}"
+        TRadd = ["TR"] if self.time_reversal else []
+        trans = [] if np.allclose(self.translation, 0) else [f"Translation: {self.translation.round(6)}"]
+        inv = ["Inversion"] if self.inversion else []
+        rot = [f"C{12 // self.iangle} {self.axis.round(4)}"] if self.iangle != 0 else []
+
+        attr_list = rot + inv + trans + TRadd
+
+        if not attr_list:
+            attr_list = ["Identity"]
+        elif self.iangle == 6 and self.inversion:
+            attr_list = [f"Mirror({self.axis.round(6)})"] + trans + TRadd
+
+        out_str = " + ".join(attr_list)
         if to_stdout:
             logger.output(out_str)
         return out_str
@@ -960,7 +975,6 @@ class SymmetryOperation():
         # Nc_tot = np.prod(Nc)
         if not self.is_identity:
             psi_n_grid = self.transform_grid_data(psi_n_grid)
-
         if self.time_reversal:
             psi_n_grid = np.conj(psi_n_grid)
         psi_n_grid *= phase  # should it be before or after time-reversal? TODO: check!

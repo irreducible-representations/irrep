@@ -226,6 +226,12 @@ do not hesitate to contact the author:
     help="Only calculate the symmetry operations",
 )
 @click.option(
+    "-symshort",
+    flag_value=True,
+    default=False,
+    help="print the symmetry operations in a short form (axis, angle, inversion, translation) instead of the full matrix",
+)
+@click.option(
     "-unk_formatted",
     flag_value=True,
     default=False,
@@ -373,6 +379,7 @@ def cli(
     symprec,
     isymsep,
     onlysym,
+    symshort,
     writesym,
     alat,
     from_sym_file,
@@ -490,7 +497,7 @@ def cli(
         irreps=True,  # always identify irreps when called from irrep code
     )
 
-    bandstr.spacegroup.show()
+    bandstr.spacegroup.show(short=symshort, to_stdout=True)
 
     if print_hs_kpoints:
         bandstr.spacegroup.print_hs_kpoints()
