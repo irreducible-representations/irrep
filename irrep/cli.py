@@ -26,9 +26,23 @@ from monty.serialization import dumpfn, loadfn
 
 from .parsers.parse_files_bandstructure import parse_files
 from .utility import sort_vectors, str2list, short
+from .logging import configure_logging, OUTPUT, INFO, DEBUG
 from . import __version__ as version
 import logging
 logger = logging.getLogger(__name__)
+
+VERBOSITY_TO_CONSOLE_LEVEL = {0: OUTPUT, 1: INFO, 2: DEBUG}
+
+
+class VerbosityType(click.IntRange):
+    """
+    Integer range 0-2 that also accepts the `-v=N` form.
+    """
+
+    def convert(self, value, param, ctx):
+        if isinstance(value, str):
+            value = value.lstrip("=")
+        return super().convert(value, param, ctx)
 
 
 class LoadContextFromConfig(click.Command):
@@ -302,14 +316,14 @@ do not hesitate to contact the author:
           "coordinates in Cartesian.")
 )
 @click.option("-v",
-              count=True,
+              type=VerbosityType(0, 2),
               default=1,
-              help=("Verbosity flag. -vv: very detailed info, recommended "
-                    "when you get an error. -v (default for CLI): info about "
-                    "some decissions taken internaly through the code's "
-                    "execution, recommended when the code runs without "
-                    "errors, but the result is not what you expected. If you "
-                    "don't set this tag, you will get the basic info.")
+              help=("Verbosity of the console output: "
+                    "-v=0: basic output only; "
+                    "-v=1 (default): info about some decisions taken internally "
+                    "through the code's execution, recommended when the code "
+                    "runs without errors, but the result is not what you expected; "
+                    "-v=2: very detailed (debug) info, recommended when you get an error.")
 )
 @click.option("-json_file",
               type=str,
@@ -387,6 +401,9 @@ def cli(
     Defines the "irrep" command-line tool interface.
     """
     # TODO: later, this can be split up into separate sub-commands (e.g. for zak, etc.)
+
+    # the root logger accepts all levels, the console handler filters by -v
+    configure_logging(loglevel=logging.DEBUG, console_level=VERBOSITY_TO_CONSOLE_LEVEL[v])
 
     # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
     if refuc:
