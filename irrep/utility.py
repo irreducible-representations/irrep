@@ -23,6 +23,8 @@ from scipy import constants
 import fortio
 import sys
 from typing import Any
+import logging
+logger = logging.getLogger(__name__)
 BOHR = constants.physical_constants['Bohr radius'][0] / constants.angstrom
 
 
@@ -62,7 +64,7 @@ class FortranFileR(fortio.FortranFile):
 
     def __init__(self, filename):
 
-        print("Using fortio to read")
+        logger.output("Using fortio to read")
 
         try:  # assuming there are not subrecords
             super().__init__(filename,
@@ -71,9 +73,9 @@ class FortranFileR(fortio.FortranFile):
                              auto_endian=True,
                              check_file=True
                              )
-            print("Long records not found in ", filename)
+            logger.output("Long records not found in  %s", filename)
         except ValueError:  # there are subrecords, allow negative markers
-            print(f"File '{filename}' contains subrecords - using header_dtype='int32'")
+            logger.output("File '%s' contains subrecords - using header_dtype='int32'", filename)
             super().__init__(filename,
                              mode='r',
                              header_dtype='int32',
@@ -194,6 +196,23 @@ def str_(x):
     return str(round(x, 5))
 
 
+def log_message(message, verbosity=0, level=0, *args, **kwargs):
+    """
+    Backward-compatible shim for legacy callers that still use the old
+    `log_message(message, verbosity, level)` interface.
+
+    The package itself uses direct logger.* calls; this helper only preserves
+    compatibility with the vendored irreptables code while keeping the logger
+    configuration as the single source of truth for output behaviour.
+    """
+    level_name = level if level in (0, 1, 2) else verbosity
+    if level_name not in (0, 1, 2):
+        level_name = 0
+
+    method = {0: logger.output, 1: logger.info, 2: logger.debug}[level_name]
+    method(message, *args, **kwargs)
+
+
 def is_round(A, prec=1e-14):
     """
     Returns `True` if all values in A are integers.
@@ -272,26 +291,9 @@ def format_matrix(A):
                    for a in A)
 
 
-def log_message(msg, verbosity, level):
-    '''
-    Logger to decide if a message is printed or not
-
-    Parameters
-    ----------
-    msg : str
-        Message to print
-    verbosity : int
-        Verbosity set for the current run of the code
-    level : int
-        If `verbosity >= level`, the message will be printed
-    '''
-
-    if verbosity >= level:
-        print(msg)
 
 
-def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf, verbosity=1,
-                  debug_msg=""):
+def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf, debug_msg=""):
     """
     Orthogonalize a square matrix, using SVD
 
@@ -314,15 +316,15 @@ def orthogonalize(A, warning_threshold=np.inf, error_threshold=np.inf, verbosity
     if np.any(np.abs(s - 1) > error_threshold):
         raise ValueError(msg)
     elif np.any(np.abs(s - 1) > warning_threshold):
-        log_message("Warning: " + msg, verbosity, 1)
+        logger.warning("%s", msg)
     return u @ vh
 
 
 def sort_vectors(list_of_vectors):
     list_of_vectors = list(list_of_vectors)
-    print(list_of_vectors)
+    logger.output(list_of_vectors)
     srt = arg_sort_vectors(list_of_vectors)
-    print(list_of_vectors, srt)
+    logger.output("%s %s", list_of_vectors, srt)
     return [list_of_vectors[i] for i in srt]
 
 
@@ -434,7 +436,6 @@ def grid_from_kpoints(kpoints, grid=None, allow_missing=False):
     if grid is None:
         grid = tuple(np.lcm.reduce([Fraction(k).limit_denominator(100).denominator for k in kp]) for kp in kpoints.T)
     npgrid = np.array(grid)
-    print(f"mpgrid = {npgrid}, {len(kpoints)}")
     kpoints_unique = UniqueListMod1()
     selected_kpoints = []
     for i, k in enumerate(kpoints):
@@ -452,6 +453,7 @@ def grid_from_kpoints(kpoints, grid=None, allow_missing=False):
     if len(kpoints_unique) < len(kpoints):
         warnings.warn("Some k-points are not on the grid or are repeated")
     return grid, np.array(selected_kpoints, dtype=int)
+
 
 
 class UniqueList(list):

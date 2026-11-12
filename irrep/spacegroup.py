@@ -25,13 +25,15 @@ from .parsers import ParserAbinit, ParserEspresso, ParserVasp, ParserW90
 from .parsers.gpaw import get_magnetic_moments
 
 from .symmetry_operation import SymmetryOperation
-from .utility import BOHR, clean_np_load, group_numbers, log_message, select_irreducible
+from .utility import BOHR, clean_np_load, group_numbers, select_irreducible
 from packaging import version
 import os
 
 from pyxtal import Group
 from sympy import Matrix, sympify
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
+import logging
+logger = logging.getLogger(__name__)
 
 
 
@@ -141,15 +143,14 @@ class SpaceGroup:
                  refUC=None,
                  shiftUC=None,
                  alat=None,
-                 verbosity=0,
                  ):
 
-        log_message(f"Creating space group {name} with number {number_str}", verbosity, 2)
+        logger.debug("Creating space group %s with number %s", name, number_str)
         if rotations is not None:
             nsym = len(rotations)
         else:
             nsym = len(symmetry_operations)
-        log_message(f"Number of symmetries: {nsym}", verbosity, 2)
+        logger.debug("Number of symmetries: %s", nsym)
 
         self.real_lattice = Lattice
         self.spinor = spinor
@@ -284,7 +285,7 @@ class SpaceGroup:
             if symmetries is None or symop.ind in symmetries:
                 out_str += symop.show(refUC=None, shiftUC=None, to_stdout=False, short=short) + '\n'
         if to_stdout:
-            print(out_str)
+            logger.output(out_str)
         return out_str
 
     @property
@@ -320,7 +321,6 @@ class SpaceGroup:
             symprec=1e-5,
             mag_symprec=-1,
             angle_tolerance=-1,
-            verbosity=0,
             ############
             **kwargs_tables
     ):
@@ -368,7 +368,6 @@ class SpaceGroup:
         from_sym_file : str, default=None
             If provided, the symmetry operations are read from this file.
             (format of pw2wannier90 prefix.sym  file)
-        verbosity : int, default=0
             Verbosity level. Default set to minimalistic printing
         magmom : array
             Each element is the magnetic moment of an ion. if None - non-magnetic calculation
@@ -401,7 +400,7 @@ class SpaceGroup:
         include_TR = include_TR
 
         if not np.all(isinstance(x, int) for x in typat):
-            log_message("typat are not integers -trying to enumerate them", verbosity, 2)
+            logger.debug("typat are not integers -trying to enumerate them")
             typeatset = set(typat)
             typeatdict = {t: i + 1 for i, t in enumerate(typeatset)}
             typat = np.array([typeatdict[t] for t in typat], dtype=int)
@@ -466,10 +465,10 @@ class SpaceGroup:
             translation_mod1 = True
 
         if not include_TR:
-            log_message("Removing time-reversal symmetries", verbosity, 2)
-            log_message(f"Number of time-reversal symmetries: {sum(time_reversal_list)}", verbosity, 2)
+            logger.debug("Removing time-reversal symmetries")
+            logger.debug("Number of time-reversal symmetries: %s", sum(time_reversal_list))
             selected_symmetries = np.where(np.logical_not(time_reversal_list))[0]
-            log_message(f"Selected symmetries: {selected_symmetries}", verbosity, 2)
+            logger.debug("Selected symmetries: %s", selected_symmetries)
             # Remove time-reversal symmetries
             rotations = [rotations[i] for i in selected_symmetries]
             translations = [translations[i] for i in selected_symmetries]
@@ -503,11 +502,9 @@ class SpaceGroup:
             typat=typat,
             alat=alat,
             magmom=magmom,
-            verbosity=verbosity,
         )
         if CLS.__name__ == "SpaceGroupIrreps":
-            sg.set_irreptables(verbosity=verbosity,
-                               **kwargs_tables,)
+            sg.set_irreptables(**kwargs_tables)
         return sg
 
     @property
@@ -722,7 +719,6 @@ class SpaceGroup:
                       spinor=None,
                       alat=None,
                       from_sym_file=None,
-                      verbosity=0,
                       **kwargs_cell
                       ):
         """
@@ -740,8 +736,6 @@ class SpaceGroup:
         from_sym_file : str
             If provided, the symmetry operations are read from this file.
             (format of pw2wannier90 prefix.sym  file)
-        verbosity : int
-            Verbosity level. Default set to minimalistic printing.
         **kwargs_cell : dict
             Additional keyword arguments to pass to the 'SpaceGroup.from_cell()` and `SpaceGroupIrrep.set_irreptables` method.
 
@@ -763,7 +757,6 @@ class SpaceGroup:
             spinor=spinor if spinor is not None else _spinor,
             alat=alat,
             from_sym_file=from_sym_file,
-            verbosity=verbosity,
             **kwargs_cell
         )
 
@@ -772,7 +765,6 @@ class SpaceGroup:
         CLS,
         fWAV=None,
         fPOS=None,
-        verbosity=0,
         spinor=None,
         **kwargs_cell
     ):
@@ -789,8 +781,6 @@ class SpaceGroup:
         spinor : bool, default=None
             `True` if wave-functions are spinors (SOC), `False` if they are scalars.
             If not specified, it is determined from the code.
-        verbosity : int, default=0
-            Verbosity level. Default set to minimalistic printing.
         **kwargs_cell : dict
             Additional keyword arguments to pass to the 'SpaceGroup.from_cell()` and `SpaceGroupIrrep.set_irreptables` method.
 
@@ -800,9 +790,9 @@ class SpaceGroup:
             An instance of the `SpaceGroup` class with the parsed symmetry operations.
         """
         if spinor is None:
-            log_message("Spinor is not specified (for VASP), assuming non-spinor calculation", verbosity, 2)
+            logger.debug("Spinor is not specified (for VASP), assuming non-spinor calculation")
             spinor = False
-        parser = ParserVasp(fPOS, fWAV, onlysym=True, verbosity=verbosity)
+        parser = ParserVasp(fPOS, fWAV, onlysym=True)
         Lattice, positions, typat = parser.parse_poscar()
 
         return CLS.from_cell(
@@ -810,7 +800,6 @@ class SpaceGroup:
             positions=positions,
             typat=typat,
             spinor=spinor,
-            verbosity=verbosity,
             **kwargs_cell
         )
 
@@ -818,7 +807,6 @@ class SpaceGroup:
     @classmethod
     def from_abinit(CLS,
                     fWFK=None,
-                    verbosity=0,
                     spinor=None,
                     **kwargs_cell):
         """
@@ -827,8 +815,6 @@ class SpaceGroup:
         ----------
         fWFK : str, default=None
             Name of the file with wavefunctions (e.g. WFK for ABINIT).
-        verbosity : int, default=0
-            Verbosity level. Default set to minimalistic printing.
         spinor : bool, default=None
             `True` if wave-functions are spinors (SOC), `False` if they are scalars.
             If not specified, it is determined from the code.
@@ -842,13 +828,12 @@ class SpaceGroup:
         """
         parser = ParserAbinit(fWFK)
         (nband, NK, Lattice, Ecut0, _spinor, typat, positions, EF_in) = \
-            parser.parse_header(verbosity=verbosity)
+            parser.parse_header()
         return CLS.from_cell(
             real_lattice=Lattice,
             positions=positions,
             typat=typat,
             spinor=spinor if spinor is not None else _spinor,
-            verbosity=verbosity,
             **kwargs_cell
         )
 
@@ -857,7 +842,6 @@ class SpaceGroup:
     def from_wannier90(CLS,
                        prefix,
                        spinor=None,
-                       verbosity=0,
                        **kwargs_cell):
         """
         Parse files to create a space-group object from Wannier90 output.
@@ -868,8 +852,6 @@ class SpaceGroup:
         spinor : bool, default=None
             `True` if wave-functions are spinors (SOC), `False` if they are scalars.
             If not specified, it is determined from the code.
-        verbosity : int, default=0
-            Verbosity level. Default set to minimalistic printing.
         **kwargs_cell : dict        
             Additional keyword arguments to pass to the 'SpaceGroup.from_cell()` and `SpaceGroupIrrep.set_irreptables` method.
         Returns
@@ -885,7 +867,6 @@ class SpaceGroup:
             positions=positions,
             typat=typat,
             spinor=spinor if spinor is not None else _spinor,
-            verbosity=verbosity,
             **kwargs_cell
         )
 
@@ -902,7 +883,6 @@ class SpaceGroup:
                   magmom=None,
                   magnetic=True,
                   spinor=None,
-                  verbosity=0,
                   legacy_gpaw=None,
                   **kwargs_cell):
         """Get the spacegroup of a GPAW calculator (non-spinor only).
@@ -946,7 +926,7 @@ class SpaceGroup:
                 typat = [int(typat[i] * 1000 + magmom_map[mag]) for i, mag in enumerate(magmom)]
         else:
             assert len(typat) == len(calculator.atoms), "typat should have the same length as the number of atoms"
-        log_message(f"typat used for spacegroup detection (accounting magmom): {typat}", verbosity, 1)
+        logger.info("typat used for spacegroup detection (accounting magmom): %s", typat)
         positions = calculator.atoms.get_scaled_positions()
         return cls.from_cell(real_lattice=lattice,
                              positions=positions,

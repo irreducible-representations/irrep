@@ -1,20 +1,23 @@
+from irrep.parsers.common import ParserCommon
+import logging
+
 import numpy as np
 
-from irrep.parsers.common import ParserCommon
+logger = logging.getLogger(__name__)
 
-from ..utility import log_message
+
+
 
 
 class WAVECARFILE:
     """Low-level reader for VASP WAVECAR records."""
 
-    def __init__(self, filename, RL=3, verbosity=0):
-        self.verbosity = verbosity
+    def __init__(self, filename, RL=3):
         self.f = open(filename, "rb")
         self.rl = RL
         self.rl, ispin, iprec = [int(x) for x in self.record(0)]
         self.iprec = iprec
-        log_message(f"iprec tag = {iprec}, record_length = {self.rl} bytes", self.verbosity, 1)
+        logger.info("iprec tag = %s, record_length = %s bytes", iprec, self.rl)
         if iprec not in (45200, 53300):
             raise RuntimeError(
                 f"invalid iprec tag found: {iprec}, probably not a single-precision file. "
@@ -32,11 +35,7 @@ class WAVECARFILE:
     def set_nrec_kpoint(self, NBin):
         size_enocc = (4 + 3 * NBin) * 8
         self.nrec_enocc = (size_enocc + self.rl - 1) // self.rl
-        log_message(
-            f"number of records for energies and occupancies : {self.nrec_enocc}",
-            self.verbosity,
-            1,
-        )
+        logger.info("number of records for energies and occupancies : %s", self.nrec_enocc)
         if self.iprec in (42200, 42210):
             assert self.nrec_enocc == 1, (
                 f"energies and occupancies for tag {self.iprec} should fit in one record. However, "
@@ -65,15 +64,14 @@ class WAVECARFILE:
 class ParserVasp(ParserCommon):
     """Parser for VASP POSCAR and WAVECAR files."""
 
-    def __init__(self, fPOS, fWAV, onlysym=False, verbosity=0):
+    def __init__(self, fPOS, fWAV, onlysym=False):
         super().__init__()
-        self.verbosity = verbosity
         self.fPOS = fPOS
         if not onlysym:
-            self.fWAV = WAVECARFILE(fWAV, verbosity=self.verbosity)
+            self.fWAV = WAVECARFILE(fWAV)
 
     def parse_poscar(self):
-        log_message(f"Reading POSCAR: {self.fPOS}", self.verbosity, 1)
+        logger.info("Reading POSCAR: %s", self.fPOS)
         fpos = (l.strip() for l in open(self.fPOS))
         title = next(fpos)
         del title
@@ -102,7 +100,7 @@ class ParserVasp(ParserCommon):
                 positions[i] = np.array(l.split()[:3])
                 i += 1
             except Exception as err:
-                log_message(err, self.verbosity, 1)
+                logger.info("%s", err)
                 pass
         if sum(nat) != i:
             raise RuntimeError(f"not all atomic positions were read : {i} of {sum(nat)}")
@@ -129,7 +127,7 @@ class ParserVasp(ParserCommon):
         r = self.fWAV.record_k_header(ik)
         nspinor = 2 if spinor else 1
         npw = int(r[0])
-        log_message(f"npw = {npw}, nspinor = {nspinor}, NBin = {NBin}", self.verbosity, 2)
+        logger.debug("npw = %s, nspinor = %s, NBin = %s", npw, nspinor, NBin)
         if spinor:
             assert npw % 2 == 0, f"odd number of coefs {npw} for spinor wavefunctions"
         npw //= nspinor

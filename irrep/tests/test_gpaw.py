@@ -48,7 +48,7 @@ def test_gpaw_spinorbit(spinor, calc_type):
     bandstructure.pickle(output_file)
     # print ("Bandstructure",bandstructure)
     bandstructure.spacegroup.show()
-    bandstructure.identify_irreps(kpnames=["GM"], verbosity=0)
+    bandstructure.identify_irreps(kpnames=["GM"], )
 
     # Temporary, until we make it valid for isymsep
     bandstructure.write_characters(refcell=False)
@@ -122,4 +122,4 @@ def test_gpaw_storage(calc_type):
         assert np.allclose(kp1.get_wavefunction(), kp2.get_wavefunction()), f"Wavefunctions differ for k-point {kp1.k} and {kp2.k}"
         assert np.allclose(kp1.proj, kp2.proj), f"Projections differ for k-point {kp1.k} and {kp2.k}"
     bandstructure.spacegroup.show()
-    bandstructure.identify_irreps(kpnames=["GM"], verbosity=0)
+    bandstructure.identify_irreps(kpnames=["GM"], )

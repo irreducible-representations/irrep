@@ -21,13 +21,16 @@ from scipy.optimize import minimize
 
 from .spacegroup import SpaceGroup
 
-from .utility import log_message
+
 
 try:
     from irreptables.irreps import IrrepTable
 except ImportError:
     from .utility import DummyMethodTables
     IrrepTable = DummyMethodTables("IrrepTable")
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 
@@ -62,11 +65,10 @@ class SpaceGroupIrreps(SpaceGroup):
             shiftUC=None,
             search_cell=False,
             trans_thresh=1e-5,
-            no_match_symmetries=False,
-            verbosity=0):
+            no_match_symmetries=False):
         # Load symmetries from the space group's table
 
-        irreptable = IrrepTable(self.number_str, self.spinor, magnetic=self.magnetic, v=verbosity)
+        irreptable = IrrepTable(self.number_str, self.spinor, magnetic=self.magnetic)
         self.u_symmetries_tables = irreptable.u_symmetries
         self.au_symmetries_tables = irreptable.au_symmetries
 
@@ -82,8 +84,7 @@ class SpaceGroupIrreps(SpaceGroup):
             refUC_lib=self.refUC,
             shiftUC_lib=self.shiftUC,
             search_cell=search_cell,
-            trans_thresh=trans_thresh,
-            verbosity=verbosity
+            trans_thresh=trans_thresh
         )
 
 
@@ -116,11 +117,7 @@ class SpaceGroupIrreps(SpaceGroup):
                     # User specified refUC or shiftUC in CLI. He/She may
                     # want the traces in a cell that is not neither the
                     # one in tables nor the DFT one
-                    log_message("WARNING: refUC and shiftUC don't transform the cell to "
-                                "one where symmetries are identical to those read from "
-                                "tables. If you want to achieve the same cell as in "
-                                "tables, try not specifying refUC and shiftUC.",
-                                verbosity, 1)
+                    logger.info("WARNING: refUC and shiftUC don't transform the cell to one where symmetries are identical to those read from tables. If you want to achieve the same cell as in tables, try not specifying refUC and shiftUC.")
             self.symmetries = sorted_symmetries
         self.irreps_are_set = True
 
@@ -140,43 +137,43 @@ class SpaceGroupIrreps(SpaceGroup):
             to each symmetry operation.
         """
 
-        print('')
-        print("\n ---------- CRYSTAL STRUCTURE ---------- \n")
-        print('')
+        logger.output("")
+        logger.output("\n ---------- CRYSTAL STRUCTURE ---------- \n")
+        logger.output("")
 
         # Print cell vectors in DFT and reference cells
         vecs_refUC = np.dot(self.real_lattice, self.refUC).T
-        print('Cell vectors in angstroms:\n')
-        print(f"{'Vectors of DFT cell':^32}|{'Vectors of REF. cell':^32}")
+        logger.output('Cell vectors in angstroms:\n')
+        logger.output("%s|%s", 'Vectors of DFT cell'.center(32), 'Vectors of REF. cell'.center(32))
         for i in range(3):
             vec1 = self.real_lattice[i]
             vec2 = vecs_refUC[i]
             s = f"a{i:1d} = {vec1[0]:7.4f}  {vec1[1]:7.4f}  {vec1[2]:7.4f}  "
             s += "|  "
             s += f"a{i:1d} = {vec2[0]:7.4f}  {vec2[1]:7.4f}  {vec2[2]:7.4f}"
-            print(s)
-        print()
+            logger.output(s)
+        logger.output("")
 
         # Print atomic positions
-        print('Atomic positions in direct coordinates:\n')
-        print(f"{'Atom type':^} | {'Position in DFT cell':^25} | {'Position in REF cell':^25}")
+        logger.output('Atomic positions in direct coordinates:\n')
+        logger.output("%s | %s | %s", 'Atom type'.center(9), 'Position in DFT cell'.center(25), 'Position in REF cell'.center(25))
         positions_refUC = np.linalg.inv(self.refUC) @ np.transpose(self.positions - self.shiftUC)
         positions_refUC = positions_refUC.T % 1.0
         for itype, pos1, pos2 in zip(self.typat, self.positions, positions_refUC):
             s = f'{itype:^9d} | '
             s += '  '.join(f'{x:7.4f}' for x in pos1) + ' | '
             s += '  '.join(f'{x:7.4f}' for x in pos2)
-            print(s)
+            logger.output(s)
 
-        print()
-        print('\n ---------- SPACE GROUP ----------- \n')
-        print()
-        print(f"Space group: {self.name} (# {self.number_str})")
-        print(f"Number of unitary symmetries: {len(self.u_symmetries)} (mod. lattice translations)")
+        logger.output("")
+        logger.output('\n ---------- SPACE GROUP ----------- \n')
+        logger.output("")
+        logger.output("Space group: %s (# %s)", self.name, self.number_str)
+        logger.output("Number of unitary symmetries: %s (mod. lattice translations)", len(self.u_symmetries))
         if self.magnetic:
-            print(f"Number of antiunitary symmetries: {len(self.au_symmetries)} (mod. lattice translations)")
+            logger.output("Number of antiunitary symmetries: %s (mod. lattice translations)", len(self.au_symmetries))
         refUC_print = self.refUC.T  # print following convention in paper
-        print(
+        logger.output(
             "\nThe transformation from the DFT cell to the reference cell of tables is given by:\n"
             f"        | {''.join(f'{el:8.4f}' for el in refUC_print[0])} |\n"
             f"refUC = | {''.join(f'{el:8.4f}' for el in refUC_print[1])} |    shiftUC = {np.round(self.shiftUC, 5)}\n"
@@ -263,7 +260,7 @@ class SpaceGroupIrreps(SpaceGroup):
         )
 
 
-    def get_irreps_from_table(self, kpname, K, verbosity=0):
+    def get_irreps_from_table(self, kpname, K):
         """
         Read irreps of the little-group of a maximal k-point. 
 
@@ -273,8 +270,6 @@ class SpaceGroupIrreps(SpaceGroup):
             Label of the maximal k-point.
         K : array, shape=(3,)
             Direct coordinates of the k-point.
-        verbosity : int, default=0
-            Verbosity level. Default set to minimalistic printing
 
         Returns
         -------
@@ -301,7 +296,7 @@ class SpaceGroupIrreps(SpaceGroup):
             given in parameter `kpname`.
         """
 
-        table = IrrepTable(self.number_str, self.spinor, magnetic=self.magnetic, v=verbosity)
+        table = IrrepTable(self.number_str, self.spinor, magnetic=self.magnetic)
         tab = {}
         for irr in table.irreps:
             if irr.kpname == kpname:
@@ -337,7 +332,7 @@ class SpaceGroupIrreps(SpaceGroup):
             shiftUC_lib,
             search_cell,
             trans_thresh,
-            verbosity=0
+
     ):
         """ 
         Determine basis transformation to conventional cell. Priority
@@ -363,8 +358,6 @@ class SpaceGroupIrreps(SpaceGroup):
             It is `True` if kpnames was specified in CLI.
         trans_thresh : float, default=1e-5
             Threshold to compare translational parts of symmetries.
-        verbosity : int, default=0
-            Verbosity level. Default set to minimalistic printing
 
         Returns
         -------
@@ -390,30 +383,30 @@ class SpaceGroupIrreps(SpaceGroup):
         if refUC_cli_bool and shiftUC_cli_bool:  # Both specified in CLI.
             refUC = refUC_cli.T  # User sets refUC as if it was acting on column
             shiftUC = shiftUC_cli
-            log_message('refUC and shiftUC read from CLI', verbosity, 1)
+            logger.info('refUC and shiftUC read from CLI')
             return refUC, shiftUC
         elif refUC_cli_bool and not shiftUC_cli_bool:  # shiftUC not given in CLI.
             refUC = refUC_cli.T  # User sets refUC as if it was acting on column
             shiftUC = np.zeros(3, dtype=float)
-            log_message('refUC was specified in CLI, but shiftUC was not.'
-                        ' Taking shiftUC=(0,0,0)', verbosity, 1)
+            logger.info('refUC was specified in CLI, but shiftUC was not.'
+                        ' Taking shiftUC=(0,0,0)')
             return refUC, shiftUC
         elif not refUC_cli_bool and shiftUC_cli_bool:  # refUC not given in CLI.
             refUC = np.eye(3, dtype=float)
             shiftUC = shiftUC_cli
-            log_message('shitfUC was specified in CLI, but refUC was not. Taking '
-                        '3x3 identity matrix as refUC.', verbosity, 1)
+            logger.info('shitfUC was specified in CLI, but refUC was not. Taking '
+                        '3x3 identity matrix as refUC.')
             return refUC, shiftUC
         elif not search_cell:
             refUC = np.eye(3, dtype=float)
             shiftUC = np.zeros(3, dtype=float)
-            log_message('Taking 3x3 identity matrix as refUC and shiftUC=(0,0,0). '
+            logger.info('Taking 3x3 identity matrix as refUC and shiftUC=(0,0,0). '
                         'If you want to calculate the transformation to '
-                        'conventional cell, run IrRep with -searchcell', verbosity, 1)
+                        'conventional cell, run IrRep with -searchcell')
             return refUC, shiftUC
         else:  # Neither specifiend in CLI.
-            log_message('Determining transformation to conventional setting '
-                        '(refUC and shiftUC)', verbosity, 1)
+            logger.info('Determining transformation to conventional setting '
+                        '(refUC and shiftUC)')
             refUC = np.linalg.inv(refUC_lib)  # from DFT to convenctional cell
 
             # Check if the shift given by spglib works
@@ -444,8 +437,7 @@ class SpaceGroupIrreps(SpaceGroup):
                             trans_thresh=trans_thresh,
                             only_u_symmetries=True
                         )
-                        log_message(f'ShiftUC achieved with the centering: {r_center}',
-                                    verbosity, 1)
+                        logger.info('ShiftUC achieved with the centering: %s', r_center)
                         return refUC, shiftUC
                     except RuntimeError:
                         pass
@@ -462,10 +454,10 @@ class SpaceGroupIrreps(SpaceGroup):
                                                                   trans_thresh=trans_thresh,
                                                                   only_u_symmetries=True
                                                                   )
-                        log_message(f"ShiftUC achieved in 2 steps:\n"
+                        logger.info(f"ShiftUC achieved in 2 steps:\n"
                                     f"  (1) Place origin of primitive cell on inversion center: {0.5 * inv.translation}\n"
                                     f"  (2) Move origin of convenctional cell to the inversion-center: {r_center}",
-                                    verbosity, 1)
+                                    )
                         return refUC, shiftUC
                     except RuntimeError:
                         pass
@@ -667,26 +659,26 @@ class SpaceGroupIrreps(SpaceGroup):
                          "\t\t| {: .2f} {: .2f} {: .2f} |\n"
                          "\t\t| {: .2f} {: .2f} {: .2f} |\n\n")
 
-        print("\n---------- HS-KPOINTS FOR IRREP IDENTIFICATION ----------\n")
+        logger.output("\n---------- HS-KPOINTS FOR IRREP IDENTIFICATION ----------\n")
 
-        print("\nChange of coordinates from conventional to DFT cell:\n")
-        print(matrix_format.format(*refUC_kspace.ravel()))
+        logger.output("\nChange of coordinates from conventional to DFT cell:\n")
+        logger.output(matrix_format.format(*refUC_kspace.ravel()))
 
-        print("\nChange of coordinates from DFT to conventional cell:\n")
-        print(matrix_format.format(*np.linalg.inv(refUC_kspace).ravel()))
+        logger.output("\nChange of coordinates from DFT to conventional cell:\n")
+        logger.output(matrix_format.format(*np.linalg.inv(refUC_kspace).ravel()))
 
         _, kp_index = np.unique([irr.kpname for irr in table.irreps], return_index=True)
-        print("Coordinates in symmetry tables:\n")
+        logger.output("Coordinates in symmetry tables:\n")
         for i in kp_index:
             name = table.irreps[i].kpname
             coords = table.irreps[i].k
-            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *coords))
-        print("\nCoordinates for DFT calculation:\n")
+            logger.output("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *coords))
+        logger.output("\nCoordinates for DFT calculation:\n")
         for i in kp_index:
             name = table.irreps[i].kpname
             coords = table.irreps[i].k
             k_dft = np.round(refUC_kspace.dot(coords), 6) % 1
-            print("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *k_dft))
+            logger.output("\t {:<2} : {: .6f} {: .6f} {: .6f}".format(name, *k_dft))
 
     def kpoints_to_calculation_cell(self, kpoints):
         """Transforms kpoints form standard cell to calculation cell

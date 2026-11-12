@@ -1,6 +1,12 @@
 
+import numpy.linalg as la
+import numpy as np
+from .utility import orthogonalize, cached_einsum
+import logging
 import warnings
-from .utility import log_message, orthogonalize, cached_einsum
+
+logger = logging.getLogger(__name__)
+
 # ###   ###   #####  ###
 # #  #  #  #  #      #  #
 # ###   ###   ###    ###
@@ -18,8 +24,6 @@ from .utility import log_message, orthogonalize, cached_einsum
 ##################################################################
 
 
-import numpy as np
-import numpy.linalg as la
 Rydberg_eV = 13.605693  # eV
 Hartree_eV = 2 * Rydberg_eV
 bohr_angstrom = 0.52917721092  # Angstrom
@@ -74,7 +78,6 @@ def calc_gvectors(
     spinor=True,
     nplanemax=10000,
     iter_nochange_break=10,
-    verbosity=0
 ):
     """ 
     Generates G-vectors taking part in the plane-wave expansion of 
@@ -103,9 +106,6 @@ def calc_gvectors(
         will be read from DFT files. Mandatory for `vasp`.
     nplanemax : int, default=10000
         Sets the maximun number of iterations when calculating vectors.
-    verbosity : int, default=0
-        Level of verbosity. If 0, no output is printed. If 1, only the most 
-        important messages are printed. If 2, all messages are printed.
 
     Returns
     -------
@@ -119,7 +119,7 @@ def calc_gvectors(
 
 """
 
-    log_message(f"Generating plane waves at k: ({' '.join(f'{x:6.3f}' for x in K)})", verbosity, 2)
+    logger.debug("Generating plane waves at k: (%s)", ' '.join(f'{x:6.3f}' for x in K))
     if Ecut1 <= 0:
         Ecut1 = Ecut
     B = RecLattice
@@ -132,9 +132,9 @@ def calc_gvectors(
     for N in range(nplanemax):
         flag = True
         if N % 10 == 0:
-            log_message(f'Cycle {N:>3d}: number of plane waves = {len(igall):>10d}', verbosity, 2)
+            logger.debug('Cycle %3d: number of plane waves = %10d', N, len(igall))
         if len(igall) >= nplane:     # Only enters if vasp
-            log_message(f"{N=}, {memory=}", verbosity, 2)
+            logger.debug("%s, %s", N, memory)
             if np.all(memory):  # probably spinor wrong set as spinor=F
                 raise RuntimeError(
                     "calc_gvectors is stuck calculating plane waves of energy larger "
@@ -142,10 +142,7 @@ def calc_gvectors(
                     "VASP calculation does not include SOC and set -spinor if it does."
                 )
             else:
-                log_message(
-                    f"Reached the maximum number of plane-waves {nplane} at N={N}, "
-                    "stopping the calculation", verbosity, 2
-                )
+                logger.debug("Reached the maximum number of plane-waves %s at N=%s, stopping the calculation", nplane, N)
                 break
 
         for ig3 in range(-N, N + 1):
@@ -162,10 +159,7 @@ def calc_gvectors(
         nplane_iter.append(len(igall))
         if len(nplane_iter) > iter_nochange_break:
             if nplane_iter[-iter_nochange_break] == nplane_iter[-1]:
-                log_message(
-                    f"No change in the number of plane-waves for {iter_nochange_break} "
-                    f"iterations, stopping the calculation at N={N}", verbosity, 2
-                )
+                logger.debug("No change in the number of plane-waves for %s iterations, stopping the calculation at N=%s", iter_nochange_break, N)
                 break
 
 
@@ -194,7 +188,7 @@ def calc_gvectors(
     return igall, Eg
 
 
-def sortIG(ik, kg, kpt, WF, RecLattice, Ecut0, Ecut, verbosity=0):
+def sortIG(ik, kg, kpt, WF, RecLattice, Ecut0, Ecut):
     """
     Apply plane-wave cutoff specified in CLI to the expansion of 
     wave-functions and sort the coefficients and plane-waves in ascending 
@@ -245,10 +239,7 @@ def sortIG(ik, kg, kpt, WF, RecLattice, Ecut0, Ecut, verbosity=0):
     thresh = 1e-4  # default thresh to distinguish energies of plane-waves
     KG = (kg + kpt).dot(RecLattice)
     eKG = Hartree_eV * bohr_angstrom**2 * (la.norm(KG, axis=1) ** 2) / 2
-    log_message(
-        f"Found cutoff: {Ecut0:12.6f} eV   Largest plane wave energy in K-point {ik:4d}: {np.max(eKG):12.6f} eV",
-        verbosity=verbosity, level=2
-    )
+    logger.info("Found cutoff: %12.6f eV   Largest plane wave energy in K-point %4d: %12.6f eV", Ecut0, ik, np.max(eKG))
     assert Ecut0 * 1.000000001 > np.max(eKG)
     sel = np.where(eKG < Ecut)[0]
 

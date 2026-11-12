@@ -17,7 +17,7 @@ bandstructure = BandStructure.from_gpaw(calculator_gpaw=calc,
                                 search_cell=True,
                                 kplist=[1])
 bandstructure.spacegroup.show()
-bandstructure.identify_irreps(kpnames=["GM"], verbosity=0)
+bandstructure.identify_irreps(kpnames=["GM"], )
 bandstructure.write_characters(refcell=False)
 
 bandstructure.write_trace()

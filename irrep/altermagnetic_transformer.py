@@ -3,6 +3,8 @@ import numpy as np
 from .spacegroup import SpaceGroup
 from .utility import all_close_mod1
 from .symmetry_operation import SymmetryOperation, get_atom_map
+import logging
+logger = logging.getLogger(__name__)
 
 
 class AltermagneticTransformer:
@@ -85,7 +87,7 @@ def find_altermagnetic_symmetry(lattice, positions, typat, magmom, nskip=0,
         # print (f"Checking symmetry operation: {symop}, {atommap=}, {T=}")
         assert np.all(typat[atommap] == typat), "Atom types must match under symmetry operation."
         magmom_transformed = magmom[atommap]
-        print(f"{magmom_transformed=}, {atommap=}, m-transformed={magmom_transformed + magmom}")
+        logger.output("magmom_transformed=%s, atommap=%s, m-transformed=%s", magmom_transformed, atommap, magmom_transformed + magmom)
         if np.allclose(magmom_transformed, -magmom, atol=tol):
             cnt += 1
             if cnt > nskip:

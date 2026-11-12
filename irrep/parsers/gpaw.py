@@ -1,9 +1,13 @@
+from ..gvectors import calc_gvectors
+from irrep.parsers.common import ParserCommon
+import logging
+
 import numpy as np
 
-from irrep.parsers.common import ParserCommon
+logger = logging.getLogger(__name__)
 
-from ..gvectors import calc_gvectors
-from ..utility import log_message
+
+
 
 
 class ParserGPAW(ParserCommon):
@@ -11,7 +15,7 @@ class ParserGPAW(ParserCommon):
 
     spin_channels = {"up": 0, "dw": 1, None: 0, 0: 0, 1: 1}
 
-    def __init__(self, calculator, spinor=False, spin_channel=None, verbosity=0):
+    def __init__(self, calculator, spinor=False, spin_channel=None):
         super().__init__()
         spin_channel = self.spin_channels[spin_channel]
         from gpaw import GPAW
@@ -21,7 +25,6 @@ class ParserGPAW(ParserCommon):
         self.calculator = calculator
         self.nband = self.calculator.get_number_of_bands()
         self.spinor = spinor
-        self.verbosity = verbosity
 
         if self.spinor:
             nspins = self.calculator.get_number_of_spins()
@@ -60,7 +63,7 @@ class ParserGPAW(ParserCommon):
         ]
         Eupdw = [self.calculator.get_eigenvalues(kpt=ik, spin=ispin) for ispin in self.spin_channels]
 
-        log_message(f"shapes of WFupdw: {[wf.shape for wf in WFupdw]}", self.verbosity, 2)
+        logger.debug("shapes of WFupdw: %s", [wf.shape for wf in WFupdw])
         ngx, ngy, ngz = WFupdw[0].shape[1:]
         kpt = self.calculator.get_ibz_k_points()[ik]
         assert np.allclose(kpt, self.get_kpt_coord(ik)), f"Found kpt[{ik}] {kpt} in the wavefunction file, but expected {self.get_kpt_coord(ik)}"
@@ -69,7 +72,6 @@ class ParserGPAW(ParserCommon):
             RecLattice,
             Ecut,
             spinor=False,
-            verbosity=self.verbosity,
         )
         selectG = (kg[:, 0:3].T).copy()
         selectG[0, :] = selectG[0, :] % ngx

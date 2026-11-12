@@ -6,8 +6,10 @@ import numpy as np
 from scipy.io import FortranFile as FF
 
 from ..gvectors import Hartree_eV
-from ..utility import BOHR, log_message, str2bool
+from ..utility import BOHR, str2bool
 from .common import ParserCommon
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ParserEspresso(ParserCommon):
@@ -36,7 +38,7 @@ class ParserEspresso(ParserCommon):
             NBin_dw = int(self.bandstr.find("nbnd_dw").text)
             NBin_up = int(self.bandstr.find("nbnd_up").text)
             self.spinpol = True
-            print(f"spin-polarised bandstructure composed of {NBin_up} up and {NBin_dw} dw states")
+            logger.output("spin-polarised bandstructure composed of %d up and %d dw states", NBin_up, NBin_dw)
         except AttributeError:
             self.spinpol = False
             NBin = int(self.bandstr.find("nbnd").text)
@@ -108,7 +110,7 @@ class ParserEspresso(ParserCommon):
         kpt = kpt.dot(self.recip_lattice_alat_inv)
         return kpt
 
-    def parse_kpoint(self, ik, verbosity=0, getE=True, getWF=True):
+    def parse_kpoint(self, ik, getE=True, getWF=True):
         kptxml = self.bandstr.findall("ks_energies")[ik]
         if self.spinpol:
             if self.spin_channel == "up":
@@ -175,7 +177,7 @@ class ParserEspresso(ParserCommon):
                             B = np.array(rec)
                             rec = fWFC.read_record(f"({igwx},3)i4")
                             kg = np.array(rec)
-                            log_message(f"npwtot: {npwtot}, igwx: {igwx}", verbosity, 2)
+                            logger.debug("npwtot: %s, igwx: %s", npwtot, igwx)
                             kpt = kpt.dot(np.linalg.inv(B))
                             WF = np.zeros((NBin, npwtot), dtype=complex)
                             for ib in range(NBin):

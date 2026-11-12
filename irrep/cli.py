@@ -25,8 +25,24 @@ import click
 from monty.serialization import dumpfn, loadfn
 
 from .parsers.parse_files_bandstructure import parse_files
-from .utility import sort_vectors, str2list, short, log_message
+from .utility import sort_vectors, str2list, short
+from .logging import configure_logging, OUTPUT, INFO, DEBUG
 from . import __version__ as version
+import logging
+logger = logging.getLogger(__name__)
+
+VERBOSITY_TO_CONSOLE_LEVEL = {0: OUTPUT, 1: INFO, 2: DEBUG}
+
+
+class VerbosityType(click.IntRange):
+    """
+    Integer range 0-2 that also accepts the `-v=N` form.
+    """
+
+    def convert(self, value, param, ctx):
+        if isinstance(value, str):
+            value = value.lstrip("=")
+        return super().convert(value, param, ctx)
 
 
 class LoadContextFromConfig(click.Command):
@@ -300,14 +316,14 @@ do not hesitate to contact the author:
           "coordinates in Cartesian.")
 )
 @click.option("-v",
-              count=True,
+              type=VerbosityType(0, 2),
               default=1,
-              help=("Verbosity flag. -vv: very detailed info, recommended "
-                    "when you get an error. -v (default for CLI): info about "
-                    "some decissions taken internaly through the code's "
-                    "execution, recommended when the code runs without "
-                    "errors, but the result is not what you expected. If you "
-                    "don't set this tag, you will get the basic info.")
+              help=("Verbosity of the console output: "
+                    "-v=0: basic output only; "
+                    "-v=1 (default): info about some decisions taken internally "
+                    "through the code's execution, recommended when the code "
+                    "runs without errors, but the result is not what you expected; "
+                    "-v=2: very detailed (debug) info, recommended when you get an error.")
 )
 @click.option("-json_file",
               type=str,
@@ -386,29 +402,22 @@ def cli(
     """
     # TODO: later, this can be split up into separate sub-commands (e.g. for zak, etc.)
 
+    # the root logger accepts all levels, the console handler filters by -v
+    configure_logging(loglevel=logging.DEBUG, console_level=VERBOSITY_TO_CONSOLE_LEVEL[v])
+
     # if supplied, convert refUC and shiftUC from comma-separated lists into arrays
     if refuc:
         refuc = np.array(refuc.split(","), dtype=float).reshape((3, 3))
     if shiftuc:
         shiftuc = np.array(shiftuc.split(","), dtype=float).reshape(3)
 
-    # rename the v flag to verbosity, to avoid overlap with local variables
-    verbosity = v
     # Warning about kpnames
     if kpnames is not None:
         searchcell = True
 
     elif not searchcell:
-        log_message("Warning: transformation to the convenctional unit "
-                    "cell will not be calculated, nor its validity checked "
-                    "(if given). See the description of flag -searchcell "
-                    "on:\n"
-                    "irrep --help",
-                    verbosity, 1)
-        log_message("Warning: -kpnames not specified. Only traces of "
-                    "symmetry operations will be calculated. Remember that "
-                    "-kpnames must be specified to identify irreps",
-                    verbosity, 1)
+        logger.info("Warning: transformation to the convenctional unit cell will not be calculated, nor its validity checked (if given). See the description of flag -searchcell on:\n%s", "irrep --help")
+        logger.info("Warning: -kpnames not specified. Only traces of symmetry operations will be calculated. Remember that -kpnames must be specified to identify irreps")
 
     # parse input arguments into lists if supplied
     if symmetries:
@@ -433,17 +442,17 @@ def cli(
             if magnetic_moments.ndim == 1:
                 magnetic_moments = np.expand_dims(magnetic_moments, axis=0)
         except FileNotFoundError:
-            print(f"The magnetic moments file was not found: {magmom}")
+            logger.output("The magnetic moments file was not found: %s", magmom)
         except ValueError:
-            print(f"Error reading magnetic moments file: {magmom}")
+            logger.output("Error reading magnetic moments file: %s", magmom)
     elif time_reversal:
         magnetic_moments = True
-        print("WARNING: --time-reversal set without providing magnetic moments "
+        logger.output("WARNING: --time-reversal set without providing magnetic moments "
               "via --magmom. Magnetic grey groups will be used. Results are "
               "still valid.")
     elif symmetry_indicators:
         magnetic_moments = True
-        print("WARNING:\nusing --symmetry-indicators with a non-magnetic "
+        logger.output("WARNING:\nusing --symmetry-indicators with a non-magnetic "
               "crystal invariant under time-reversal. Switching to the "
               "grey group with time-reversal. Results are still valid.")
     else:
@@ -476,7 +485,6 @@ def cli(
         save_wf=save_wf,
         symprec=symprec,
         unk_formatted=unk_formatted,
-        verbosity=verbosity,
         from_sym_file=from_sym_file,
         include_TR=(magnetic_moments is not None),  # if magnetic, include TR
         irreps=True,  # always identify irreps when called from irrep code
@@ -502,7 +510,7 @@ def cli(
         )
 
     # Identify irreps. If kpnames wasn't set, all will be labelled as None
-    bandstr.identify_irreps(kpnames, verbosity=verbosity)
+    bandstr.identify_irreps(kpnames)
 
     # Temporary, until we make it valid for isymsep
     bandstr.write_characters()
@@ -535,9 +543,9 @@ def cli(
         json_data["separating symmetries"] = isymsep
         tmp_subbands = {}
         for isym in isymsep:
-            print(f"\n-------- SEPARATING BY SYMMETRY # {isym} --------")
+            logger.output("\n-------- SEPARATING BY SYMMETRY # %s --------", isym)
             for s_old, bs in subbands.items():
-                separated = bs.Separate(isym - 1, groupKramers=groupkramers, verbosity=verbosity)
+                separated = bs.Separate(isym - 1, groupKramers=groupkramers)
                 for s_new, bs_separated in separated.items():
                     # Later, the sorting of evals will be based on the
                     # argument of each eval in terms of [0,2pi). So it's
@@ -554,9 +562,9 @@ def cli(
         for k in sort_vectors(subbands.keys()):
             sub = subbands[k]
             if isymsep is not None:
-                print(
-                    "\n\n\n\n ################################################ \n\n\n NEXT SUBSPACE:  ",
-                    " , ".join(f"sym # {s} -> eigenvalue {short(ev)}" for s, ev in zip(isymsep, k)),
+                logger.output(
+                    f"\n\n\n\n ################################################ \n\n\n NEXT SUBSPACE:   "
+                    f"{' , '.join(f'sym # {s} -> eigenvalue {short(ev)}' for s, ev in zip(isymsep, k))}",
                 )
                 sub.write_characters()
                 json_data["characters and irreps"].append({"symmetry eigenvalues": np.array(k),
@@ -569,29 +577,29 @@ def cli(
 
     if zak:
         for k in subbands:
-            print(f"symmetry eigenvalue : {k} \n Traces are : ")
+            logger.output("symmetry eigenvalue : %s \n Traces are : ", k)
             subbands[k].write_characters()
-            print(f"symmetry eigenvalue : {k} \n Zak phases are : ")
+            logger.output("symmetry eigenvalue : %s \n Zak phases are : ", k)
             zak = subbands[k].zakphase()
             for n, (z, gw, gc, lgw) in enumerate(zip(*zak)):
-                print(f"   {n + 1:4d}    {z / np.pi:8.5f} pi gapwidth = {gw:8.4f}"
-                      f" gapcenter = {gc:8.3f} localgap= {lgw:8.4f}")
+                logger.output("   %4d    %8.5f pi gapwidth = %8.4f gapcenter = %8.3f localgap= %8.4f",
+                      n + 1, z / np.pi, gw, gc, lgw)
             exit()
 
     if wcc:
         for k in subbands:
-            print(f"symmetry eigenvalue {k}")
+            logger.output("symmetry eigenvalue %s", k)
             # subbands[k].write_characters(degen_thresh=0.001,refUC=refUC,symmetries=symmetries)
             wcc_val = subbands[k].wcc()
-            print(f"symmetry eigenvalue : {k} \n  WCC are : {wcc_val} \n sumWCC={np.sum(wcc_val) % 1}")
+            logger.output("symmetry eigenvalue : %s \n  WCC are : %s \n sumWCC=%s", k, wcc_val, np.sum(wcc_val) % 1)
         exit()
 
     if plotbands:
-        print("\nplotbands = True --> writing bands")
+        logger.output("\nplotbands = True --> writing bands")
         for k, sub in subbands.items():
             if isymsep is not None:
-                print("\n\n\n\n ################################################ \n\n\n next subspace:  ",
-                    " , ".join(f"{s}:{short(ev)}" for s, ev in zip(isymsep, k)), )
+                logger.output("\n\n\n\n ################################################ \n\n\n next subspace:   "
+                              f"{' , '.join(f'{s}:{short(ev)}' for s, ev in zip(isymsep, k))}")
                 fname = (
                     "bands-" + suffix + "-" +
                     "-".join(f"{s}:{short(ev)}" for s, ev in zip(isymsep, k)) +
