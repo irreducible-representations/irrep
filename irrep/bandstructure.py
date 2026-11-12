@@ -28,7 +28,7 @@ from .kpoint import Kpoint
 from .spacegroup import SpaceGroup
 from .spacegroup_irreps import SpaceGroupIrreps
 from .gvectors import sortIG, calc_gvectors
-from .utility import get_block_indices, get_mapping_irr, grid_from_kpoints, log_message, UniqueListMod1, restore_full_grid, select_irreducible
+from .utility import get_block_indices, get_mapping_irr, grid_from_kpoints, UniqueListMod1, restore_full_grid, select_irreducible
 from .storage import DummyStorage
 try:
     from irreptables.ebrs import load_ebr_data
@@ -108,12 +108,6 @@ class BandStructure:
     save_wf : bool
         Whether wave functions should be kept as attribute after calculating 
         traces.
-    verbosity : int, default=0
-        Number controlling the verbosity. 
-        0: minimalistic printing. 
-        1: print info about decisions taken internally by the code, recommended 
-        when the code runs without errors but the result is not the expected.
-        2: print detailed info, recommended when the code stops with an error
     magmom : array(num_atoms, 3)
         Magnetic moments of atoms in the unit cell. 
     include_TR : bool
@@ -262,7 +256,6 @@ class BandStructure:
         spinor=None,
         onlysym=False,
         spin_channel=None,
-        verbosity=0,
         irreps=False,
         spacegroup=None,
         read_kpoints=True,
@@ -278,7 +271,7 @@ class BandStructure:
         if onlysym:
             return cls(kpoints=[], spacegroup=spacegroup, Ecut=Ecut, read_all_kpoints=False)
 
-        parser = ParserVasp(fPOS, fWAV, onlysym, verbosity=verbosity)
+        parser = ParserVasp(fPOS, fWAV, onlysym)
 
         if spinor is None:
             raise RuntimeError(
@@ -294,10 +287,10 @@ class BandStructure:
 
         (kplist_noskip, mp_grid, NBout, NBin, IBstart, IBend, Ecut,
          efermi) = cls.get_check_mpgrid(parser=parser, spacegroup=spacegroup, kplist=kplist, EF_in=EF_in, Ecut=Ecut, Ecut0=Ecut0,
-                                        IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, verbosity=verbosity, **kwargs)
+                                        IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, **kwargs)
 
         def get_kpoint(ik, getE=True, getWF=True, paw=False):
-            log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
+            logger.debug("Parsing wave functions at k-point #%3d", ik)
             assert paw is False, "PAW parsing not implemented for VASP"
             WF, Energy, kpt, npw = parser.parse_kpoint(ik, NBin, spinor, getE=getE, getWF=getWF)
             if not getE:
@@ -309,7 +302,6 @@ class BandStructure:
                                     npw,
                                     Ecut,
                                     spinor=spinor,
-                                    verbosity=verbosity
                                     )
                 WF = WF[:, kg[:, 3], :]
             else:
@@ -318,7 +310,7 @@ class BandStructure:
                 WF = None
             kp, kwargs_kpoint = cls._set_kpoint(
                 spacegroup=spacegroup, efermi=efermi, rec_lattice=spacegroup.reciprocal_lattice, spinor=spinor, irreps=irreps,
-                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, verbosity=verbosity, **kwargs)
+                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, **kwargs)
             return kp, kwargs_kpoint
 
         bandstr = cls(kplist=kplist_noskip, spacegroup=spacegroup, Ecut=Ecut, mp_grid=mp_grid, efermi=efermi,
@@ -337,7 +329,6 @@ class BandStructure:
         kplist=None,
         onlysym=False,
         spin_channel=None,
-        verbosity=0,
         irreps=False,
         spacegroup=None,
         read_kpoints=True,
@@ -354,28 +345,28 @@ class BandStructure:
         spinor = spacegroup.spinor
 
         parser = ParserAbinit(fWFK)
-        (nband, NK, Lattice, Ecut0, _spinor, typat, positions, EF_in) = parser.parse_header(verbosity=verbosity)
+        (nband, NK, Lattice, Ecut0, _spinor, typat, positions, EF_in) = parser.parse_header()
         NBin = max(nband)
 
         (kplist_noskip, mp_grid, NBout, NBin, IBstart, IBend, Ecut,
          efermi) = cls.get_check_mpgrid(parser=parser, spacegroup=spacegroup, kplist=kplist, EF_in=EF_in, Ecut=Ecut, Ecut0=Ecut0,
-                                        IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, verbosity=verbosity, **kwargs)
+                                        IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, **kwargs)
 
         def get_kpoint(ik, getE=True, getWF=True, getG=True, paw=False):
-            log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
+            logger.debug("Parsing wave functions at k-point #%3d", ik)
             assert paw is False, "PAW parsing not implemented for ABINIT"
             NBin = parser.nband[ik]
             kpt = parser.kpt[ik]
-            log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
+            logger.debug("Parsing wave functions at k-point #%3d: %s", ik, kpt)
             WF, Energy, kg = parser.parse_kpoint(ik, getE=getE, getWF=getWF)
             if getWF:
-                WF, kg, eKG = sortIG(ik, kg, kpt, WF, spacegroup.reciprocal_lattice, Ecut0, Ecut, verbosity=verbosity)
+                WF, kg, eKG = sortIG(ik, kg, kpt, WF, spacegroup.reciprocal_lattice, Ecut0, Ecut)
             else:
                 eKG = None
 
             kp, kwargs_kpoint = cls._set_kpoint(
                 spacegroup=spacegroup, efermi=efermi, rec_lattice=spacegroup.reciprocal_lattice, spinor=spinor, irreps=irreps,
-                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, verbosity=verbosity, **kwargs)
+                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, **kwargs)
             return kp, kwargs_kpoint
 
         bandstr = cls(kplist=kplist_noskip, spacegroup=spacegroup, Ecut=Ecut, mp_grid=mp_grid, efermi=efermi,
@@ -395,7 +386,6 @@ class BandStructure:
         kplist=None,
         onlysym=False,
         spin_channel=None,
-        verbosity=0,
         alat=None,
         irreps=False,
         from_sym_file=None,
@@ -422,19 +412,19 @@ class BandStructure:
 
         (kplist_noskip, mp_grid, NBout, NBin, IBstart, IBend, Ecut,
          efermi) = cls.get_check_mpgrid(parser=parser, spacegroup=spacegroup, kplist=kplist, EF_in=EF_in, Ecut=Ecut, Ecut0=Ecut0,
-                                        IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, verbosity=verbosity, **kwargs)
+                                        IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, **kwargs)
 
         def get_kpoint(ik, getE=True, getWF=True, getG=True, paw=False):
-            log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
-            WF, Energy, kg, kpt = parser.parse_kpoint(ik, verbosity=verbosity, getE=getE, getWF=getWF)
+            logger.debug("Parsing wave functions at k-point #%3d", ik)
+            WF, Energy, kg, kpt = parser.parse_kpoint(ik, getE=getE, getWF=getWF)
             if getWF:
-                WF, kg, eKG = sortIG(ik + 1, kg, kpt, WF, spacegroup.reciprocal_lattice, Ecut0, Ecut, verbosity=verbosity)
+                WF, kg, eKG = sortIG(ik + 1, kg, kpt, WF, spacegroup.reciprocal_lattice, Ecut0, Ecut)
             else:
                 eKG = None
 
             kp, kwargs_kpoint = cls._set_kpoint(
                 spacegroup=spacegroup, efermi=efermi, rec_lattice=spacegroup.reciprocal_lattice, spinor=spinor, irreps=irreps,
-                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, verbosity=verbosity, **kwargs)
+                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, **kwargs)
             return kp, kwargs_kpoint
 
         bandstr = cls(kplist=kplist_noskip, spacegroup=spacegroup, Ecut=Ecut, mp_grid=mp_grid, efermi=efermi,
@@ -457,7 +447,6 @@ class BandStructure:
         spinor=None,
         onlysym=False,
         spin_channel=None,
-        verbosity=0,
         irreps=False,
         unk_formatted=False,
         spacegroup=None,
@@ -485,10 +474,10 @@ class BandStructure:
 
         (kplist_noskip, mp_grid, NBout, NBin, IBstart, IBend, Ecut,
          efermi) = cls.get_check_mpgrid(parser=parser, spacegroup=spacegroup, kplist=kplist, EF_in=EF_in, Ecut=Ecut, Ecut0=Ecut0,
-                                        IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, verbosity=verbosity, **kwargs)
+                                        IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, **kwargs)
 
         def get_kpoint(ik, getE=True, getWF=True, paw=False):
-            log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
+            logger.debug("Parsing wave functions at k-point #%3d", ik)
             kpt = kpred[ik]
             Energy = Energies[ik]
             ngx, ngy, ngz = parser.parse_grid(ik + 1)
@@ -497,15 +486,14 @@ class BandStructure:
                                 Ecut=Ecut,
                                 spinor=spinor,
                                 nplanemax=np.max([ngx, ngy, ngz]) // 2,
-                                verbosity=verbosity
                                 )
             selectG = tuple(kg[:, 0:3].T)
-            log_message(f'Parsing wave functions at k-point #{ik:>3d}: {kpt}', verbosity, 2)
+            logger.debug("Parsing wave functions at k-point #%3d: %s", ik, kpt)
             WF = parser.parse_kpoint(ik + 1, selectG)
 
             kp, kwargs_kpoint = cls._set_kpoint(
                 spacegroup=spacegroup, efermi=efermi, rec_lattice=spacegroup.reciprocal_lattice, spinor=spinor, irreps=irreps,
-                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, verbosity=verbosity, **kwargs)
+                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, **kwargs)
             return kp, kwargs_kpoint
 
 
@@ -527,7 +515,6 @@ class BandStructure:
         spinor=None,
         onlysym=False,
         spin_channel=None,
-        verbosity=0,
         irreps=False,
         spacegroup=None,
         read_kpoints=True,
@@ -550,7 +537,6 @@ class BandStructure:
         parser = ParserGPAW(calculator=calculator_gpaw,
                             spinor=bool(spinor),
                             spin_channel=spin_channel,
-                            verbosity=verbosity
                             )
         if read_paw:
             if isinstance(storage, str):
@@ -572,10 +558,10 @@ class BandStructure:
 
         (kplist_noskip, mp_grid, NBout, NBin, IBstart, IBend, Ecut,
          efermi) = cls.get_check_mpgrid(parser=parser, spacegroup=spacegroup, kplist=kplist, EF_in=EF_in, Ecut=Ecut, Ecut0=Ecut0,
-                                        IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, verbosity=verbosity, **kwargs)
+                                        IBstart=IBstart, IBend=IBend, NBin=NBin, NK=NK, **kwargs)
 
         def get_kpoint(ik, getE=True, getWF=True, paw=False):
-            log_message(f'Parsing wave functions at k-point #{ik:>3d}', verbosity, 2)
+            logger.debug("Parsing wave functions at k-point #%3d", ik)
             kpt = kpred[ik]
             Energy, WF, kg, kpt, eKG = parser.parse_kpoint(ik,
                                                 RecLattice=spacegroup.reciprocal_lattice,
@@ -583,7 +569,7 @@ class BandStructure:
 
             kp, kwargs_kpoint = cls._set_kpoint(
                 spacegroup=spacegroup, efermi=efermi, rec_lattice=spacegroup.reciprocal_lattice, spinor=spinor, irreps=irreps,
-                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, verbosity=verbosity, **kwargs)
+                kpt=kpt, WF=WF, Energy=Energy, kg=kg, eKG=eKG, ik=ik, IBstart=IBstart, IBend=IBend, NBout=NBout, NBin=NBin, **kwargs)
             return kp, kwargs_kpoint
 
         if read_paw:
@@ -616,8 +602,7 @@ class BandStructure:
                   spin_channel,
                   magmom=None,
                   include_TR=False,
-                  verbosity=0,
-                  symprec=1e-5,
+                           symprec=1e-5,
                   angle_tolerance=-1,
                   mag_symprec=-1,
                   refUC=None,
@@ -638,7 +623,6 @@ class BandStructure:
         kwargs_spacegroup = dict(
             magmom=magmom,
             include_TR=include_TR,
-            verbosity=verbosity,
             symprec=symprec,
             angle_tolerance=angle_tolerance,
             mag_symprec=mag_symprec,
@@ -655,7 +639,7 @@ class BandStructure:
     def get_check_mpgrid(cls,
                   parser,
                   spacegroup,
-                  kplist, EF_in, Ecut, Ecut0, IBstart, IBend, NBin, NK, verbosity, EF="0.0",
+                  kplist, EF_in, Ecut, Ecut0, IBstart, IBend, NBin, NK, EF="0.0",
                   select_grid=None,
                   irreducible=False,
                   **kwargs):
@@ -695,10 +679,10 @@ class BandStructure:
 
         def check_skip(kpt):
             if not is_on_grid(kpt):
-                log_message(f'k-point {kpt} is not on the grid {select_grid}, skipping', verbosity, 1)
+                logger.info("k-point %s is not on the grid %s, skipping", kpt, select_grid)
                 return True
             if is_reducible(kpt):
-                log_message(f'k-point {kpt} is reducible, skipping', verbosity, 1)
+                logger.info("k-point %s is reducible, skipping", kpt)
                 return True
             return False
 
@@ -710,7 +694,7 @@ class BandStructure:
         if isinstance(EF, str) and EF.lower() == "auto" or EF is None:
             if EF_in is None:
                 efermi = 0.0
-                log_message("WARNING : fermi-energy not found. Setting it as 0 eV", verbosity, 1)
+                logger.info("WARNING : fermi-energy not found. Setting it as 0 eV")
             else:
                 efermi = EF_in
         else:
@@ -719,7 +703,7 @@ class BandStructure:
             except ValueError:
                 raise ValueError("Invalid value for keyword EF. It must be a number or 'auto'")
 
-        log_message(f"Efermi: {efermi:.4f} eV", verbosity, 1)
+        logger.info("Efermi: %.4f eV", efermi)
 
         # Fix indices of bands to be considered
         if IBstart is None:
@@ -742,12 +726,12 @@ class BandStructure:
 
 
         # To do: create writer of description for this class
-        log_message(f"Wave function file contains total {NK} k-points and {NBin} bands.", verbosity, 1)
-        log_message(f"Saving {len(kpt_coords)} k-points and {NBout} bands in the output.", verbosity, 1)
-        log_message(f'Saving k-points with coordinates: \n {kpt_coords}', verbosity, 2)
-        log_message(f'Saving bands with band indices: {IBstart + 1} to {IBend + 1}', verbosity, 2)
-        log_message(f"Energy cutoff in WAVECAR : {Ecut0}", verbosity, 1)
-        log_message(f"Energy cutoff reduced to : {Ecut}", verbosity, 1)
+        logger.info("Wave function file contains total %s k-points and %s bands.", NK, NBin)
+        logger.info("Saving %s k-points and %s bands in the output.", len(kpt_coords), NBout)
+        logger.debug("Saving k-points with coordinates: \n %s", kpt_coords)
+        logger.debug("Saving bands with band indices: %s to %s", IBstart + 1, IBend + 1)
+        logger.info("Energy cutoff in WAVECAR : %s", Ecut0)
+        logger.info("Energy cutoff reduced to : %s", Ecut)
 
         # Create list of indices for k-points
 
@@ -756,7 +740,7 @@ class BandStructure:
 
     @classmethod
     def _set_kpoint(cls, spacegroup, efermi, rec_lattice, spinor,
-                    IBstart, IBend, NBout, ik, kpt, WF, Energy, kg, eKG, verbosity, irreps,
+                    IBstart, IBend, NBout, ik, kpt, WF, Energy, kg, eKG, irreps,
                     calculate_traces=False,
                     degen_thresh=1e-8,
                     save_wf=True,
@@ -798,7 +782,6 @@ class BandStructure:
                 shiftUC=spacegroup.shiftUC,
                 symmetries_tables=spacegroup.u_symmetries_tables,
                 save_wf=save_wf,
-                verbosity=verbosity,
                 calculate_traces=calculate_traces,
             )
             kp.init_traces(**kwargs_kpoint)
@@ -831,7 +814,7 @@ class BandStructure:
         '''Getter for the number of k points'''
         return len(self.kpoints)
 
-    def identify_irreps(self, kpnames, verbosity=0):
+    def identify_irreps(self, kpnames):
         '''
         Identifies the irreducible representations of wave functions based on 
         the traces of symmetries of the little co-group. Each element of 
@@ -842,14 +825,12 @@ class BandStructure:
         ----------
         kpnames : list
             List of labels of the maximal k points.
-        verbosity : int, default=0
-            Verbosity level. Default set to minimalistic printing
         '''
 
         for ik, KP in enumerate(self.kpoints):
 
             if kpnames is not None:
-                irreps = self.spacegroup.get_irreps_from_table(kpnames[ik], KP.k, verbosity=verbosity)
+                irreps = self.spacegroup.get_irreps_from_table(kpnames[ik], KP.k)
             else:
                 irreps = None
             KP.identify_irreps(irreptable=irreps)
@@ -1047,7 +1028,7 @@ class BandStructure:
         for KP in self.kpoints:
             f.write(KP.write_trace())
 
-    def Separate(self, isymop, groupKramers=True, verbosity=0):
+    def Separate(self, isymop, groupKramers=True):
         """
         Separate band structure according to the eigenvalues of a symmetry 
         operation.
@@ -1058,8 +1039,6 @@ class BandStructure:
             Index of symmetry used for the separation. (counting from 0)
         groupKramers : bool, default=True
             If `True`, states will be coupled by Kramers' pairs.
-        verbosity : int, default=0
-            Verbosity level. Default is set to minimalistic printingcode 
 
         Returns
         -------
@@ -1083,7 +1062,7 @@ class BandStructure:
 
         # Separate each k-point
         kpseparated = [
-            kp.Separate(symop, groupKramers=groupKramers, verbosity=verbosity, kwargs_kpoint=self.kwargs_kpoint)
+            kp.Separate(symop, groupKramers=groupKramers, kwargs_kpoint=self.kwargs_kpoint)
             for kp in self.kpoints
         ]  # each element is a dict with separated bandstructure of a k-point
 
@@ -1110,13 +1089,13 @@ class BandStructure:
                 return dict({allvalues.mean(): self})
         else:
             allvalues = allvalues[np.argsort(np.angle(allvalues))]
-            log_message(f'allvalues: {allvalues}', verbosity, 2)
+            logger.debug("allvalues: %s", allvalues)
             block_indices = get_block_indices(allvalues, thresh=0.01, cyclic=True)
             nv = len(allvalues)
             if len(block_indices) > 1:
                 allvalues = set([np.roll(allvalues, -b1)[: (b2 - b1) % nv].mean()
                                  for b1, b2 in block_indices])
-                log_message(f'Distinct values: {allvalues}', verbosity, 2)
+                logger.debug("Distinct values: %s", allvalues)
                 subspaces = {}
                 for vv in allvalues:
                     other = copy.copy(self)

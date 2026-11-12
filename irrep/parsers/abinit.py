@@ -3,7 +3,7 @@ from sys import stdout
 
 from ..gvectors import Hartree_eV
 from ..utility import FortranFileR as FFR
-from ..utility import BOHR, log_message
+from ..utility import BOHR
 from .common import ParserCommon
 import logging
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ class ParserAbinit(ParserCommon):
         self.fWFK = FFR(filename)
         self.kpt_count = 0
 
-    def parse_header(self, verbosity=0):
+    def parse_header(self):
         try:
             record = self.fWFK.read_record("S6,2i4", rec=0)
         except Exception as err:
@@ -29,11 +29,7 @@ class ParserAbinit(ParserCommon):
         headform, fform = record[0][1]
         defversion = ["8.6.3", "9.6.2", "8.4.4", "8.10.3"]
         if codsvn not in defversion:
-            log_message(
-                f"WARNING, the version {codsvn} of abinit is not in {defversion} and may not be fully tested",
-                verbosity,
-                1,
-            )
+            logger.warning("WARNING, the version %s of abinit is not in %s and may not be fully tested", codsvn, defversion)
         if headform < 80:
             raise ValueError(f"Head form {headform}<80 is not supported")
 

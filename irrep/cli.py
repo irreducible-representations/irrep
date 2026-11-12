@@ -25,7 +25,7 @@ import click
 from monty.serialization import dumpfn, loadfn
 
 from .parsers.parse_files_bandstructure import parse_files
-from .utility import sort_vectors, str2list, short, log_message
+from .utility import sort_vectors, str2list, short
 from . import __version__ as version
 import logging
 logger = logging.getLogger(__name__)
@@ -394,23 +394,13 @@ def cli(
     if shiftuc:
         shiftuc = np.array(shiftuc.split(","), dtype=float).reshape(3)
 
-    # rename the v flag to verbosity, to avoid overlap with local variables
-    verbosity = v
     # Warning about kpnames
     if kpnames is not None:
         searchcell = True
 
     elif not searchcell:
-        log_message("Warning: transformation to the convenctional unit "
-                    "cell will not be calculated, nor its validity checked "
-                    "(if given). See the description of flag -searchcell "
-                    "on:\n"
-                    "irrep --help",
-                    verbosity, 1)
-        log_message("Warning: -kpnames not specified. Only traces of "
-                    "symmetry operations will be calculated. Remember that "
-                    "-kpnames must be specified to identify irreps",
-                    verbosity, 1)
+        logger.info("Warning: transformation to the convenctional unit cell will not be calculated, nor its validity checked (if given). See the description of flag -searchcell on:\n%s", "irrep --help")
+        logger.info("Warning: -kpnames not specified. Only traces of symmetry operations will be calculated. Remember that -kpnames must be specified to identify irreps")
 
     # parse input arguments into lists if supplied
     if symmetries:
@@ -478,7 +468,6 @@ def cli(
         save_wf=save_wf,
         symprec=symprec,
         unk_formatted=unk_formatted,
-        verbosity=verbosity,
         from_sym_file=from_sym_file,
         include_TR=(magnetic_moments is not None),  # if magnetic, include TR
         irreps=True,  # always identify irreps when called from irrep code
@@ -504,7 +493,7 @@ def cli(
         )
 
     # Identify irreps. If kpnames wasn't set, all will be labelled as None
-    bandstr.identify_irreps(kpnames, verbosity=verbosity)
+    bandstr.identify_irreps(kpnames)
 
     # Temporary, until we make it valid for isymsep
     bandstr.write_characters()
@@ -539,7 +528,7 @@ def cli(
         for isym in isymsep:
             logger.output("\n-------- SEPARATING BY SYMMETRY # %s --------", isym)
             for s_old, bs in subbands.items():
-                separated = bs.Separate(isym - 1, groupKramers=groupkramers, verbosity=verbosity)
+                separated = bs.Separate(isym - 1, groupKramers=groupkramers)
                 for s_new, bs_separated in separated.items():
                     # Later, the sorting of evals will be based on the
                     # argument of each eval in terms of [0,2pi). So it's

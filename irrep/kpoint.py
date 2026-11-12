@@ -22,7 +22,7 @@ import numpy as np
 import numpy.linalg as la
 import copy
 from .gvectors import symm_eigenvalues, symm_matrix, get_pw_energies
-from .utility import cached_einsum, compstr, get_block_indices, is_round, format_matrix, log_message, orthogonalize, vector_pprint
+from .utility import cached_einsum, compstr, get_block_indices, is_round, format_matrix, orthogonalize, vector_pprint
 import logging
 logger = logging.getLogger(__name__)
 
@@ -233,7 +233,7 @@ class Kpoint(KpointAbstract):
         """
         return 2 if self.spinor else 1
 
-    def init_traces(self, degen_thresh=1e-8, verbosity=0, calculate_traces=True, refUC=np.eye(3), shiftUC=np.zeros(3),
+    def init_traces(self, degen_thresh=1e-8, calculate_traces=True, refUC=np.eye(3), shiftUC=np.zeros(3),
                     symmetries_tables=None, save_wf=True):
         """
         Continuation of __init__ method. Calculates traces of symmetry eigenvalues and irreps, when asked. 
@@ -259,8 +259,6 @@ class Kpoint(KpointAbstract):
         save_wf : bool
             Whether wave functions should be kept as attribute after calculating 
             traces.
-        verbosity : int
-            Verbosity level. Default set to minimalistic printing
         """
 
         self.k_refUC = np.dot(refUC.T, self.k)
@@ -276,7 +274,7 @@ class Kpoint(KpointAbstract):
         # Calculate traces
         if calculate_traces:
             self.char, self.char_refUC, self.Energy_mean = \
-                self.calculate_traces(refUC, shiftUC, symmetries_tables, verbosity, use_blocks=False)
+                self.calculate_traces(refUC, shiftUC, symmetries_tables, use_blocks=False)
 
             # Determine number of band inversions based on parity
             found = False
@@ -462,8 +460,7 @@ class Kpoint(KpointAbstract):
     def normWF(self):
         return np.linalg.norm(self.WF, axis=(1, 2))
 
-    def Separate(self, symop, groupKramers=True, verbosity=0,
-                 kwargs_kpoint={}):
+    def Separate(self, symop, groupKramers=True, kwargs_kpoint={}):
         """
         Separate the band structure in a particular k-point according to the 
         eigenvalues of a symmetry operation.
@@ -474,8 +471,6 @@ class Kpoint(KpointAbstract):
             Index of symmetry used for the separation.
         groupKramers : bool, default=True
             If `True`, states will be coupled by pairs of Kramers.
-        verbosity : int, default=0
-            Verbosity level. Default set to minimalistic printing
 
         Returns
         -------
@@ -490,8 +485,7 @@ class Kpoint(KpointAbstract):
         norms = self.normWF()**2
         check = np.max(abs(norms - np.eye(norms.shape[0])))
         if check > 1e-5:
-            log_message(f"orthogonality (largest of diag. <psi_nk|psi_mk>): {check:7.5f} > 1e-5   \n",
-                        verbosity, 1)
+            logger.info("orthogonality (largest of diag. <psi_nk|psi_mk>): %7.5f > 1e-5   \n", check)
 
 
         S = symm_matrix(
@@ -511,12 +505,11 @@ class Kpoint(KpointAbstract):
             Sblock[b1:b2, b1:b2] = 0
         check = np.max(abs(Sblock))
         if check > 0.001:
-            log_message("WARNING: matrix of symmetry has non-zero elements between "
-                        f"states of different energy:  {check} \n", verbosity, 1)
-            log_message(f"Printing matrix of symmetry at k={self.k}", verbosity, 1)
-            log_message(format_matrix(Sblock), verbosity, 1)
-            log_message("The diagonal blocks", verbosity, 1)
-            log_message(", ".join([f"{b1}:{b2} \n: {format_matrix(S[b1:b2, b1:b2])}" for b1, b2 in self.block_indices]), verbosity, 1)
+            logger.info("WARNING: matrix of symmetry has non-zero elements between states of different energy:  %s \n", check)
+            logger.info("Printing matrix of symmetry at k=%s", self.k)
+            logger.info("%s", format_matrix(Sblock))
+            logger.info("The diagonal blocks")
+            logger.info(", ".join(f"{b1}:{b2} \n: {format_matrix(S[b1:b2, b1:b2])}" for b1, b2 in self.block_indices))
 
 
         # Calculate eigenvalues and eigenvectors in each block
@@ -524,7 +517,7 @@ class Kpoint(KpointAbstract):
         eigenvectors = []
         Eloc = []
         for istate, (b1, b2) in enumerate(self.block_indices):
-            S_loc = orthogonalize(S[b1:b2, b1:b2], verbosity=verbosity, error_threshold=1e-2, warning_threshold=1e-3)
+            S_loc = orthogonalize(S[b1:b2, b1:b2], error_threshold=1e-2, warning_threshold=1e-3)
             W, V = la.eig(S_loc)
             for w, v in zip(W, V.T):
                 eigenvalues.append(w)
@@ -538,7 +531,7 @@ class Kpoint(KpointAbstract):
 
         # Check unitarity of the symmetry
         if np.abs((np.abs(w) - 1.0)).max() > 1e-4:
-            log_message(f"WARNING: some eigenvalues are not unitary: {w}", verbosity, 1)
+            logger.info("WARNING: some eigenvalues are not unitary: %s", w)
         if np.abs((np.abs(w) - 1.0)).max() > 3e-1:
             raise RuntimeError(f" some eigenvalues are not unitary :{w} ")
         w /= np.abs(w)
@@ -603,7 +596,7 @@ class Kpoint(KpointAbstract):
             eKG=K1.eKG
         )
 
-    def calculate_traces(self, refUC, shiftUC, symmetries_tables, verbosity=0, use_blocks=True):
+    def calculate_traces(self, refUC, shiftUC, symmetries_tables, use_blocks=True):
         '''
         Calculate traces of symmetry operations
 
@@ -649,12 +642,12 @@ class Kpoint(KpointAbstract):
                 ))
         char = np.array(char)
 
-        log_message(f"char.shape = {char.shape}, Energy_raw.shape = {self.Energy_raw.shape}, block_indices = {self.block_indices}", verbosity, 2)
+        logger.debug("char.shape = %s, Energy_raw.shape = %s, block_indices = %s", char.shape, self.Energy_raw.shape, self.block_indices)
 
         # Check that number of irreps is int
         Nirrep = np.linalg.norm(char.sum(axis=1)) ** 2 / char.shape[0]
         if abs(Nirrep - round(Nirrep)) > 1e-2:
-            log_message(f"WARNING - non-integer number of states : {Nirrep}", verbosity, 2)
+            logger.debug("WARNING - non-integer number of states : %s", Nirrep)
         Nirrep = int(round(Nirrep))
 
         # Sum traces of degenerate states. Rows (cols) correspond to states (syms)
