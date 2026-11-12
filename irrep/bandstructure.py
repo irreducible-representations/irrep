@@ -269,7 +269,7 @@ class BandStructure:
 
 
         if onlysym:
-            return cls(kpoints=[], spacegroup=spacegroup, Ecut=Ecut, read_all_kpoints=False)
+            return cls(kpoints=[], spacegroup=spacegroup, Ecut=Ecut)
 
         parser = ParserVasp(fPOS, fWAV, onlysym)
 
