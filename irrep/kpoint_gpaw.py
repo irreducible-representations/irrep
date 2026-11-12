@@ -78,8 +78,10 @@ class OverlapPAW:
 
     def __init__(self, calc, get_soc=True):
         self.dO_aii = {}
+        self.setups_l = []
         for a, setup in enumerate(calc.wfs.setups):
             self.dO_aii[a] = np.copy(setup.dO_ii)
+            self.setups_l.append(setup.l_j)
         self.orb_atom_indices = np.cumsum([0] + [dO.shape[0] for dO in self.dO_aii.values()])
         from ase.units import Bohr
         self.dv = np.copy(calc.wfs.gd.dv) * Bohr ** 3
