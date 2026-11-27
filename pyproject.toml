@@ -33,6 +33,9 @@ irrep = "irrep.cli:cli"
 [project.urls]
 Homepage = "https://github.com/irreducible-representations/irrep.git"
 
+[project.optional-dependencies]
+gpaw = ["gpaw"]
+
 [tool.setuptools]
 include-package-data = true
 
