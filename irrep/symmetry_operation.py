@@ -15,7 +15,6 @@
 ##################################################################
 
 
-from gpaw.rotation import rotation   # rotation(l, U_vv) -> (2l+1, 2l+1)
 from functools import cached_property
 import warnings
 import numpy as np
@@ -893,6 +892,7 @@ class SymmetryOperation():
 
     def set_R_aii_gpaw(self, calc, reset=False):
         """rotation matrices for the PAW projections."""
+        from gpaw.rotation import rotation   # rotation(l, U_vv) -> (2l+1, 2l+1)
         if not hasattr(self, 'R_aii') or reset:
             """One block-diagonal projector-space rotation matrix per atom."""
             self.R_aii = []
